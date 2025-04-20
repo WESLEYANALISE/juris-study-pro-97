@@ -50,9 +50,12 @@ const DicionarioJuridico = () => {
       if (data) {
         setDicionario(data as DicionarioItem[]);
         
-        // Extract unique areas
-        const uniqueAreas = [...new Set(data.map(item => item.area_direito).filter(Boolean))];
-        setAreas(uniqueAreas as string[]);
+        // Extract unique areas - Fix the undefined iterable issue
+        const uniqueAreas = [...new Set(data
+          .map(item => item.area_direito)
+          .filter(area => area !== null && area !== undefined))] as string[];
+        
+        setAreas(uniqueAreas);
       }
     } catch (error) {
       console.error('Error fetching dictionary:', error);
