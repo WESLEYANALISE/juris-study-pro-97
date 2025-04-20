@@ -45,24 +45,6 @@ export type Database = {
         }
         Relationships: []
       }
-      FLASHCARDS: {
-        Row: {
-          Answer: string | null
-          id: number
-          Question: string
-        }
-        Insert: {
-          Answer?: string | null
-          id?: number
-          Question: string
-        }
-        Update: {
-          Answer?: string | null
-          id?: number
-          Question?: string
-        }
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -90,18 +72,6 @@ export type Database = {
           id?: string
           updated_at?: string | null
           user_type?: string | null
-        }
-        Relationships: []
-      }
-      SS: {
-        Row: {
-          "[": string
-        }
-        Insert: {
-          "[": string
-        }
-        Update: {
-          "["?: string
         }
         Relationships: []
       }

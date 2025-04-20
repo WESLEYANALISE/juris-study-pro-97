@@ -1,327 +1,331 @@
 
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Play, PlaySquare } from "lucide-react";
-import { VideoPlayer } from "@/components/VideoPlayer";
-import { 
-  getJuridicPlaylists, 
-  getPlaylistVideos, 
-  type YouTubeVideo, 
-  type YouTubePlaylist 
-} from "@/lib/youtube-service";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import VideoPlayer from "@/components/VideoPlayer";
+import { SearchIcon, BookOpen, Brain, FileText, MessageSquare } from "lucide-react";
+import { getJuridicPlaylists, getPlaylistVideos, type YouTubePlaylist, type YouTubeVideo } from "@/lib/youtube-service";
 
-// Mock das disciplinas e playlists (substituir pela API real do YouTube)
-const disciplinas = [
-  { id: "constitucional", nome: "Direito Constitucional" },
-  { id: "administrativo", nome: "Direito Administrativo" },
-  { id: "civil", nome: "Direito Civil" },
-  { id: "penal", nome: "Direito Penal" },
-  { id: "processual", nome: "Direito Processual" },
-  { id: "trabalho", nome: "Direito do Trabalho" },
-  { id: "tributario", nome: "Direito Tributário" },
-  { id: "empresarial", nome: "Direito Empresarial" },
+// Legal areas without prefixing "Direito"
+const LEGAL_AREAS = [
+  "Constitucional",
+  "Civil",
+  "Penal",
+  "Administrativo",
+  "Processual Civil",
+  "Processual Penal",
+  "Trabalho",
+  "Tributário",
+  "Empresarial",
+  "Ambiental",
+  "Internacional",
+  "Consumidor"
 ];
 
-// Função para buscar playlists do YouTube
-const fetchYouTubePlaylists = async (disciplina: string): Promise<YouTubePlaylist[]> => {
-  // Tentando buscar playlists da API
-  try {
-    const playlists = await getJuridicPlaylists(disciplina);
-    if (playlists.length > 0) {
-      return playlists;
-    }
-  } catch (error) {
-    console.error("Erro ao buscar playlists da API:", error);
-  }
-  
-  // Fallback para dados simulados se a API falhar
-  return Array(6).fill(null).map((_, index) => ({
-    id: `playlist-${disciplina}-${index}`,
-    title: `${disciplinas.find(d => d.id === disciplina)?.nome || disciplina} - Parte ${index + 1}`,
-    description: `Playlist completa sobre tópicos importantes de ${disciplinas.find(d => d.id === disciplina)?.nome || disciplina}.`,
-    thumbnail: `https://picsum.photos/seed/${disciplina}${index}/640/360`,
-    videoCount: Math.floor(Math.random() * 20) + 5,
-    channelTitle: "JurisStudy Pro"
-  }));
+// Topics within each area
+const TOPICS_MAP: Record<string, string[]> = {
+  "Constitucional": [
+    "Controle de Constitucionalidade",
+    "Direitos Fundamentais",
+    "Organização do Estado",
+    "Poder Judiciário",
+    "Sistema Tributário"
+  ],
+  "Civil": [
+    "Parte Geral",
+    "Obrigações",
+    "Contratos",
+    "Responsabilidade Civil",
+    "Direito das Coisas",
+    "Família e Sucessões"
+  ],
+  "Penal": [
+    "Teoria do Delito",
+    "Penas",
+    "Crimes contra a Pessoa",
+    "Crimes contra o Patrimônio",
+    "Execução Penal"
+  ]
+  // Add more topics for other areas
 };
 
-// Função para buscar vídeos de uma playlist
-const fetchPlaylistVideos = async (playlistId: string): Promise<YouTubeVideo[]> => {
-  // Tentando buscar vídeos da API
-  try {
-    const videos = await getPlaylistVideos(playlistId);
-    if (videos.length > 0) {
-      return videos;
-    }
-  } catch (error) {
-    console.error("Erro ao buscar vídeos da API:", error);
-  }
-  
-  // Fallback para dados simulados se a API falhar
-  return Array(8).fill(null).map((_, index) => ({
-    id: `video-${playlistId}-${index}`,
-    title: `Aula ${index + 1} - Tópico importante`,
-    description: `Descrição detalhada da aula ${index + 1} sobre este tópico importante.`,
-    thumbnail: `https://picsum.photos/seed/${playlistId}${index}/640/360`,
-    publishedAt: new Date(Date.now() - (index * 86400000)).toISOString(),
-    channelTitle: "JurisStudy Pro",
-    duration: `${Math.floor(Math.random() * 40) + 20}:${Math.floor(Math.random() * 60).toString().padStart(2, '0')}`
-  }));
-};
-
-// Componente principal de VideoAulas
 const VideoAulas = () => {
-  const [disciplinaSelecionada, setDisciplinaSelecionada] = useState<string>("constitucional");
-  const [playlistSelecionada, setPlaylistSelecionada] = useState<string | null>(null);
-  const [videoSelecionado, setVideoSelecionado] = useState<YouTubeVideo | null>(null);
-  const [page, setPage] = useState(1);
-  const itemsPerPage = 6;
+  const [selectedArea, setSelectedArea] = useState<string>("Constitucional");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [playlists, setPlaylists] = useState<YouTubePlaylist[]>([]);
+  const [videos, setVideos] = useState<YouTubeVideo[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("playlists");
+  const [topics, setTopics] = useState<string[]>([]);
 
-  // Query para buscar playlists
-  const { 
-    data: playlists, 
-    isLoading: isLoadingPlaylists 
-  } = useQuery({
-    queryKey: ['playlists', disciplinaSelecionada],
-    queryFn: () => fetchYouTubePlaylists(disciplinaSelecionada),
-  });
-
-  // Query para buscar vídeos da playlist selecionada
-  const { 
-    data: videos, 
-    isLoading: isLoadingVideos 
-  } = useQuery({
-    queryKey: ['videos', playlistSelecionada],
-    queryFn: () => playlistSelecionada ? fetchPlaylistVideos(playlistSelecionada) : Promise.resolve([]),
-    enabled: !!playlistSelecionada,
-  });
-
-  // Reset da paginação quando mudar de disciplina
   useEffect(() => {
-    setPage(1);
-    setPlaylistSelecionada(null);
-    setVideoSelecionado(null);
-  }, [disciplinaSelecionada]);
+    const fetchPlaylists = async () => {
+      setLoading(true);
+      try {
+        const searchTerm = selectedArea;
+        const data = await getJuridicPlaylists(searchTerm);
+        setPlaylists(data);
+        setTopics(TOPICS_MAP[selectedArea] || []);
+      } catch (error) {
+        console.error("Error fetching playlists:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Resetar vídeo selecionado quando mudar de playlist
-  useEffect(() => {
-    setVideoSelecionado(null);
-  }, [playlistSelecionada]);
+    fetchPlaylists();
+  }, [selectedArea]);
 
-  // Cálculos para paginação
-  const totalPages = playlists ? Math.ceil(playlists.length / itemsPerPage) : 0;
-  const paginatedPlaylists = playlists ? playlists.slice((page - 1) * itemsPerPage, page * itemsPerPage) : [];
-
-  // Função para formatar data
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const handlePlaylistClick = async (playlistId: string) => {
+    try {
+      const videosData = await getPlaylistVideos(playlistId);
+      setVideos(videosData);
+      setSelectedVideo(videosData[0] || null);
+      setActiveTab("videos");
+    } catch (error) {
+      console.error("Error fetching videos:", error);
+    }
   };
 
-  // Função para assistir vídeo
-  const assistirVideo = (video: YouTubeVideo) => {
-    setVideoSelecionado(video);
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const generateAIResponse = (type: string) => {
+    if (!selectedVideo) return;
+    
+    // This would be implemented with a real AI service
+    alert(`Gerando ${type} para o vídeo: ${selectedVideo.title}`);
   };
 
   return (
     <div className="container mx-auto">
-      <div className="mb-6 animate-slide-up">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold">Vídeo-aulas</h1>
-        <p className="text-muted-foreground">Assista às aulas das principais disciplinas jurídicas</p>
+        <p className="text-muted-foreground">
+          Assista vídeo-aulas de diversos temas jurídicos
+        </p>
       </div>
 
-      <Tabs defaultValue={disciplinaSelecionada} onValueChange={setDisciplinaSelecionada} className="mb-8">
-        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-2 animate-fade-in">
-          {disciplinas.map((disciplina) => (
-            <TabsTrigger key={disciplina.id} value={disciplina.id}>
-              {disciplina.nome}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        {disciplinas.map((disciplina) => (
-          <TabsContent key={disciplina.id} value={disciplina.id} className="pt-4">
-            {playlistSelecionada ? (
-              <div>
-                <div className="flex justify-between items-center mb-6 animate-fade-in">
-                  <Button variant="outline" onClick={() => setPlaylistSelecionada(null)}>
-                    <ChevronLeft className="mr-2 h-4 w-4" />
-                    Voltar para playlists
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-1 space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Áreas</CardTitle>
+            </CardHeader>
+            <CardContent className="max-h-[400px] overflow-y-auto">
+              <div className="space-y-1">
+                {LEGAL_AREAS.map((area) => (
+                  <Button
+                    key={area}
+                    variant={selectedArea === area ? "default" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedArea(area)}
+                  >
+                    {area}
                   </Button>
-                </div>
-                
-                {videoSelecionado ? (
-                  <div className="animate-fade-in">
-                    <VideoPlayer
-                      video={videoSelecionado}
-                      onClose={() => setVideoSelecionado(null)}
-                    />
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {isLoadingVideos ? (
-                      Array(6).fill(null).map((_, index) => (
-                        <Card key={index} className="overflow-hidden">
-                          <Skeleton className="h-[180px] w-full" />
-                          <CardHeader>
-                            <Skeleton className="h-6 w-3/4 mb-2" />
-                            <Skeleton className="h-4 w-1/2" />
-                          </CardHeader>
-                        </Card>
-                      ))
-                    ) : (
-                      videos?.map((video, index) => (
-                        <Card 
-                          key={video.id} 
-                          className={`overflow-hidden shadow-md hover:shadow-card-hover transition-all duration-300 animate-fade-in border border-transparent hover:border-primary/30`}
-                          style={{ animationDelay: `${index * 0.05}s` }}
-                        >
-                          <div 
-                            className="relative cursor-pointer"
-                            onClick={() => assistirVideo(video)}
-                          >
-                            <img 
-                              src={video.thumbnail} 
-                              alt={video.title}
-                              className="w-full h-[180px] object-cover"
-                            />
-                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                              <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full bg-primary/80 hover:bg-primary">
-                                <Play className="h-6 w-6 text-white" fill="white" />
-                              </Button>
-                            </div>
-                            <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                              {video.duration}
-                            </div>
-                          </div>
-                          <CardHeader>
-                            <CardTitle className="text-lg line-clamp-2">{video.title}</CardTitle>
-                            <CardDescription>
-                              {video.channelTitle} • {formatDate(video.publishedAt)}
-                            </CardDescription>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {video.description}
-                            </p>
-                          </CardContent>
-                          <CardFooter>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="w-full"
-                              onClick={() => assistirVideo(video)}
-                            >
-                              <PlaySquare className="h-4 w-4 mr-2" />
-                              Assistir aula
-                            </Button>
-                          </CardFooter>
-                        </Card>
-                      ))
-                    )}
-                  </div>
-                )}
+                ))}
               </div>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {isLoadingPlaylists ? (
-                    Array(6).fill(null).map((_, index) => (
-                      <Card key={index} className="overflow-hidden">
-                        <Skeleton className="h-[180px] w-full" />
-                        <CardHeader>
-                          <Skeleton className="h-6 w-3/4 mb-2" />
-                          <Skeleton className="h-4 w-1/2" />
-                        </CardHeader>
-                      </Card>
-                    ))
-                  ) : (
-                    paginatedPlaylists.map((playlist, index) => (
-                      <Card 
-                        key={playlist.id} 
-                        className="overflow-hidden shadow-md hover:shadow-card-hover transition-all duration-300 cursor-pointer animate-fade-in border border-transparent hover:border-primary/30"
-                        onClick={() => setPlaylistSelecionada(playlist.id)}
-                        style={{ animationDelay: `${index * 0.05}s` }}
-                      >
-                        <div className="relative">
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Tópicos de {selectedArea}</CardTitle>
+            </CardHeader>
+            <CardContent className="max-h-[300px] overflow-y-auto">
+              <div className="space-y-1">
+                {topics.map((topic) => (
+                  <Button
+                    key={topic}
+                    variant="ghost"
+                    className="w-full justify-start text-sm"
+                    onClick={() => setSearchTerm(topic)}
+                  >
+                    {topic}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Filtros</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  Mais recentes
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  Mais assistidos
+                </Button>
+                <Button variant="outline" size="sm" className="w-full justify-start">
+                  Por professor
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="lg:col-span-3">
+          <div className="mb-4 relative">
+            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input 
+              className="pl-10" 
+              placeholder="Buscar por título, tema ou professor..." 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="playlists">Playlists</TabsTrigger>
+              <TabsTrigger value="videos" disabled={videos.length === 0}>Vídeos</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="playlists">
+              {loading ? (
+                <div className="text-center py-12">
+                  <p>Carregando playlists...</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {playlists
+                    .filter(playlist => 
+                      playlist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      playlist.description.toLowerCase().includes(searchTerm.toLowerCase())
+                    )
+                    .map((playlist) => (
+                      <Card key={playlist.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handlePlaylistClick(playlist.id)}>
+                        <div className="aspect-video w-full overflow-hidden">
                           <img 
-                            src={playlist.thumbnail} 
+                            src={playlist.thumbnail || "/placeholder.svg"} 
                             alt={playlist.title}
-                            className="w-full h-[180px] object-cover"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                            <Button size="icon" variant="ghost" className="h-12 w-12 rounded-full bg-primary/80 hover:bg-primary">
-                              <Play className="h-6 w-6 text-white" fill="white" />
-                            </Button>
-                          </div>
-                          <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
-                            <PlaySquare className="h-3 w-3" /> 
-                            {playlist.videoCount} vídeos
-                          </div>
                         </div>
                         <CardHeader>
-                          <CardTitle className="line-clamp-2">{playlist.title}</CardTitle>
+                          <CardTitle className="text-base">{playlist.title}</CardTitle>
                           <CardDescription>
-                            {playlist.channelTitle}
+                            {playlist.channelTitle} • {playlist.videoCount} vídeos
                           </CardDescription>
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {playlist.description}
-                          </p>
-                        </CardContent>
                         <CardFooter>
-                          <Button variant="outline" size="sm" className="w-full">
-                            <PlaySquare className="h-4 w-4 mr-2" />
-                            Ver playlist
+                          <Button variant="outline" className="w-full">
+                            Ver Playlist
                           </Button>
                         </CardFooter>
                       </Card>
-                    ))
-                  )}
+                    ))}
                 </div>
-
-                {totalPages > 1 && (
-                  <div className="flex justify-center items-center mt-8 gap-2 animate-fade-in">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                      disabled={page === 1 || isLoadingPlaylists}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
+              )}
+              
+              {!loading && playlists.filter(p => 
+                p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.description.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhuma playlist encontrada para "{searchTerm}"</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    Limpar filtro
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="videos">
+              {selectedVideo && (
+                <div className="space-y-4 mb-6">
+                  <VideoPlayer videoId={selectedVideo.id} />
+                  
+                  <div>
+                    <h2 className="text-xl font-bold">{selectedVideo.title}</h2>
+                    <p className="text-muted-foreground">
+                      {selectedVideo.channelTitle} • {selectedVideo.publishedAt?.split('T')[0]}
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    <Button variant="outline" size="sm" onClick={() => generateAIResponse("resumo")}>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Gerar Resumo
                     </Button>
-                    <span className="text-sm">
-                      Página {page} de {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                      disabled={page === totalPages || isLoadingPlaylists}
-                    >
-                      <ChevronRight className="h-4 w-4" />
+                    <Button variant="outline" size="sm" onClick={() => generateAIResponse("mapa")}>
+                      <Brain className="mr-2 h-4 w-4" />
+                      Mapa Mental
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => generateAIResponse("anotações")}>
+                      <BookOpen className="mr-2 h-4 w-4" />
+                      Anotações
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => generateAIResponse("dúvidas")}>
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Tirar Dúvidas
                     </Button>
                   </div>
-                )}
-              </>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+                  
+                  <div>
+                    <p className="whitespace-pre-line">{selectedVideo.description}</p>
+                  </div>
+                </div>
+              )}
+              
+              <h3 className="font-semibold mb-3">Mais vídeos desta playlist</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {videos
+                  .filter(video => 
+                    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    video.description.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .map((video) => (
+                    <Card key={video.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedVideo(video)}>
+                      <div className="relative">
+                        <div className="aspect-video w-full overflow-hidden">
+                          <img 
+                            src={video.thumbnail || "/placeholder.svg"} 
+                            alt={video.title}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs">
+                          {video.duration}
+                        </div>
+                      </div>
+                      <CardHeader className="p-3">
+                        <CardTitle className="text-sm line-clamp-2">{video.title}</CardTitle>
+                        <CardDescription className="text-xs">
+                          {video.channelTitle}
+                        </CardDescription>
+                      </CardHeader>
+                    </Card>
+                  ))}
+              </div>
+              
+              {videos.filter(v => 
+                v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                v.description.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">Nenhum vídeo encontrado para "{searchTerm}"</p>
+                  <Button 
+                    variant="outline" 
+                    className="mt-4"
+                    onClick={() => setSearchTerm("")}
+                  >
+                    Limpar filtro
+                  </Button>
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { type ProfileType } from "@/components/WelcomeModal";
+import MobileNavigation from "@/components/MobileNavigation";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,10 +17,11 @@ const Layout = ({ children, userProfile }: LayoutProps) => {
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
-          <main className="flex-1 p-6 overflow-auto">
+          <main className="flex-1 p-6 overflow-auto pb-20 md:pb-6">
             {children}
           </main>
         </div>
+        <MobileNavigation />
       </div>
     </SidebarProvider>
   );

@@ -1,0 +1,59 @@
+
+import { useNavigate, useLocation } from "react-router-dom";
+import { Home, BookOpen, Compass, MessageSquare, User } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const MobileNavigation = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const navItems = [
+    {
+      name: "Início",
+      icon: Home,
+      path: "/"
+    },
+    {
+      name: "Biblioteca",
+      icon: BookOpen,
+      path: "/biblioteca"
+    },
+    {
+      name: "Explorar",
+      icon: Compass,
+      path: "/explorar"
+    },
+    {
+      name: "Bloger",
+      icon: MessageSquare,
+      path: "/bloger"
+    },
+    {
+      name: "Perfil",
+      icon: User,
+      path: "/perfil"
+    }
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-card border-t border-border p-2 md:hidden">
+      {navItems.map((item) => (
+        <button
+          key={item.name}
+          onClick={() => navigate(item.path)}
+          className={cn(
+            "flex flex-col items-center justify-center p-2 rounded-md",
+            location.pathname === item.path 
+              ? "text-primary" 
+              : "text-muted-foreground hover:text-primary"
+          )}
+        >
+          <item.icon className="h-5 w-5 mb-1" />
+          <span className="text-xs">{item.name}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
+
+export default MobileNavigation;
