@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +16,7 @@ import Anotacoes from "./pages/Anotacoes";
 import Biblioteca from "./pages/Biblioteca";
 import Explorar from "./pages/Explorar";
 import FerramentasJuridicas from "./pages/FerramentasJuridicas";
+import Flashcards from "./pages/Flashcards";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +54,7 @@ const App = () => {
               <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
               <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
               <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
+              <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
               
               {/* Placeholder routes until these pages are created */}
               <Route path="/flashcards" element={<Layout userProfile={userProfile}><Index /></Layout>} />

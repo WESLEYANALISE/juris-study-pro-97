@@ -45,6 +45,36 @@ export type Database = {
         }
         Relationships: []
       }
+      flash_cards: {
+        Row: {
+          area: string | null
+          created_at: string
+          explicacao: string | null
+          id: number
+          pergunta: string | null
+          resposta: string | null
+          tema: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          explicacao?: string | null
+          id?: number
+          pergunta?: string | null
+          resposta?: string | null
+          tema?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          explicacao?: string | null
+          id?: number
+          pergunta?: string | null
+          resposta?: string | null
+          tema?: string | null
+        }
+        Relationships: []
+      }
       jurisprudencia: {
         Row: {
           area_direito: string | null
