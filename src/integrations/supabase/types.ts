@@ -45,69 +45,6 @@ export type Database = {
         }
         Relationships: []
       }
-      cronograma: {
-        Row: {
-          concluido: boolean | null
-          cor: string | null
-          created_at: string | null
-          data_fim: string
-          data_inicio: string
-          descricao: string | null
-          id: string
-          titulo: string
-          user_id: string | null
-        }
-        Insert: {
-          concluido?: boolean | null
-          cor?: string | null
-          created_at?: string | null
-          data_fim: string
-          data_inicio: string
-          descricao?: string | null
-          id?: string
-          titulo: string
-          user_id?: string | null
-        }
-        Update: {
-          concluido?: boolean | null
-          cor?: string | null
-          created_at?: string | null
-          data_fim?: string
-          data_inicio?: string
-          descricao?: string | null
-          id?: string
-          titulo?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      dicionario_juridico: {
-        Row: {
-          area_direito: string | null
-          created_at: string | null
-          definicao: string
-          exemplo_uso: string | null
-          id: string
-          termo: string
-        }
-        Insert: {
-          area_direito?: string | null
-          created_at?: string | null
-          definicao: string
-          exemplo_uso?: string | null
-          id?: string
-          termo: string
-        }
-        Update: {
-          area_direito?: string | null
-          created_at?: string | null
-          definicao?: string
-          exemplo_uso?: string | null
-          id?: string
-          termo?: string
-        }
-        Relationships: []
-      }
       flash_cards: {
         Row: {
           area: string | null
@@ -135,39 +72,6 @@ export type Database = {
           pergunta?: string | null
           resposta?: string | null
           tema?: string | null
-        }
-        Relationships: []
-      }
-      gamificacao: {
-        Row: {
-          conquistas: string[] | null
-          created_at: string | null
-          id: string
-          nivel: number | null
-          pontos: number | null
-          streak_dias: number | null
-          ultima_atividade: string | null
-          user_id: string | null
-        }
-        Insert: {
-          conquistas?: string[] | null
-          created_at?: string | null
-          id?: string
-          nivel?: number | null
-          pontos?: number | null
-          streak_dias?: number | null
-          ultima_atividade?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          conquistas?: string[] | null
-          created_at?: string | null
-          id?: string
-          nivel?: number | null
-          pontos?: number | null
-          streak_dias?: number | null
-          ultima_atividade?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }

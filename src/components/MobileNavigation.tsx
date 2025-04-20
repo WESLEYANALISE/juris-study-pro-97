@@ -1,6 +1,5 @@
-
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, BookOpen, Compass, Scale, MessageSquare } from "lucide-react";
+import { Home, BookOpen, Compass, Newspaper, MessageSquare, Scale } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MobileNavigation = () => {
@@ -41,13 +40,8 @@ const MobileNavigation = () => {
         <button
           key={item.name}
           onClick={() => navigate(item.path)}
-          className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md min-h-[48px] w-full",
-            "transition-transform duration-300 hover:scale-105 active:scale-95",
-            location.pathname === item.path 
-              ? "text-primary" 
-              : "text-muted-foreground hover:text-primary"
-          )}
+          className={`flex flex-col items-center justify-center p-2 rounded-md min-h-[48px] w-full 
+            ${location.pathname === item.path ? "text-primary" : "text-muted-foreground hover:text-primary"}`}
         >
           <item.icon className="h-5 w-5 mb-1" />
           <span className="text-xs">{item.name}</span>

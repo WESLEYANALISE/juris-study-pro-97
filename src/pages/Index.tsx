@@ -14,7 +14,6 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
 
 // Random audio transcript generator
 const getRandomTranscript = (category: string, title: string) => {
@@ -171,16 +170,6 @@ const Index = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleCardClick = (path: string) => {
-    // Add a class for the animation
-    document.querySelector('.page-transition')?.classList.add('page-exit');
-    
-    // Navigate after a small delay for the animation
-    setTimeout(() => {
-      navigate(path);
-    }, 300);
-  };
-
   return (
     <div className="container mx-auto py-0 px-1 sm:px-4">
       <div className="flex flex-col items-center text-center mb-8">
@@ -204,7 +193,7 @@ const Index = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => handleCardClick("/explorar")}
+                onClick={() => navigate("/explorar")}
                 className="text-xs flex items-center"
               >
                 Ver mais <ArrowRight className="ml-1 h-3 w-3" />
@@ -222,13 +211,7 @@ const Index = () => {
                   const transcriptKey = `${category.title}-${feature.title}`;
                   return (
                     <CarouselItem key={index} className="pl-2 md:pl-4 basis-[85%] sm:basis-[45%] md:basis-1/3">
-                      <Card 
-                        className={cn(
-                          "overflow-hidden shadow-sm hover:shadow-md border h-full",
-                          "transition-all duration-300 hover:scale-105 active:scale-95"
-                        )}
-                        onClick={() => handleCardClick(feature.path)}
-                      >
+                      <Card className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border h-full">
                         <CardHeader className="p-3 md:p-4">
                           <div className="flex items-center gap-2">
                             <feature.icon className={`h-5 w-5 ${feature.color}`} />
@@ -246,6 +229,7 @@ const Index = () => {
                         <CardFooter className="p-2 md:p-3 pt-0">
                           <Button 
                             variant="outline" 
+                            onClick={() => navigate(feature.path)} 
                             className="w-full text-xs min-h-[48px]"
                           >
                             Acessar

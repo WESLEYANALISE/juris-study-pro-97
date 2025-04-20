@@ -1,4 +1,5 @@
 
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
@@ -22,10 +23,7 @@ export function Header({ userProfile }: HeaderProps) {
         <SidebarTrigger />
       </div>
       
-      <div 
-        className="flex items-center mr-2 cursor-pointer transition-transform duration-300 hover:scale-105 active:scale-95" 
-        onClick={() => navigate("/")}
-      >
+      <div className="flex items-center mr-2 cursor-pointer" onClick={() => navigate("/")}>
         <Scale className="h-6 w-6 text-primary mr-2" />
         <span className="font-bold text-lg hidden sm:inline">JurisStudy Pro</span>
       </div>
@@ -37,6 +35,7 @@ export function Header({ userProfile }: HeaderProps) {
       )}
       
       <div className="ml-auto flex items-center gap-2">
+        <ThemeToggle />
         <div className="w-40">
           <ProfileSwitcher currentProfile={userProfile} />
         </div>
