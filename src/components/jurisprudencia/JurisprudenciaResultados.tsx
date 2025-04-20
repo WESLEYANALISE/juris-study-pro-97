@@ -2,8 +2,9 @@
 import React from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, RefreshCw, Search } from "lucide-react";
 import JurisprudenciaResultadoCard from "./JurisprudenciaResultadoCard";
+import { Button } from "@/components/ui/button";
 
 type ResultadoDatajud = {
   [key: string]: any;
@@ -36,8 +37,21 @@ export default function JurisprudenciaResultados({
         <Alert variant="destructive" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Erro na consulta</AlertTitle>
-          <AlertDescription>{erro}</AlertDescription>
+          <AlertDescription className="mt-2">
+            {erro}
+          </AlertDescription>
         </Alert>
+      )}
+
+      {!loading && resultados.length === 0 && !erro && (
+        <div className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground">
+          <Search className="h-12 w-12 mb-4 opacity-20" />
+          <h3 className="text-lg font-medium">Nenhum resultado para exibir</h3>
+          <p className="mt-2 max-w-md">
+            Digite um termo de busca e selecione um tribunal para pesquisar 
+            na base de jurisprudência.
+          </p>
+        </div>
       )}
 
       {!loading && resultados.length > 0 && (

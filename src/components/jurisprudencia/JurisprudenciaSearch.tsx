@@ -1,15 +1,11 @@
+
 import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Search, FileText, Calendar, ChevronDown, AlertTriangle } from "lucide-react";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Info } from "lucide-react";
 import JurisprudenciaForm from "./JurisprudenciaForm";
 import JurisprudenciaResultados from "./JurisprudenciaResultados";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const TRIBUNAIS_POR_CATEGORIA = {
   "Tribunais Superiores": [
@@ -70,6 +66,7 @@ export default function JurisprudenciaSearch() {
   const [loading, setLoading] = useState(false);
   const [resultados, setResultados] = useState<ResultadoDatajud[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [showCorsInfo, setShowCorsInfo] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -86,6 +83,7 @@ export default function JurisprudenciaSearch() {
     setLoading(true);
     setResultados([]);
     setErro(null);
+    setShowCorsInfo(false);
 
     try {
       const apiKey = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==";
@@ -116,7 +114,7 @@ export default function JurisprudenciaSearch() {
           "Authorization": `APIKey ${apiKey}`
         },
         body: JSON.stringify(queryBody),
-        signal: AbortSignal.timeout(20000)
+        signal: AbortSignal.timeout(15000)
       });
 
       if (!res.ok) {
@@ -148,14 +146,15 @@ export default function JurisprudenciaSearch() {
       if (err.name === 'AbortError') {
         setErro("A consulta excedeu o tempo limite. Por favor, tente novamente.");
       } else if (err.message.includes('Failed to fetch')) {
-        setErro("Não foi possível conectar à API do Datajud. Isso pode ocorrer devido a restrições de rede ou CORS. Tente acessar usando uma conexão diferente.");
+        setErro("Não foi possível conectar à API do Datajud devido a restrições de CORS.");
+        setShowCorsInfo(true);
       } else {
         setErro(err.message || "Não foi possível buscar informações. Verifique sua conexão e tente novamente.");
       }
       
       toast({
         title: "Erro na consulta",
-        description: "Ocorreu um erro ao consultar a jurisprudência. Por favor, tente novamente.",
+        description: "Ocorreu um erro ao consultar a jurisprudência. Por favor, veja os detalhes abaixo.",
         variant: "destructive",
       });
     } finally {
@@ -186,6 +185,36 @@ export default function JurisprudenciaSearch() {
         onSubmit={handleSubmit}
         TRIBUNAIS_POR_CATEGORIA={TRIBUNAIS_POR_CATEGORIA}
       />
+
+      {showCorsInfo && (
+        <Alert className="my-4 bg-amber-50 dark:bg-amber-950/30">
+          <Info className="h-5 w-5" />
+          <AlertTitle>Limitação do navegador (CORS)</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="mb-2">
+              Os navegadores bloqueiam chamadas diretas à API do Datajud devido à política de segurança CORS. 
+              Para usar esta funcionalidade em produção, é necessário implementar um servidor proxy.
+            </p>
+            <details className="mt-2">
+              <summary className="cursor-pointer font-medium">
+                Como resolver este problema?
+              </summary>
+              <div className="mt-2 pl-4 text-sm border-l-2 border-amber-200 dark:border-amber-800">
+                <p className="mb-2">
+                  1. Implemente um servidor proxy em Node.js/Express que faça a chamada à API do Datajud.
+                </p>
+                <p className="mb-2">
+                  2. Configure o proxy para adicionar o header de autorização e repassar as requisições.
+                </p>
+                <p>
+                  3. Modifique o frontend para fazer chamadas ao seu servidor proxy em vez de chamar a API do Datajud diretamente.
+                </p>
+              </div>
+            </details>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <JurisprudenciaResultados
         resultados={resultados}
         loading={loading}
