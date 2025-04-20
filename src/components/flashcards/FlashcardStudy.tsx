@@ -75,7 +75,7 @@ const FlashcardStudy = ({
       </div>;
   }
   const currentFlashcard = shuffledCards[currentIndex];
-  return <div className="container md:py-6 md:px-6 max-w-4xl px-[33px] py-[19px] mx-0 my-[20px] rounded-none">
+  return <div className="container md:py-6 md:px-6 max-w-4xl mx-0 rounded-none px-0 py-0 my-0">
       <div className="flex justify-between items-center mb-4 md:mb-6">
         <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={onBack} className="text-sm">
           <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
