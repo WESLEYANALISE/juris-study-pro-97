@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -122,28 +123,11 @@ const Index = () => {
             Plataforma completa para estudos jurídicos
           </p>
         </div>
-        <div className="max-w-2xl mb-4">
+        <div className="max-w-2xl mb-4 hidden md:block">
           <p className="mb-4 text-sm md:text-base">
             Seja bem-vindo à plataforma JurisStudy Pro, seu ambiente completo para estudos jurídicos.
             Acesse videoaulas, materiais, simulados e muito mais, tudo em um só lugar.
           </p>
-          <div className="flex gap-2 justify-center">
-            <Button 
-              size="sm" 
-              onClick={() => navigate("/videoaulas")}
-              className="text-xs md:text-sm"
-            >
-              <Video className="mr-1 h-3 w-3 md:h-4 md:w-4" />
-              Começar com Vídeo-aulas
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="text-xs md:text-sm"
-            >
-              Saiba mais
-            </Button>
-          </div>
         </div>
       </div>
 

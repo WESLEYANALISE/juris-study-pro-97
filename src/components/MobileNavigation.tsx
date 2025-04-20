@@ -1,6 +1,6 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, BookOpen, Compass, MessageSquare, User } from "lucide-react";
+import { Home, BookOpen, Compass, Newspaper, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const MobileNavigation = () => {
@@ -25,13 +25,13 @@ const MobileNavigation = () => {
     },
     {
       name: "Bloger",
-      icon: MessageSquare,
+      icon: Newspaper,
       path: "/bloger"
     },
     {
-      name: "Perfil",
-      icon: User,
-      path: "/perfil"
+      name: "Assistente",
+      icon: MessageSquare,
+      path: "/assistente"
     }
   ];
 
