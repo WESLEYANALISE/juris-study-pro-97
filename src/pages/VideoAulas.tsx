@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -435,8 +434,10 @@ const VideoAulas = () => {
                     <MotionCard 
                       className={`cursor-pointer transition-all duration-300 ${selectedVideo?.id === video.id ? 'border-primary shadow-[0_0_10px_rgba(155,135,245,0.5)]' : 'hover:border-primary'}`}
                       onClick={() => handleVideoSelect(video)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
+                      hoverScale={1.02}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
                     >
                       <div className="relative">
                         <div className="aspect-video w-full overflow-hidden">

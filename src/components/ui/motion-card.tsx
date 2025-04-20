@@ -1,18 +1,17 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion, HTMLMotionProps } from "framer-motion";
+
+// Define a type that extends HTMLMotionProps for the div element
+type MotionCardProps = HTMLMotionProps<"div"> & {
+  hoverScale?: number;
+};
 
 const MotionCard = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & {
-    hoverScale?: number;
-    initial?: any;
-    whileInView?: any;
-    transition?: any;
-    viewport?: any;
-  }
->(({ className, hoverScale = 1.02, initial, whileInView, transition, viewport, ...props }, ref) => (
+  MotionCardProps
+>(({ className, hoverScale = 1.02, initial, whileInView, transition, viewport, whileHover, ...props }, ref) => (
   <motion.div
     ref={ref}
     initial={initial || { opacity: 0, y: 10 }}
@@ -24,7 +23,7 @@ const MotionCard = React.forwardRef<
       damping: 20, 
       duration: 0.3
     }}
-    whileHover={{ scale: hoverScale, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
+    whileHover={whileHover || { scale: hoverScale, boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)" }}
     className={cn(
       "rounded-lg border bg-card text-card-foreground shadow-sm transition-all duration-300",
       className
@@ -34,9 +33,14 @@ const MotionCard = React.forwardRef<
 ));
 MotionCard.displayName = "MotionCard";
 
+// Define props for each subcomponent
+type MotionCardElementProps = React.HTMLAttributes<HTMLDivElement>;
+type MotionCardTitleProps = React.HTMLAttributes<HTMLHeadingElement>;
+type MotionCardDescriptionProps = React.HTMLAttributes<HTMLParagraphElement>;
+
 const MotionCardHeader = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  MotionCardElementProps
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -48,7 +52,7 @@ MotionCardHeader.displayName = "MotionCardHeader";
 
 const MotionCardTitle = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLHeadingElement>
+  MotionCardTitleProps
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
@@ -63,7 +67,7 @@ MotionCardTitle.displayName = "MotionCardTitle";
 
 const MotionCardDescription = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
+  MotionCardDescriptionProps
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
@@ -75,7 +79,7 @@ MotionCardDescription.displayName = "MotionCardDescription";
 
 const MotionCardContent = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  MotionCardElementProps
 >(({ className, ...props }, ref) => (
   <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
 ));
@@ -83,7 +87,7 @@ MotionCardContent.displayName = "MotionCardContent";
 
 const MotionCardFooter = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  MotionCardElementProps
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
