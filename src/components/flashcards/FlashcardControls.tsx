@@ -1,5 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, RotateCcw, Shuffle } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FlashcardControlsProps {
   currentIndex: number;
@@ -33,14 +35,25 @@ export const FlashcardControls = ({
         Anterior
       </Button>
 
-      <Button 
-        onClick={onRestart} 
-        variant="outline"
-        size="icon"
-        className="h-9 w-9 md:h-10 md:w-10"
-      >
-        <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
-      </Button>
+      <div className="flex gap-2">
+        <Button 
+          onClick={onRestart} 
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 md:h-10 md:w-10"
+        >
+          <RotateCcw className="h-4 w-4 md:h-5 md:w-5" />
+        </Button>
+        
+        <Button 
+          onClick={onShuffle} 
+          variant="outline"
+          size="icon"
+          className="h-9 w-9 md:h-10 md:w-10"
+        >
+          <Shuffle className="h-4 w-4 md:h-5 md:w-5" />
+        </Button>
+      </div>
 
       <Button 
         onClick={onNext} 
