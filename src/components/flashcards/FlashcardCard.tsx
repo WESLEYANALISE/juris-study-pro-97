@@ -16,13 +16,13 @@ interface FlashcardCardProps {
 export const FlashcardCard = ({ flashcard, isFlipped, onFlip }: FlashcardCardProps) => {
   return (
     <motion.div 
-      className="perspective-1000 mb-6"
+      className="perspective-1000 mb-4 md:mb-6"
       initial={false}
       animate={{ rotateY: isFlipped ? 180 : 0 }}
       transition={{ duration: 0.6, type: "spring" }}
     >
       <Card 
-        className="min-h-[300px] md:min-h-[400px] cursor-pointer transform-gpu"
+        className="min-h-[250px] sm:min-h-[300px] md:min-h-[400px] cursor-pointer transform-gpu"
         onClick={onFlip}
       >
         <AnimatePresence mode="wait">
@@ -35,12 +35,12 @@ export const FlashcardCard = ({ flashcard, isFlipped, onFlip }: FlashcardCardPro
               transition={{ duration: 0.3 }}
               className="h-full"
             >
-              <CardHeader className="text-center pt-8">
-                <h3 className="text-xl font-semibold mb-0">Pergunta</h3>
-                <Separator className="my-3" />
+              <CardHeader className="text-center pt-6 md:pt-8">
+                <h3 className="text-lg md:text-xl font-semibold mb-0">Pergunta</h3>
+                <Separator className="my-2 md:my-3" />
               </CardHeader>
-              <CardContent className="text-center px-8">
-                <p className="text-lg">{flashcard.pergunta || "Sem pergunta"}</p>
+              <CardContent className="text-center px-4 md:px-8">
+                <p className="text-base md:text-lg">{flashcard.pergunta || "Sem pergunta"}</p>
               </CardContent>
             </motion.div>
           ) : (
@@ -52,24 +52,24 @@ export const FlashcardCard = ({ flashcard, isFlipped, onFlip }: FlashcardCardPro
               transition={{ duration: 0.3 }}
               className="h-full"
             >
-              <CardHeader className="text-center pt-8">
-                <h3 className="text-xl font-semibold mb-0">Resposta</h3>
-                <Separator className="my-3" />
+              <CardHeader className="text-center pt-6 md:pt-8">
+                <h3 className="text-lg md:text-xl font-semibold mb-0">Resposta</h3>
+                <Separator className="my-2 md:my-3" />
               </CardHeader>
-              <CardContent className="text-center px-8">
-                <p className="text-lg">{flashcard.resposta || "Sem resposta"}</p>
+              <CardContent className="text-center px-4 md:px-8">
+                <p className="text-base md:text-lg">{flashcard.resposta || "Sem resposta"}</p>
               </CardContent>
               {flashcard.explicacao && (
-                <CardFooter className="flex justify-center pb-4">
+                <CardFooter className="flex justify-center pb-3 md:pb-4">
                   <Drawer>
                     <DrawerTrigger asChild>
-                      <Button variant="outline" size="sm">
+                      <Button variant="outline" size="sm" className="text-sm">
                         <Lightbulb className="mr-2 h-4 w-4" />
                         Ver Explicação
                       </Button>
                     </DrawerTrigger>
-                    <DrawerContent>
-                      <div className="mx-auto w-full max-w-lg">
+                    <DrawerContent className="max-h-[90vh]">
+                      <div className="mx-auto w-full max-w-lg px-4">
                         <DrawerHeader>
                           <DrawerTitle>Explicação Detalhada</DrawerTitle>
                           <DrawerDescription>
@@ -79,11 +79,11 @@ export const FlashcardCard = ({ flashcard, isFlipped, onFlip }: FlashcardCardPro
                         <div className="p-4 pb-0">
                           <div className="space-y-4">
                             <div className="bg-muted/30 p-4 rounded-lg">
-                              <h4 className="font-medium mb-2 flex items-center">
+                              <h4 className="font-medium mb-2 flex items-center text-sm md:text-base">
                                 <MessageSquare className="h-4 w-4 mr-2" />
                                 Sobre este conceito:
                               </h4>
-                              <p>{flashcard.explicacao}</p>
+                              <p className="text-sm md:text-base">{flashcard.explicacao}</p>
                             </div>
                           </div>
                         </div>

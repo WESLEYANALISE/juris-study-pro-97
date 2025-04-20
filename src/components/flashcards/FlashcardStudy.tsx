@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +7,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { FlashcardCard } from "./FlashcardCard";
 import { FlashcardControls } from "./FlashcardControls";
 import { FlashcardSettings } from "./FlashcardSettings";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface FlashcardStudyProps {
   flashcards: Tables<"flash_cards">[];
@@ -22,6 +22,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
   const [progress, setProgress] = useState(0);
   const [speed, setSpeed] = useState(5);
   const [shuffledCards, setShuffledCards] = useState(flashcards);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (flashcards.length > 0) {
@@ -88,22 +89,22 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
   const currentFlashcard = shuffledCards[currentIndex];
 
   return (
-    <div className="container mx-auto py-6 px-4 md:px-6 max-w-4xl">
-      <div className="flex justify-between items-center mb-6">
-        <Button variant="outline" size="sm" onClick={onBack}>
+    <div className="container mx-auto py-4 md:py-6 px-2 md:px-6 max-w-4xl">
+      <div className="flex justify-between items-center mb-4 md:mb-6">
+        <Button variant="outline" size={isMobile ? "sm" : "default"} onClick={onBack} className="text-sm">
           <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
         </Button>
         <div className="flex gap-2">
-          <Badge variant="outline" className="py-1.5">
+          <Badge variant="outline" className="py-1 md:py-1.5 text-xs md:text-sm">
             {currentIndex + 1} / {shuffledCards.length}
           </Badge>
-          <Badge variant="secondary" className="py-1.5">
+          <Badge variant="secondary" className="py-1 md:py-1.5 text-xs md:text-sm">
             {currentFlashcard.area || "Sem área"}
           </Badge>
         </div>
       </div>
 
-      <Progress value={progress} className="mb-6 h-2" />
+      <Progress value={progress} className="mb-4 md:mb-6 h-1.5 md:h-2" />
 
       <FlashcardCard
         flashcard={currentFlashcard}
@@ -111,7 +112,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
         onFlip={handleFlip}
       />
 
-      <div className="flex flex-col gap-4 md:gap-6">
+      <div className="flex flex-col gap-3 md:gap-6 pb-safe-area-bottom">
         <FlashcardSettings
           speed={speed}
           isAutoMode={isAutoMode}
