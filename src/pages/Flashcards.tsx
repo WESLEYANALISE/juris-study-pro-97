@@ -121,7 +121,7 @@ const Flashcards = () => {
       <div className="flex flex-col items-center mb-6">
         <div className="mb-4">
           <BookOpen className="h-12 w-12 text-primary mx-auto mb-2" />
-          <h1 className="text-2xl font-bold mb-1">Flashcards</h1>
+          <h1 className="text-2xl font-bold mb-1 my-0 mx-[190px]">Flashcards</h1>
           <p className="text-muted-foreground text-center">
             Estude através de cartões de memorização com repetição espaçada
           </p>
