@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
+import Biblioteca from "./pages/Biblioteca";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,14 +49,13 @@ const App = () => {
               <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
               <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
               <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
-              <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
               <Route path="/flashcards" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/resumos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/simulados" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/peticionario" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/noticias" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/assistente" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/explorar" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/perfil" element={<Layout userProfile={userProfile}><Index /></Layout>} />
