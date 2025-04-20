@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
@@ -14,6 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import ProxyStatusAlert from "./ProxyStatusAlert";
+import ProxyInstructionsDialog from "./ProxyInstructionsDialog";
 
 const TRIBUNAIS_POR_CATEGORIA = {
   "Tribunais Superiores": [
@@ -67,7 +68,6 @@ type ResultadoDatajud = {
   [key: string]: any;
 };
 
-// Dados de exemplo para simular respostas da API quando o CORS bloqueia chamadas reais
 const RESULTADOS_SIMULADOS: ResultadoDatajud[] = [
   {
     numeroProcesso: "0000123-45.2022.5.00.0000",
@@ -120,7 +120,6 @@ export default function JurisprudenciaSearch() {
   const [proxyUrl, setProxyUrl] = useState<string>("http://localhost:3500/api/datajud/search");
   const [proxyStatus, setProxyStatus] = useState<'checking' | 'online' | 'offline'>('checking');
 
-  // Verificar se o servidor proxy está online
   useEffect(() => {
     const checkProxyStatus = async () => {
       try {
@@ -162,7 +161,6 @@ export default function JurisprudenciaSearch() {
     setErro(null);
     setTotalResultados(0);
 
-    // Verificamos se o proxy está online
     if (proxyStatus === 'online') {
       await buscarViaProxy();
     } else {
@@ -230,7 +228,6 @@ export default function JurisprudenciaSearch() {
         variant: "destructive",
       });
       
-      // Se o proxy falhar, carregamos dados simulados
       await buscarDadosSimulados();
     }
   };
@@ -238,11 +235,9 @@ export default function JurisprudenciaSearch() {
   const buscarDadosSimulados = async () => {
     console.log("Carregando dados simulados...");
     
-    // Filtrar resultados simulados pelo termo de busca (simulando a API)
     const resultadosFiltrados = RESULTADOS_SIMULADOS.filter(res => {
       const termoBusca = termo.toLowerCase();
       
-      // Verifica se o termo está em qualquer campo relevante
       return (
         (res.numeroProcesso?.toLowerCase().includes(termoBusca) || false) ||
         (res.classe?.nome?.toLowerCase().includes(termoBusca) || false) ||
@@ -255,10 +250,9 @@ export default function JurisprudenciaSearch() {
       );
     });
     
-    // Simula um pequeno delay para parecer que está buscando
     setTimeout(() => {
       setResultados(resultadosFiltrados);
-      setTotalResultados(resultadosFiltrados.length * 103); // Multiplicamos para simular um número maior
+      setTotalResultados(resultadosFiltrados.length * 103);
       
       if (resultadosFiltrados.length === 0) {
         setErro("Nenhum resultado encontrado para os critérios informados (modo simulado).");
@@ -346,46 +340,6 @@ const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => console.log(\`Proxy Datajud rodando na porta \${PORT}\`));
 `;
 
-  // Aviso sobre o status do proxy
-  const ProxyStatusAlert = () => {
-    if (proxyStatus === 'checking') {
-      return (
-        <Alert className="my-4 bg-blue-50 dark:bg-blue-950/30">
-          <Info className="h-5 w-5" />
-          <AlertTitle>Verificando status do servidor proxy</AlertTitle>
-          <AlertDescription>
-            Verificando se o servidor proxy está disponível...
-          </AlertDescription>
-        </Alert>
-      );
-    } else if (proxyStatus === 'offline') {
-      return (
-        <Alert className="my-4 bg-amber-50 dark:bg-amber-950/30">
-          <Info className="h-5 w-5" />
-          <AlertTitle>Servidor proxy offline</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p className="mb-2">
-              O servidor proxy para a API do Datajud não está disponível. 
-              Estamos exibindo dados simulados para demonstração.
-            </p>
-            <div className="flex gap-2 mt-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowProxyInstructions(true)}
-                className="text-xs"
-              >
-                Como configurar o proxy
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      );
-    }
-    
-    return null;
-  };
-
   return (
     <div className="w-full max-w-3xl mx-auto mt-4 p-2">
       <JurisprudenciaForm
@@ -400,76 +354,15 @@ app.listen(PORT, () => console.log(\`Proxy Datajud rodando na porta \${PORT}\`))
         TRIBUNAIS_POR_CATEGORIA={TRIBUNAIS_POR_CATEGORIA}
       />
 
-      <ProxyStatusAlert />
+      <ProxyStatusAlert
+        proxyStatus={proxyStatus}
+        setShowProxyInstructions={setShowProxyInstructions}
+      />
 
-      <Dialog open={showProxyInstructions} onOpenChange={setShowProxyInstructions}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Implementação do Proxy para a API Datajud</DialogTitle>
-            <DialogDescription>
-              Siga estas instruções para implementar um servidor proxy que contorne as limitações de CORS
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="mt-4 space-y-4">
-            <div>
-              <h3 className="text-md font-semibold mb-2">1. Crie um servidor proxy em Node.js/Express</h3>
-              <div className="bg-muted p-3 rounded-md overflow-x-auto">
-                <pre className="text-xs"><code>{codeProxyExpress}</code></pre>
-              </div>
-              <p className="text-sm mt-2">
-                Salve este código como <code>server.js</code> e instale as dependências com:
-                <br />
-                <code className="bg-muted p-1 rounded text-xs">npm install express node-fetch cors</code>
-              </p>
-            </div>
-            
-            <div>
-              <h3 className="text-md font-semibold mb-2">2. Ajuste o código frontend para usar o proxy</h3>
-              <div className="bg-muted p-3 rounded-md overflow-x-auto">
-                <pre className="text-xs"><code>{codeFrontendAjustado}</code></pre>
-              </div>
-            </div>
-            
-            <div>
-              <h3 className="text-md font-semibold mb-2">3. Execute o servidor proxy</h3>
-              <p className="text-sm">
-                Execute o servidor com: <code className="bg-muted p-1 rounded text-xs">node server.js</code>
-                <br />
-                Seu proxy estará disponível em <code className="bg-muted p-1 rounded text-xs">http://localhost:3000/api/datajud/search</code>
-              </p>
-            </div>
-            
-            <div className="flex justify-between items-center border-t pt-4 mt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setShowProxyInstructions(false)}
-              >
-                Fechar
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                className="flex gap-2 items-center"
-                onClick={() => {
-                  const blob = new Blob([codeProxyExpress], { type: 'text/javascript' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url;
-                  a.download = 'datajud-proxy-server.js';
-                  document.body.appendChild(a);
-                  a.click();
-                  document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
-                }}
-              >
-                <Download className="h-4 w-4" />
-                Baixar código do servidor
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProxyInstructionsDialog
+        open={showProxyInstructions}
+        onOpenChange={setShowProxyInstructions}
+      />
 
       <JurisprudenciaResultados
         resultados={resultados}
