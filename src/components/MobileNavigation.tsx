@@ -37,7 +37,7 @@ const MobileNavigation = () => {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-card border-t border-border p-2 md:hidden">
-      {navItems.map((item) => (
+      {navItems && navItems.map((item) => (
         <button
           key={item.name}
           onClick={() => navigate(item.path)}

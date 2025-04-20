@@ -59,10 +59,13 @@ const RecentAccess = () => {
     }
   };
 
-  const visibleItems = recentItems.slice(currentIndex, currentIndex + 3);
+  // Make sure we have valid items before slicing
+  const visibleItems = recentItems && recentItems.length > 0 
+    ? recentItems.slice(currentIndex, currentIndex + Math.min(3, recentItems.length - currentIndex))
+    : [];
   
   const nextSlide = () => {
-    if (currentIndex < recentItems.length - 3) {
+    if (recentItems && currentIndex < recentItems.length - 3) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -92,7 +95,7 @@ const RecentAccess = () => {
             size="icon" 
             className="h-6 w-6" 
             onClick={nextSlide}
-            disabled={currentIndex >= recentItems.length - 3}
+            disabled={!recentItems || currentIndex >= recentItems.length - 3}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
