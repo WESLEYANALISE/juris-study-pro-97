@@ -1,10 +1,13 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { ChevronLeft } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { FlashcardCard } from "./FlashcardCard";
 import { FlashcardControls } from "./FlashcardControls";
 import { FlashcardSettings } from "./FlashcardSettings";
-import { FlashcardHeader } from "./FlashcardHeader";
 
 interface FlashcardStudyProps {
   flashcards: Tables<"flash_cards">[];
@@ -86,13 +89,21 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
 
   return (
     <div className="container mx-auto py-6 px-4 md:px-6 max-w-4xl">
-      <FlashcardHeader
-        currentIndex={currentIndex}
-        totalCards={shuffledCards.length}
-        progress={progress}
-        currentFlashcard={currentFlashcard}
-        onBack={onBack}
-      />
+      <div className="flex justify-between items-center mb-6">
+        <Button variant="outline" size="sm" onClick={onBack}>
+          <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
+        </Button>
+        <div className="flex gap-2">
+          <Badge variant="outline" className="py-1.5">
+            {currentIndex + 1} / {shuffledCards.length}
+          </Badge>
+          <Badge variant="secondary" className="py-1.5">
+            {currentFlashcard.area || "Sem área"}
+          </Badge>
+        </div>
+      </div>
+
+      <Progress value={progress} className="mb-6 h-2" />
 
       <FlashcardCard
         flashcard={currentFlashcard}
