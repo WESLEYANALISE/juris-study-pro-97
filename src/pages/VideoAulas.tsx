@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,48 +8,15 @@ import { SearchIcon, BookOpen, Brain, FileText, MessageSquare } from "lucide-rea
 import { getJuridicPlaylists, getPlaylistVideos, type YouTubePlaylist, type YouTubeVideo } from "@/lib/youtube-service";
 
 // Legal areas without prefixing "Direito"
-const LEGAL_AREAS = [
-  "Constitucional",
-  "Civil",
-  "Penal",
-  "Administrativo",
-  "Processual Civil",
-  "Processual Penal",
-  "Trabalho",
-  "Tributário",
-  "Empresarial",
-  "Ambiental",
-  "Internacional",
-  "Consumidor"
-];
+const LEGAL_AREAS = ["Constitucional", "Civil", "Penal", "Administrativo", "Processual Civil", "Processual Penal", "Trabalho", "Tributário", "Empresarial", "Ambiental", "Internacional", "Consumidor"];
 
 // Topics within each area
 const TOPICS_MAP: Record<string, string[]> = {
-  "Constitucional": [
-    "Controle de Constitucionalidade",
-    "Direitos Fundamentais",
-    "Organização do Estado",
-    "Poder Judiciário",
-    "Sistema Tributário"
-  ],
-  "Civil": [
-    "Parte Geral",
-    "Obrigações",
-    "Contratos",
-    "Responsabilidade Civil",
-    "Direito das Coisas",
-    "Família e Sucessões"
-  ],
-  "Penal": [
-    "Teoria do Delito",
-    "Penas",
-    "Crimes contra a Pessoa",
-    "Crimes contra o Patrimônio",
-    "Execução Penal"
-  ]
+  "Constitucional": ["Controle de Constitucionalidade", "Direitos Fundamentais", "Organização do Estado", "Poder Judiciário", "Sistema Tributário"],
+  "Civil": ["Parte Geral", "Obrigações", "Contratos", "Responsabilidade Civil", "Direito das Coisas", "Família e Sucessões"],
+  "Penal": ["Teoria do Delito", "Penas", "Crimes contra a Pessoa", "Crimes contra o Patrimônio", "Execução Penal"]
   // Add more topics for other areas
 };
-
 const VideoAulas = () => {
   const [selectedArea, setSelectedArea] = useState<string>("Constitucional");
   const [searchTerm, setSearchTerm] = useState("");
@@ -60,7 +26,6 @@ const VideoAulas = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("playlists");
   const [topics, setTopics] = useState<string[]>([]);
-
   useEffect(() => {
     const fetchPlaylists = async () => {
       setLoading(true);
@@ -75,10 +40,8 @@ const VideoAulas = () => {
         setLoading(false);
       }
     };
-
     fetchPlaylists();
   }, [selectedArea]);
-
   const handlePlaylistClick = async (playlistId: string) => {
     try {
       const videosData = await getPlaylistVideos(playlistId);
@@ -89,16 +52,13 @@ const VideoAulas = () => {
       console.error("Error fetching videos:", error);
     }
   };
-
   const generateAIResponse = (type: string) => {
     if (!selectedVideo) return;
-    
+
     // This would be implemented with a real AI service
     alert(`Gerando ${type} para o vídeo: ${selectedVideo.title}`);
   };
-
-  return (
-    <div className="container mx-auto">
+  return <div className="container mx-auto px-0">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Vídeo-aulas</h1>
         <p className="text-muted-foreground">
@@ -114,16 +74,9 @@ const VideoAulas = () => {
             </CardHeader>
             <CardContent className="max-h-[400px] overflow-y-auto">
               <div className="space-y-1">
-                {LEGAL_AREAS.map((area) => (
-                  <Button
-                    key={area}
-                    variant={selectedArea === area ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedArea(area)}
-                  >
+                {LEGAL_AREAS.map(area => <Button key={area} variant={selectedArea === area ? "default" : "ghost"} className="w-full justify-start" onClick={() => setSelectedArea(area)}>
                     {area}
-                  </Button>
-                ))}
+                  </Button>)}
               </div>
             </CardContent>
           </Card>
@@ -134,16 +87,9 @@ const VideoAulas = () => {
             </CardHeader>
             <CardContent className="max-h-[300px] overflow-y-auto">
               <div className="space-y-1">
-                {topics.map((topic) => (
-                  <Button
-                    key={topic}
-                    variant="ghost"
-                    className="w-full justify-start text-sm"
-                    onClick={() => setSearchTerm(topic)}
-                  >
+                {topics.map(topic => <Button key={topic} variant="ghost" className="w-full justify-start text-sm" onClick={() => setSearchTerm(topic)}>
                     {topic}
-                  </Button>
-                ))}
+                  </Button>)}
               </div>
             </CardContent>
           </Card>
@@ -171,12 +117,7 @@ const VideoAulas = () => {
         <div className="lg:col-span-3">
           <div className="mb-4 relative">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input 
-              className="pl-10" 
-              placeholder="Buscar por título, tema ou professor..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <Input className="pl-10" placeholder="Buscar por título, tema ou professor..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -186,25 +127,12 @@ const VideoAulas = () => {
             </TabsList>
             
             <TabsContent value="playlists">
-              {loading ? (
-                <div className="text-center py-12">
+              {loading ? <div className="text-center py-12">
                   <p>Carregando playlists...</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {playlists
-                    .filter(playlist => 
-                      playlist.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      playlist.description.toLowerCase().includes(searchTerm.toLowerCase())
-                    )
-                    .map((playlist) => (
-                      <Card key={playlist.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handlePlaylistClick(playlist.id)}>
+                </div> : <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {playlists.filter(playlist => playlist.title.toLowerCase().includes(searchTerm.toLowerCase()) || playlist.description.toLowerCase().includes(searchTerm.toLowerCase())).map(playlist => <Card key={playlist.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => handlePlaylistClick(playlist.id)}>
                         <div className="aspect-video w-full overflow-hidden">
-                          <img 
-                            src={playlist.thumbnail || "/placeholder.svg"} 
-                            alt={playlist.title}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={playlist.thumbnail || "/placeholder.svg"} alt={playlist.title} className="w-full h-full object-cover" />
                         </div>
                         <CardHeader>
                           <CardTitle className="text-base">{playlist.title}</CardTitle>
@@ -217,31 +145,19 @@ const VideoAulas = () => {
                             Ver Playlist
                           </Button>
                         </CardFooter>
-                      </Card>
-                    ))}
-                </div>
-              )}
+                      </Card>)}
+                </div>}
               
-              {!loading && playlists.filter(p => 
-                p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                p.description.toLowerCase().includes(searchTerm.toLowerCase())
-              ).length === 0 && (
-                <div className="text-center py-12">
+              {!loading && playlists.filter(p => p.title.toLowerCase().includes(searchTerm.toLowerCase()) || p.description.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && <div className="text-center py-12">
                   <p className="text-muted-foreground">Nenhuma playlist encontrada para "{searchTerm}"</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => setSearchTerm("")}
-                  >
+                  <Button variant="outline" className="mt-4" onClick={() => setSearchTerm("")}>
                     Limpar filtro
                   </Button>
-                </div>
-              )}
+                </div>}
             </TabsContent>
             
             <TabsContent value="videos">
-              {selectedVideo && (
-                <div className="space-y-4 mb-6">
+              {selectedVideo && <div className="space-y-4 mb-6">
                   <VideoPlayer videoId={selectedVideo.id} />
                   
                   <div>
@@ -273,25 +189,14 @@ const VideoAulas = () => {
                   <div>
                     <p className="whitespace-pre-line">{selectedVideo.description}</p>
                   </div>
-                </div>
-              )}
+                </div>}
               
               <h3 className="font-semibold mb-3">Mais vídeos desta playlist</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {videos
-                  .filter(video => 
-                    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    video.description.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((video) => (
-                    <Card key={video.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedVideo(video)}>
+                {videos.filter(video => video.title.toLowerCase().includes(searchTerm.toLowerCase()) || video.description.toLowerCase().includes(searchTerm.toLowerCase())).map(video => <Card key={video.id} className="cursor-pointer hover:border-primary transition-colors" onClick={() => setSelectedVideo(video)}>
                       <div className="relative">
                         <div className="aspect-video w-full overflow-hidden">
-                          <img 
-                            src={video.thumbnail || "/placeholder.svg"} 
-                            alt={video.title}
-                            className="w-full h-full object-cover"
-                          />
+                          <img src={video.thumbnail || "/placeholder.svg"} alt={video.title} className="w-full h-full object-cover" />
                         </div>
                         <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-0.5 rounded text-xs">
                           {video.duration}
@@ -303,31 +208,19 @@ const VideoAulas = () => {
                           {video.channelTitle}
                         </CardDescription>
                       </CardHeader>
-                    </Card>
-                  ))}
+                    </Card>)}
               </div>
               
-              {videos.filter(v => 
-                v.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                v.description.toLowerCase().includes(searchTerm.toLowerCase())
-              ).length === 0 && (
-                <div className="text-center py-12">
+              {videos.filter(v => v.title.toLowerCase().includes(searchTerm.toLowerCase()) || v.description.toLowerCase().includes(searchTerm.toLowerCase())).length === 0 && <div className="text-center py-12">
                   <p className="text-muted-foreground">Nenhum vídeo encontrado para "{searchTerm}"</p>
-                  <Button 
-                    variant="outline" 
-                    className="mt-4"
-                    onClick={() => setSearchTerm("")}
-                  >
+                  <Button variant="outline" className="mt-4" onClick={() => setSearchTerm("")}>
                     Limpar filtro
                   </Button>
-                </div>
-              )}
+                </div>}
             </TabsContent>
           </Tabs>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default VideoAulas;
