@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Scale, BookOpen, ListChecks, Clock, Upload, PlusCircle } from "lucide-react";
@@ -13,9 +12,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { Separator } from "@/components/ui/separator";
 import FlashcardStudy from "@/components/flashcards/FlashcardStudy";
 import FlashcardStats from "@/components/flashcards/FlashcardStats";
-
 type FlashCard = Tables<"flash_cards">;
-
 const Flashcards = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -27,41 +24,39 @@ const Flashcards = () => {
   const [activeTab, setActiveTab] = useState("explorar");
   const [startStudy, setStartStudy] = useState(false);
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
-
   useEffect(() => {
     fetchFlashcardsCount();
     fetchAreas();
   }, []);
-
   useEffect(() => {
     if (selectedArea) {
       fetchTemas(selectedArea);
     }
   }, [selectedArea]);
-
   const fetchFlashcardsCount = async () => {
     try {
-      const { count, error } = await supabase
-        .from("flash_cards")
-        .select("*", { count: "exact", head: true });
-        
+      const {
+        count,
+        error
+      } = await supabase.from("flash_cards").select("*", {
+        count: "exact",
+        head: true
+      });
       if (error) throw error;
       setFlashcardsCount(count || 0);
     } catch (error) {
       console.error("Error fetching flashcards count:", error);
     }
   };
-
   const fetchAreas = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("flash_cards")
-        .select("area")
-        .not("area", "is", null);
-        
+      const {
+        data,
+        error
+      } = await supabase.from("flash_cards").select("area").not("area", "is", null);
       if (error) throw error;
-      
+
       // Get unique areas
       const uniqueAreas = [...new Set(data.map(item => item.area))].filter(Boolean) as string[];
       setAreas(uniqueAreas);
@@ -71,17 +66,14 @@ const Flashcards = () => {
       setLoading(false);
     }
   };
-
   const fetchTemas = async (area: string) => {
     try {
-      const { data, error } = await supabase
-        .from("flash_cards")
-        .select("tema")
-        .eq("area", area)
-        .not("tema", "is", null);
-        
+      const {
+        data,
+        error
+      } = await supabase.from("flash_cards").select("tema").eq("area", area).not("tema", "is", null);
       if (error) throw error;
-      
+
       // Get unique temas
       const uniqueTemas = [...new Set(data.map(item => item.tema))].filter(Boolean) as string[];
       setTemas(uniqueTemas);
@@ -89,26 +81,21 @@ const Flashcards = () => {
       console.error("Error fetching temas:", error);
     }
   };
-
   const fetchFlashcards = async () => {
     setLoading(true);
     try {
-      let query = supabase
-        .from("flash_cards")
-        .select("*");
-        
+      let query = supabase.from("flash_cards").select("*");
       if (selectedArea) {
         query = query.eq("area", selectedArea);
       }
-      
       if (selectedTema) {
         query = query.eq("tema", selectedTema);
       }
-      
-      const { data, error } = await query;
-        
+      const {
+        data,
+        error
+      } = await query;
       if (error) throw error;
-      
       setFlashcards(data as FlashCard[]);
       setStartStudy(true);
     } catch (error) {
@@ -117,26 +104,20 @@ const Flashcards = () => {
       setLoading(false);
     }
   };
-
   const handleAreaChange = (value: string) => {
     setSelectedArea(value);
     setSelectedTema("");
   };
-
   const handleTemaChange = (value: string) => {
     setSelectedTema(value);
   };
-
   const resetStudy = () => {
     setStartStudy(false);
   };
-
   if (startStudy && flashcards.length > 0) {
     return <FlashcardStudy flashcards={flashcards} onBack={resetStudy} />;
   }
-
-  return (
-    <div className="container mx-auto py-6 max-w-5xl">
+  return <div className="container mx-auto py-6 max-w-5xl px-0">
       <div className="flex flex-col items-center mb-6">
         <div className="mb-4">
           <BookOpen className="h-12 w-12 text-primary mx-auto mb-2" />
@@ -172,11 +153,9 @@ const Flashcards = () => {
                         <SelectValue placeholder="Selecione uma área" />
                       </SelectTrigger>
                       <SelectContent>
-                        {areas.map((area) => (
-                          <SelectItem key={area} value={area}>
+                        {areas.map(area => <SelectItem key={area} value={area}>
                             {area}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -188,23 +167,16 @@ const Flashcards = () => {
                         <SelectValue placeholder={selectedArea ? "Selecione um tema" : "Selecione uma área primeiro"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {temas.map((tema) => (
-                          <SelectItem key={tema} value={tema}>
+                        {temas.map(tema => <SelectItem key={tema} value={tema}>
                             {tema}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 gap-3 mt-6">
-                  <Button 
-                    onClick={fetchFlashcards} 
-                    disabled={!selectedArea || loading}
-                    className="w-full"
-                    size="lg"
-                  >
+                  <Button onClick={fetchFlashcards} disabled={!selectedArea || loading} className="w-full" size="lg">
                     Começar a Estudar
                   </Button>
                 </div>
@@ -304,8 +276,6 @@ const Flashcards = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default Flashcards;
