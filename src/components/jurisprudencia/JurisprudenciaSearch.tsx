@@ -2,10 +2,18 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Info } from "lucide-react";
+import { Info, Download } from "lucide-react";
 import JurisprudenciaForm from "./JurisprudenciaForm";
 import JurisprudenciaResultados from "./JurisprudenciaResultados";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 const TRIBUNAIS_POR_CATEGORIA = {
   "Tribunais Superiores": [
@@ -59,6 +67,47 @@ type ResultadoDatajud = {
   [key: string]: any;
 };
 
+// Dados de exemplo para simular respostas da API quando o CORS bloqueia chamadas reais
+const RESULTADOS_SIMULADOS: ResultadoDatajud[] = [
+  {
+    numeroProcesso: "0000123-45.2022.5.00.0000",
+    classe: { codigo: 1, nome: "Recurso Ordinário" },
+    assuntos: [{ nome: "Horas Extras" }, { nome: "Verbas Rescisórias" }],
+    orgaoJulgador: { nome: "2ª Turma" },
+    dataAjuizamento: "2022-06-15T00:00:00Z",
+    movimentos: [
+      { nome: "Distribuído", dataHora: "2022-06-15T14:30:00Z" },
+      { nome: "Conclusos para Decisão", dataHora: "2022-07-10T09:15:00Z" },
+      { nome: "Julgado Procedente", dataHora: "2022-08-25T16:45:00Z" }
+    ]
+  },
+  {
+    numeroProcesso: "0000456-78.2021.5.00.0001",
+    classe: { codigo: 2, nome: "Agravo de Instrumento" },
+    assuntos: [{ nome: "Pensão" }, { nome: "Previdência Privada" }],
+    orgaoJulgador: { nome: "3ª Turma" },
+    dataAjuizamento: "2021-11-23T00:00:00Z",
+    movimentos: [
+      { nome: "Autuado", dataHora: "2021-11-23T10:20:00Z" },
+      { nome: "Conclusos para Relatório", dataHora: "2021-12-15T11:00:00Z" },
+      { nome: "Incluído em Pauta", dataHora: "2022-01-18T13:30:00Z" },
+      { nome: "Julgado Parcialmente Procedente", dataHora: "2022-02-05T15:10:00Z" }
+    ]
+  },
+  {
+    numeroProcesso: "0000789-12.2023.5.00.0002",
+    classe: { codigo: 3, nome: "Mandado de Segurança" },
+    assuntos: [{ nome: "Pensão por Morte" }],
+    orgaoJulgador: { nome: "Seção Especializada" },
+    dataAjuizamento: "2023-01-08T00:00:00Z",
+    movimentos: [
+      { nome: "Protocolado", dataHora: "2023-01-08T08:45:00Z" },
+      { nome: "Despacho", dataHora: "2023-01-20T14:20:00Z" },
+      { nome: "Vista ao Ministério Público", dataHora: "2023-02-10T16:30:00Z" }
+    ]
+  }
+];
+
 export default function JurisprudenciaSearch() {
   const [categoria, setCategoria] = useState<string>("Tribunais Superiores");
   const [tribunal, setTribunal] = useState<string>(TRIBUNAIS_POR_CATEGORIA[categoria as keyof typeof TRIBUNAIS_POR_CATEGORIA][0].alias);
@@ -67,6 +116,7 @@ export default function JurisprudenciaSearch() {
   const [resultados, setResultados] = useState<ResultadoDatajud[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [showCorsInfo, setShowCorsInfo] = useState(false);
+  const [showProxyInstructions, setShowProxyInstructions] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -107,49 +157,85 @@ export default function JurisprudenciaSearch() {
       console.log("Consultando API:", url);
       console.log("Corpo da requisição:", JSON.stringify(queryBody));
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `APIKey ${apiKey}`
-        },
-        body: JSON.stringify(queryBody),
-        signal: AbortSignal.timeout(15000)
-      });
+      // Tentar a chamada direta à API
+      try {
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `APIKey ${apiKey}`
+          },
+          body: JSON.stringify(queryBody),
+          signal: AbortSignal.timeout(8000)
+        });
 
-      if (!res.ok) {
-        console.error("Erro na API:", res.status, res.statusText);
-        throw new Error(`Erro ao consultar a API: ${res.status} ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      console.log("Resposta da API:", data);
-
-      if (data.hits && data.hits.hits) {
-        const docs = data.hits.hits.map((hit: any) => hit._source) || [];
-        setResultados(docs);
-        
-        if (docs.length === 0) {
-          setErro("Nenhum resultado encontrado para os critérios informados.");
-        } else {
-          toast({
-            title: "Busca realizada com sucesso",
-            description: `${docs.length} ${docs.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}.`,
-          });
+        if (!res.ok) {
+          throw new Error(`Erro ao consultar a API: ${res.status} ${res.statusText}`);
         }
-      } else {
-        setErro("Formato de resposta inesperado. Por favor, tente novamente.");
+
+        const data = await res.json();
+        console.log("Resposta da API:", data);
+
+        if (data.hits && data.hits.hits) {
+          const docs = data.hits.hits.map((hit: any) => hit._source) || [];
+          setResultados(docs);
+          
+          if (docs.length === 0) {
+            setErro("Nenhum resultado encontrado para os critérios informados.");
+          } else {
+            toast({
+              title: "Busca realizada com sucesso",
+              description: `${docs.length} ${docs.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}.`,
+            });
+          }
+        } else {
+          setErro("Formato de resposta inesperado. Por favor, tente novamente.");
+        }
+      } catch (fetchError: any) {
+        console.error("Erro na requisição direta:", fetchError);
+        
+        // Se falhou por CORS ou outro motivo, usar os dados simulados
+        setShowCorsInfo(true);
+        
+        // Filtrar resultados simulados pelo termo de busca (simulando a API)
+        const resultadosFiltrados = RESULTADOS_SIMULADOS.filter(res => {
+          const termoBusca = termo.toLowerCase();
+          
+          // Verifica se o termo está em qualquer campo relevante
+          return (
+            (res.numeroProcesso?.toLowerCase().includes(termoBusca) || false) ||
+            (res.classe?.nome?.toLowerCase().includes(termoBusca) || false) ||
+            (res.orgaoJulgador?.nome?.toLowerCase().includes(termoBusca) || false) ||
+            (res.assuntos?.some(assunto => 
+              typeof assunto === 'object' ? 
+                (assunto.nome?.toLowerCase().includes(termoBusca) || false) : 
+                String(assunto).toLowerCase().includes(termoBusca)
+            ) || false)
+          );
+        });
+        
+        // Simula um pequeno delay para parecer que está buscando
+        setTimeout(() => {
+          setResultados(resultadosFiltrados);
+          
+          if (resultadosFiltrados.length === 0) {
+            setErro("Nenhum resultado encontrado para os critérios informados (modo simulado).");
+          } else {
+            toast({
+              title: "Dados simulados carregados",
+              description: `${resultadosFiltrados.length} ${resultadosFiltrados.length === 1 ? 'resultado simulado' : 'resultados simulados'} encontrados.`,
+            });
+          }
+        }, 800);
       }
     } catch (err: any) {
       console.error("Erro na requisição:", err);
       
       if (err.name === 'AbortError') {
         setErro("A consulta excedeu o tempo limite. Por favor, tente novamente.");
-      } else if (err.message.includes('Failed to fetch')) {
-        setErro("Não foi possível conectar à API do Datajud devido a restrições de CORS.");
-        setShowCorsInfo(true);
       } else {
         setErro(err.message || "Não foi possível buscar informações. Verifique sua conexão e tente novamente.");
+        setShowCorsInfo(true);
       }
       
       toast({
@@ -172,6 +258,105 @@ export default function JurisprudenciaSearch() {
     }
   };
 
+  const codeProxyExpress = `
+// arquivo: server.js
+import express from 'express';
+import fetch from 'node-fetch';
+import cors from 'cors';
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+const API_KEY = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==";
+
+app.post('/api/datajud/search', async (req, res) => {
+  const { tribunal, termo } = req.body;
+  const url = \`https://api-publica.datajud.cnj.jus.br/\${tribunal}/_search\`;
+
+  const queryBody = {
+    size: 10,
+    query: {
+      multi_match: {
+        query: termo,
+        fields: ["*"],
+        type: "best_fields",
+        fuzziness: "AUTO"
+      }
+    },
+    sort: [
+      { "@timestamp": { order: "desc" } }
+    ]
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': \`APIKey \${API_KEY}\`
+      },
+      body: JSON.stringify(queryBody)
+    });
+
+    if (!response.ok) {
+      throw new Error(\`Status \${response.status} – \${await response.text()}\`);
+    }
+
+    const data = await response.json();
+    res.json(data);
+
+  } catch (err) {
+    console.error('Erro ao chamar Datajud:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(\`Proxy Datajud rodando na porta \${PORT}\`));
+`;
+
+  const codeFrontendAjustado = `
+// Exemplo de como chamar o proxy a partir do frontend
+const handleSubmit = async (e) => {
+  if (e) e.preventDefault();
+  
+  setLoading(true);
+  setResultados([]);
+  setErro(null);
+
+  try {
+    // Agora fazemos a chamada para nosso servidor proxy
+    const res = await fetch('http://localhost:3000/api/datajud/search', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        tribunal: tribunal,
+        termo: termo
+      })
+    });
+
+    if (!res.ok) {
+      throw new Error(\`Erro ao consultar a API: \${res.status} \${res.statusText}\`);
+    }
+
+    const data = await res.json();
+    
+    // Processa os resultados como antes
+    if (data.hits && data.hits.hits) {
+      const docs = data.hits.hits.map((hit) => hit._source) || [];
+      setResultados(docs);
+    }
+  } catch (err) {
+    setErro(err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+`;
+
   return (
     <div className="w-full max-w-3xl mx-auto mt-4 p-2">
       <JurisprudenciaForm
@@ -189,31 +374,94 @@ export default function JurisprudenciaSearch() {
       {showCorsInfo && (
         <Alert className="my-4 bg-amber-50 dark:bg-amber-950/30">
           <Info className="h-5 w-5" />
-          <AlertTitle>Limitação do navegador (CORS)</AlertTitle>
+          <AlertTitle>Dados simulados carregados</AlertTitle>
           <AlertDescription className="mt-2">
             <p className="mb-2">
-              Os navegadores bloqueiam chamadas diretas à API do Datajud devido à política de segurança CORS. 
-              Para usar esta funcionalidade em produção, é necessário implementar um servidor proxy.
+              Os navegadores bloqueiam chamadas diretas à API do Datajud devido à política de segurança CORS.
+              Estamos exibindo dados simulados para demonstração.
             </p>
-            <details className="mt-2">
-              <summary className="cursor-pointer font-medium">
-                Como resolver este problema?
-              </summary>
-              <div className="mt-2 pl-4 text-sm border-l-2 border-amber-200 dark:border-amber-800">
-                <p className="mb-2">
-                  1. Implemente um servidor proxy em Node.js/Express que faça a chamada à API do Datajud.
-                </p>
-                <p className="mb-2">
-                  2. Configure o proxy para adicionar o header de autorização e repassar as requisições.
-                </p>
-                <p>
-                  3. Modifique o frontend para fazer chamadas ao seu servidor proxy em vez de chamar a API do Datajud diretamente.
-                </p>
-              </div>
-            </details>
+            <div className="flex gap-2 mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowProxyInstructions(true)}
+                className="text-xs"
+              >
+                Como implementar o proxy
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}
+
+      <Dialog open={showProxyInstructions} onOpenChange={setShowProxyInstructions}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Implementação do Proxy para a API Datajud</DialogTitle>
+            <DialogDescription>
+              Siga estas instruções para implementar um servidor proxy que contorne as limitações de CORS
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4 space-y-4">
+            <div>
+              <h3 className="text-md font-semibold mb-2">1. Crie um servidor proxy em Node.js/Express</h3>
+              <div className="bg-muted p-3 rounded-md overflow-x-auto">
+                <pre className="text-xs"><code>{codeProxyExpress}</code></pre>
+              </div>
+              <p className="text-sm mt-2">
+                Salve este código como <code>server.js</code> e instale as dependências com:
+                <br />
+                <code className="bg-muted p-1 rounded text-xs">npm install express node-fetch cors</code>
+              </p>
+            </div>
+            
+            <div>
+              <h3 className="text-md font-semibold mb-2">2. Ajuste o código frontend para usar o proxy</h3>
+              <div className="bg-muted p-3 rounded-md overflow-x-auto">
+                <pre className="text-xs"><code>{codeFrontendAjustado}</code></pre>
+              </div>
+            </div>
+            
+            <div>
+              <h3 className="text-md font-semibold mb-2">3. Execute o servidor proxy</h3>
+              <p className="text-sm">
+                Execute o servidor com: <code className="bg-muted p-1 rounded text-xs">node server.js</code>
+                <br />
+                Seu proxy estará disponível em <code className="bg-muted p-1 rounded text-xs">http://localhost:3000/api/datajud/search</code>
+              </p>
+            </div>
+            
+            <div className="flex justify-between items-center border-t pt-4 mt-4">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowProxyInstructions(false)}
+              >
+                Fechar
+              </Button>
+              
+              <Button 
+                variant="outline" 
+                className="flex gap-2 items-center"
+                onClick={() => {
+                  const blob = new Blob([codeProxyExpress], { type: 'text/javascript' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = 'datajud-proxy-server.js';
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+              >
+                <Download className="h-4 w-4" />
+                Baixar código do servidor
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <JurisprudenciaResultados
         resultados={resultados}

@@ -39,6 +39,13 @@ export default function JurisprudenciaResultados({
           <AlertTitle>Erro na consulta</AlertTitle>
           <AlertDescription className="mt-2">
             {erro}
+            {erro.includes("CORS") && (
+              <p className="mt-2 text-sm">
+                Os navegadores bloqueiam chamadas diretas à API do Datajud devido à 
+                política de segurança CORS. É necessário implementar um servidor proxy 
+                para contornar essa limitação.
+              </p>
+            )}
           </AlertDescription>
         </Alert>
       )}
