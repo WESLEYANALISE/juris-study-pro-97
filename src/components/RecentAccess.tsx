@@ -4,6 +4,7 @@ import { BookOpen, Video, Newspaper, FileText, ChevronLeft, ChevronRight } from 
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RecentItem {
   id: string;
@@ -16,38 +17,53 @@ interface RecentItem {
 const RecentAccess = () => {
   const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data for recent access items
-  const recentItems: RecentItem[] = [
-    {
-      id: "1",
-      title: "Direito Constitucional - Aula 3",
-      type: "video",
-      path: "/videoaulas",
-      timestamp: "2h atrás"
-    },
-    {
-      id: "2",
-      title: "Reforma tributária 2025",
-      type: "article",
-      path: "/bloger",
-      timestamp: "ontem"
-    },
-    {
-      id: "3",
-      title: "Manual de Direito Civil",
-      type: "book",
-      path: "/biblioteca",
-      timestamp: "3d atrás"
-    },
-    {
-      id: "4",
-      title: "Recurso Extraordinário",
-      type: "document",
-      path: "/peticionario",
-      timestamp: "5d atrás"
-    }
-  ];
+  useEffect(() => {
+    const fetchRecentAccess = async () => {
+      try {
+        // In a real app, this would fetch from Supabase
+        // For now, we'll use mock data
+        setRecentItems([
+          {
+            id: "1",
+            title: "Direito Constitucional - Aula 3",
+            type: "video",
+            path: "/videoaulas",
+            timestamp: "2h atrás"
+          },
+          {
+            id: "2",
+            title: "Reforma tributária 2025",
+            type: "article",
+            path: "/bloger",
+            timestamp: "ontem"
+          },
+          {
+            id: "3",
+            title: "Manual de Direito Civil",
+            type: "book",
+            path: "/biblioteca",
+            timestamp: "3d atrás"
+          },
+          {
+            id: "4",
+            title: "Recurso Extraordinário",
+            type: "document",
+            path: "/peticionario",
+            timestamp: "5d atrás"
+          }
+        ]);
+      } catch (error) {
+        console.error("Error fetching recent access:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecentAccess();
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -81,8 +97,21 @@ const RecentAccess = () => {
   };
 
   // If there are no items, don't render anything
-  if (itemsArray.length === 0) {
+  if (itemsArray.length === 0 && !loading) {
     return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="w-full mb-4 animate-pulse">
+        <div className="h-4 w-32 bg-muted rounded mb-4"></div>
+        <div className="flex gap-2">
+          <div className="h-20 flex-1 bg-muted rounded"></div>
+          <div className="h-20 flex-1 bg-muted rounded"></div>
+          <div className="h-20 flex-1 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -93,7 +122,7 @@ const RecentAccess = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-6 w-6" 
+            className="h-8 w-8 min-h-0" 
             onClick={prevSlide}
             disabled={currentIndex === 0}
           >
@@ -102,7 +131,7 @@ const RecentAccess = () => {
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-6 w-6" 
+            className="h-8 w-8 min-h-0" 
             onClick={nextSlide}
             disabled={currentIndex >= itemsArray.length - 3}
           >

@@ -43,13 +43,13 @@ const MobileNavigation = () => {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-card border-t border-border p-2 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-card border-t border-border p-2 safe-area-bottom md:hidden">
       {itemsArray.map((item) => (
         <button
           key={item.name}
           onClick={() => navigate(item.path)}
           className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md",
+            "flex flex-col items-center justify-center p-2 rounded-md min-h-[48px] w-full",
             location.pathname === item.path 
               ? "text-primary" 
               : "text-muted-foreground hover:text-primary"

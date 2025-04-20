@@ -114,7 +114,7 @@ const Index = () => {
   ];
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-[5%]">
       <div className="flex flex-col items-center text-center mb-8">
         <div className="mb-4">
           <Scale className="h-12 w-12 text-primary mx-auto mb-2" />
@@ -135,7 +135,7 @@ const Index = () => {
         {categories.map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h2 className="text-xl font-semibold mb-4 px-2">{category.title}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
               {category.items.map((feature, index) => (
                 <Card key={index} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border">
                   <CardHeader className="p-3 md:p-4">
@@ -147,7 +147,7 @@ const Index = () => {
                   </CardHeader>
                   <CardFooter className="p-2 md:p-3 pt-0">
                     <Button 
-                      className="w-full text-xs py-1 h-8" 
+                      className="w-full text-xs py-1 min-h-[40px]" 
                       variant="outline"
                       onClick={() => navigate(feature.path)}
                     >
@@ -161,7 +161,7 @@ const Index = () => {
         ))}
       </div>
 
-      <div className="bg-card p-4 rounded-lg shadow-sm mt-8 mb-6">
+      <div className="bg-card p-4 rounded-lg shadow-sm mt-8 mb-16 md:mb-6">
         <h2 className="text-xl font-bold mb-3">Escolha seu perfil de estudos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">

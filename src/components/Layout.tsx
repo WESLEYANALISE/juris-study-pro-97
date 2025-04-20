@@ -6,7 +6,8 @@ import { type ProfileType } from "@/components/WelcomeModal";
 import MobileNavigation from "@/components/MobileNavigation";
 import RecentAccess from "@/components/RecentAccess";
 import { useLocation } from "react-router-dom";
-import { Suspense, ErrorBoundary } from "react";
+import { Suspense } from "react";
+import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
 
 // Simple error fallback component
 const ErrorFallback = () => (
@@ -37,14 +38,18 @@ const Layout = ({ children, userProfile }: LayoutProps) => {
           <AppSidebar userProfile={userProfile} />
           <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6">
             {isHomePage && (
-              <div className="md:max-w-4xl mx-auto">
+              <div className="w-full md:max-w-4xl mx-auto">
                 <Suspense fallback={<LoadingFallback />}>
-                  <RecentAccess />
+                  <ReactErrorBoundary FallbackComponent={ErrorFallback}>
+                    <RecentAccess />
+                  </ReactErrorBoundary>
                 </Suspense>
               </div>
             )}
             <Suspense fallback={<LoadingFallback />}>
-              {children}
+              <ReactErrorBoundary FallbackComponent={ErrorFallback}>
+                {children}
+              </ReactErrorBoundary>
             </Suspense>
           </main>
         </div>
