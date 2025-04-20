@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookOpen } from "lucide-react";
@@ -62,8 +63,9 @@ const Flashcards = () => {
       
       if (data && data.length > 0) {
         const areasWithValues = data
-          .map(item => item.area)
-          .filter(Boolean) as string[];
+          .filter(item => item && item.area) // Ensure item and item.area exist
+          .map(item => item.area as string)
+          .filter(Boolean);
         
         const uniqueAreas = [...new Set(areasWithValues)];
         setAreas(uniqueAreas);
@@ -90,8 +92,9 @@ const Flashcards = () => {
       
       if (data && data.length > 0) {
         const temasWithValues = data
-          .map(item => item.tema)
-          .filter(Boolean) as string[];
+          .filter(item => item && item.tema) // Ensure item and item.tema exist
+          .map(item => item.tema as string)
+          .filter(Boolean);
         
         const uniqueTemas = [...new Set(temasWithValues)];
         setTemas(uniqueTemas);

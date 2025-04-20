@@ -37,7 +37,7 @@ interface FlashcardStudyProps {
   onBack: () => void;
 }
 
-const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
+const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(true);
   const [isAdvancedMode, setIsAdvancedMode] = useState(false);
@@ -46,12 +46,18 @@ const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
   const [isFlipped, setIsFlipped] = useState(false);
   const [progress, setProgress] = useState(0);
 
+  // Safely check if we have flashcards before calculating progress
   useEffect(() => {
-    setProgress(((currentIndex + 1) / flashcards.length) * 100);
+    if (flashcards.length > 0) {
+      setProgress(((currentIndex + 1) / flashcards.length) * 100);
+    } else {
+      setProgress(0);
+    }
   }, [currentIndex, flashcards.length]);
 
+  // Only set up auto mode if we have flashcards
   useEffect(() => {
-    if (isAutoMode) {
+    if (isAutoMode && flashcards.length > 0) {
       const interval = window.setInterval(() => {
         handleNext();
       }, 5000);
@@ -68,7 +74,17 @@ const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
         clearInterval(autoInterval);
       }
     };
-  }, [isAutoMode, currentIndex]);
+  }, [isAutoMode, currentIndex, flashcards.length]);
+
+  // Guard against empty flashcards array
+  if (!flashcards || flashcards.length === 0) {
+    return (
+      <div className="container mx-auto py-6 max-w-4xl text-center">
+        <h2 className="text-xl font-semibold mb-4">Nenhum flashcard encontrado</h2>
+        <Button onClick={onBack}>Voltar</Button>
+      </div>
+    );
+  }
 
   const handleNext = () => {
     if (currentIndex < flashcards.length - 1) {
@@ -104,6 +120,16 @@ const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
 
   const currentFlashcard = flashcards[currentIndex];
 
+  // Add null check for currentFlashcard
+  if (!currentFlashcard) {
+    return (
+      <div className="container mx-auto py-6 max-w-4xl text-center">
+        <h2 className="text-xl font-semibold mb-4">Erro ao carregar flashcard</h2>
+        <Button onClick={onBack}>Voltar</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto py-6 max-w-4xl">
       <div className="flex justify-between items-center mb-6">
@@ -115,10 +141,10 @@ const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
             {currentIndex + 1} / {flashcards.length}
           </Badge>
           <Badge variant="secondary" className="py-1.5">
-            {currentFlashcard.area}
+            {currentFlashcard.area || "Sem área"}
           </Badge>
           <Badge className="py-1.5">
-            {currentFlashcard.tema}
+            {currentFlashcard.tema || "Sem tema"}
           </Badge>
         </div>
       </div>
@@ -152,7 +178,7 @@ const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
               <Separator className="my-3" />
             </CardHeader>
             <CardContent className="text-center px-8">
-              <p className="text-lg">{currentFlashcard.pergunta}</p>
+              <p className="text-lg">{currentFlashcard.pergunta || "Sem pergunta"}</p>
             </CardContent>
             <CardFooter className="flex justify-center pb-8">
               {isAdvancedMode && (
@@ -169,7 +195,7 @@ const FlashcardStudy = ({ flashcards, onBack }: FlashcardStudyProps) => {
               <Separator className="my-3" />
             </CardHeader>
             <CardContent className="text-center px-8">
-              <p className="text-lg">{currentFlashcard.resposta}</p>
+              <p className="text-lg">{currentFlashcard.resposta || "Sem resposta"}</p>
             </CardContent>
             {currentFlashcard.explicacao && (
               <CardFooter className="flex justify-center pb-4">
