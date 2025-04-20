@@ -19,6 +19,18 @@ import Explorar from "./pages/Explorar";
 import FerramentasJuridicas from "./pages/FerramentasJuridicas";
 import Flashcards from "./pages/Flashcards";
 import Jurisprudencia from "./pages/Jurisprudencia";
+import Resumos from "./pages/Resumos";
+import Simulados from "./pages/Simulados";
+import Peticionario from "./pages/Peticionario";
+import Noticias from "./pages/Noticias";
+import Assistente from "./pages/Assistente";
+import Perfil from "./pages/Perfil";
+import Search from "./pages/Search";
+import RemoteDesktop from "./pages/RemoteDesktop";
+import Vademecum from "./pages/ferramentas/Vademecum";
+import Dicionario from "./pages/ferramentas/Dicionario";
+import Modelos from "./pages/ferramentas/Modelos";
+import Cronograma from "./pages/ferramentas/Cronograma";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -58,22 +70,20 @@ const App = () => {
               <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
               <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
               <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Jurisprudencia /></Layout>} />
-              
-              {/* Placeholder routes until these pages are created */}
-              <Route path="/resumos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/simulados" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/peticionario" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/noticias" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/assistente" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/perfil" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/search" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/resumos" element={<Layout userProfile={userProfile}><Resumos /></Layout>} />
+              <Route path="/simulados" element={<Layout userProfile={userProfile}><Simulados /></Layout>} />
+              <Route path="/peticionario" element={<Layout userProfile={userProfile}><Peticionario /></Layout>} />
+              <Route path="/noticias" element={<Layout userProfile={userProfile}><Noticias /></Layout>} />
+              <Route path="/assistente" element={<Layout userProfile={userProfile}><Assistente /></Layout>} />
+              <Route path="/perfil" element={<Layout userProfile={userProfile}><Perfil /></Layout>} />
+              <Route path="/search" element={<Layout userProfile={userProfile}><Search /></Layout>} />
+              <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><RemoteDesktop /></Layout>} />
               
               {/* Ferramentas Jurídicas sub-routes */}
-              <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Vademecum /></Layout>} />
+              <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Dicionario /></Layout>} />
+              <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Modelos /></Layout>} />
+              <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Cronograma /></Layout>} />
               
               {/* Redirect routes */}
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
