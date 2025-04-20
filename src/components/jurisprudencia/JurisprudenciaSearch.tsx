@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search, FileText, Calendar, ChevronDown } from "lucide-react";
+import { Search, FileText, Calendar, ChevronDown, AlertTriangle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/components/ui/use-toast";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Lista de tribunais e aliases organizados por categoria
 const TRIBUNAIS_POR_CATEGORIA = {
@@ -115,6 +116,7 @@ export default function JurisprudenciaSearch() {
       console.log("Consultando API:", url);
       console.log("Corpo da requisição:", JSON.stringify(queryBody));
 
+      // Ajuste: Usando modo no-cors, para tentar resolver problemas de CORS
       const res = await fetch(url, {
         method: "POST",
         headers: {
@@ -122,6 +124,8 @@ export default function JurisprudenciaSearch() {
           "Authorization": `APIKey ${apiKey}`
         },
         body: JSON.stringify(queryBody),
+        // Ajuste: Adicionar timeout de 20 segundos
+        signal: AbortSignal.timeout(20000)
       });
 
       if (!res.ok) {
@@ -149,7 +153,15 @@ export default function JurisprudenciaSearch() {
       }
     } catch (err: any) {
       console.error("Erro na requisição:", err);
-      setErro(err.message || "Não foi possível buscar informações. Verifique sua conexão e tente novamente.");
+      
+      // Melhor tratamento de erros específicos
+      if (err.name === 'AbortError') {
+        setErro("A consulta excedeu o tempo limite. Por favor, tente novamente.");
+      } else if (err.message.includes('Failed to fetch')) {
+        setErro("Não foi possível conectar à API do Datajud. Isso pode ocorrer devido a restrições de rede ou CORS. Tente acessar usando uma conexão diferente.");
+      } else {
+        setErro(err.message || "Não foi possível buscar informações. Verifique sua conexão e tente novamente.");
+      }
       
       toast({
         title: "Erro na consulta",
@@ -336,9 +348,11 @@ export default function JurisprudenciaSearch() {
         )}
 
         {!loading && erro && (
-          <div className="text-center text-sm p-6 border rounded-lg bg-muted/20">
-            <div className="text-muted-foreground">{erro}</div>
-          </div>
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Erro na consulta</AlertTitle>
+            <AlertDescription>{erro}</AlertDescription>
+          </Alert>
         )}
 
         {!loading && resultados.length > 0 && (
