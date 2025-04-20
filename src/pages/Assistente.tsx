@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send, Paperclip, Trash, RotateCcw, Clock, Lightbulb, Save } from "lucide-react";
-import AskAssistant from "@/components/AskAssistant";
+import { AskAssistant } from "@/components/AskAssistant";
 
 type Message = {
   id: string;
@@ -267,3 +267,4 @@ const Assistente = () => {
 };
 
 export default Assistente;
+
