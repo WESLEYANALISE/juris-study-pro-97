@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tables } from "@/integrations/supabase/types";
 import FlashcardStudy from "@/components/flashcards/FlashcardStudy";
 import FlashcardStats from "@/components/flashcards/FlashcardStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type FlashCard = Tables<"flash_cards">;
 
@@ -34,6 +35,9 @@ const Flashcards = () => {
   useEffect(() => {
     if (selectedArea) {
       fetchTemas(selectedArea);
+    } else {
+      // Reset temas when no area is selected
+      setTemas([]);
     }
   }, [selectedArea]);
 
@@ -47,6 +51,7 @@ const Flashcards = () => {
       setFlashcardsCount(count || 0);
     } catch (error) {
       console.error("Error fetching flashcards count:", error);
+      setFlashcardsCount(0);
     }
   };
 
@@ -60,17 +65,21 @@ const Flashcards = () => {
       
       if (error) throw error;
       
-      // Ensure data is defined before processing
+      // Ensure data is defined and not empty before processing
       if (data && data.length > 0) {
-        const uniqueAreas = [...new Set(data.map(item => item.area))].filter(Boolean) as string[];
+        const areasWithValues = data
+          .map(item => item.area)
+          .filter(Boolean) as string[];
+        
+        // Use Set to get unique values and convert back to array
+        const uniqueAreas = [...new Set(areasWithValues)];
         setAreas(uniqueAreas);
       } else {
-        // Set default empty array if no data returned
         setAreas([]);
       }
     } catch (error) {
       console.error("Error fetching areas:", error);
-      setAreas([]); // Set default on error
+      setAreas([]);
     } finally {
       setLoading(false);
     }
@@ -86,17 +95,21 @@ const Flashcards = () => {
       
       if (error) throw error;
       
-      // Ensure data is defined before processing
+      // Ensure data is defined and not empty before processing
       if (data && data.length > 0) {
-        const uniqueTemas = [...new Set(data.map(item => item.tema))].filter(Boolean) as string[];
+        const temasWithValues = data
+          .map(item => item.tema)
+          .filter(Boolean) as string[];
+        
+        // Use Set to get unique values and convert back to array
+        const uniqueTemas = [...new Set(temasWithValues)];
         setTemas(uniqueTemas);
       } else {
-        // Set default empty array if no data returned
         setTemas([]);
       }
     } catch (error) {
       console.error("Error fetching temas:", error);
-      setTemas([]); // Set default on error
+      setTemas([]);
     }
   };
 
@@ -114,7 +127,6 @@ const Flashcards = () => {
       
       if (error) throw error;
       
-      // Ensure data is defined before setting state
       if (data && data.length > 0) {
         setFlashcards(data as FlashCard[]);
         setStartStudy(true);
@@ -181,46 +193,54 @@ const Flashcards = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium mb-1 block">Área do Direito</label>
-                    <Select value={selectedArea} onValueChange={handleAreaChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma área" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {areas && areas.length > 0 ? (
-                          areas.map(area => (
-                            <SelectItem key={area} value={area}>
-                              {area}
+                    {loading ? (
+                      <Skeleton className="h-10 w-full" />
+                    ) : (
+                      <Select value={selectedArea} onValueChange={handleAreaChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione uma área" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {areas && areas.length > 0 ? (
+                            areas.map((area, index) => (
+                              <SelectItem key={`${area}-${index}`} value={area}>
+                                {area}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-areas" disabled>
+                              Nenhuma área disponível
                             </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-areas" disabled>
-                            Nenhuma área disponível
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium mb-1 block">Tema</label>
-                    <Select value={selectedTema} onValueChange={handleTemaChange} disabled={!selectedArea}>
-                      <SelectTrigger>
-                        <SelectValue placeholder={selectedArea ? "Selecione um tema" : "Selecione uma área primeiro"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {temas && temas.length > 0 ? (
-                          temas.map(tema => (
-                            <SelectItem key={tema} value={tema}>
-                              {tema}
+                    {loading && selectedArea ? (
+                      <Skeleton className="h-10 w-full" />
+                    ) : (
+                      <Select value={selectedTema} onValueChange={handleTemaChange} disabled={!selectedArea}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={selectedArea ? "Selecione um tema" : "Selecione uma área primeiro"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {temas && temas.length > 0 ? (
+                            temas.map((tema, index) => (
+                              <SelectItem key={`${tema}-${index}`} value={tema}>
+                                {tema}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            <SelectItem value="no-temas" disabled>
+                              {selectedArea ? "Nenhum tema disponível" : "Selecione uma área primeiro"}
                             </SelectItem>
-                          ))
-                        ) : (
-                          <SelectItem value="no-temas" disabled>
-                            {selectedArea ? "Nenhum tema disponível" : "Selecione uma área primeiro"}
-                          </SelectItem>
-                        )}
-                      </SelectContent>
-                    </Select>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
                 </div>
                 
@@ -231,7 +251,7 @@ const Flashcards = () => {
                     className="w-full" 
                     size="lg"
                   >
-                    Começar a Estudar
+                    {loading ? "Carregando..." : "Começar a Estudar"}
                   </Button>
                 </div>
               </div>
