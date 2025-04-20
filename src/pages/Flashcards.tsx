@@ -59,10 +59,18 @@ const Flashcards = () => {
         .not("area", "is", null);
       
       if (error) throw error;
-      const uniqueAreas = [...new Set(data.map(item => item.area))].filter(Boolean) as string[];
-      setAreas(uniqueAreas);
+      
+      // Ensure data is defined before processing
+      if (data && data.length > 0) {
+        const uniqueAreas = [...new Set(data.map(item => item.area))].filter(Boolean) as string[];
+        setAreas(uniqueAreas);
+      } else {
+        // Set default empty array if no data returned
+        setAreas([]);
+      }
     } catch (error) {
       console.error("Error fetching areas:", error);
+      setAreas([]); // Set default on error
     } finally {
       setLoading(false);
     }
@@ -77,10 +85,18 @@ const Flashcards = () => {
         .not("tema", "is", null);
       
       if (error) throw error;
-      const uniqueTemas = [...new Set(data.map(item => item.tema))].filter(Boolean) as string[];
-      setTemas(uniqueTemas);
+      
+      // Ensure data is defined before processing
+      if (data && data.length > 0) {
+        const uniqueTemas = [...new Set(data.map(item => item.tema))].filter(Boolean) as string[];
+        setTemas(uniqueTemas);
+      } else {
+        // Set default empty array if no data returned
+        setTemas([]);
+      }
     } catch (error) {
       console.error("Error fetching temas:", error);
+      setTemas([]); // Set default on error
     }
   };
 
@@ -97,10 +113,19 @@ const Flashcards = () => {
       const { data, error } = await query;
       
       if (error) throw error;
-      setFlashcards(data as FlashCard[]);
-      setStartStudy(true);
+      
+      // Ensure data is defined before setting state
+      if (data && data.length > 0) {
+        setFlashcards(data as FlashCard[]);
+        setStartStudy(true);
+      } else {
+        console.log("No flashcards found for the selected criteria");
+        setFlashcards([]);
+        // Don't start study if no flashcards available
+      }
     } catch (error) {
       console.error("Error fetching flashcards:", error);
+      setFlashcards([]);
     } finally {
       setLoading(false);
     }
@@ -119,6 +144,7 @@ const Flashcards = () => {
     setStartStudy(false);
   };
 
+  // Only proceed to study mode if we have flashcards
   if (startStudy && flashcards.length > 0) {
     return <FlashcardStudy flashcards={flashcards} onBack={resetStudy} />;
   }
@@ -160,11 +186,17 @@ const Flashcards = () => {
                         <SelectValue placeholder="Selecione uma área" />
                       </SelectTrigger>
                       <SelectContent>
-                        {areas.map(area => (
-                          <SelectItem key={area} value={area}>
-                            {area}
+                        {areas && areas.length > 0 ? (
+                          areas.map(area => (
+                            <SelectItem key={area} value={area}>
+                              {area}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-areas" disabled>
+                            Nenhuma área disponível
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -176,18 +208,29 @@ const Flashcards = () => {
                         <SelectValue placeholder={selectedArea ? "Selecione um tema" : "Selecione uma área primeiro"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {temas.map(tema => (
-                          <SelectItem key={tema} value={tema}>
-                            {tema}
+                        {temas && temas.length > 0 ? (
+                          temas.map(tema => (
+                            <SelectItem key={tema} value={tema}>
+                              {tema}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <SelectItem value="no-temas" disabled>
+                            {selectedArea ? "Nenhum tema disponível" : "Selecione uma área primeiro"}
                           </SelectItem>
-                        ))}
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-1 gap-3 mt-6">
-                  <Button onClick={fetchFlashcards} disabled={!selectedArea || loading} className="w-full" size="lg">
+                  <Button 
+                    onClick={fetchFlashcards} 
+                    disabled={!selectedArea || loading}
+                    className="w-full" 
+                    size="lg"
+                  >
                     Começar a Estudar
                   </Button>
                 </div>
