@@ -1,10 +1,15 @@
-
 import { useState, useEffect } from "react";
-import { BookOpen, Video, Newspaper, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface RecentItem {
   id: string;
@@ -16,7 +21,6 @@ interface RecentItem {
 
 const RecentAccess = () => {
   const navigate = useNavigate();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -87,24 +91,7 @@ const RecentAccess = () => {
   const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
   // Get visible items safely
-  const visibleItems = itemsArray.slice(
-    currentIndex, 
-    currentIndex + Math.min(3, itemsArray.length - currentIndex)
-  );
-  
-  const nextSlide = () => {
-    if (itemsArray.length > 0 && currentIndex < itemsArray.length - 3) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-  
-  const prevSlide = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
-    }
-  };
 
-  // If there are no items, don't render anything
   if (itemsArray.length === 0 && !loading) {
     return null;
   }
@@ -126,45 +113,36 @@ const RecentAccess = () => {
     <div className="w-full mb-4">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-medium">Acessos Recentes</h2>
-        <div className="flex gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 min-h-0" 
-            onClick={prevSlide}
-            disabled={currentIndex === 0}
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 min-h-0" 
-            onClick={nextSlide}
-            disabled={currentIndex >= itemsArray.length - 3}
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
       </div>
 
-      <div className="flex gap-2 overflow-hidden">
-        {visibleItems.map((item) => (
-          <Card 
-            key={item.id} 
-            className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => navigate(item.path)}
-          >
-            <CardContent className="p-3">
-              <div className="flex items-center gap-2 mb-1">
-                {getIcon(item.type)}
-                <span className="text-xs text-muted-foreground">{item.timestamp}</span>
-              </div>
-              <p className="text-sm font-medium truncate">{item.title}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <Carousel
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {itemsArray.map((item) => (
+            <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3">
+              <Card 
+                className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
+                onClick={() => navigate(item.path)}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2 mb-1">
+                    {getIcon(item.type)}
+                    <span className="text-xs text-muted-foreground">{item.timestamp}</span>
+                  </div>
+                  <p className="text-sm font-medium truncate">{item.title}</p>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden md:flex" />
+        <CarouselNext className="hidden md:flex" />
+      </Carousel>
     </div>
   );
 };

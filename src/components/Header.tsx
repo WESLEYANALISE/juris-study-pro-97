@@ -26,7 +26,7 @@ export function Header({ userProfile }: HeaderProps) {
         <span className="font-bold text-lg hidden sm:inline">JurisStudy Pro</span>
       </div>
       
-      <div className="flex-1 px-2">
+      <div className="flex-1 px-2 hidden md:block">
         <SearchBar />
       </div>
       
