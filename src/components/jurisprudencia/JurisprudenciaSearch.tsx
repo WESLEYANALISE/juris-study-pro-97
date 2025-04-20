@@ -4,34 +4,64 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Search } from "lucide-react";
+import { Search, FileText, Calendar, ChevronDown } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "@/components/ui/use-toast";
 
-// Lista de tribunais e aliases
-const TRIBUNAIS = [
-  { nome: "Tribunal Superior do Trabalho", alias: "api_publica_tst" },
-  { nome: "Tribunal Superior Eleitoral", alias: "api_publica_tse" },
-  { nome: "Tribunal Superior de Justiça", alias: "api_publica_stj" },
-  { nome: "Tribunal Superior Militar", alias: "api_publica_stm" },
-  { nome: "TRF 1ª Região", alias: "api_publica_trf1" },
-  { nome: "TRF 2ª Região", alias: "api_publica_trf2" },
-  { nome: "TRF 3ª Região", alias: "api_publica_trf3" },
-  { nome: "TRF 4ª Região", alias: "api_publica_trf4" },
-  { nome: "TRF 5ª Região", alias: "api_publica_trf5" },
-  { nome: "TRF 6ª Região", alias: "api_publica_trf6" },
-  { nome: "TJMG", alias: "api_publica_tjmg" },
-  { nome: "TJSP", alias: "api_publica_tjsp" },
-  { nome: "TJRJ", alias: "api_publica_tjrj" },
-  { nome: "TJRS", alias: "api_publica_tjrs" },
-  // Adicione mais conforme necessário...
-];
+// Lista de tribunais e aliases organizados por categoria
+const TRIBUNAIS_POR_CATEGORIA = {
+  "Tribunais Superiores": [
+    { nome: "Tribunal Superior do Trabalho", alias: "api_publica_tst" },
+    { nome: "Tribunal Superior Eleitoral", alias: "api_publica_tse" },
+    { nome: "Superior Tribunal de Justiça", alias: "api_publica_stj" },
+    { nome: "Superior Tribunal Militar", alias: "api_publica_stm" },
+  ],
+  "Justiça Federal": [
+    { nome: "TRF 1ª Região", alias: "api_publica_trf1" },
+    { nome: "TRF 2ª Região", alias: "api_publica_trf2" },
+    { nome: "TRF 3ª Região", alias: "api_publica_trf3" },
+    { nome: "TRF 4ª Região", alias: "api_publica_trf4" },
+    { nome: "TRF 5ª Região", alias: "api_publica_trf5" },
+    { nome: "TRF 6ª Região", alias: "api_publica_trf6" },
+  ],
+  "Justiça Estadual": [
+    { nome: "TJMG", alias: "api_publica_tjmg" },
+    { nome: "TJSP", alias: "api_publica_tjsp" },
+    { nome: "TJRJ", alias: "api_publica_tjrj" },
+    { nome: "TJRS", alias: "api_publica_tjrs" },
+    { nome: "TJDFT", alias: "api_publica_tjdft" },
+  ],
+  "Justiça do Trabalho": [
+    { nome: "TRT 1ª Região", alias: "api_publica_trt1" },
+    { nome: "TRT 2ª Região", alias: "api_publica_trt2" },
+    { nome: "TRT 3ª Região", alias: "api_publica_trt3" },
+    { nome: "TRT 4ª Região", alias: "api_publica_trt4" },
+  ],
+  "Justiça Eleitoral": [
+    { nome: "TRE-SP", alias: "api_publica_tre-sp" },
+    { nome: "TRE-MG", alias: "api_publica_tre-mg" },
+    { nome: "TRE-RJ", alias: "api_publica_tre-rj" },
+    { nome: "TRE-RS", alias: "api_publica_tre-rs" },
+  ],
+};
+
+// Criar lista plana para uso no componente
+const TRIBUNAIS = Object.values(TRIBUNAIS_POR_CATEGORIA).flat();
 
 type ResultadoDatajud = {
-  processo?: string;
-  tema?: string;
-  dataDistribuicao?: string;
-  assunto?: any;
-  classe?: any;
-  parte?: any;
+  numeroProcesso?: string;
+  classe?: {
+    codigo?: number;
+    nome?: string;
+  };
+  assuntos?: any[];
+  orgaoJulgador?: {
+    nome?: string;
+    codigoMunicipioIBGE?: number;
+  };
+  dataAjuizamento?: string;
+  movimentos?: any[];
   [key: string]: any;
 };
 
@@ -41,110 +71,279 @@ export default function JurisprudenciaSearch() {
   const [loading, setLoading] = useState(false);
   const [resultados, setResultados] = useState<ResultadoDatajud[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [categoria, setCategoria] = useState<string>("Tribunais Superiores");
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
+    if (!termo.trim()) {
+      toast({
+        title: "Digite um termo para buscar",
+        description: "Por favor, informe um termo de pesquisa para realizar a consulta.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setLoading(true);
     setResultados([]);
     setErro(null);
 
     try {
-      // Fetch usando POST (a API espera POST com body {"query":{}})
+      // API Key fixa do Datajud (conforme documentação)
+      const apiKey = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==";
+      
+      // Construindo URL para o tribunal selecionado
       const url = `https://api-publica.datajud.cnj.jus.br/${tribunal}/_search`;
+      
+      // Preparando a consulta usando o padrão ElasticSearch
+      const queryBody = {
+        size: 10,
+        query: {
+          multi_match: {
+            query: termo,
+            fields: ["*"],
+            type: "best_fields",
+            fuzziness: "AUTO"
+          }
+        },
+        sort: [
+          { "@timestamp": { order: "desc" } }
+        ]
+      };
+
+      console.log("Consultando API:", url);
+      console.log("Corpo da requisição:", JSON.stringify(queryBody));
+
       const res = await fetch(url, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `APIKey ${apiKey}`
         },
-        body: JSON.stringify({
-          query: {
-            multi_match: {
-              query: termo,
-              fields: ["*"]
-            }
-          },
-          size: 10  // Limita a 10 resultados para ser rápido/mobile
-        }),
+        body: JSON.stringify(queryBody),
       });
 
-      if (!res.ok) throw new Error("Erro ao consultar a API");
+      if (!res.ok) {
+        console.error("Erro na API:", res.status, res.statusText);
+        throw new Error(`Erro ao consultar a API: ${res.status} ${res.statusText}`);
+      }
 
       const data = await res.json();
+      console.log("Resposta da API:", data);
 
-      const docs = data.hits?.hits?.map((hit: any) => hit._source) ?? [];
-
-      setResultados(docs);
-      if (docs.length === 0) setErro("Nenhum resultado encontrado.");
+      if (data.hits && data.hits.hits) {
+        const docs = data.hits.hits.map((hit: any) => hit._source) || [];
+        setResultados(docs);
+        
+        if (docs.length === 0) {
+          setErro("Nenhum resultado encontrado para os critérios informados.");
+        } else {
+          toast({
+            title: "Busca realizada com sucesso",
+            description: `${docs.length} ${docs.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}.`,
+          });
+        }
+      } else {
+        setErro("Formato de resposta inesperado. Por favor, tente novamente.");
+      }
     } catch (err: any) {
-      setErro("Não foi possível buscar informações agora.");
+      console.error("Erro na requisição:", err);
+      setErro(err.message || "Não foi possível buscar informações. Verifique sua conexão e tente novamente.");
+      
+      toast({
+        title: "Erro na consulta",
+        description: "Ocorreu um erro ao consultar a jurisprudência. Por favor, tente novamente.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const formatarData = (dataString?: string) => {
+    if (!dataString) return "Data não informada";
+    try {
+      const data = new Date(dataString);
+      return data.toLocaleDateString('pt-BR');
+    } catch (e) {
+      return dataString;
+    }
+  };
+
+  const renderizarResultado = (resultado: ResultadoDatajud, index: number) => {
+    return (
+      <div
+        key={index}
+        className="rounded-lg border shadow bg-card p-4 text-sm transition hover:shadow-md"
+      >
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between items-start">
+            <span className="font-bold text-primary text-base">
+              {resultado.numeroProcesso || "Processo sem número"}
+            </span>
+            {resultado.dataAjuizamento && (
+              <Badge variant="outline" className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {formatarData(resultado.dataAjuizamento)}
+              </Badge>
+            )}
+          </div>
+          
+          {resultado.classe?.nome && (
+            <div className="flex items-center gap-1">
+              <FileText className="h-3 w-3 text-muted-foreground" />
+              <span className="text-xs text-muted-foreground">
+                <strong>Classe:</strong> {resultado.classe.nome}
+              </span>
+            </div>
+          )}
+          
+          {resultado.orgaoJulgador?.nome && (
+            <span className="block text-xs text-muted-foreground">
+              <strong>Órgão Julgador:</strong> {resultado.orgaoJulgador.nome}
+            </span>
+          )}
+          
+          {resultado.assuntos && resultado.assuntos.length > 0 && (
+            <div>
+              <span className="block text-xs font-semibold mb-1">Assuntos:</span>
+              <div className="flex flex-wrap gap-1">
+                {Array.isArray(resultado.assuntos[0]) 
+                  ? resultado.assuntos.flat().map((assunto, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {assunto.nome || "Não especificado"}
+                      </Badge>
+                    ))
+                  : resultado.assuntos.map((assunto, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {typeof assunto === 'object' ? (assunto.nome || "Não especificado") : String(assunto)}
+                      </Badge>
+                    ))
+                }
+              </div>
+            </div>
+          )}
+          
+          {resultado.movimentos && resultado.movimentos.length > 0 && (
+            <Accordion type="single" collapsible className="mt-2">
+              <AccordionItem value="movimentos">
+                <AccordionTrigger className="text-xs py-1">
+                  Movimentações ({resultado.movimentos.length})
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className="max-h-40 overflow-y-auto text-xs">
+                    {resultado.movimentos.slice(0, 10).map((movimento, idx) => (
+                      <div key={idx} className="border-b py-1 last:border-0">
+                        <div className="flex justify-between">
+                          <span>{movimento.nome}</span>
+                          <span className="text-muted-foreground">
+                            {formatarData(movimento.dataHora)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {resultado.movimentos.length > 10 && (
+                      <div className="text-center text-muted-foreground mt-2">
+                        + {resultado.movimentos.length - 10} movimentações não exibidas
+                      </div>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className="w-full max-w-xl mx-auto mt-4 p-2">
-      <form className="flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={handleSubmit}>
-        <div className="flex-1">
-          <label className="block mb-1 text-xs font-medium">Tribunal</label>
-          <Select value={tribunal} onValueChange={setTribunal}>
-            <SelectTrigger>
-              <SelectValue placeholder="Selecione o tribunal" />
-            </SelectTrigger>
-            <SelectContent>
-              {TRIBUNAIS.map(tj => (
-                <SelectItem value={tj.alias} key={tj.alias}>
-                  {tj.nome}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="w-full max-w-3xl mx-auto mt-4 p-2">
+      <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex-1">
+            <label className="block mb-1 text-xs font-medium">Categoria</label>
+            <Select 
+              value={categoria} 
+              onValueChange={(value) => {
+                setCategoria(value);
+                const primeiroTribunalDaCategoria = TRIBUNAIS_POR_CATEGORIA[value as keyof typeof TRIBUNAIS_POR_CATEGORIA][0].alias;
+                setTribunal(primeiroTribunalDaCategoria);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.keys(TRIBUNAIS_POR_CATEGORIA).map(cat => (
+                  <SelectItem value={cat} key={cat}>
+                    {cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex-1">
+            <label className="block mb-1 text-xs font-medium">Tribunal</label>
+            <Select value={tribunal} onValueChange={setTribunal}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tribunal" />
+              </SelectTrigger>
+              <SelectContent>
+                {TRIBUNAIS_POR_CATEGORIA[categoria as keyof typeof TRIBUNAIS_POR_CATEGORIA].map(tj => (
+                  <SelectItem value={tj.alias} key={tj.alias}>
+                    {tj.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
-        <div className="flex-1">
-          <label className="block mb-1 text-xs font-medium">Tema, palavra-chave, etc</label>
-          <Input
-            value={termo}
-            onChange={e => setTermo(e.target.value)}
-            placeholder="Ex: contrato, pensão, trabalhista…"
-            required
-          />
+        
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+          <div className="flex-1">
+            <label className="block mb-1 text-xs font-medium">Termo de busca</label>
+            <Input
+              value={termo}
+              onChange={e => setTermo(e.target.value)}
+              placeholder="Ex: habeas corpus, pensão, contrato..."
+              className="w-full"
+            />
+          </div>
+          
+          <Button type="submit" disabled={loading} className="w-full sm:w-auto gap-2 flex items-center">
+            {loading ? (
+              <>Buscando...</>
+            ) : (
+              <>
+                <Search className="h-4 w-4" /> 
+                Buscar Jurisprudência
+              </>
+            )}
+          </Button>
         </div>
-        <Button type="submit" className="w-full sm:w-auto mt-2 sm:mt-0 gap-2 flex items-center">
-          <Search className="h-4 w-4" /> Buscar
-        </Button>
       </form>
 
-      <div className="mt-4 min-h-[120px]">
+      <div className="mt-6 min-h-[120px]">
         {loading && (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-4">
             {Array.from({ length: 3 }).map((_, idx) => (
-              <Skeleton key={idx} className="h-16 rounded-xl w-full" />
+              <Skeleton key={idx} className="h-32 rounded-xl w-full" />
             ))}
           </div>
         )}
 
         {!loading && erro && (
-          <div className="text-center text-sm p-4 text-muted-foreground">{erro}</div>
+          <div className="text-center text-sm p-6 border rounded-lg bg-muted/20">
+            <div className="text-muted-foreground">{erro}</div>
+          </div>
         )}
 
         {!loading && resultados.length > 0 && (
           <div className="flex flex-col gap-4 mt-2">
-            {resultados.map((res, idx) => (
-              <div
-                key={idx}
-                className="rounded-lg border shadow bg-card p-3 text-sm transition hover:shadow-md"
-              >
-                <div className="flex flex-col gap-1">
-                  <span className="font-bold text-primary">{res.processo || "Sem número"}</span>
-                  {res.tema && <span className="block text-xs text-muted-foreground">Tema: {res.tema}</span>}
-                  {res.assunto && <span className="block text-xs text-muted-foreground">Assunto: {typeof res.assunto === "object" ? JSON.stringify(res.assunto) : res.assunto}</span>}
-                  {res.classe && <span className="block text-xs text-muted-foreground">Classe: {typeof res.classe === "object" ? JSON.stringify(res.classe) : res.classe}</span>}
-                  {res.dataDistribuicao && (
-                    <span className="block text-xs text-muted-foreground">Data de Distribuição: {res.dataDistribuicao}</span>
-                  )}
-                </div>
-              </div>
-            ))}
+            {resultados.map((res, idx) => renderizarResultado(res, idx))}
           </div>
         )}
       </div>
