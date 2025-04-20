@@ -1,12 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookOpen, Search, VolumeUp } from "lucide-react";
+import { BookOpen, Search, Volume } from "lucide-react";
 
-// Temporary mock data for blog articles
 const mockArticles = [
   {
     id: 1,
@@ -76,7 +74,6 @@ const Bloger = () => {
   useEffect(() => {
     let result = mockArticles;
     
-    // Filter by search term
     if (searchTerm) {
       result = result.filter(article => 
         article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -84,7 +81,6 @@ const Bloger = () => {
       );
     }
     
-    // Filter by category
     if (activeCategory !== "Todos") {
       result = result.filter(article => article.category === activeCategory);
     }
@@ -175,7 +171,7 @@ const Bloger = () => {
                   size="icon"
                   onClick={() => narrarTexto(`${article.title}. ${article.summary}`)}
                 >
-                  <VolumeUp className="h-5 w-5" />
+                  <Volume className="h-5 w-5" />
                 </Button>
               </div>
               <CardDescription>{article.date} • Por {article.author}</CardDescription>

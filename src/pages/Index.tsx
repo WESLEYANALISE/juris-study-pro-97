@@ -1,10 +1,9 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   Scale, Video, BookOpen, Brain, GraduationCap, FilePlus, 
   MessageSquare, LibrarySquare, Gavel, Newspaper, FileText,
-  PenTool, RemoteDesktop, MonitorCheck, Calendar, Search
+  PenTool, Monitor, MonitorCheck, Calendar, Search
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -96,7 +95,7 @@ const Index = () => {
           color: "text-teal-500"
         },
         {
-          icon: RemoteDesktop,
+          icon: Monitor,
           title: "Remote Desktop",
           description: "Acesse sua área de trabalho remotamente",
           path: "/remote-desktop",
