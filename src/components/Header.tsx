@@ -7,6 +7,7 @@ import { type ProfileType } from "@/components/WelcomeModal";
 import SearchBar from "@/components/SearchBar";
 import { Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HeaderProps {
   userProfile: ProfileType;
@@ -14,6 +15,7 @@ interface HeaderProps {
 
 export function Header({ userProfile }: HeaderProps) {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-6">
@@ -26,13 +28,17 @@ export function Header({ userProfile }: HeaderProps) {
         <span className="font-bold text-lg hidden sm:inline">JurisStudy Pro</span>
       </div>
       
-      <div className="flex-1 px-2 hidden md:block">
-        <SearchBar />
-      </div>
+      {!isMobile && (
+        <div className="flex-1 px-2">
+          <SearchBar />
+        </div>
+      )}
       
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
-        <ProfileSwitcher currentProfile={userProfile} />
+        <div className="w-40">
+          <ProfileSwitcher currentProfile={userProfile} />
+        </div>
       </div>
     </header>
   );

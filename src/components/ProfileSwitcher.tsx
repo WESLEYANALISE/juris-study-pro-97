@@ -1,5 +1,5 @@
 
-import { Check, ChevronsUpDown, GraduationCap, Scale, User } from "lucide-react";
+import { Check, ChevronsUpDown, GraduationCap, Scale, User, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -37,6 +37,12 @@ const profiles = [
     description: "Profissional em exercício",
   },
   {
+    value: "oab",
+    label: "Candidato OAB",
+    icon: BookOpen,
+    description: "Preparação específica para Exame da Ordem",
+  },
+  {
     value: "tudo",
     label: "Tudo",
     icon: User,
@@ -55,7 +61,7 @@ export function ProfileSwitcher({
 }: ProfileSwitcherProps) {
   const [open, setOpen] = useState(false);
   const [selectedProfile, setSelectedProfile] = useState(
-    profiles.find(p => p.value === currentProfile) || profiles[3]
+    profiles.find(p => p.value === currentProfile) || profiles[4]
   );
 
   const handleProfileSelect = (profile: typeof profiles[0]) => {
@@ -79,7 +85,7 @@ export function ProfileSwitcher({
             {selectedProfile && (
               <>
                 <selectedProfile.icon className="h-5 w-5 text-primary" />
-                <span>{selectedProfile.label}</span>
+                <span className="truncate">{selectedProfile.label}</span>
               </>
             )}
           </div>

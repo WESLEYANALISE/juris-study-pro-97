@@ -15,6 +15,8 @@ import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
 import Biblioteca from "./pages/Biblioteca";
+import Explorar from "./pages/Explorar";
+import FerramentasJuridicas from "./pages/FerramentasJuridicas";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -50,6 +52,10 @@ const App = () => {
               <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
               <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
               <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
+              <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
+              <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
+              
+              {/* Placeholder routes until these pages are created */}
               <Route path="/flashcards" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/resumos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/simulados" element={<Layout userProfile={userProfile}><Index /></Layout>} />
@@ -57,9 +63,15 @@ const App = () => {
               <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/noticias" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/assistente" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/explorar" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/perfil" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/search" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              
+              {/* Ferramentas Jurídicas sub-routes */}
+              <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               
               {/* Redirect routes */}
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />

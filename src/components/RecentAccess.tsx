@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,12 +18,32 @@ interface RecentItem {
   type: "video" | "article" | "document" | "book";
   path: string;
   timestamp: string;
+  transcript?: string;
 }
+
+// Random audio transcript generator
+const getRandomTranscript = (type: string, title: string) => {
+  const transcripts = [
+    `Último acesso ao ${title}, continue de onde parou.`,
+    `${title} foi visualizado recentemente.`,
+    `Continue estudando ${title} para melhor fixação.`,
+    `Você progrediu 45% em ${title}.`,
+    `Revisão recomendada para ${title}.`,
+    `O conteúdo de ${title} foi atualizado.`,
+    `Este ${type} está relacionado aos seus interesses.`,
+    `Retome seus estudos em ${title}.`,
+    `Material complementar disponível para ${title}.`,
+    `${title} faz parte da sua trilha de aprendizado.`
+  ];
+  
+  return transcripts[Math.floor(Math.random() * transcripts.length)];
+};
 
 const RecentAccess = () => {
   const navigate = useNavigate();
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [transcripts, setTranscripts] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     const fetchRecentAccess = async () => {
@@ -37,36 +58,59 @@ const RecentAccess = () => {
         if (error) throw error;
 
         // TODO: Convert Supabase data to RecentItem format
-        setRecentItems([
+        const items = [
           {
             id: "1",
             title: "Direito Constitucional - Aula 3",
-            type: "video",
+            type: "video" as const,
             path: "/videoaulas",
             timestamp: "2h atrás"
           },
           {
             id: "2",
             title: "Reforma tributária 2025",
-            type: "article",
+            type: "article" as const,
             path: "/bloger",
             timestamp: "ontem"
           },
           {
             id: "3",
             title: "Manual de Direito Civil",
-            type: "book",
+            type: "book" as const,
             path: "/biblioteca",
             timestamp: "3d atrás"
           },
           {
             id: "4",
             title: "Recurso Extraordinário",
-            type: "document",
+            type: "document" as const,
             path: "/peticionario",
             timestamp: "5d atrás"
+          },
+          {
+            id: "5",
+            title: "Direito Administrativo - Concursos",
+            type: "video" as const,
+            path: "/videoaulas",
+            timestamp: "1 semana"
+          },
+          {
+            id: "6",
+            title: "Lei Geral de Proteção de Dados",
+            type: "article" as const,
+            path: "/bloger",
+            timestamp: "2 semanas"
           }
-        ]);
+        ];
+        
+        // Generate random transcripts for each item
+        const newTranscripts: {[key: string]: string} = {};
+        items.forEach(item => {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        });
+        
+        setTranscripts(newTranscripts);
+        setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
       } finally {
@@ -75,6 +119,17 @@ const RecentAccess = () => {
     };
 
     fetchRecentAccess();
+    
+    // Refresh transcripts every 10 seconds
+    const interval = setInterval(() => {
+      const newTranscripts: {[key: string]: string} = {};
+      recentItems.forEach(item => {
+        newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+      });
+      setTranscripts(newTranscripts);
+    }, 10000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const getIcon = (type: string) => {
@@ -90,8 +145,6 @@ const RecentAccess = () => {
   // Ensure recentItems is an array before using array methods
   const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
-  // Get visible items safely
-
   if (itemsArray.length === 0 && !loading) {
     return null;
   }
@@ -118,13 +171,13 @@ const RecentAccess = () => {
       <Carousel
         opts={{
           align: "start",
-          loop: true,
+          containScroll: false,
         }}
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
           {itemsArray.map((item) => (
-            <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 md:basis-1/3">
+            <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => navigate(item.path)}
@@ -135,13 +188,18 @@ const RecentAccess = () => {
                     <span className="text-xs text-muted-foreground">{item.timestamp}</span>
                   </div>
                   <p className="text-sm font-medium truncate">{item.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2 h-8">
+                    "{transcripts[item.id] || getRandomTranscript(item.type, item.title)}"
+                  </p>
                 </CardContent>
               </Card>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex" />
-        <CarouselNext className="hidden md:flex" />
+        <div className="hidden md:block">
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </div>
       </Carousel>
     </div>
   );
