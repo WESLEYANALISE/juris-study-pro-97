@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Provider } from '@supabase/supabase-js';
 import { toast } from 'sonner';
+import { Scale } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 export const Auth = () => {
   const [email, setEmail] = useState('');
@@ -72,16 +74,35 @@ export const Auth = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Login JurisStudy</h2>
+    <div className="max-w-md mx-auto p-6 bg-background rounded-lg shadow-md flex flex-col items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center mb-8 space-y-4">
+        <Scale 
+          className={cn(
+            "h-16 w-16 text-primary animate-pulse-subtle", 
+            "transition-transform duration-300 hover:scale-110"
+          )} 
+        />
+        <div className="text-center">
+          <h1 className={cn(
+            "text-4xl font-bold text-primary",
+            "animate-fade-in tracking-tight"
+          )}>
+            JurisStudy
+          </h1>
+          <p className="text-muted-foreground mt-2 animate-slide-up">
+            Plataforma de Estudos Jurídicos
+          </p>
+        </div>
+      </div>
       
-      <form onSubmit={handleSignIn} className="space-y-4">
+      <form onSubmit={handleSignIn} className="w-full space-y-4">
         <Input 
           type="email" 
           placeholder="Email" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required 
+          className="animate-enter"
         />
         <Input 
           type="password" 
@@ -89,15 +110,21 @@ export const Auth = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required 
+          className="animate-enter"
         />
         
         <div className="space-y-2">
-          <Button type="submit" className="w-full">Entrar</Button>
+          <Button 
+            type="submit" 
+            className="w-full animate-enter"
+          >
+            Entrar
+          </Button>
           <Button 
             type="button" 
             variant="outline" 
             onClick={handleSignUp} 
-            className="w-full"
+            className="w-full animate-enter"
           >
             Cadastrar
           </Button>
@@ -105,7 +132,7 @@ export const Auth = () => {
             type="button" 
             variant="secondary" 
             onClick={handleGoogleSignIn} 
-            className="w-full"
+            className="w-full animate-enter"
           >
             Entrar com Google
           </Button>

@@ -81,6 +81,33 @@ export type Database = {
         }
         Relationships: []
       }
+      dicionario_juridico: {
+        Row: {
+          area_direito: string | null
+          created_at: string | null
+          definicao: string
+          exemplo_uso: string | null
+          id: string
+          termo: string
+        }
+        Insert: {
+          area_direito?: string | null
+          created_at?: string | null
+          definicao: string
+          exemplo_uso?: string | null
+          id?: string
+          termo: string
+        }
+        Update: {
+          area_direito?: string | null
+          created_at?: string | null
+          definicao?: string
+          exemplo_uso?: string | null
+          id?: string
+          termo?: string
+        }
+        Relationships: []
+      }
       flash_cards: {
         Row: {
           area: string | null
