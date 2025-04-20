@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,16 +9,15 @@ import { Clock, Calendar, Plus, CheckCircle, Circle, BarChart, Book, GraduationC
 const Cronograma = () => {
   const [viewMode, setViewMode] = useState("hoje");
   
-  // Dados de exemplo para tarefas
   const tarefas = [
     {
       id: 1,
       title: "Estudar Direito Constitucional",
       description: "Princípios fundamentais e direitos individuais",
-      status: "pendente", // pendente, concluida, atrasada
+      status: "pendente",
       date: "20/04/2025",
       time: "09:00 - 11:00",
-      priority: "alta", // alta, media, baixa
+      priority: "alta",
       category: "Concurso",
       progress: 0
     },
@@ -69,7 +67,6 @@ const Cronograma = () => {
     }
   ];
   
-  // Dados de exemplo para metas
   const metas = [
     {
       id: 1,
@@ -91,9 +88,8 @@ const Cronograma = () => {
     }
   ];
   
-  // Filtragem de tarefas com base na visualização selecionada
   const getTarefasFiltradas = () => {
-    const hoje = "20/04/2025"; // Simulando a data atual
+    const hoje = "20/04/2025";
     
     switch (viewMode) {
       case "hoje":
@@ -145,7 +141,7 @@ const Cronograma = () => {
         return <Badge className="bg-red-500">Alta</Badge>;
       case "media":
         return <Badge className="bg-amber-500">Média</Badge>;
-      case "baix
+      case "baixa":
         return <Badge className="bg-green-500">Baixa</Badge>;
       default:
         return <Badge variant="outline">-</Badge>;
