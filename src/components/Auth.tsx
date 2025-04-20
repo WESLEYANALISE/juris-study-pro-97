@@ -173,7 +173,9 @@ export const Auth = () => {
         </div>
       </form>
       
-      <style jsx global>{`
+      {/* Removed jsx and global attributes from style tag, which caused the TypeScript error */}
+      <style>
+        {`
         @keyframes bounce-slow {
           0%, 100% {
             transform: translateY(0);
@@ -185,7 +187,8 @@ export const Auth = () => {
         .animate-bounce-slow {
           animation: bounce-slow 3s ease-in-out infinite;
         }
-      `}</style>
+        `}
+      </style>
     </div>
   );
 };
