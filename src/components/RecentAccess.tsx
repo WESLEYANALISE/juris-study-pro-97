@@ -59,13 +59,17 @@ const RecentAccess = () => {
     }
   };
 
-  // Make sure we have valid items before slicing
-  const visibleItems = recentItems && recentItems.length > 0 
-    ? recentItems.slice(currentIndex, currentIndex + Math.min(3, recentItems.length - currentIndex))
-    : [];
+  // Ensure recentItems is an array before using array methods
+  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
+  
+  // Get visible items safely
+  const visibleItems = itemsArray.slice(
+    currentIndex, 
+    currentIndex + Math.min(3, itemsArray.length - currentIndex)
+  );
   
   const nextSlide = () => {
-    if (recentItems && currentIndex < recentItems.length - 3) {
+    if (itemsArray.length > 0 && currentIndex < itemsArray.length - 3) {
       setCurrentIndex(currentIndex + 1);
     }
   };
@@ -75,6 +79,11 @@ const RecentAccess = () => {
       setCurrentIndex(currentIndex - 1);
     }
   };
+
+  // If there are no items, don't render anything
+  if (itemsArray.length === 0) {
+    return null;
+  }
 
   return (
     <div className="w-full mb-4">
@@ -95,7 +104,7 @@ const RecentAccess = () => {
             size="icon" 
             className="h-6 w-6" 
             onClick={nextSlide}
-            disabled={!recentItems || currentIndex >= recentItems.length - 3}
+            disabled={currentIndex >= itemsArray.length - 3}
           >
             <ChevronRight className="h-4 w-4" />
           </Button>

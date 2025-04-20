@@ -35,9 +35,16 @@ const MobileNavigation = () => {
     }
   ];
 
+  // Ensure navItems is an array before mapping
+  const itemsArray = Array.isArray(navItems) ? navItems : [];
+
+  if (itemsArray.length === 0) {
+    return null;
+  }
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 flex justify-around bg-card border-t border-border p-2 md:hidden">
-      {navItems && navItems.map((item) => (
+      {itemsArray.map((item) => (
         <button
           key={item.name}
           onClick={() => navigate(item.path)}
