@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/popover";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { type ProfileType } from "@/components/WelcomeModal";
 
 const profiles = [
   {
@@ -43,9 +44,27 @@ const profiles = [
   },
 ];
 
-export function ProfileSwitcher() {
+interface ProfileSwitcherProps {
+  currentProfile?: ProfileType;
+  onProfileChange?: (profile: ProfileType) => void;
+}
+
+export function ProfileSwitcher({ 
+  currentProfile = "tudo", 
+  onProfileChange 
+}: ProfileSwitcherProps) {
   const [open, setOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState(profiles[0]);
+  const [selectedProfile, setSelectedProfile] = useState(
+    profiles.find(p => p.value === currentProfile) || profiles[3]
+  );
+
+  const handleProfileSelect = (profile: typeof profiles[0]) => {
+    setSelectedProfile(profile);
+    setOpen(false);
+    if (onProfileChange) {
+      onProfileChange(profile.value as ProfileType);
+    }
+  };
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -57,8 +76,12 @@ export function ProfileSwitcher() {
           className="w-full justify-between"
         >
           <div className="flex items-center gap-2">
-            <selectedProfile.icon className="h-5 w-5 text-primary" />
-            <span>{selectedProfile.label}</span>
+            {selectedProfile && (
+              <>
+                <selectedProfile.icon className="h-5 w-5 text-primary" />
+                <span>{selectedProfile.label}</span>
+              </>
+            )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -72,10 +95,7 @@ export function ProfileSwitcher() {
               <CommandItem
                 key={profile.value}
                 value={profile.value}
-                onSelect={() => {
-                  setSelectedProfile(profile);
-                  setOpen(false);
-                }}
+                onSelect={() => handleProfileSelect(profile)}
                 className="cursor-pointer"
               >
                 <div className="flex items-center gap-2">
