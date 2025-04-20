@@ -19,6 +19,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   Drawer,
   DrawerClose,
@@ -133,7 +134,12 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
   return (
     <div className="container mx-auto py-6 max-w-4xl">
       <div className="flex justify-between items-center mb-6">
-        <Button variant="outline" size="sm" onClick={onBack}>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={onBack}
+          className="transition-transform duration-300 hover:scale-105 active:scale-95"
+        >
           <ChevronLeft className="h-4 w-4 mr-1" /> Voltar
         </Button>
         <div className="flex gap-2">
@@ -151,7 +157,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
 
       <Progress value={progress} className="mb-6 h-2" />
 
-      <div className="mb-6 grid grid-cols-2 gap-4">
+      <div className="mb-6 flex flex-wrap gap-4 justify-center">
         <div className="flex items-center space-x-2">
           <Switch id="advanced-mode" checked={isAdvancedMode} onCheckedChange={handleModeChange} />
           <Label htmlFor="advanced-mode">
@@ -167,41 +173,58 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
       </div>
 
       <div 
-        className={`cursor-pointer transition-all duration-500 perspective-1000 mb-6 ${isFlipped ? 'rotate-y-180' : ''}`}
+        className={cn(
+          "relative cursor-pointer min-h-[300px]",
+          "transition-all duration-500"
+        )}
         onClick={isAdvancedMode ? handleFlip : undefined}
-        style={{ perspective: '1000px' }}
       >
-        <Card className={`transform-style-3d relative min-h-[300px] transform transition-transform duration-500 ${isFlipped ? 'rotate-y-180' : ''}`}>
-          <div className={`absolute w-full h-full backface-hidden ${isFlipped ? 'hidden' : ''}`}>
-            <CardHeader className="text-center pt-8">
+        <div 
+          className={cn(
+            "absolute inset-0 w-full h-full backface-hidden",
+            "transition-all duration-500",
+            isFlipped ? "opacity-0 transform -translate-y-10" : "opacity-100 transform translate-y-0"
+          )}
+        >
+          <Card className="h-full">
+            <CardHeader className="text-center">
               <h3 className="text-xl font-semibold mb-0">Pergunta</h3>
               <Separator className="my-3" />
             </CardHeader>
-            <CardContent className="text-center px-8">
+            <CardContent className="text-center px-8 flex flex-col justify-center items-center h-48">
               <p className="text-lg">{currentFlashcard.pergunta || "Sem pergunta"}</p>
             </CardContent>
-            <CardFooter className="flex justify-center pb-8">
+            <CardFooter className="flex justify-center">
               {isAdvancedMode && (
                 <Badge variant="outline" className="animate-pulse">
                   Clique para ver a resposta
                 </Badge>
               )}
             </CardFooter>
-          </div>
+          </Card>
+        </div>
 
-          <div className={`absolute w-full h-full backface-hidden transform rotate-y-180 ${!isFlipped && isAdvancedMode ? 'hidden' : (!isAdvancedMode && showAnswer ? '' : 'hidden')}`}>
-            <CardHeader className="text-center pt-8">
+        <div 
+          className={cn(
+            "absolute inset-0 w-full h-full backface-hidden",
+            "transition-all duration-500",
+            !isFlipped ? "opacity-0 transform translate-y-10" : "opacity-100 transform translate-y-0",
+            !isAdvancedMode && showAnswer ? "opacity-100 transform translate-y-0" : ""
+          )}
+        >
+          <Card className="h-full">
+            <CardHeader className="text-center">
               <h3 className="text-xl font-semibold mb-0">Resposta</h3>
               <Separator className="my-3" />
             </CardHeader>
-            <CardContent className="text-center px-8">
+            <CardContent className="text-center px-8 flex flex-col justify-center items-center h-48">
               <p className="text-lg">{currentFlashcard.resposta || "Sem resposta"}</p>
             </CardContent>
             {currentFlashcard.explicacao && (
-              <CardFooter className="flex justify-center pb-4">
+              <CardFooter className="flex justify-center">
                 <Drawer>
                   <DrawerTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button variant="outline" size="sm" className="transition-transform duration-300 hover:scale-105 active:scale-95">
                       <Lightbulb className="mr-2 h-4 w-4" />
                       Ver Explicação
                     </Button>
@@ -235,16 +258,17 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
                 </Drawer>
               </CardFooter>
             )}
-          </div>
-        </Card>
+          </Card>
+        </div>
       </div>
 
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mt-6">
         <Button 
           onClick={handlePrevious} 
           disabled={currentIndex === 0}
           variant="outline"
           size="lg"
+          className="transition-transform duration-300 hover:scale-105 active:scale-95"
         >
           <ChevronLeft className="h-5 w-5 mr-1" />
           Anterior
@@ -255,7 +279,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
             onClick={handleRestart} 
             variant="outline"
             size="icon"
-            className="h-10 w-10"
+            className="h-10 w-10 transition-transform duration-300 hover:scale-105 active:scale-95"
           >
             <RotateCcw className="h-5 w-5" />
           </Button>
@@ -264,7 +288,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
               onClick={handleAutoModeChange} 
               variant="outline"
               size="icon"
-              className="h-10 w-10"
+              className="h-10 w-10 transition-transform duration-300 hover:scale-105 active:scale-95"
             >
               <Pause className="h-5 w-5" />
             </Button>
@@ -273,7 +297,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
               onClick={handleAutoModeChange} 
               variant="outline"
               size="icon"
-              className="h-10 w-10"
+              className="h-10 w-10 transition-transform duration-300 hover:scale-105 active:scale-95"
             >
               <Play className="h-5 w-5" />
             </Button>
@@ -285,6 +309,7 @@ const FlashcardStudy = ({ flashcards = [], onBack }: FlashcardStudyProps) => {
           disabled={currentIndex === flashcards.length - 1}
           variant="default"
           size="lg"
+          className="transition-transform duration-300 hover:scale-105 active:scale-95"
         >
           Próximo
           <ChevronRight className="h-5 w-5 ml-1" />

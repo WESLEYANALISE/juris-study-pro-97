@@ -18,6 +18,7 @@ import Biblioteca from "./pages/Biblioteca";
 import Explorar from "./pages/Explorar";
 import FerramentasJuridicas from "./pages/FerramentasJuridicas";
 import Flashcards from "./pages/Flashcards";
+import DicionarioJuridico from "./pages/DicionarioJuridico";
 import Auth from "./components/Auth";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
@@ -31,11 +32,44 @@ const queryClient = new QueryClient({
   },
 });
 
+// Add style for page transitions
+const globalStyles = `
+.page-transition {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.page-exit {
+  opacity: 0;
+  transform: translateY(10px);
+}
+.page-enter {
+  opacity: 0;
+  transform: translateY(-10px);
+  animation: page-enter-animation 0.3s forwards;
+}
+@keyframes page-enter-animation {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+`;
+
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<ProfileType>(() => {
     return (localStorage.getItem("juris-study-profile") as ProfileType) || "tudo";
   });
+
+  useEffect(() => {
+    // Add global styles
+    const styleElement = document.createElement('style');
+    styleElement.innerHTML = globalStyles;
+    document.head.appendChild(styleElement);
+    
+    return () => {
+      document.head.removeChild(styleElement);
+    };
+  }, []);
 
   useEffect(() => {
     // Check current session
@@ -88,6 +122,7 @@ const App = () => {
               <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
               <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
               <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
+              <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><DicionarioJuridico /></Layout>} />
               
               {/* Placeholder routes until these pages are created */}
               <Route path="/resumos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
@@ -102,7 +137,6 @@ const App = () => {
               
               {/* Ferramentas Jurídicas sub-routes */}
               <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               

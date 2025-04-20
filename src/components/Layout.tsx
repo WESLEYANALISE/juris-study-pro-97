@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -25,7 +26,7 @@ const Layout = ({
 }: LayoutProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
-  return <SidebarProvider defaultOpen={true}>
+  return <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
@@ -40,7 +41,9 @@ const Layout = ({
               </div>}
             <Suspense fallback={<LoadingFallback />}>
               <ReactErrorBoundary FallbackComponent={ErrorFallback}>
-                {children}
+                <div className="page-transition">
+                  {children}
+                </div>
               </ReactErrorBoundary>
             </Suspense>
           </main>
@@ -49,4 +52,5 @@ const Layout = ({
       </div>
     </SidebarProvider>;
 };
+
 export default Layout;

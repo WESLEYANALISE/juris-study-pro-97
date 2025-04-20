@@ -1,9 +1,8 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { Provider } from '@supabase/supabase-js';
 import { toast } from 'sonner';
 import { Scale } from 'lucide-react';
 import { cn } from "@/lib/utils";
@@ -11,6 +10,16 @@ import { cn } from "@/lib/utils";
 export const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [animationComplete, setAnimationComplete] = useState(false);
+
+  useEffect(() => {
+    // Trigger animations after component mounts
+    const timer = setTimeout(() => {
+      setAnimationComplete(true);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   // Function to get greeting based on current time
   const getGreeting = () => {
@@ -78,18 +87,25 @@ export const Auth = () => {
       <div className="flex flex-col items-center mb-8 space-y-4">
         <Scale 
           className={cn(
-            "h-16 w-16 text-primary animate-pulse-subtle", 
-            "transition-transform duration-300 hover:scale-110"
+            "h-16 w-16 text-primary", 
+            "transition-transform duration-1000",
+            animationComplete ? "scale-100" : "scale-0",
+            "animate-bounce-slow"
           )} 
         />
-        <div className="text-center">
+        <div className="text-center overflow-hidden">
           <h1 className={cn(
-            "text-4xl font-bold text-primary",
-            "animate-fade-in tracking-tight"
+            "text-4xl font-bold text-primary tracking-tight",
+            "transition-all duration-700 delay-300",
+            animationComplete ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
           )}>
             JurisStudy
           </h1>
-          <p className="text-muted-foreground mt-2 animate-slide-up">
+          <p className={cn(
+            "text-muted-foreground mt-2",
+            "transition-all duration-700 delay-500",
+            animationComplete ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
+          )}>
             Plataforma de Estudos Jurídicos
           </p>
         </div>
@@ -102,7 +118,10 @@ export const Auth = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required 
-          className="animate-enter"
+          className={cn(
+            "transition-all duration-500 delay-700",
+            animationComplete ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+          )}
         />
         <Input 
           type="password" 
@@ -110,13 +129,20 @@ export const Auth = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required 
-          className="animate-enter"
+          className={cn(
+            "transition-all duration-500 delay-800",
+            animationComplete ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+          )}
         />
         
         <div className="space-y-2">
           <Button 
             type="submit" 
-            className="w-full animate-enter"
+            className={cn(
+              "w-full",
+              "transition-all duration-500 delay-900",
+              animationComplete ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            )}
           >
             Entrar
           </Button>
@@ -124,7 +150,11 @@ export const Auth = () => {
             type="button" 
             variant="outline" 
             onClick={handleSignUp} 
-            className="w-full animate-enter"
+            className={cn(
+              "w-full",
+              "transition-all duration-500 delay-1000",
+              animationComplete ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            )}
           >
             Cadastrar
           </Button>
@@ -132,12 +162,30 @@ export const Auth = () => {
             type="button" 
             variant="secondary" 
             onClick={handleGoogleSignIn} 
-            className="w-full animate-enter"
+            className={cn(
+              "w-full",
+              "transition-all duration-500 delay-1100",
+              animationComplete ? "translate-y-0 opacity-100" : "translate-y-4 opacity-0"
+            )}
           >
             Entrar com Google
           </Button>
         </div>
       </form>
+      
+      <style jsx global>{`
+        @keyframes bounce-slow {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-10px);
+          }
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 };
