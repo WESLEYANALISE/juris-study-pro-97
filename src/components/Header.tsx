@@ -2,7 +2,8 @@
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ProfileSwitcher, type ProfileType } from "@/components/ProfileSwitcher";
+import { ProfileSwitcher } from "@/components/ProfileSwitcher";
+import { type ProfileType } from "@/components/WelcomeModal";
 import SearchBar from "@/components/SearchBar";
 import { Scale } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -31,7 +32,7 @@ export function Header({ userProfile }: HeaderProps) {
       
       <div className="ml-auto flex items-center gap-2">
         <ThemeToggle />
-        <ProfileSwitcher profile={userProfile} />
+        <ProfileSwitcher currentProfile={userProfile} />
       </div>
     </header>
   );
