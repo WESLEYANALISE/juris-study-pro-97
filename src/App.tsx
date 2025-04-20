@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +18,7 @@ import Biblioteca from "./pages/Biblioteca";
 import Explorar from "./pages/Explorar";
 import FerramentasJuridicas from "./pages/FerramentasJuridicas";
 import Flashcards from "./pages/Flashcards";
+import Jurisprudencia from "./pages/Jurisprudencia";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -55,13 +57,12 @@ const App = () => {
               <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
               <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
               <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
+              <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Jurisprudencia /></Layout>} />
               
               {/* Placeholder routes until these pages are created */}
-              <Route path="/flashcards" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/resumos" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/simulados" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/peticionario" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/noticias" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/assistente" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/perfil" element={<Layout userProfile={userProfile}><Index /></Layout>} />
