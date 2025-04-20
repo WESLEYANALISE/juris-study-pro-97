@@ -1,18 +1,19 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Scale, BookOpen, ListChecks, Clock, Upload, PlusCircle } from "lucide-react";
+import { Scale, BookOpen, ListChecks, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Tables } from "@/integrations/supabase/types";
-import { Separator } from "@/components/ui/separator";
 import FlashcardStudy from "@/components/flashcards/FlashcardStudy";
 import FlashcardStats from "@/components/flashcards/FlashcardStats";
+
 type FlashCard = Tables<"flash_cards">;
+
 const Flashcards = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -24,40 +25,40 @@ const Flashcards = () => {
   const [activeTab, setActiveTab] = useState("explorar");
   const [startStudy, setStartStudy] = useState(false);
   const [flashcards, setFlashcards] = useState<FlashCard[]>([]);
+
   useEffect(() => {
     fetchFlashcardsCount();
     fetchAreas();
   }, []);
+
   useEffect(() => {
     if (selectedArea) {
       fetchTemas(selectedArea);
     }
   }, [selectedArea]);
+
   const fetchFlashcardsCount = async () => {
     try {
-      const {
-        count,
-        error
-      } = await supabase.from("flash_cards").select("*", {
-        count: "exact",
-        head: true
-      });
+      const { count, error } = await supabase
+        .from("flash_cards")
+        .select("*", { count: "exact", head: true });
+      
       if (error) throw error;
       setFlashcardsCount(count || 0);
     } catch (error) {
       console.error("Error fetching flashcards count:", error);
     }
   };
+
   const fetchAreas = async () => {
     setLoading(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.from("flash_cards").select("area").not("area", "is", null);
+      const { data, error } = await supabase
+        .from("flash_cards")
+        .select("area")
+        .not("area", "is", null);
+      
       if (error) throw error;
-
-      // Get unique areas
       const uniqueAreas = [...new Set(data.map(item => item.area))].filter(Boolean) as string[];
       setAreas(uniqueAreas);
     } catch (error) {
@@ -66,21 +67,23 @@ const Flashcards = () => {
       setLoading(false);
     }
   };
+
   const fetchTemas = async (area: string) => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from("flash_cards").select("tema").eq("area", area).not("tema", "is", null);
+      const { data, error } = await supabase
+        .from("flash_cards")
+        .select("tema")
+        .eq("area", area)
+        .not("tema", "is", null);
+      
       if (error) throw error;
-
-      // Get unique temas
       const uniqueTemas = [...new Set(data.map(item => item.tema))].filter(Boolean) as string[];
       setTemas(uniqueTemas);
     } catch (error) {
       console.error("Error fetching temas:", error);
     }
   };
+
   const fetchFlashcards = async () => {
     setLoading(true);
     try {
@@ -91,10 +94,8 @@ const Flashcards = () => {
       if (selectedTema) {
         query = query.eq("tema", selectedTema);
       }
-      const {
-        data,
-        error
-      } = await query;
+      const { data, error } = await query;
+      
       if (error) throw error;
       setFlashcards(data as FlashCard[]);
       setStartStudy(true);
@@ -104,26 +105,32 @@ const Flashcards = () => {
       setLoading(false);
     }
   };
+
   const handleAreaChange = (value: string) => {
     setSelectedArea(value);
     setSelectedTema("");
   };
+
   const handleTemaChange = (value: string) => {
     setSelectedTema(value);
   };
+
   const resetStudy = () => {
     setStartStudy(false);
   };
+
   if (startStudy && flashcards.length > 0) {
     return <FlashcardStudy flashcards={flashcards} onBack={resetStudy} />;
   }
-  return <div className="container mx-auto py-6 max-w-5xl px-0">
+
+  return (
+    <div className="container mx-auto py-6 max-w-5xl px-4">
       <div className="flex flex-col items-center mb-6">
         <div className="mb-4">
           <BookOpen className="h-12 w-12 text-primary mx-auto mb-2" />
-          <h1 className="text-2xl font-bold mb-1 my-0 mx-[190px]">Flashcards</h1>
+          <h1 className="text-2xl font-bold text-center mb-1">Flashcards</h1>
           <p className="text-muted-foreground text-center">
-            Estude através de cartões de memorização com repetição espaçada
+            Estude através de cartões de memorização
           </p>
         </div>
       </div>
@@ -153,9 +160,11 @@ const Flashcards = () => {
                         <SelectValue placeholder="Selecione uma área" />
                       </SelectTrigger>
                       <SelectContent>
-                        {areas.map(area => <SelectItem key={area} value={area}>
+                        {areas.map(area => (
+                          <SelectItem key={area} value={area}>
                             {area}
-                          </SelectItem>)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -167,9 +176,11 @@ const Flashcards = () => {
                         <SelectValue placeholder={selectedArea ? "Selecione um tema" : "Selecione uma área primeiro"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {temas.map(tema => <SelectItem key={tema} value={tema}>
+                        {temas.map(tema => (
+                          <SelectItem key={tema} value={tema}>
                             {tema}
-                          </SelectItem>)}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -195,59 +206,6 @@ const Flashcards = () => {
               </Button>
             </CardFooter>
           </Card>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Modo de Exibição</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="px-2 py-1">Padrão</Badge>
-                    <span className="text-sm">Modo Eficiente (pergunta e resposta juntas)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="px-2 py-1">Avançado</Badge>
-                    <span className="text-sm">Apenas pergunta, clique para ver resposta</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Velocidade</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="px-2 py-1">Padrão</Badge>
-                    <span className="text-sm">Modo Manual (você controla)</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="px-2 py-1">Automático</Badge>
-                    <span className="text-sm">Cards avançam automaticamente</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base">Crie seus próprios flashcards</CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <p className="text-sm text-muted-foreground mb-3">
-                  Envie seu material e gere flashcards personalizados
-                </p>
-                <Button variant="outline" className="w-full" size="sm">
-                  <Upload className="h-4 w-4 mr-1" />
-                  Enviar Material
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </TabsContent>
         
         <TabsContent value="estatisticas">
@@ -276,6 +234,8 @@ const Flashcards = () => {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>;
+    </div>
+  );
 };
+
 export default Flashcards;
