@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 import { Info, Download } from "lucide-react";
@@ -115,8 +115,35 @@ export default function JurisprudenciaSearch() {
   const [loading, setLoading] = useState(false);
   const [resultados, setResultados] = useState<ResultadoDatajud[]>([]);
   const [erro, setErro] = useState<string | null>(null);
-  const [showCorsInfo, setShowCorsInfo] = useState(false);
   const [showProxyInstructions, setShowProxyInstructions] = useState(false);
+  const [totalResultados, setTotalResultados] = useState<number>(0);
+  const [proxyUrl, setProxyUrl] = useState<string>("http://localhost:3500/api/datajud/search");
+  const [proxyStatus, setProxyStatus] = useState<'checking' | 'online' | 'offline'>('checking');
+
+  // Verificar se o servidor proxy está online
+  useEffect(() => {
+    const checkProxyStatus = async () => {
+      try {
+        const response = await fetch(proxyUrl.replace('/search', '/health'), {
+          method: 'GET',
+          signal: AbortSignal.timeout(3000)
+        });
+        
+        if (response.ok) {
+          setProxyStatus('online');
+          console.log("Servidor proxy está online");
+        } else {
+          setProxyStatus('offline');
+          console.log("Servidor proxy está offline (resposta não-ok)");
+        }
+      } catch (error) {
+        setProxyStatus('offline');
+        console.log("Servidor proxy está offline:", error);
+      }
+    };
+    
+    checkProxyStatus();
+  }, [proxyUrl]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -133,109 +160,68 @@ export default function JurisprudenciaSearch() {
     setLoading(true);
     setResultados([]);
     setErro(null);
-    setShowCorsInfo(false);
+    setTotalResultados(0);
 
+    // Verificamos se o proxy está online
+    if (proxyStatus === 'online') {
+      await buscarViaProxy();
+    } else {
+      await buscarDadosSimulados();
+    }
+  };
+
+  const buscarViaProxy = async () => {
     try {
-      const apiKey = "cDZHYzlZa0JadVREZDJCendQbXY6SkJlTzNjLV9TRENyQk1RdnFKZGRQdw==";
-      const url = `https://api-publica.datajud.cnj.jus.br/${tribunal}/_search`;
-
-      const queryBody = {
-        size: 10,
-        query: {
-          multi_match: {
-            query: termo,
-            fields: ["*"],
-            type: "best_fields",
-            fuzziness: "AUTO"
-          }
-        },
-        sort: [
-          { "@timestamp": { order: "desc" } }
-        ]
-      };
-
-      console.log("Consultando API:", url);
-      console.log("Corpo da requisição:", JSON.stringify(queryBody));
-
-      // Tentar a chamada direta à API
-      try {
-        const res = await fetch(url, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `APIKey ${apiKey}`
-          },
-          body: JSON.stringify(queryBody),
-          signal: AbortSignal.timeout(8000)
-        });
-
-        if (!res.ok) {
-          throw new Error(`Erro ao consultar a API: ${res.status} ${res.statusText}`);
-        }
-
-        const data = await res.json();
-        console.log("Resposta da API:", data);
-
-        if (data.hits && data.hits.hits) {
-          const docs = data.hits.hits.map((hit: any) => hit._source) || [];
-          setResultados(docs);
-          
-          if (docs.length === 0) {
-            setErro("Nenhum resultado encontrado para os critérios informados.");
-          } else {
-            toast({
-              title: "Busca realizada com sucesso",
-              description: `${docs.length} ${docs.length === 1 ? 'resultado encontrado' : 'resultados encontrados'}.`,
-            });
-          }
-        } else {
-          setErro("Formato de resposta inesperado. Por favor, tente novamente.");
-        }
-      } catch (fetchError: any) {
-        console.error("Erro na requisição direta:", fetchError);
-        
-        // Se falhou por CORS ou outro motivo, usar os dados simulados
-        setShowCorsInfo(true);
-        
-        // Filtrar resultados simulados pelo termo de busca (simulando a API)
-        const resultadosFiltrados = RESULTADOS_SIMULADOS.filter(res => {
-          const termoBusca = termo.toLowerCase();
-          
-          // Verifica se o termo está em qualquer campo relevante
-          return (
-            (res.numeroProcesso?.toLowerCase().includes(termoBusca) || false) ||
-            (res.classe?.nome?.toLowerCase().includes(termoBusca) || false) ||
-            (res.orgaoJulgador?.nome?.toLowerCase().includes(termoBusca) || false) ||
-            (res.assuntos?.some(assunto => 
-              typeof assunto === 'object' ? 
-                (assunto.nome?.toLowerCase().includes(termoBusca) || false) : 
-                String(assunto).toLowerCase().includes(termoBusca)
-            ) || false)
-          );
-        });
-        
-        // Simula um pequeno delay para parecer que está buscando
-        setTimeout(() => {
-          setResultados(resultadosFiltrados);
-          
-          if (resultadosFiltrados.length === 0) {
-            setErro("Nenhum resultado encontrado para os critérios informados (modo simulado).");
-          } else {
-            toast({
-              title: "Dados simulados carregados",
-              description: `${resultadosFiltrados.length} ${resultadosFiltrados.length === 1 ? 'resultado simulado' : 'resultados simulados'} encontrados.`,
-            });
-          }
-        }, 800);
-      }
-    } catch (err: any) {
-      console.error("Erro na requisição:", err);
+      console.log(`Enviando consulta ao proxy: ${proxyUrl}`);
+      console.log(`Tribunal: ${tribunal}, Termo: ${termo}`);
       
-      if (err.name === 'AbortError') {
+      const res = await fetch(proxyUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          tribunal: tribunal,
+          termo: termo
+        }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => null);
+        throw new Error(
+          errorData?.error || `Erro ao consultar o proxy: ${res.status} ${res.statusText}`
+        );
+      }
+
+      const data = await res.json();
+      console.log("Resposta do proxy:", data);
+
+      if (data.hits && data.hits.hits) {
+        const docs = data.hits.hits.map((hit: any) => hit._source) || [];
+        const total = data.hits.total?.value || docs.length;
+        
+        setResultados(docs);
+        setTotalResultados(total);
+        
+        if (docs.length === 0) {
+          setErro("Nenhum resultado encontrado para os critérios informados.");
+        } else {
+          toast({
+            title: "Busca realizada com sucesso",
+            description: `${total.toLocaleString('pt-BR')} ${total === 1 ? 'resultado encontrado' : 'resultados encontrados'}.`,
+          });
+        }
+      } else {
+        setErro("Formato de resposta inesperado. Por favor, tente novamente.");
+      }
+    } catch (error: any) {
+      console.error("Erro na requisição ao proxy:", error);
+      
+      if (error.name === 'AbortError') {
         setErro("A consulta excedeu o tempo limite. Por favor, tente novamente.");
       } else {
-        setErro(err.message || "Não foi possível buscar informações. Verifique sua conexão e tente novamente.");
-        setShowCorsInfo(true);
+        setErro(error.message || "Não foi possível buscar informações. Verifique se o servidor proxy está em execução.");
       }
       
       toast({
@@ -243,9 +229,48 @@ export default function JurisprudenciaSearch() {
         description: "Ocorreu um erro ao consultar a jurisprudência. Por favor, veja os detalhes abaixo.",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
+      
+      // Se o proxy falhar, carregamos dados simulados
+      await buscarDadosSimulados();
     }
+  };
+
+  const buscarDadosSimulados = async () => {
+    console.log("Carregando dados simulados...");
+    
+    // Filtrar resultados simulados pelo termo de busca (simulando a API)
+    const resultadosFiltrados = RESULTADOS_SIMULADOS.filter(res => {
+      const termoBusca = termo.toLowerCase();
+      
+      // Verifica se o termo está em qualquer campo relevante
+      return (
+        (res.numeroProcesso?.toLowerCase().includes(termoBusca) || false) ||
+        (res.classe?.nome?.toLowerCase().includes(termoBusca) || false) ||
+        (res.orgaoJulgador?.nome?.toLowerCase().includes(termoBusca) || false) ||
+        (res.assuntos?.some(assunto => 
+          typeof assunto === 'object' ? 
+            (assunto.nome?.toLowerCase().includes(termoBusca) || false) : 
+            String(assunto).toLowerCase().includes(termoBusca)
+        ) || false)
+      );
+    });
+    
+    // Simula um pequeno delay para parecer que está buscando
+    setTimeout(() => {
+      setResultados(resultadosFiltrados);
+      setTotalResultados(resultadosFiltrados.length * 103); // Multiplicamos para simular um número maior
+      
+      if (resultadosFiltrados.length === 0) {
+        setErro("Nenhum resultado encontrado para os critérios informados (modo simulado).");
+      } else {
+        toast({
+          title: "Dados simulados carregados",
+          description: `${resultadosFiltrados.length} ${resultadosFiltrados.length === 1 ? 'resultado simulado' : 'resultados simulados'} encontrados.`,
+        });
+      }
+      
+      setLoading(false);
+    }, 800);
   };
 
   const formatarData = (dataString?: string) => {
@@ -275,7 +300,7 @@ app.post('/api/datajud/search', async (req, res) => {
   const url = \`https://api-publica.datajud.cnj.jus.br/\${tribunal}/_search\`;
 
   const queryBody = {
-    size: 10,
+    size: 50,
     query: {
       multi_match: {
         query: termo,
@@ -285,7 +310,8 @@ app.post('/api/datajud/search', async (req, res) => {
       }
     },
     sort: [
-      { "@timestamp": { order: "desc" } }
+      { "_score": { "order": "desc" } },
+      { "@timestamp": { "order": "desc" } }
     ]
   };
 
@@ -312,50 +338,53 @@ app.post('/api/datajud/search', async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' });
+});
+
+const PORT = process.env.PORT || 3500;
 app.listen(PORT, () => console.log(\`Proxy Datajud rodando na porta \${PORT}\`));
 `;
 
-  const codeFrontendAjustado = `
-// Exemplo de como chamar o proxy a partir do frontend
-const handleSubmit = async (e) => {
-  if (e) e.preventDefault();
-  
-  setLoading(true);
-  setResultados([]);
-  setErro(null);
-
-  try {
-    // Agora fazemos a chamada para nosso servidor proxy
-    const res = await fetch('http://localhost:3000/api/datajud/search', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        tribunal: tribunal,
-        termo: termo
-      })
-    });
-
-    if (!res.ok) {
-      throw new Error(\`Erro ao consultar a API: \${res.status} \${res.statusText}\`);
+  // Aviso sobre o status do proxy
+  const ProxyStatusAlert = () => {
+    if (proxyStatus === 'checking') {
+      return (
+        <Alert className="my-4 bg-blue-50 dark:bg-blue-950/30">
+          <Info className="h-5 w-5" />
+          <AlertTitle>Verificando status do servidor proxy</AlertTitle>
+          <AlertDescription>
+            Verificando se o servidor proxy está disponível...
+          </AlertDescription>
+        </Alert>
+      );
+    } else if (proxyStatus === 'offline') {
+      return (
+        <Alert className="my-4 bg-amber-50 dark:bg-amber-950/30">
+          <Info className="h-5 w-5" />
+          <AlertTitle>Servidor proxy offline</AlertTitle>
+          <AlertDescription className="mt-2">
+            <p className="mb-2">
+              O servidor proxy para a API do Datajud não está disponível. 
+              Estamos exibindo dados simulados para demonstração.
+            </p>
+            <div className="flex gap-2 mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setShowProxyInstructions(true)}
+                className="text-xs"
+              >
+                Como configurar o proxy
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
+      );
     }
-
-    const data = await res.json();
     
-    // Processa os resultados como antes
-    if (data.hits && data.hits.hits) {
-      const docs = data.hits.hits.map((hit) => hit._source) || [];
-      setResultados(docs);
-    }
-  } catch (err) {
-    setErro(err.message);
-  } finally {
-    setLoading(false);
-  }
-};
-`;
+    return null;
+  };
 
   return (
     <div className="w-full max-w-3xl mx-auto mt-4 p-2">
@@ -371,28 +400,7 @@ const handleSubmit = async (e) => {
         TRIBUNAIS_POR_CATEGORIA={TRIBUNAIS_POR_CATEGORIA}
       />
 
-      {showCorsInfo && (
-        <Alert className="my-4 bg-amber-50 dark:bg-amber-950/30">
-          <Info className="h-5 w-5" />
-          <AlertTitle>Dados simulados carregados</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p className="mb-2">
-              Os navegadores bloqueiam chamadas diretas à API do Datajud devido à política de segurança CORS.
-              Estamos exibindo dados simulados para demonstração.
-            </p>
-            <div className="flex gap-2 mt-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowProxyInstructions(true)}
-                className="text-xs"
-              >
-                Como implementar o proxy
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
-      )}
+      <ProxyStatusAlert />
 
       <Dialog open={showProxyInstructions} onOpenChange={setShowProxyInstructions}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
@@ -468,6 +476,8 @@ const handleSubmit = async (e) => {
         loading={loading}
         erro={erro}
         formatarData={formatarData}
+        totalResultados={totalResultados}
+        termoBusca={termo}
       />
     </div>
   );

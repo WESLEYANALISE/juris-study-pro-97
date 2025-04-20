@@ -5,6 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, RefreshCw, Search } from "lucide-react";
 import JurisprudenciaResultadoCard from "./JurisprudenciaResultadoCard";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type ResultadoDatajud = {
   [key: string]: any;
@@ -15,6 +16,8 @@ interface JurisprudenciaResultadosProps {
   loading: boolean;
   erro: string | null;
   formatarData: (dataString?: string) => string;
+  totalResultados?: number;
+  termoBusca?: string;
 }
 
 export default function JurisprudenciaResultados({
@@ -22,6 +25,8 @@ export default function JurisprudenciaResultados({
   loading,
   erro,
   formatarData,
+  totalResultados = 0,
+  termoBusca = ""
 }: JurisprudenciaResultadosProps) {
   return (
     <div className="mt-6 min-h-[120px]">
@@ -42,8 +47,7 @@ export default function JurisprudenciaResultados({
             {erro.includes("CORS") && (
               <p className="mt-2 text-sm">
                 Os navegadores bloqueiam chamadas diretas à API do Datajud devido à 
-                política de segurança CORS. É necessário implementar um servidor proxy 
-                para contornar essa limitação.
+                política de segurança CORS. É necessário usar o servidor proxy.
               </p>
             )}
           </AlertDescription>
@@ -62,10 +66,29 @@ export default function JurisprudenciaResultados({
       )}
 
       {!loading && resultados.length > 0 && (
-        <div className="flex flex-col gap-4 mt-2">
-          {resultados.map((res, idx) => (
-            <JurisprudenciaResultadoCard key={idx} resultado={res} formatarData={formatarData} />
-          ))}
+        <div className="space-y-5">
+          <div className="flex justify-between items-center">
+            <div>
+              {termoBusca && totalResultados > 0 && (
+                <p className="text-sm">
+                  <strong>{totalResultados.toLocaleString('pt-BR')}</strong> resultado(s) para: <Badge variant="outline" className="font-normal">{termoBusca}</Badge>
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <select className="text-sm border p-1 rounded">
+                <option>10 por página</option>
+                <option>25 por página</option>
+                <option>50 por página</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 mt-2">
+            {resultados.map((res, idx) => (
+              <JurisprudenciaResultadoCard key={idx} resultado={res} formatarData={formatarData} />
+            ))}
+          </div>
         </div>
       )}
     </div>
