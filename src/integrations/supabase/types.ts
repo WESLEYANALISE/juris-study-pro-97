@@ -45,6 +45,111 @@ export type Database = {
         }
         Relationships: []
       }
+      jurisprudencia: {
+        Row: {
+          area_direito: string | null
+          created_at: string | null
+          data_julgamento: string | null
+          ementa: string
+          id: string
+          numero_processo: string | null
+          relator: string | null
+          titulo: string
+          tribunal: string
+        }
+        Insert: {
+          area_direito?: string | null
+          created_at?: string | null
+          data_julgamento?: string | null
+          ementa: string
+          id?: string
+          numero_processo?: string | null
+          relator?: string | null
+          titulo: string
+          tribunal: string
+        }
+        Update: {
+          area_direito?: string | null
+          created_at?: string | null
+          data_julgamento?: string | null
+          ementa?: string
+          id?: string
+          numero_processo?: string | null
+          relator?: string | null
+          titulo?: string
+          tribunal?: string
+        }
+        Relationships: []
+      }
+      noticias: {
+        Row: {
+          area_direito: string | null
+          conteudo: string
+          created_at: string | null
+          data_publicacao: string | null
+          fonte: string | null
+          id: string
+          thumbnail_url: string | null
+          titulo: string
+        }
+        Insert: {
+          area_direito?: string | null
+          conteudo: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          fonte?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          titulo: string
+        }
+        Update: {
+          area_direito?: string | null
+          conteudo?: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          fonte?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          titulo?: string
+        }
+        Relationships: []
+      }
+      peticoes: {
+        Row: {
+          area_direito: string
+          conteudo: string
+          created_at: string | null
+          descricao: string | null
+          downloads: number | null
+          id: string
+          tags: string[] | null
+          tipo_peca: string
+          titulo: string
+        }
+        Insert: {
+          area_direito: string
+          conteudo: string
+          created_at?: string | null
+          descricao?: string | null
+          downloads?: number | null
+          id?: string
+          tags?: string[] | null
+          tipo_peca: string
+          titulo: string
+        }
+        Update: {
+          area_direito?: string
+          conteudo?: string
+          created_at?: string | null
+          descricao?: string | null
+          downloads?: number | null
+          id?: string
+          tags?: string[] | null
+          tipo_peca?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -72,6 +177,102 @@ export type Database = {
           id?: string
           updated_at?: string | null
           user_type?: string | null
+        }
+        Relationships: []
+      }
+      recent_access: {
+        Row: {
+          accessed_at: string | null
+          id: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Insert: {
+          accessed_at?: string | null
+          id?: string
+          item_id: string
+          item_type: string
+          user_id: string
+        }
+        Update: {
+          accessed_at?: string | null
+          id?: string
+          item_id?: string
+          item_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resumos: {
+        Row: {
+          area_direito: string
+          autor: string | null
+          conteudo: string
+          created_at: string | null
+          id: string
+          likes: number | null
+          tags: string[] | null
+          titulo: string
+        }
+        Insert: {
+          area_direito: string
+          autor?: string | null
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          titulo: string
+        }
+        Update: {
+          area_direito?: string
+          autor?: string | null
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          titulo?: string
+        }
+        Relationships: []
+      }
+      video_aulas: {
+        Row: {
+          area: string
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          professor: string | null
+          thumbnail_url: string | null
+          title: string
+          url: string
+          views: number | null
+        }
+        Insert: {
+          area: string
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          professor?: string | null
+          thumbnail_url?: string | null
+          title: string
+          url: string
+          views?: number | null
+        }
+        Update: {
+          area?: string
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          professor?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          url?: string
+          views?: number | null
         }
         Relationships: []
       }
