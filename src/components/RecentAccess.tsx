@@ -130,7 +130,7 @@ const RecentAccess = () => {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [recentItems]);
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {

@@ -18,7 +18,7 @@ interface HeaderProps {
 }
 
 export function Header({ userProfile, pageTitle, onProfileChange }: HeaderProps) {
-  const { onOpen } = useSidebar();
+  const { setOpen } = useSidebar(); // Correção: usar setOpen em vez de onOpen
   const [hasScrolled, setHasScrolled] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -36,6 +36,10 @@ export function Header({ userProfile, pageTitle, onProfileChange }: HeaderProps)
     navigate("/auth");
   };
 
+  const handleSidebarOpen = () => {
+    setOpen(true);
+  };
+
   return (
     <header
       className={`sticky top-0 z-40 flex h-16 w-full items-center justify-between border-b bg-background px-4 transition-shadow sm:px-6 lg:px-8 ${
@@ -43,14 +47,14 @@ export function Header({ userProfile, pageTitle, onProfileChange }: HeaderProps)
       }`}
     >
       <div className="flex flex-row items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={onOpen} className="lg:hidden">
+        <Button variant="ghost" size="icon" onClick={handleSidebarOpen} className="lg:hidden">
           <Menu className="h-6 w-6" />
         </Button>
         {pageTitle && <h1 className="font-semibold text-xl">{pageTitle}</h1>}
       </div>
 
       <div className="hidden md:flex md:items-center md:space-x-4">
-        {onProfileChange && <ProfileSwitcher value={userProfile} onValueChange={onProfileChange} />}
+        {onProfileChange && <ProfileSwitcher currentProfile={userProfile} onProfileChange={onProfileChange} />}
         <ThemeToggle />
         {isAuthenticated ? (
           <ProfileButton />
@@ -75,7 +79,7 @@ export function Header({ userProfile, pageTitle, onProfileChange }: HeaderProps)
           </SheetTrigger>
           <SheetContent side="right">
             <div className="grid gap-4 py-4">
-              {onProfileChange && <ProfileSwitcher value={userProfile} onValueChange={onProfileChange} />}
+              {onProfileChange && <ProfileSwitcher currentProfile={userProfile} onProfileChange={onProfileChange} />}
             </div>
           </SheetContent>
         </Sheet>
