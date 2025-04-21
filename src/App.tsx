@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,8 +14,7 @@ import NotFound from "./pages/NotFound";
 import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
-import AuthPage from "./pages/Auth";
-import { supabase } from "@/integrations/supabase/client";
+import Auth from "./pages/Auth"; // Import the Auth page
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,7 +25,7 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
+const App = () => {
   const [userProfile, setUserProfile] = useState<ProfileType>(() => {
     // Recuperar o perfil do localStorage, ou usar 'tudo' como padrão
     return (localStorage.getItem("juris-study-profile") as ProfileType) || "tudo";
@@ -37,29 +36,6 @@ function App() {
     localStorage.setItem("juris-study-profile", profile);
   };
 
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Listen auth state
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => setSession(session)
-    );
-    
-    // Check session on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-    });
-    
-    return () => subscription.unsubscribe();
-  }, []);
-
-  // Enquanto carrega, não mostre nada
-  if (loading) {
-    return null;
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="juris-study-theme">
@@ -69,61 +45,14 @@ function App() {
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
-              {/* Auth route */}
-              <Route 
-                path="/auth" 
-                element={session ? <Navigate to="/" replace /> : <AuthPage />} 
-              />
-              
-              {/* Protected routes */}
-              <Route 
-                path="/" 
-                element={
-                  session ? (
-                    <Layout userProfile={userProfile}><Index /></Layout>
-                  ) : (
-                    <Navigate to="/auth" replace />
-                  )
-                } 
-              />
-              <Route 
-                path="/videoaulas" 
-                element={
-                  session ? (
-                    <Layout userProfile={userProfile}><VideoAulas /></Layout>
-                  ) : (
-                    <Navigate to="/auth" replace />
-                  )
-                } 
-              />
-              <Route 
-                path="/bloger" 
-                element={
-                  session ? (
-                    <Layout userProfile={userProfile}><Bloger /></Layout>
-                  ) : (
-                    <Navigate to="/auth" replace />
-                  )
-                } 
-              />
-              <Route 
-                path="/anotacoes" 
-                element={
-                  session ? (
-                    <Layout userProfile={userProfile}><Anotacoes /></Layout>
-                  ) : (
-                    <Navigate to="/auth" replace />
-                  )
-                } 
-              />
-              
+              <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+              <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
+              <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
+              <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
+              <Route path="/auth" element={<Auth />} /> {/* Added Auth route */}
               {/* Redirect routes */}
-              <Route 
-                path="/videoaulas.html" 
-                element={<Navigate to="/videoaulas" replace />} 
-              />
-              
-              {/* Catch-all route */}
+              <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
@@ -132,7 +61,6 @@ function App() {
       </ThemeProvider>
     </QueryClientProvider>
   );
-}
+};
 
 export default App;
-

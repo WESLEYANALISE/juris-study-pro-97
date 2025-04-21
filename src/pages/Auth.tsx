@@ -1,117 +1,131 @@
 
-import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabaseClient";
+import { Google } from "lucide-react"; // Import the Google icon directly
 
-const AuthPage = () => {
-  const [nome, setNome] = useState("");
+const LOGO_URL = "/placeholder.svg";
+const SUBTITLE = "Acesse com e-mail ou Google e aproveite a experiência jurídica completa.";
+
+const Auth = () => {
   const [email, setEmail] = useState("");
-  const [formType, setFormType] = useState<"login" | "signup">("signup");
+  const [magicSent, setMagicSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  async function handleAuth(e: React.FormEvent) {
+  async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
-    if (!email || !nome) {
-      toast("Preencha todos os campos!");
-      setLoading(false);
-      return;
+    setError(null);
+
+    const { error: signInError } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: window.location.origin + "/" },
+    });
+
+    if (signInError) {
+      setError(signInError.message || "Erro ao enviar o e-mail. Tente novamente.");
+    } else {
+      setMagicSent(true);
+      toast({
+        title: "Verifique seu e-mail",
+        description: "Enviamos um link mágico de acesso. Confira sua caixa de entrada!",
+      });
     }
 
-    try {
-      if (formType === "signup") {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            data: { nome },
-          },
-        });
-        if (error) throw error;
-        toast("Cadastro realizado! Verifique seu e-mail.");
-      } else {
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-        });
-        if (error) throw error;
-        toast("Enviamos um e-mail para login!");
-      }
-    } catch (err: any) {
-      toast(err.message || "Erro na autenticação");
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
+  }
+
+  async function handleGoogle() {
+    setGoogleLoading(true);
+    setError(null);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + "/" }
+    });
+    if (error) setError(error.message || "Erro no login com Google.");
+    setGoogleLoading(false);
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">
-            {formType === "signup" ? "Criar Conta" : "Entrar"}
-          </CardTitle>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-slate-50 via-gray-100 to-primary/10 dark:from-muted dark:to-bg">
+      <Card className="w-full max-w-md border shadow-xl rounded-xl bg-background animate-fade-in">
+        <CardHeader className="flex flex-col items-center gap-2 pb-2">
+          <img src={LOGO_URL} alt="Logo" className="h-14 w-14 mb-2 rounded-full bg-muted shadow" />
+          <CardTitle className="text-2xl font-black text-primary tracking-tight">JurisStudy Pro</CardTitle>
+          <CardDescription className="text-center">{SUBTITLE}</CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAuth} className="flex flex-col gap-4">
-            <div>
-              <Label htmlFor="nome">Nome</Label>
-              <Input
-                id="nome"
-                value={nome}
-                onChange={(e) => setNome(e.target.value)}
-                placeholder="Ex: Maria Silva"
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="email">E-mail</Label>
-              <Input
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                type="email"
-              />
-            </div>
-            <Button className="mt-2" type="submit" disabled={loading}>
-              {loading
-                ? "Enviando..."
-                : formType === "signup"
-                ? "Cadastrar"
-                : "Entrar"}
-            </Button>
-          </form>
-          <div className="text-sm mt-4 text-center">
-            {formType === "signup" ? (
-              <>
-                Já tem uma conta?{" "}
-                <button
-                  className="underline text-primary"
-                  onClick={() => setFormType("login")}
+        <CardContent className="flex flex-col gap-8 pt-0">
+          {!magicSent ? (
+            <>
+              <form className="space-y-5" onSubmit={handleEmail}>
+                <div>
+                  <label htmlFor="email" className="font-semibold text-sm mb-2 block">
+                    E-mail
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    disabled={loading}
+                    required
+                    autoFocus
+                  />
+                </div>
+                {error && (
+                  <div className="text-sm text-destructive font-medium">{error}</div>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full rounded-md text-base font-semibold shadow transition"
+                  disabled={loading}
                 >
-                  Entrar
-                </button>
-              </>
-            ) : (
-              <>
-                Não possui conta?{" "}
-                <button
-                  className="underline text-primary"
-                  onClick={() => setFormType("signup")}
-                >
-                  Cadastrar
-                </button>
-              </>
-            )}
-          </div>
+                  {loading ? "Enviando..." : "Entrar com link mágico"}
+                </Button>
+              </form>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-muted-foreground/20" />
+                <span className="text-xs text-muted-foreground">ou</span>
+                <div className="flex-1 h-px bg-muted-foreground/20" />
+              </div>
+              <Button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 rounded-md border shadow"
+                onClick={handleGoogle}
+                disabled={googleLoading}
+                variant="outline"
+              >
+                <Google className="h-5 w-5 text-blue-600" />
+                <span>{googleLoading ? "Entrando..." : "Entrar com Google"}</span>
+              </Button>
+            </>
+          ) : (
+            <div className="text-center py-10">
+              <p className="font-semibold text-primary">Confira sua caixa de entrada!</p>
+              <p className="text-sm mt-2 text-muted-foreground">
+                Enviamos um link mágico para <span className="font-medium">{email}</span>.
+              </p>
+              <Button
+                variant="secondary"
+                className="mt-6 rounded-lg"
+                onClick={() => { setMagicSent(false); setEmail(""); }}
+              >
+                Voltar
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 };
 
-export default AuthPage;
+export default Auth;
