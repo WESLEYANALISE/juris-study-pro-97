@@ -183,11 +183,14 @@ const Biblioteca = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const askAiForRecommendation = async (query: string) => {
-    if (!query.trim()) return {
+  const askAiForRecommendation = async (query: string): Promise<{
+    result: string;
+    books: Book[];
+  }> => {
+    if (!query.trim()) return Promise.resolve({
       result: "",
       books: [] as Book[]
-    };
+    });
     try {
       const prompt = `Estou procurando livros para estudar sobre: ${query}. Por favor, sugira até 3 livros que podem me ajudar, considerando que estou na área jurídica.`;
       const response = await askGemini(prompt);
