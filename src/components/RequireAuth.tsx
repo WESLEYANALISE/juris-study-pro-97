@@ -44,7 +44,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     });
 
     return () => {
-      authListener?.unsubscribe();
+      authListener.subscription.unsubscribe();
     };
     // eslint-disable-next-line
   }, []);
