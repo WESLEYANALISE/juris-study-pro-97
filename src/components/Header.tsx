@@ -18,7 +18,7 @@ interface HeaderProps {
 }
 
 export function Header({ userProfile, pageTitle, onProfileChange }: HeaderProps) {
-  const { setOpen } = useSidebar(); // Correção: usar setOpen em vez de onOpen
+  const { setOpen } = useSidebar();
   const [hasScrolled, setHasScrolled] = useState(false);
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();

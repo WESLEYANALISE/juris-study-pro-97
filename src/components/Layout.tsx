@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -14,6 +15,7 @@ const ErrorFallback = () => <div className="p-4 bg-red-50 text-red-500 rounded-m
 
 // Simple loading fallback
 const LoadingFallback = () => <div className="p-4 text-center">Carregando...</div>;
+
 interface LayoutProps {
   children: React.ReactNode;
   userProfile: ProfileType;
@@ -43,8 +45,11 @@ const Layout = ({
     if (path === "/perfil") return "Meu Perfil";
     return null;
   };
+  
   const pageTitle = getCurrentPageTitle();
-  return <SidebarProvider defaultOpen={true}>
+  
+  return (
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} pageTitle={pageTitle} onProfileChange={onProfileChange} />
         <div className="flex flex-1 w-full">
@@ -59,6 +64,8 @@ const Layout = ({
         </div>
         <MobileNavigation />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default Layout;

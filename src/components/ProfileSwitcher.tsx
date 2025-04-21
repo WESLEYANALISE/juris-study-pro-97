@@ -59,8 +59,8 @@ export function ProfileSwitcher({
       <PopoverTrigger asChild>
         <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
           <div className="flex items-center gap-2 truncate">
-            <selectedProfile.icon className="h-4 w-4" />
-            <span className="truncate">{selectedProfile.label}</span>
+            {selectedProfile && <selectedProfile.icon className="h-4 w-4" />}
+            <span className="truncate">{selectedProfile?.label || "Selecione um perfil"}</span>
           </div>
           <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -84,7 +84,7 @@ export function ProfileSwitcher({
                     <span className="text-xs text-muted-foreground">{profile.description}</span>
                   </div>
                 </div>
-                <Check className={cn("ml-auto h-4 w-4", selectedProfile.value === profile.value ? "opacity-100" : "opacity-0")} />
+                <Check className={cn("ml-auto h-4 w-4", selectedProfile?.value === profile.value ? "opacity-100" : "opacity-0")} />
               </CommandItem>
             ))}
           </CommandGroup>
