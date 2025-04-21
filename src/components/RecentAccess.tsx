@@ -44,7 +44,7 @@ const RecentAccess = () => {
     const fetchRecentAccess = async () => {
       try {
         // Dados mockados para evitar problemas com tabelas inexistentes
-        const items = [
+        const mockItems = [
           {
             id: "1",
             title: "Direito Constitucional - Aula 3",
@@ -89,17 +89,17 @@ const RecentAccess = () => {
           }
         ];
 
-        // Gerando transcrições aleatórias para cada item
-        const newTranscripts: { [key: string]: string } = {};
-        items.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        // Inicializar as transcrições para cada item
+        const initialTranscripts: { [key: string]: string } = {};
+        mockItems.forEach(item => {
+          initialTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
         
-        setTranscripts(newTranscripts);
-        setRecentItems(items);
+        setTranscripts(initialTranscripts);
+        setRecentItems(mockItems);
       } catch (error) {
         console.error("Error fetching recent access:", error);
-        // Em caso de erro, garantir que recentItems seja sempre um array vazio
+        // Garantir que recentItems é sempre um array vazio em caso de erro
         setRecentItems([]);
       } finally {
         setLoading(false);
@@ -107,29 +107,36 @@ const RecentAccess = () => {
     };
     
     fetchRecentAccess();
+  }, []);
 
-    // Atualizar transcrições a cada 10 segundos
-    const interval = setInterval(() => {
-      setTranscripts(prevTranscripts => {
-        // Usar a função de atualização de estado para garantir que estamos usando o valor mais recente
-        // de recentItems e prevTranscripts
-        const newTranscripts = { ...prevTranscripts };
-        
-        // Verificar se recentItems existe antes de iterar
-        if (recentItems && recentItems.length > 0) {
-          recentItems.forEach(item => {
-            if (item && item.id) {
-              newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-            }
-          });
+  // Separamos o efeito de atualização das transcrições em um useEffect próprio
+  useEffect(() => {
+    // Só configuramos o intervalo se tivermos itens para mostrar
+    if (recentItems.length === 0) return;
+
+    // Função para atualizar todas as transcrições
+    const updateAllTranscripts = () => {
+      const newTranscripts: { [key: string]: string } = {};
+      
+      // Garante que só atualizamos as transcrições se recentItems existe e tem itens
+      recentItems.forEach(item => {
+        if (item && item.id) {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         }
-        
-        return newTranscripts;
       });
-    }, 10000);
+      
+      setTranscripts(prevTranscripts => ({
+        ...prevTranscripts,
+        ...newTranscripts
+      }));
+    };
+
+    // Configurar o intervalo para atualizar transcrições
+    const interval = setInterval(updateAllTranscripts, 10000);
     
+    // Limpar o intervalo quando o componente for desmontado
     return () => clearInterval(interval);
-  }, []); // Remover a dependência para evitar possíveis loops ou efeitos colaterais
+  }, [recentItems]); // Dependência direta no array de itens, não no length
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -145,13 +152,6 @@ const RecentAccess = () => {
         return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
-
-  // Garantir que recentItems seja sempre um array antes de usar métodos de array
-  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
-  
-  if (itemsArray.length === 0 && !loading) {
-    return null;
-  }
   
   if (loading) {
     return (
@@ -165,13 +165,18 @@ const RecentAccess = () => {
       </div>
     );
   }
+  
+  // Se não temos itens, não mostramos nada
+  if (!recentItems || recentItems.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mb-6">
       <h2 className="text-lg font-medium mb-3">Acessos recentes</h2>
       <Carousel>
         <CarouselContent>
-          {itemsArray.map((item) => (
+          {recentItems.map((item) => (
             <CarouselItem key={item.id} className="basis-1/1 sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
               <Card 
                 className="cursor-pointer hover:bg-accent/50 transition-colors" 
