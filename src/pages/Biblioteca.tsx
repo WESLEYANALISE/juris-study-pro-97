@@ -1,19 +1,42 @@
-
 import React, { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { BookOpen, Search, ListFilter } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { AnimatedTabs, AnimatedTabsList, AnimatedTabsTrigger, AnimatedTabsContent } from "@/components/ui/animated-tabs";
+import { Dialog } from "@/components/ui/dialog";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { supabase } from "@/integrations/supabase/client";
-import { useIsMobile } from "@/hooks/use-mobile";
-import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
+import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
+import { askGemini } from "@/services/ai-assistant";
+import BookCard from "@/components/biblioteca/BookCard";
+import BookList from "@/components/biblioteca/BookList";
 import AnnotationsDialog from "@/components/biblioteca/AnnotationsDialog";
-import BibliotecaHeader from "@/components/biblioteca/BibliotecaHeader";
-import BibliotecaSearchBar from "@/components/biblioteca/BibliotecaSearchBar";
-import BibliotecaTabs from "@/components/biblioteca/BibliotecaTabs";
-
-interface Book { id: number; livro: string | null; area: string | null; sobre: string | null; imagem: string | null; download: string | null; link: string | null; }
-interface ReadBook { id: number; isRead: boolean; }
-interface FavoriteBook { id: number; isFavorite: boolean; }
-interface Annotation { id: string; bookId: number; text: string; createdAt: string; }
-
+import AIRecommendations from "@/components/biblioteca/AIRecommendations";
+import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
+interface Book {
+  id: number;
+  livro: string | null;
+  area: string | null;
+  sobre: string | null;
+  imagem: string | null;
+  download: string | null;
+  link: string | null;
+}
+interface ReadBook {
+  id: number;
+  isRead: boolean;
+}
+interface FavoriteBook {
+  id: number;
+  isFavorite: boolean;
+}
+interface Annotation {
+  id: string;
+  bookId: number;
+  text: string;
+  createdAt: string;
+}
 const Biblioteca = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
@@ -25,6 +48,7 @@ const Biblioteca = () => {
   const [readBooks, setReadBooks] = useState<ReadBook[]>([]);
   const [favoriteBooks, setFavoriteBooks] = useState<FavoriteBook[]>([]);
   const [recentBooks, setRecentBooks] = useState<Book[]>([]);
+  const [isAiPopoverOpen, setIsAiPopoverOpen] = useState(false);
   const [narrationVolume, setNarrationVolume] = useState(70);
   const [isNarrating, setIsNarrating] = useState(false);
   const [viewMode, setViewMode] = useState<Record<string, 'grid' | 'list'>>({});
@@ -33,11 +57,9 @@ const Biblioteca = () => {
   const [currentAnnotation, setCurrentAnnotation] = useState<string>("");
   const [editingAnnotation, setEditingAnnotation] = useState<string | null>(null);
   const [isAnnotationsDialogOpen, setIsAnnotationsDialogOpen] = useState(false);
-
-  const isMobile = useIsMobile();
-
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   useEffect(() => {
     const fetchBooks = async () => {
       try {
@@ -105,7 +127,6 @@ const Biblioteca = () => {
     };
     fetchBooks();
   }, []);
-
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredBooks(books);
@@ -114,7 +135,6 @@ const Biblioteca = () => {
       setFilteredBooks(filtered);
     }
   }, [searchQuery, books]);
-
   const toggleReadStatus = (bookId: number) => {
     const updatedReadBooks = readBooks.some(item => item.id === bookId) ? readBooks.filter(item => item.id !== bookId) : [...readBooks, {
       id: bookId,
@@ -128,7 +148,6 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
-
   const toggleFavoriteStatus = (bookId: number) => {
     const updatedFavoriteBooks = favoriteBooks.some(item => item.id === bookId) ? favoriteBooks.filter(item => item.id !== bookId) : [...favoriteBooks, {
       id: bookId,
@@ -142,7 +161,6 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
-
   const addToRecentBooks = (book: Book) => {
     const existingRecentBooks = localStorage.getItem('recentBooks');
     let recentIds: number[] = existingRecentBooks ? JSON.parse(existingRecentBooks) : [];
@@ -153,20 +171,12 @@ const Biblioteca = () => {
     const updatedRecentBooks = recentIds.map(id => books.find(book => book.id === id)).filter(Boolean) as Book[];
     setRecentBooks(updatedRecentBooks);
   };
-
   const openBookDialog = (book: Book, readingNow = false) => {
     setSelectedBook(book);
     setIsBookDialogOpen(true);
     setReadingMode(!!readingNow);
     addToRecentBooks(book);
-    setTimeout(() => {
-      const bookDialog = document.querySelector('[role="dialog"]');
-      if (bookDialog) {
-        (bookDialog as HTMLElement).focus();
-      }
-    }, 100);
   };
-
   const handleNarration = (text: string) => {
     if (!text) return;
     if (isNarrating) {
@@ -181,18 +191,14 @@ const Biblioteca = () => {
     setIsNarrating(true);
     window.speechSynthesis.speak(utterance);
   };
-
-  const askAiForRecommendation = async (query: string): Promise<{
-    result: string;
-    books: Book[];
-  }> => {
-    if (!query.trim()) return Promise.resolve({
+  const askAiForRecommendation = async (query: string) => {
+    if (!query.trim()) return {
       result: "",
       books: [] as Book[]
-    });
+    };
     try {
       const prompt = `Estou procurando livros para estudar sobre: ${query}. Por favor, sugira até 3 livros que podem me ajudar, considerando que estou na área jurídica.`;
-      const response = await (await import("@/services/ai-assistant")).askGemini(prompt);
+      const response = await askGemini(prompt);
       if (response.error) throw new Error(response.error);
       const keywords = query.toLowerCase().split(' ');
       const recommendedBooks = books.filter(book => keywords.some(keyword => book.livro?.toLowerCase().includes(keyword) || book.area?.toLowerCase().includes(keyword) || book.sobre?.toLowerCase().includes(keyword))).slice(0, 5);
@@ -207,14 +213,12 @@ const Biblioteca = () => {
       };
     }
   };
-
   const toggleViewMode = (area: string) => {
     setViewMode(prev => ({
       ...prev,
       [area]: prev[area] === "grid" ? "list" : "grid"
     }));
   };
-
   const saveAnnotation = (bookId: number) => {
     if (!currentAnnotation.trim()) return;
     const newAnnotation: Annotation = {
@@ -233,7 +237,6 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
-
   const updateAnnotation = (id: string, newText: string) => {
     const updatedAnnotations = annotations.map(anno => anno.id === id ? {
       ...anno,
@@ -248,7 +251,6 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
-
   const deleteAnnotation = (id: string) => {
     const updatedAnnotations = annotations.filter(anno => anno.id !== id);
     setAnnotations(updatedAnnotations);
@@ -259,15 +261,12 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
-
   const openAnnotationsDialog = () => setIsAnnotationsDialogOpen(true);
-
   const booksByArea = areas.reduce((acc, area) => {
     if (!area) return acc;
     acc[area] = filteredBooks.filter(book => book.area === area);
     return acc;
   }, {} as Record<string, Book[]>);
-
   const favoriteBooksData = books.filter(book => favoriteBooks.some(fav => fav.id === book.id));
   const readBooksData = books.filter(book => readBooks.some(rb => rb.id === book.id));
   const totalBooks = books.length;
@@ -276,76 +275,101 @@ const Biblioteca = () => {
     acc[area] = books.filter(book => book.area === area).length;
     return acc;
   }, {} as Record<string, number>);
+  return <div className="container py-4 mx-[18px] px-0">
+      <div className="flex items-center justify-between mb-6">
+        
+        <div className="flex items-center space-x-3 px-0 mx-0">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-semibold">{totalBooks}</span> livros disponíveis
+          </div>
+          <div className="relative w-full max-w-sm">
+            <Input type="text" placeholder="Pesquisar livros..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          </div>
+          <AIRecommendations askAiForRecommendation={askAiForRecommendation} books={books} openBookDialog={openBookDialog} />
+          <Button variant="outline" onClick={openAnnotationsDialog} className="px-0 py-0 my-0 mx-[30px]">
+            <span className="mr-2">Anotações</span>
+          </Button>
+        </div>
+      </div>
 
-  return (
-    <div className="container py-2 sm:py-4 mx-auto px-1 sm:px-0">
-      <BibliotecaHeader totalBooks={totalBooks} onOpenAnnotations={openAnnotationsDialog} />
+      <AnimatedTabs defaultValue="areas" className="w-full">
+        <AnimatedTabsList className="w-full justify-start mb-4">
+          <AnimatedTabsTrigger value="areas">Por Área</AnimatedTabsTrigger>
+          <AnimatedTabsTrigger value="recentes">Recentes</AnimatedTabsTrigger>
+          <AnimatedTabsTrigger value="lidos">Lidos</AnimatedTabsTrigger>
+          <AnimatedTabsTrigger value="favoritos">Favoritos</AnimatedTabsTrigger>
+        </AnimatedTabsList>
 
-      <BibliotecaSearchBar
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        books={books}
-        onOpenAnnotations={openAnnotationsDialog}
-        askAiForRecommendation={askAiForRecommendation}
-        openBookDialog={openBookDialog}
-      />
+        <AnimatedTabsContent value="areas" slideDirection="right">
+          {isLoading ? <div className="flex justify-center p-12">
+              <p>Carregando biblioteca...</p>
+            </div> : areas.length > 0 ? <div className="space-y-10">
+              {areas.map(area => area && booksByArea[area]?.length > 0 && <div key={area} className="mb-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                      <h2 className="text-xl font-semibold">{area}</h2>
+                      <span className="ml-2 text-sm text-muted-foreground">
+                        ({booksPerArea[area] || 0} livros)
+                      </span>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => toggleViewMode(area)} className="flex items-center gap-1">
+                      <ListFilter className="h-4 w-4 mr-1" />
+                      Ver em {viewMode[area] === "grid" ? "lista" : "grade"}
+                    </Button>
+                  </div>
 
-      <BibliotecaTabs
-        areas={areas}
-        booksByArea={booksByArea}
-        booksPerArea={booksPerArea}
-        viewMode={viewMode}
-        readBooks={readBooks}
-        favoriteBooks={favoriteBooks}
-        toggleViewMode={toggleViewMode}
-        openBookDialog={openBookDialog}
-        isLoading={isLoading}
-        recentBooks={recentBooks}
-        allRead={readBooks}
-        favoriteBookIds={favoriteBooks}
-        readBooksData={readBooksData}
-        favoriteBooksData={favoriteBooksData}
-        openAnnotationsDialog={openAnnotationsDialog}
-      />
+                  {viewMode[area] === "grid" ? <Carousel className="w-full">
+                      <CarouselContent>
+                        {booksByArea[area].map(book => <CarouselItem key={book.id} className="basis-auto md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4">
+                            <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
+                          </CarouselItem>)}
+                      </CarouselContent>
+                      <CarouselPrevious className="left-0" />
+                      <CarouselNext className="right-0" />
+                    </Carousel> : <BookList books={booksByArea[area]} readBooks={readBooks} favoriteBooks={favoriteBooks} onOpenBookDialog={openBookDialog} />}
+                </div>)}
+            </div> : <p className="text-center py-12 text-muted-foreground">
+              Nenhuma área encontrada na biblioteca.
+            </p>}
+        </AnimatedTabsContent>
 
-      <BookDetailsDialog
-        selectedBook={selectedBook}
-        readingMode={readingMode}
-        setReadingMode={setReadingMode}
-        isNarrating={isNarrating}
-        narrationVolume={narrationVolume}
-        onClose={() => setIsBookDialogOpen(false)}
-        onFavorite={id => { toggleFavoriteStatus(id); }}
-        onRead={id => { toggleReadStatus(id); }}
-        isFavorite={!!(selectedBook && favoriteBooks.some(f => f.id === selectedBook.id))}
-        isRead={!!(selectedBook && readBooks.some(f => f.id === selectedBook.id))}
-        onNarrate={handleNarration}
-        setNarrationVolume={setNarrationVolume}
-        annotations={annotations}
-        currentAnnotation={currentAnnotation}
-        setCurrentAnnotation={setCurrentAnnotation}
-        saveAnnotation={saveAnnotation}
-        editingAnnotation={editingAnnotation}
-        setEditingAnnotation={setEditingAnnotation}
-        updateAnnotation={updateAnnotation}
-        deleteAnnotation={deleteAnnotation}
-        openAnnotationsDialog={openAnnotationsDialog}
-      />
+        <AnimatedTabsContent value="recentes" slideDirection="right">
+          {recentBooks.length > 0 ? <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
+              {recentBooks.map(book => <div key={book.id} className="flex justify-center">
+                  <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
+                </div>)}
+            </div> : <p className="text-center py-12 text-muted-foreground">
+              Você ainda não acessou nenhum livro recentemente.
+            </p>}
+        </AnimatedTabsContent>
 
-      <AnnotationsDialog
-        open={isAnnotationsDialogOpen}
-        onOpenChange={setIsAnnotationsDialogOpen}
-        annotations={annotations}
-        books={books}
-        editingAnnotation={editingAnnotation}
-        currentAnnotation={currentAnnotation}
-        setEditingAnnotation={setEditingAnnotation}
-        setCurrentAnnotation={setCurrentAnnotation}
-        updateAnnotation={updateAnnotation}
-        deleteAnnotation={deleteAnnotation}
-      />
-    </div>
-  );
+        <AnimatedTabsContent value="lidos" slideDirection="right">
+          {readBooksData.length > 0 ? <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
+              {readBooksData.map(book => <div key={book.id} className="flex justify-center">
+                  <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
+                </div>)}
+            </div> : <p className="text-center py-12 text-muted-foreground">
+              Você ainda não marcou nenhum livro como lido.
+            </p>}
+        </AnimatedTabsContent>
+
+        <AnimatedTabsContent value="favoritos" slideDirection="right">
+          {favoriteBooksData.length > 0 ? <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
+              {favoriteBooksData.map(book => <div key={book.id} className="flex justify-center">
+                  <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
+                </div>)}
+            </div> : <p className="text-center py-12 text-muted-foreground">
+              Você ainda não adicionou nenhum livro aos favoritos.
+            </p>}
+        </AnimatedTabsContent>
+      </AnimatedTabs>
+
+      <Dialog open={isBookDialogOpen} onOpenChange={setIsBookDialogOpen}>
+        <BookDetailsDialog selectedBook={selectedBook} readingMode={readingMode} setReadingMode={setReadingMode} isNarrating={isNarrating} narrationVolume={narrationVolume} onClose={() => setIsBookDialogOpen(false)} onFavorite={toggleFavoriteStatus} onRead={toggleReadStatus} isFavorite={!!(selectedBook && favoriteBooks.some(f => f.id === selectedBook.id))} isRead={!!(selectedBook && readBooks.some(f => f.id === selectedBook.id))} onNarrate={handleNarration} setNarrationVolume={setNarrationVolume} annotations={annotations} currentAnnotation={currentAnnotation} setCurrentAnnotation={setCurrentAnnotation} saveAnnotation={saveAnnotation} editingAnnotation={editingAnnotation} setEditingAnnotation={setEditingAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} openAnnotationsDialog={openAnnotationsDialog} />
+      </Dialog>
+
+      <AnnotationsDialog open={isAnnotationsDialogOpen} onOpenChange={setIsAnnotationsDialogOpen} annotations={annotations} books={books} editingAnnotation={editingAnnotation} currentAnnotation={currentAnnotation} setEditingAnnotation={setEditingAnnotation} setCurrentAnnotation={setCurrentAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} />
+    </div>;
 };
-
 export default Biblioteca;

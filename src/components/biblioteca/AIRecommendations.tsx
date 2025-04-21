@@ -1,11 +1,9 @@
-
 import { useState } from "react";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Popover, PopoverContent } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Lamp } from "lucide-react";
 import { motion } from "framer-motion";
-
 interface Book {
   id: number;
   livro: string | null;
@@ -15,7 +13,6 @@ interface Book {
   download: string | null;
   link: string | null;
 }
-
 interface AIRecommendationsProps {
   askAiForRecommendation: (query: string) => Promise<{
     result: string;
@@ -24,7 +21,6 @@ interface AIRecommendationsProps {
   books: Book[];
   openBookDialog: (book: Book) => void;
 }
-
 const AIRecommendations: React.FC<AIRecommendationsProps> = ({
   askAiForRecommendation,
   books,
@@ -35,7 +31,6 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
   const [aiResult, setAiResult] = useState("");
   const [aiRecommendations, setAiRecommendations] = useState<Book[]>([]);
   const [loading, setLoading] = useState(false);
-
   const handleAsk = async () => {
     if (!aiQuery.trim()) return;
     setLoading(true);
@@ -44,14 +39,7 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
     setAiRecommendations(res.books);
     setLoading(false);
   };
-
-  return (
-    <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Lamp className="h-4 w-4 text-amber-500" />
-        </Button>
-      </PopoverTrigger>
+  return <Popover open={aiPopoverOpen} onOpenChange={setAiPopoverOpen}>
       
       <PopoverContent className="w-[450px] p-4">
         <div className="space-y-4">
@@ -99,8 +87,6 @@ const AIRecommendations: React.FC<AIRecommendationsProps> = ({
             </div>}
         </div>
       </PopoverContent>
-    </Popover>
-  );
+    </Popover>;
 };
-
 export default AIRecommendations;
