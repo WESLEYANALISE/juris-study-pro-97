@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -106,7 +105,7 @@ const RecentAccess = () => {
             
             return {
               id: item.id,
-              title: item.title || `Item ${item.item_id}`,
+              title: `Item ${item.item_id}`,
               type,
               path,
               timestamp
