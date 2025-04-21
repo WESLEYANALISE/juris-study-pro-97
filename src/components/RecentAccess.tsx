@@ -47,6 +47,7 @@ const RecentAccess = () => {
   useEffect(() => {
     const fetchRecentAccess = async () => {
       try {
+        // Mock data for demonstration
         const items: RecentItem[] = [
           {
             id: "1",
@@ -93,12 +94,18 @@ const RecentAccess = () => {
         ];
 
         const newTranscripts: {[key: string]: string} = {};
-        items.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-        });
+        
+        // Garantir que items existe antes de iterar
+        if (items && items.length > 0) {
+          items.forEach(item => {
+            if (item && item.id) {
+              newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+            }
+          });
+        }
 
         setTranscripts(newTranscripts);
-        setRecentItems(items);
+        setRecentItems(items || []);
       } catch (error) {
         console.error("Error fetching recent access:", error);
         setRecentItems([]);
@@ -110,11 +117,13 @@ const RecentAccess = () => {
     fetchRecentAccess();
 
     const interval = setInterval(() => {
-      // Make sure recentItems exists and has items before updating transcripts
+      // Verificar se recentItems existe e tem itens antes de atualizar transcripts
       if (recentItems && recentItems.length > 0) {
         const newTranscripts: {[key: string]: string} = {};
         recentItems.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+          if (item && item.id) {
+            newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+          }
         });
         setTranscripts(newTranscripts);
       }
@@ -133,7 +142,7 @@ const RecentAccess = () => {
     }
   };
 
-  // Ensure recentItems is always an array, even if it's undefined
+  // Garantir que recentItems é sempre um array, mesmo que seja undefined
   const itemsArray = recentItems || [];
 
   if (itemsArray.length === 0 && !loading) {
