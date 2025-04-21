@@ -183,9 +183,11 @@ export default function Biblioteca() {
                     <CarouselItem
                       key={livro.id}
                       className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
-                      onClick={() => setState({ mode: "modal", livro })}
                     >
-                      <BookCard livro={livro} />
+                      <BookCard 
+                        livro={livro} 
+                        onCardClick={() => setState({ mode: "modal", livro })}
+                      />
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -202,8 +204,11 @@ export default function Biblioteca() {
               <h2 className="text-xl font-semibold text-primary">{area}</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {livrosArea.map(livro => (
-                  <div key={livro.id} onClick={() => setState({ mode: "modal", livro })}>
-                    <BookCard livro={livro} />
+                  <div key={livro.id}>
+                    <BookCard 
+                      livro={livro} 
+                      onCardClick={() => setState({ mode: "modal", livro })}
+                    />
                   </div>
                 ))}
               </div>

@@ -22,7 +22,7 @@ type Livro = {
 
 type BookCardProps = {
   livro: Livro;
-  onCardClick: () => void;
+  onCardClick?: () => void;  // Make this prop optional
   isFavorite?: boolean;
   showFavoriteButton?: boolean;
   onToggleFavorite?: () => void;
@@ -30,7 +30,7 @@ type BookCardProps = {
 
 export function BookCard({ 
   livro, 
-  onCardClick, 
+  onCardClick = () => {}, // Provide a default empty function 
   isFavorite = false, 
   showFavoriteButton = false,
   onToggleFavorite 
