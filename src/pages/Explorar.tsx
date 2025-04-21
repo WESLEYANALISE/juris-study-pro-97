@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor, Search, Scale, BookMarked, Clock, FileSymlink } from "lucide-react";
@@ -160,7 +159,7 @@ const Explorar = () => {
             <h2 className="text-xl font-semibold mb-4 px-2">
               {category.category}
             </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 px-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {category.items.map((feature, index) => (
                 <Card key={index} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border h-full">
                   <CardHeader className="p-4">

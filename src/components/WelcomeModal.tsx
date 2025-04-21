@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-export type ProfileType = "concurseiro" | "universitario" | "advogado" | "oab" | "tudo";
+export type ProfileType = "concurseiro" | "universitario" | "advogado" | "tudo";
 
 interface ProfileOption {
   id: ProfileType;
@@ -35,11 +35,6 @@ const profileOptions: ProfileOption[] = [
     id: "advogado",
     title: "Advogado",
     description: "Profissional da advocacia em exercício",
-  },
-  {
-    id: "oab",
-    title: "Candidato OAB",
-    description: "Preparação específica para Exame da Ordem",
   },
   {
     id: "tudo",
@@ -113,7 +108,7 @@ export function WelcomeModal({ onProfileSelect }: WelcomeModalProps) {
         </DialogHeader>
         <div className="py-4">
           <RadioGroup
-            value={selectedProfile || undefined}
+            value={selectedProfile || ""}
             onValueChange={(value) => setSelectedProfile(value as ProfileType)}
             className="space-y-3"
           >

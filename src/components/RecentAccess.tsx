@@ -57,125 +57,62 @@ const RecentAccess = () => {
 
         if (error) throw error;
 
-        // Transform Supabase data to match RecentItem interface or use fallback data
-        let items: RecentItem[] = [];
-        
-        if (data && data.length > 0) {
-          // Map Supabase data to RecentItem format
-          items = data.map(item => {
-            // Default mappings based on item_type
-            let path = "/";
-            let type: "video" | "article" | "document" | "book" = "document";
-            
-            switch(item.item_type) {
-              case "video":
-                path = "/videoaulas";
-                type = "video";
-                break;
-              case "article":
-                path = "/bloger";
-                type = "article";
-                break;
-              case "book":
-                path = "/biblioteca";
-                type = "book";
-                break;
-              case "document":
-                path = "/peticionario";
-                type = "document";
-                break;
-            }
-            
-            // Format timestamp
-            const accessDate = new Date(item.accessed_at);
-            const now = new Date();
-            const diffMs = now.getTime() - accessDate.getTime();
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-            
-            let timestamp = "";
-            if (diffDays > 7) {
-              timestamp = `${Math.floor(diffDays / 7)} semanas`;
-            } else if (diffDays > 0) {
-              timestamp = diffDays === 1 ? "ontem" : `${diffDays}d atrás`;
-            } else if (diffHours > 0) {
-              timestamp = `${diffHours}h atrás`;
-            } else {
-              timestamp = "recentemente";
-            }
-            
-            return {
-              id: item.id,
-              title: `Item ${item.item_id}`,
-              type,
-              path,
-              timestamp
-            };
-          });
-        } else {
-          // Fallback data if no data from Supabase
-          items = [
-            {
-              id: "1",
-              title: "Direito Constitucional - Aula 3",
-              type: "video" as const,
-              path: "/videoaulas",
-              timestamp: "2h atrás"
-            },
-            {
-              id: "2",
-              title: "Reforma tributária 2025",
-              type: "article" as const,
-              path: "/bloger",
-              timestamp: "ontem"
-            },
-            {
-              id: "3",
-              title: "Manual de Direito Civil",
-              type: "book" as const,
-              path: "/biblioteca",
-              timestamp: "3d atrás"
-            },
-            {
-              id: "4",
-              title: "Recurso Extraordinário",
-              type: "document" as const,
-              path: "/peticionario",
-              timestamp: "5d atrás"
-            },
-            {
-              id: "5",
-              title: "Direito Administrativo - Concursos",
-              type: "video" as const,
-              path: "/videoaulas",
-              timestamp: "1 semana"
-            },
-            {
-              id: "6",
-              title: "Lei Geral de Proteção de Dados",
-              type: "article" as const,
-              path: "/bloger",
-              timestamp: "2 semanas"
-            }
-          ];
-        }
+        // TODO: Convert Supabase data to RecentItem format
+        const items = [
+          {
+            id: "1",
+            title: "Direito Constitucional - Aula 3",
+            type: "video" as const,
+            path: "/videoaulas",
+            timestamp: "2h atrás"
+          },
+          {
+            id: "2",
+            title: "Reforma tributária 2025",
+            type: "article" as const,
+            path: "/bloger",
+            timestamp: "ontem"
+          },
+          {
+            id: "3",
+            title: "Manual de Direito Civil",
+            type: "book" as const,
+            path: "/biblioteca",
+            timestamp: "3d atrás"
+          },
+          {
+            id: "4",
+            title: "Recurso Extraordinário",
+            type: "document" as const,
+            path: "/peticionario",
+            timestamp: "5d atrás"
+          },
+          {
+            id: "5",
+            title: "Direito Administrativo - Concursos",
+            type: "video" as const,
+            path: "/videoaulas",
+            timestamp: "1 semana"
+          },
+          {
+            id: "6",
+            title: "Lei Geral de Proteção de Dados",
+            type: "article" as const,
+            path: "/bloger",
+            timestamp: "2 semanas"
+          }
+        ];
         
         // Generate random transcripts for each item
         const newTranscripts: {[key: string]: string} = {};
-        if (items && items.length > 0) {
-          items.forEach(item => {
-            if (item && item.id) {
-              newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-            }
-          });
-        }
+        items.forEach(item => {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        });
         
         setTranscripts(newTranscripts);
-        setRecentItems(items || []);
+        setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
-        // Set default items on error
-        setRecentItems([]);
       } finally {
         setLoading(false);
       }
@@ -185,15 +122,11 @@ const RecentAccess = () => {
     
     // Refresh transcripts every 10 seconds
     const interval = setInterval(() => {
-      if (recentItems && recentItems.length > 0) {
-        const newTranscripts: {[key: string]: string} = {};
-        recentItems.forEach(item => {
-          if (item && item.id) {
-            newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-          }
-        });
-        setTranscripts(newTranscripts);
-      }
+      const newTranscripts: {[key: string]: string} = {};
+      recentItems.forEach(item => {
+        newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+      });
+      setTranscripts(newTranscripts);
     }, 10000);
     
     return () => clearInterval(interval);
@@ -208,7 +141,14 @@ const RecentAccess = () => {
       default: return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
+
+  // Ensure recentItems is an array before using array methods
+  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
+  if (itemsArray.length === 0 && !loading) {
+    return null;
+  }
+
   if (loading) {
     return (
       <div className="w-full mb-4 animate-pulse">
@@ -220,11 +160,6 @@ const RecentAccess = () => {
         </div>
       </div>
     );
-  }
-
-  // If there are no items, don't render anything
-  if (!recentItems || recentItems.length === 0) {
-    return null;
   }
 
   return (
@@ -241,7 +176,7 @@ const RecentAccess = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {recentItems && recentItems.map((item) => (
+          {itemsArray.map((item) => (
             <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
