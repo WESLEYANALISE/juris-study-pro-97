@@ -371,33 +371,6 @@ export type Database = {
         }
         Relationships: []
       }
-      recent_access: {
-        Row: {
-          access_type: string
-          accessed_at: string
-          id: string
-          target_id: string
-          target_table: string
-          user_id: string
-        }
-        Insert: {
-          access_type: string
-          accessed_at?: string
-          id?: string
-          target_id: string
-          target_table: string
-          user_id: string
-        }
-        Update: {
-          access_type?: string
-          accessed_at?: string
-          id?: string
-          target_id?: string
-          target_table?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       resumos: {
         Row: {
           area_direito: string

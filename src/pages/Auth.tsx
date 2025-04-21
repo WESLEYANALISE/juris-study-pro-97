@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/lib/supabaseClient";
-import { Google } from "lucide-react"; // Import the Google icon directly
+import { ExternalLink } from "lucide-react"; // Replace Google with ExternalLink icon
 
 const LOGO_URL = "/placeholder.svg";
 const SUBTITLE = "Acesse com e-mail ou Google e aproveite a experiência jurídica completa.";
@@ -103,7 +103,7 @@ const Auth = () => {
                 disabled={googleLoading}
                 variant="outline"
               >
-                <Google className="h-5 w-5 text-blue-600" />
+                <ExternalLink className="h-5 w-5 text-blue-600" /> {/* Using ExternalLink instead of Google */}
                 <span>{googleLoading ? "Entrando..." : "Entrar com Google"}</span>
               </Button>
             </>
