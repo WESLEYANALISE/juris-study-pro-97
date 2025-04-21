@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Loader2, mail, google } from "lucide-react";
+import { Loader2, Mail, Google } from "lucide-react";
 
 const LOGO_URL = "https://lovable.dev/opengraph-image-p98pqg.png"; // Você pode trocar para seu logo local depois!
 
@@ -104,7 +104,7 @@ export default function Auth() {
             type="submit"
             size="full"
           >
-            {loading ? <Loader2 className="animate-spin mr-2" /> : mail({ className: "mr-2" }) }
+            {loading ? <Loader2 className="animate-spin mr-2" /> : <Mail className="mr-2" /> }
             Continuar com e-mail
           </Button>
         </form>
@@ -124,7 +124,7 @@ export default function Auth() {
           disabled={loading}
         >
           <span className="mr-2 flex items-center">
-            {google({ className: "w-5 h-5" })}
+            <Google className="w-5 h-5" />
           </span>
           Entrar com Google
         </Button>
