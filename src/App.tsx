@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,8 +15,6 @@ import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
 import Auth from "./pages/Auth";
 import { RequireAuth } from "@/components/RequireAuth";
-import Biblioteca from "./pages/Biblioteca";
-import Flashcards from "./pages/Flashcards";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -77,22 +74,6 @@ const App = () => {
                 element={
                   <RequireAuth>
                     <Layout userProfile={userProfile}><Anotacoes /></Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/biblioteca"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}><Biblioteca /></Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/flashcards"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}><Flashcards /></Layout>
                   </RequireAuth>
                 }
               />
