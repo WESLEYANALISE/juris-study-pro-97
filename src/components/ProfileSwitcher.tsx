@@ -1,5 +1,5 @@
 
-import { Check, ChevronsUpDown, GraduationCap, Scale, User, BookOpen } from "lucide-react";
+import { Check, ChevronsUpDown, GraduationCap, Scale, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -37,12 +37,6 @@ const profiles = [
     description: "Profissional em exercício",
   },
   {
-    value: "oab",
-    label: "Candidato OAB",
-    icon: BookOpen,
-    description: "Preparação específica para Exame da Ordem",
-  },
-  {
     value: "tudo",
     label: "Tudo",
     icon: User,
@@ -60,22 +54,15 @@ export function ProfileSwitcher({
   onProfileChange 
 }: ProfileSwitcherProps) {
   const [open, setOpen] = useState(false);
-  
-  // Make sure we have a valid profile even if the passed currentProfile is invalid
-  const [selectedProfile, setSelectedProfile] = useState(() => {
-    const foundProfile = profiles.find(p => p.value === currentProfile);
-    return foundProfile || profiles[4]; // Use the "tudo" profile as fallback
-  });
+  const [selectedProfile, setSelectedProfile] = useState(
+    profiles.find(p => p.value === currentProfile) || profiles[3]
+  );
 
   const handleProfileSelect = (profile: typeof profiles[0]) => {
-    try {
-      setSelectedProfile(profile);
-      setOpen(false);
-      if (onProfileChange) {
-        onProfileChange(profile.value as ProfileType);
-      }
-    } catch (error) {
-      console.error("Erro ao selecionar perfil:", error);
+    setSelectedProfile(profile);
+    setOpen(false);
+    if (onProfileChange) {
+      onProfileChange(profile.value as ProfileType);
     }
   };
 
@@ -92,14 +79,14 @@ export function ProfileSwitcher({
             {selectedProfile && (
               <>
                 <selectedProfile.icon className="h-5 w-5 text-primary" />
-                <span className="truncate">{selectedProfile.label}</span>
+                <span>{selectedProfile.label}</span>
               </>
             )}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-0 bg-popover">
+      <PopoverContent className="w-[250px] p-0">
         <Command>
           <CommandInput placeholder="Buscar perfil..." />
           <CommandEmpty>Nenhum perfil encontrado.</CommandEmpty>
