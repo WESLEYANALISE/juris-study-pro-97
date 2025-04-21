@@ -162,12 +162,16 @@ const RecentAccess = () => {
         
         // Generate random transcripts for each item
         const newTranscripts: {[key: string]: string} = {};
-        items.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-        });
+        if (items && items.length > 0) {
+          items.forEach(item => {
+            if (item && item.id) {
+              newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+            }
+          });
+        }
         
         setTranscripts(newTranscripts);
-        setRecentItems(items);
+        setRecentItems(items || []);
       } catch (error) {
         console.error("Error fetching recent access:", error);
         // Set default items on error
@@ -184,7 +188,9 @@ const RecentAccess = () => {
       if (recentItems && recentItems.length > 0) {
         const newTranscripts: {[key: string]: string} = {};
         recentItems.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+          if (item && item.id) {
+            newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+          }
         });
         setTranscripts(newTranscripts);
       }
