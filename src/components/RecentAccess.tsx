@@ -10,14 +10,43 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { supabase } from "@/integrations/supabase/client";
+
+// Types for all possible target tables
+type AccessType = "video" | "article" | "document" | "book";
 
 interface RecentItem {
   id: string;
   title: string;
-  type: "video" | "article" | "document" | "book";
+  type: AccessType;
   path: string;
   timestamp: string;
   transcript?: string;
+}
+
+const TABLE_TYPE_PATH_MAP: Record<string, {type: AccessType, path: string}> = {
+  "video_aulas": { type: "video", path: "/videoaulas" },
+  "biblioteca_juridica": { type: "book", path: "/biblioteca" },
+  "peticoes": { type: "document", path: "/peticionario" },
+  "noticias": { type: "article", path: "/noticias" },
+  "resumos": { type: "article", path: "/resumos" },
+  "bloger": { type: "article", path: "/bloger" },
+};
+
+function getTimestampStr(dateIso: string) {
+  const date = new Date(dateIso);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  if (diffSec < 60) return "agora";
+  const diffMin = Math.floor(diffSec / 60);
+  if (diffMin < 60) return `${diffMin} min atrás`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h atrás`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay === 1) return "ontem";
+  if (diffDay < 7) return `${diffDay}d atrás`;
+  return date.toLocaleDateString();
 }
 
 // Random audio transcript generator
@@ -34,7 +63,6 @@ const getRandomTranscript = (type: string, title: string) => {
     `Material complementar disponível para ${title}.`,
     `${title} faz parte da sua trilha de aprendizado.`
   ];
-  
   return transcripts[Math.floor(Math.random() * transcripts.length)];
 };
 
@@ -42,78 +70,110 @@ const RecentAccess = () => {
   const navigate = useNavigate();
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [transcripts, setTranscripts] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     const fetchRecentAccess = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        // Note: We're no longer trying to query the recent_access table
-        // Instead, we'll use hardcoded mock data as the table doesn't exist yet
-        
-        // Mock recent access data
-        const items = [
-          {
-            id: "1",
-            title: "Direito Constitucional - Aula 3",
-            type: "video" as const,
-            path: "/videoaulas",
-            timestamp: "2h atrás"
-          },
-          {
-            id: "2",
-            title: "Reforma tributária 2025",
-            type: "article" as const,
-            path: "/bloger",
-            timestamp: "ontem"
-          },
-          {
-            id: "3",
-            title: "Manual de Direito Civil",
-            type: "book" as const,
-            path: "/biblioteca",
-            timestamp: "3d atrás"
-          },
-          {
-            id: "4",
-            title: "Recurso Extraordinário",
-            type: "document" as const,
-            path: "/peticionario",
-            timestamp: "5d atrás"
-          },
-          {
-            id: "5",
-            title: "Direito Administrativo - Concursos",
-            type: "video" as const,
-            path: "/videoaulas",
-            timestamp: "1 semana"
-          },
-          {
-            id: "6",
-            title: "Lei Geral de Proteção de Dados",
-            type: "article" as const,
-            path: "/bloger",
-            timestamp: "2 semanas"
+        // Get accesses from logged-in user, newest first (limit 10 for now)
+        const { data: access, error: accessErr } = await supabase
+          .from("recent_access")
+          .select("*")
+          .order("accessed_at", { ascending: false })
+          .limit(10);
+        if (accessErr) throw accessErr;
+
+        // For each access, fetch title from appropriate table
+        const items: RecentItem[] = [];
+        for (const record of access || []) {
+          const { target_table, target_id, access_type, id, accessed_at } = record;
+          let resource: any = null;
+          let title = "Conteúdo desconhecido";
+          let type: AccessType = "document";
+          let path = "/";
+          // Map type/path based on table
+          if (TABLE_TYPE_PATH_MAP[target_table]) {
+            type = TABLE_TYPE_PATH_MAP[target_table].type;
+            path = TABLE_TYPE_PATH_MAP[target_table].path;
           }
-        ];
-        
-        // Generate random transcripts for each item
-        const newTranscripts: {[key: string]: string} = {};
+          // For each table, fetch title/name
+          if (target_table === "video_aulas") {
+            const { data } = await supabase
+              .from("video_aulas")
+              .select("title")
+              .eq("id", target_id)
+              .maybeSingle();
+            title = data?.title ? data.title : "Vídeo desconhecido";
+          } else if (target_table === "biblioteca_juridica") {
+            const { data } = await supabase
+              .from("biblioteca_juridica")
+              .select("livro")
+              .eq("id", target_id)
+              .maybeSingle();
+            title = data?.livro ? data.livro : "Livro desconhecido";
+          } else if (target_table === "peticoes") {
+            const { data } = await supabase
+              .from("peticoes")
+              .select("titulo")
+              .eq("id", target_id)
+              .maybeSingle();
+            title = data?.titulo ? data.titulo : "Peça desconhecida";
+          } else if (target_table === "noticias") {
+            const { data } = await supabase
+              .from("noticias")
+              .select("titulo")
+              .eq("id", target_id)
+              .maybeSingle();
+            title = data?.titulo ? data.titulo : "Notícia desconhecida";
+          } else if (target_table === "resumos") {
+            const { data } = await supabase
+              .from("resumos")
+              .select("titulo")
+              .eq("id", target_id)
+              .maybeSingle();
+            title = data?.titulo ? data.titulo : "Resumo desconhecido";
+          } else if (target_table === "bloger") {
+            // Bloger: same, fetch titulo
+            const { data } = await supabase
+              .from("bloger")
+              .select("titulo")
+              .eq("id", target_id)
+              .maybeSingle();
+            title = data?.titulo ? data.titulo : "Artigo desconhecido";
+          }
+          // Generate transcript
+          items.push({
+            id: id,
+            title,
+            type,
+            path,
+            timestamp: getTimestampStr(accessed_at),
+          });
+        }
+
+        // Generate transcripts
+        const transcriptsObj: {[key: string]: string} = {};
         items.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+          transcriptsObj[item.id] = getRandomTranscript(item.type, item.title);
         });
-        
-        setTranscripts(newTranscripts);
         setRecentItems(items);
-      } catch (error) {
-        console.error("Error fetching recent access:", error);
+        setTranscripts(transcriptsObj);
+      } catch (err: any) {
+        setError("Erro ao buscar acessos recentes.");
+        setRecentItems([]);
+        setTranscripts({});
+        console.error(err);
       } finally {
         setLoading(false);
       }
     };
 
     fetchRecentAccess();
-    
-    // Refresh transcripts every 10 seconds
+
+    // Refresh transcripts, not data, every 10s
     const interval = setInterval(() => {
       const newTranscripts: {[key: string]: string} = {};
       recentItems.forEach(item => {
@@ -121,9 +181,8 @@ const RecentAccess = () => {
       });
       setTranscripts(newTranscripts);
     }, 10000);
-    
     return () => clearInterval(interval);
-  }, []);
+  }, []); // Note: user id management is handled by RLS
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -134,13 +193,6 @@ const RecentAccess = () => {
       default: return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
-
-  // Ensure recentItems is an array before using array methods
-  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
-  
-  if (itemsArray.length === 0 && !loading) {
-    return null;
-  }
 
   if (loading) {
     return (
@@ -154,13 +206,20 @@ const RecentAccess = () => {
       </div>
     );
   }
+  if (error) {
+    return (
+      <div className="w-full mb-4">
+        <div className="text-xs text-red-500">{error}</div>
+      </div>
+    );
+  }
+  if (!recentItems.length) return null;
 
   return (
     <div className="w-full mb-4">
       <div className="flex items-center justify-between mb-2">
         <h2 className="text-sm font-medium">Acessos Recentes</h2>
       </div>
-
       <Carousel
         opts={{
           align: "start",
@@ -169,9 +228,9 @@ const RecentAccess = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {itemsArray.map((item) => (
+          {recentItems.map((item) => (
             <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
-              <Card 
+              <Card
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => navigate(item.path)}
               >
