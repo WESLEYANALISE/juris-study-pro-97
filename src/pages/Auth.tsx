@@ -1,26 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/components/ui/sonner";
-import { useNavigate } from "react-router-dom";
 
 const AuthPage = () => {
-  const navigate = useNavigate();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [formType, setFormType] = useState<"login" | "signup">("signup");
   const [loading, setLoading] = useState(false);
-
-  // Está logado? Redireciona para /
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/");
-    });
-  }, [navigate]);
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault();

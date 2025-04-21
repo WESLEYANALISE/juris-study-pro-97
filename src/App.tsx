@@ -26,7 +26,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
+function App() {
   const [userProfile, setUserProfile] = useState<ProfileType>(() => {
     // Recuperar o perfil do localStorage, ou usar 'tudo' como padrão
     return (localStorage.getItem("juris-study-profile") as ProfileType) || "tudo";
@@ -38,24 +38,25 @@ const App = () => {
   };
 
   const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
     // Listen auth state
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => setSession(session)
     );
+    
     // Check session on load
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+    
     return () => subscription.unsubscribe();
   }, []);
 
-  // Redireciona para autenticação se não logado e rota diferente de /auth
-  const isAuthPage = window.location.pathname.startsWith("/auth");
-  if (!session && !isAuthPage) {
-    window.location.href = "/auth";
-    return null;
-  }
-  if (session && isAuthPage) {
-    window.location.href = "/";
+  // Enquanto carrega, não mostre nada
+  if (loading) {
     return null;
   }
 
@@ -69,15 +70,60 @@ const App = () => {
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
               {/* Auth route */}
-              <Route path="/auth" element={<AuthPage />} />
-              {/* Main routes */}
-              <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
-              <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
-              <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
+              <Route 
+                path="/auth" 
+                element={session ? <Navigate to="/" replace /> : <AuthPage />} 
+              />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/" 
+                element={
+                  session ? (
+                    <Layout userProfile={userProfile}><Index /></Layout>
+                  ) : (
+                    <Navigate to="/auth" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/videoaulas" 
+                element={
+                  session ? (
+                    <Layout userProfile={userProfile}><VideoAulas /></Layout>
+                  ) : (
+                    <Navigate to="/auth" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/bloger" 
+                element={
+                  session ? (
+                    <Layout userProfile={userProfile}><Bloger /></Layout>
+                  ) : (
+                    <Navigate to="/auth" replace />
+                  )
+                } 
+              />
+              <Route 
+                path="/anotacoes" 
+                element={
+                  session ? (
+                    <Layout userProfile={userProfile}><Anotacoes /></Layout>
+                  ) : (
+                    <Navigate to="/auth" replace />
+                  )
+                } 
+              />
+              
               {/* Redirect routes */}
-              <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route 
+                path="/videoaulas.html" 
+                element={<Navigate to="/videoaulas" replace />} 
+              />
+              
+              {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
@@ -86,6 +132,7 @@ const App = () => {
       </ThemeProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
+
