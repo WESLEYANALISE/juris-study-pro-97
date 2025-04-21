@@ -79,6 +79,13 @@ const App = () => {
     return <>{children}</>;
   };
 
+  // Componente que redireciona para / se já estiver autenticado
+  const AuthRoute = ({ children }: { children: React.ReactNode }) => {
+    if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    if (session) return <Navigate to="/" replace />;
+    return <>{children}</>;
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="juris-study-theme">
@@ -88,7 +95,11 @@ const App = () => {
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
-              <Route path="/auth" element={<Auth />} />
+              <Route path="/auth" element={
+                <AuthRoute>
+                  <Auth />
+                </AuthRoute>
+              } />
               
               <Route path="/" element={
                 <ProtectedRoute>
@@ -198,10 +209,17 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              {/* Redirect routes */}
+              {/* Adicionando redirecionamento para a tela de login como fallback */}
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+              <Route path="*" element={
+                loading ? (
+                  <div className="flex items-center justify-center h-screen">Carregando...</div>
+                ) : session ? (
+                  <NotFound />
+                ) : (
+                  <Navigate to="/auth" replace />
+                )
+              } />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>

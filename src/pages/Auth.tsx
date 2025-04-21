@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Loader2, Mail } from "lucide-react";      // ícones padrão Lucide
-import { SiGoogle } from "react-icons/si";           // ícone Google de “Simple Icons”
+import { Loader2, Mail } from "lucide-react";
+import { SiGoogle } from "react-icons/si";
 
 const LOGO_URL = "https://lovable.dev/opengraph-image-p98pqg.png";
 
@@ -66,7 +66,7 @@ export default function Auth() {
     <div className="min-h-screen bg-gradient-to-br from-[#E5DEFF] via-[#F1F0FB] to-white flex items-center justify-center px-4">
       <div className="max-w-md w-full rounded-xl shadow-card-hover bg-white p-8 pt-6 flex flex-col gap-6">
         <img src={LOGO_URL} alt="Logo JurisStudy" className="h-20 mx-auto mb-2" />
-        <p className="text-center text-lg font-semibold text-juris-purple-dark mb-1">
+        <p className="text-center text-lg font-semibold text-gray-800 mb-1">
           Tenha acesso aos melhores conteúdos jurídicos e transforme seus estudos com organização e foco.
         </p>
 
@@ -82,13 +82,13 @@ export default function Auth() {
               value={email}
               placeholder="seu@email.com"
               onChange={e => setEmail(e.target.value)}
-              className="text-base bg-[rgba(245,245,255,0.7)] border border-juris-purple-light"
+              className="text-base bg-[rgba(245,245,255,0.7)] border border-gray-300"
               autoComplete="email"
             />
           </div>
           <Button
             disabled={loading || !email}
-            className="w-full bg-juris-purple hover:bg-juris-purple-dark text-white text-base shadow hover:shadow-lg transition disabled:opacity-60"
+            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-base shadow hover:shadow-lg transition disabled:opacity-60"
             type="submit"
             size="full"
           >
@@ -118,7 +118,7 @@ export default function Auth() {
         </Button>
 
         <div className="mt-1 text-xs text-center text-gray-400">
-          Ao continuar, você aceita os <a href="#" className="underline text-juris-purple">Termos de Uso</a>.
+          Ao continuar, você aceita os <a href="#" className="underline text-indigo-600">Termos de Uso</a>.
         </div>
       </div>
     </div>
