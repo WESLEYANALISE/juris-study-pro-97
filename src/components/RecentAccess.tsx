@@ -43,21 +43,7 @@ const RecentAccess = () => {
   useEffect(() => {
     const fetchRecentAccess = async () => {
       try {
-        // Since there's no recent_access table yet, we'll use static sample data
-        // This avoids the error with attempting to query a non-existent table
-
-        // In the future, you might want to create a recent_access table with:
-        // CREATE TABLE public.recent_access (
-        //   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-        //   user_id uuid REFERENCES auth.users NOT NULL,
-        //   content_id text NOT NULL,
-        //   content_type text NOT NULL,
-        //   content_title text NOT NULL,
-        //   content_path text NOT NULL,
-        //   accessed_at timestamp with time zone DEFAULT now()
-        // );
-
-        // Mock data for now
+        // Dados mockados para evitar problemas com tabelas inexistentes
         const items = [
           {
             id: "1",
@@ -103,31 +89,39 @@ const RecentAccess = () => {
           }
         ];
 
-        // Generate random transcripts for each item
+        // Gerando transcrições aleatórias para cada item
         const newTranscripts: { [key: string]: string } = {};
         items.forEach(item => {
           newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
+        
         setTranscripts(newTranscripts);
         setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
+        // Em caso de erro, definir um array vazio em vez de undefined
+        setRecentItems([]);
       } finally {
         setLoading(false);
       }
     };
+    
     fetchRecentAccess();
 
-    // Refresh transcripts every 10 seconds
+    // Atualizar transcrições a cada 10 segundos
     const interval = setInterval(() => {
-      const newTranscripts: { [key: string]: string } = {};
-      recentItems.forEach(item => {
-        newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-      });
-      setTranscripts(newTranscripts);
+      // Garantir que recentItems existe e não é undefined antes de iterar
+      if (recentItems && recentItems.length > 0) {
+        const newTranscripts: { [key: string]: string } = {};
+        recentItems.forEach(item => {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        });
+        setTranscripts(newTranscripts);
+      }
     }, 10000);
+    
     return () => clearInterval(interval);
-  }, []);
+  }, [recentItems.length]); // Adicionamos recentItems.length como dependência
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -144,7 +138,7 @@ const RecentAccess = () => {
     }
   };
 
-  // Ensure recentItems is an array before using array methods
+  // Garantir que recentItems seja sempre um array antes de usar métodos de array
   const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
   if (itemsArray.length === 0 && !loading) {
@@ -184,7 +178,7 @@ const RecentAccess = () => {
                       <div className="text-sm font-medium truncate">{item.title}</div>
                       <div className="text-xs text-muted-foreground mt-1">{item.timestamp}</div>
                       <div className="text-xs text-muted-foreground mt-1 italic line-clamp-2">
-                        "{transcripts[item.id]}"
+                        "{transcripts[item.id] || getRandomTranscript(item.type, item.title)}"
                       </div>
                     </div>
                   </div>
