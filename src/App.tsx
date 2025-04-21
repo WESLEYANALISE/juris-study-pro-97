@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -13,7 +14,6 @@ import NotFound from "./pages/NotFound";
 import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
-import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -48,8 +48,6 @@ const App = () => {
               <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
               <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
               <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
-              {/* Auth route */}
-              <Route path="/auth" element={<Auth />} />
               {/* Redirect routes */}
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
