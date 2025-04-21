@@ -14,6 +14,10 @@ import AnnotationsDialog from "@/components/biblioteca/AnnotationsDialog";
 import AIRecommendations from "@/components/biblioteca/AIRecommendations";
 import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
+import BooksByAreaSection from "@/components/biblioteca/BooksByAreaSection";
+import RecentBooksGrid from "@/components/biblioteca/RecentBooksGrid";
+import ReadBooksGrid from "@/components/biblioteca/ReadBooksGrid";
+import FavoriteBooksGrid from "@/components/biblioteca/FavoriteBooksGrid";
 
 interface Book { id: number; livro: string | null; area: string | null; sobre: string | null; imagem: string | null; download: string | null; link: string | null; }
 interface ReadBook { id: number; isRead: boolean; }
@@ -327,75 +331,41 @@ const Biblioteca = () => {
         </AnimatedTabsList>
 
         <AnimatedTabsContent value="areas" slideDirection="right">
-          {isLoading ? <div className="flex justify-center p-12"><p>Carregando biblioteca...</p></div> :
-            areas.length > 0 ? <div className="space-y-10">
-              {areas.map(area => area && booksByArea[area]?.length > 0 && (
-                <div key={area} className="mb-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <h2 className="text-base md:text-xl font-semibold">{area}</h2>
-                      <span className="ml-2 text-xs md:text-sm text-muted-foreground">
-                        ({booksPerArea[area] || 0} livros)
-                      </span>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setViewMode(prev => ({ ...prev, [area]: prev[area] === "grid" ? "list" : "grid" }))} className="flex items-center gap-1">
-                      <ListFilter className="h-4 w-4 mr-1" />
-                      Ver em {viewMode[area] === "grid" ? "lista" : "grade"}
-                    </Button>
-                  </div>
-                  {viewMode[area] === "grid" ? (
-                    <Carousel className="w-full">
-                      <CarouselContent>
-                        {booksByArea[area].map(book => (
-                          <CarouselItem key={book.id} className="md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-2 pr-0">
-                            <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-                          </CarouselItem>
-                        ))}
-                      </CarouselContent>
-                    </Carousel>
-                  ) : (
-                    <BookList books={booksByArea[area]} readBooks={readBooks} favoriteBooks={favoriteBooks} onOpenBookDialog={openBookDialog} />
-                  )}
-                </div>
-              ))}
-            </div>
-              : <p className="text-center py-12 text-muted-foreground">Nenhuma área encontrada na biblioteca.</p>}
+          <BooksByAreaSection
+            areas={areas}
+            booksByArea={booksByArea}
+            booksPerArea={booksPerArea}
+            viewMode={viewMode}
+            readBooks={readBooks}
+            favoriteBooks={favoriteBooks}
+            toggleViewMode={toggleViewMode}
+            openBookDialog={openBookDialog}
+            isLoading={isLoading}
+          />
         </AnimatedTabsContent>
-
         <AnimatedTabsContent value="recentes" slideDirection="right">
-          {recentBooks.length > 0 ?
-            <div className={`grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2`}>
-              {recentBooks.map(book => <div key={book.id} className="flex justify-center">
-                <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-              </div>)}
-            </div>
-            : <p className="text-center py-10 text-muted-foreground">
-              Você ainda não acessou nenhum livro recentemente.
-            </p>}
+          <RecentBooksGrid
+            recentBooks={recentBooks}
+            readBooks={readBooks}
+            favoriteBooks={favoriteBooks}
+            openBookDialog={openBookDialog}
+          />
         </AnimatedTabsContent>
-
         <AnimatedTabsContent value="lidos" slideDirection="right">
-          {readBooksData.length > 0 ?
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2">
-              {readBooksData.map(book => <div key={book.id} className="flex justify-center">
-                <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-              </div>)}
-            </div>
-            : <p className="text-center py-12 text-muted-foreground">
-              Você ainda não marcou nenhum livro como lido.
-            </p>}
+          <ReadBooksGrid
+            readBooks={readBooksData}
+            allRead={readBooks}
+            favoriteBooks={favoriteBooks}
+            openBookDialog={openBookDialog}
+          />
         </AnimatedTabsContent>
-
         <AnimatedTabsContent value="favoritos" slideDirection="right">
-          {favoriteBooksData.length > 0 ?
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2">
-              {favoriteBooksData.map(book => <div key={book.id} className="flex justify-center">
-                <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-              </div>)}
-            </div>
-            : <p className="text-center py-12 text-muted-foreground">
-              Você ainda não adicionou nenhum livro aos favoritos.
-            </p>}
+          <FavoriteBooksGrid
+            favoriteBooks={favoriteBooksData}
+            allRead={readBooks}
+            favoriteBookIds={favoriteBooks}
+            openBookDialog={openBookDialog}
+          />
         </AnimatedTabsContent>
       </AnimatedTabs>
 
