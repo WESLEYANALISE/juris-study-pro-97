@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,6 +13,8 @@ import NotFound from "./pages/NotFound";
 import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
+import AuthPage from "./pages/Auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -35,6 +36,28 @@ const App = () => {
     localStorage.setItem("juris-study-profile", profile);
   };
 
+  const [session, setSession] = useState(null);
+  useEffect(() => {
+    // Listen auth state
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
+    );
+    // Check session on load
+    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // Redireciona para autenticação se não logado e rota diferente de /auth
+  const isAuthPage = window.location.pathname.startsWith("/auth");
+  if (!session && !isAuthPage) {
+    window.location.href = "/auth";
+    return null;
+  }
+  if (session && isAuthPage) {
+    window.location.href = "/";
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="dark" storageKey="juris-study-theme">
@@ -44,6 +67,9 @@ const App = () => {
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
+              {/* Auth route */}
+              <Route path="/auth" element={<AuthPage />} />
+              {/* Main routes */}
               <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
               <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
               <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />

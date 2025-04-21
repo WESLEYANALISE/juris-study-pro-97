@@ -45,33 +45,428 @@ export type Database = {
         }
         Relationships: []
       }
+      biblioteca_juridica: {
+        Row: {
+          area: string | null
+          created_at: string
+          download: string | null
+          id: number
+          imagem: string | null
+          link: string | null
+          livro: string | null
+          sobre: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          download?: string | null
+          id?: number
+          imagem?: string | null
+          link?: string | null
+          livro?: string | null
+          sobre?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          download?: string | null
+          id?: number
+          imagem?: string | null
+          link?: string | null
+          livro?: string | null
+          sobre?: string | null
+        }
+        Relationships: []
+      }
+      cronograma: {
+        Row: {
+          concluido: boolean | null
+          cor: string | null
+          created_at: string | null
+          data_fim: string
+          data_inicio: string
+          descricao: string | null
+          id: string
+          titulo: string
+          user_id: string | null
+        }
+        Insert: {
+          concluido?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          data_fim: string
+          data_inicio: string
+          descricao?: string | null
+          id?: string
+          titulo: string
+          user_id?: string | null
+        }
+        Update: {
+          concluido?: boolean | null
+          cor?: string | null
+          created_at?: string | null
+          data_fim?: string
+          data_inicio?: string
+          descricao?: string | null
+          id?: string
+          titulo?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      dicionario_juridico: {
+        Row: {
+          area_direito: string | null
+          created_at: string | null
+          definicao: string
+          exemplo_uso: string | null
+          id: string
+          termo: string
+        }
+        Insert: {
+          area_direito?: string | null
+          created_at?: string | null
+          definicao: string
+          exemplo_uso?: string | null
+          id?: string
+          termo: string
+        }
+        Update: {
+          area_direito?: string | null
+          created_at?: string | null
+          definicao?: string
+          exemplo_uso?: string | null
+          id?: string
+          termo?: string
+        }
+        Relationships: []
+      }
+      estatisticas: {
+        Row: {
+          artigos_lidos: number | null
+          aulas_assistidas: number | null
+          created_at: string | null
+          flashcards_feitos: number | null
+          id: string
+          resumos_criados: number | null
+          user_id: string
+        }
+        Insert: {
+          artigos_lidos?: number | null
+          aulas_assistidas?: number | null
+          created_at?: string | null
+          flashcards_feitos?: number | null
+          id?: string
+          resumos_criados?: number | null
+          user_id: string
+        }
+        Update: {
+          artigos_lidos?: number | null
+          aulas_assistidas?: number | null
+          created_at?: string | null
+          flashcards_feitos?: number | null
+          id?: string
+          resumos_criados?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estatisticas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      flash_cards: {
+        Row: {
+          area: string | null
+          created_at: string
+          explicacao: string | null
+          id: number
+          pergunta: string | null
+          resposta: string | null
+          tema: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          explicacao?: string | null
+          id?: number
+          pergunta?: string | null
+          resposta?: string | null
+          tema?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          explicacao?: string | null
+          id?: number
+          pergunta?: string | null
+          resposta?: string | null
+          tema?: string | null
+        }
+        Relationships: []
+      }
+      gamificacao: {
+        Row: {
+          conquistas: string[] | null
+          created_at: string | null
+          id: string
+          nivel: number | null
+          pontos: number | null
+          streak_dias: number | null
+          ultima_atividade: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conquistas?: string[] | null
+          created_at?: string | null
+          id?: string
+          nivel?: number | null
+          pontos?: number | null
+          streak_dias?: number | null
+          ultima_atividade?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conquistas?: string[] | null
+          created_at?: string | null
+          id?: string
+          nivel?: number | null
+          pontos?: number | null
+          streak_dias?: number | null
+          ultima_atividade?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      jurisprudencia: {
+        Row: {
+          area_direito: string | null
+          created_at: string | null
+          data_julgamento: string | null
+          ementa: string
+          id: string
+          numero_processo: string | null
+          relator: string | null
+          titulo: string
+          tribunal: string
+        }
+        Insert: {
+          area_direito?: string | null
+          created_at?: string | null
+          data_julgamento?: string | null
+          ementa: string
+          id?: string
+          numero_processo?: string | null
+          relator?: string | null
+          titulo: string
+          tribunal: string
+        }
+        Update: {
+          area_direito?: string | null
+          created_at?: string | null
+          data_julgamento?: string | null
+          ementa?: string
+          id?: string
+          numero_processo?: string | null
+          relator?: string | null
+          titulo?: string
+          tribunal?: string
+        }
+        Relationships: []
+      }
+      noticias: {
+        Row: {
+          area_direito: string | null
+          conteudo: string
+          created_at: string | null
+          data_publicacao: string | null
+          fonte: string | null
+          id: string
+          thumbnail_url: string | null
+          titulo: string
+        }
+        Insert: {
+          area_direito?: string | null
+          conteudo: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          fonte?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          titulo: string
+        }
+        Update: {
+          area_direito?: string | null
+          conteudo?: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          fonte?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          titulo?: string
+        }
+        Relationships: []
+      }
+      peticoes: {
+        Row: {
+          area_direito: string
+          conteudo: string
+          created_at: string | null
+          descricao: string | null
+          downloads: number | null
+          id: string
+          tags: string[] | null
+          tipo_peca: string
+          titulo: string
+        }
+        Insert: {
+          area_direito: string
+          conteudo: string
+          created_at?: string | null
+          descricao?: string | null
+          downloads?: number | null
+          id?: string
+          tags?: string[] | null
+          tipo_peca: string
+          titulo: string
+        }
+        Update: {
+          area_direito?: string
+          conteudo?: string
+          created_at?: string | null
+          descricao?: string | null
+          downloads?: number | null
+          id?: string
+          tags?: string[] | null
+          tipo_peca?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
           display_name: string | null
-          email: string | null
+          email: string
           id: string
-          updated_at: string | null
-          user_type: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
+          email: string
           id: string
-          updated_at?: string | null
-          user_type?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
+          email?: string
           id?: string
-          updated_at?: string | null
-          user_type?: string | null
+        }
+        Relationships: []
+      }
+      recent_access: {
+        Row: {
+          access_type: string
+          accessed_at: string
+          id: string
+          target_id: string
+          target_table: string
+          user_id: string
+        }
+        Insert: {
+          access_type: string
+          accessed_at?: string
+          id?: string
+          target_id: string
+          target_table: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string
+          id?: string
+          target_id?: string
+          target_table?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resumos: {
+        Row: {
+          area_direito: string
+          autor: string | null
+          conteudo: string
+          created_at: string | null
+          id: string
+          likes: number | null
+          tags: string[] | null
+          titulo: string
+        }
+        Insert: {
+          area_direito: string
+          autor?: string | null
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          titulo: string
+        }
+        Update: {
+          area_direito?: string
+          autor?: string | null
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          likes?: number | null
+          tags?: string[] | null
+          titulo?: string
+        }
+        Relationships: []
+      }
+      video_aulas: {
+        Row: {
+          area: string
+          created_at: string | null
+          description: string | null
+          duration: string | null
+          id: string
+          professor: string | null
+          thumbnail_url: string | null
+          title: string
+          url: string
+          views: number | null
+        }
+        Insert: {
+          area: string
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          professor?: string | null
+          thumbnail_url?: string | null
+          title: string
+          url: string
+          views?: number | null
+        }
+        Update: {
+          area?: string
+          created_at?: string | null
+          description?: string | null
+          duration?: string | null
+          id?: string
+          professor?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          url?: string
+          views?: number | null
         }
         Relationships: []
       }
