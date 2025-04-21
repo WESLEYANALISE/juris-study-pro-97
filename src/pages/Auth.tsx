@@ -1,57 +1,137 @@
 
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/hooks/use-toast";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { ExternalLink, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { ExternalLink } from "lucide-react"; // Replace Google with ExternalLink icon
+import { toast } from "@/hooks/use-toast";
 
 const LOGO_URL = "/placeholder.svg";
-const SUBTITLE = "Acesse com e-mail ou Google e aproveite a experiência jurídica completa.";
+const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
+
+// Schema para validação de formulário
+const authSchema = z.object({
+  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres")
+});
+
+type AuthFormValues = z.infer<typeof authSchema>;
 
 const Auth = () => {
-  const [email, setEmail] = useState("");
-  const [magicSent, setMagicSent] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
 
-  async function handleEmail(e: React.FormEvent) {
-    e.preventDefault();
+  // React Hook Form com validação Zod
+  const form = useForm<AuthFormValues>({
+    resolver: zodResolver(authSchema),
+    defaultValues: {
+      email: "",
+      password: ""
+    }
+  });
+
+  const handleGoogleAuth = async () => {
     setLoading(true);
-    setError(null);
-
-    const { error: signInError } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + "/" },
-    });
-
-    if (signInError) {
-      setError(signInError.message || "Erro ao enviar o e-mail. Tente novamente.");
-    } else {
-      setMagicSent(true);
-      toast({
-        title: "Verifique seu e-mail",
-        description: "Enviamos um link mágico de acesso. Confira sua caixa de entrada!",
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: { redirectTo: window.location.origin + "/" }
       });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      toast({
+        title: "Erro ao entrar com Google",
+        description: error.message || "Tente novamente mais tarde",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    const email = form.getValues("email");
+    if (!email || !z.string().email().safeParse(email).success) {
+      form.setError("email", { message: "Email inválido" });
+      return;
     }
 
-    setLoading(false);
-  }
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: { emailRedirectTo: window.location.origin + "/" }
+      });
 
-  async function handleGoogle() {
-    setGoogleLoading(true);
-    setError(null);
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: window.location.origin + "/" }
-    });
-    if (error) setError(error.message || "Erro no login com Google.");
-    setGoogleLoading(false);
-  }
+      if (error) throw error;
+      
+      setMagicLinkSent(true);
+      toast({
+        title: "Link enviado",
+        description: "Verifique seu email para fazer login"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro ao enviar link",
+        description: error.message || "Tente novamente mais tarde",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSubmit = async (values: AuthFormValues) => {
+    setLoading(true);
+    try {
+      if (activeTab === "login") {
+        // Login com email/senha
+        const { error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Login realizado com sucesso",
+          description: "Bem-vindo de volta!"
+        });
+      } else {
+        // Cadastro com email/senha
+        const { error } = await supabase.auth.signUp({
+          email: values.email,
+          password: values.password,
+          options: {
+            emailRedirectTo: window.location.origin + "/"
+          }
+        });
+        
+        if (error) throw error;
+        
+        toast({
+          title: "Cadastro realizado com sucesso",
+          description: "Verifique seu email para confirmar o cadastro"
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Erro na autenticação",
+        description: error.message || "Tente novamente mais tarde",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-slate-50 via-gray-100 to-primary/10 dark:from-muted dark:to-bg">
@@ -61,66 +141,166 @@ const Auth = () => {
           <CardTitle className="text-2xl font-black text-primary tracking-tight">JurisStudy Pro</CardTitle>
           <CardDescription className="text-center">{SUBTITLE}</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-8 pt-0">
-          {!magicSent ? (
-            <>
-              <form className="space-y-5" onSubmit={handleEmail}>
-                <div>
-                  <label htmlFor="email" className="font-semibold text-sm mb-2 block">
-                    E-mail
-                  </label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    disabled={loading}
-                    required
-                    autoFocus
-                  />
-                </div>
-                {error && (
-                  <div className="text-sm text-destructive font-medium">{error}</div>
-                )}
-                <Button
-                  type="submit"
-                  className="w-full rounded-md text-base font-semibold shadow transition"
-                  disabled={loading}
-                >
-                  {loading ? "Enviando..." : "Entrar com link mágico"}
-                </Button>
-              </form>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-px bg-muted-foreground/20" />
-                <span className="text-xs text-muted-foreground">ou</span>
-                <div className="flex-1 h-px bg-muted-foreground/20" />
-              </div>
-              <Button
-                type="button"
-                className="w-full flex items-center justify-center gap-2 rounded-md border shadow"
-                onClick={handleGoogle}
-                disabled={googleLoading}
-                variant="outline"
-              >
-                <ExternalLink className="h-5 w-5 text-blue-600" /> {/* Using ExternalLink instead of Google */}
-                <span>{googleLoading ? "Entrando..." : "Entrar com Google"}</span>
-              </Button>
-            </>
-          ) : (
+        <CardContent className="flex flex-col gap-4 pt-0">
+          {magicLinkSent ? (
             <div className="text-center py-10">
               <p className="font-semibold text-primary">Confira sua caixa de entrada!</p>
               <p className="text-sm mt-2 text-muted-foreground">
-                Enviamos um link mágico para <span className="font-medium">{email}</span>.
+                Enviamos um link mágico para <span className="font-medium">{form.getValues("email")}</span>
               </p>
               <Button
                 variant="secondary"
                 className="mt-6 rounded-lg"
-                onClick={() => { setMagicSent(false); setEmail(""); }}
+                onClick={() => setMagicLinkSent(false)}
               >
                 Voltar
               </Button>
             </div>
+          ) : (
+            <>
+              <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")} className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="login">Entrar</TabsTrigger>
+                  <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="login" className="mt-0">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="seu@email.com" 
+                                disabled={loading} 
+                                autoComplete="email"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="Sua senha" 
+                                disabled={loading}
+                                autoComplete="current-password"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full mt-4" 
+                        disabled={loading}
+                      >
+                        {loading ? "Entrando..." : "Entrar"}
+                      </Button>
+                    </form>
+                  </Form>
+                  
+                  <div className="mt-4">
+                    <Button
+                      variant="outline"
+                      type="button"
+                      className="w-full flex items-center gap-2"
+                      onClick={handleMagicLink}
+                      disabled={loading}
+                    >
+                      <Mail className="h-4 w-4" />
+                      <span>Entrar com link mágico</span>
+                    </Button>
+                  </div>
+                </TabsContent>
+                
+                <TabsContent value="signup" className="mt-0">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="seu@email.com" 
+                                disabled={loading}
+                                autoComplete="email"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Senha</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="password" 
+                                placeholder="Mínimo 6 caracteres" 
+                                disabled={loading}
+                                autoComplete="new-password"
+                                {...field} 
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <Button 
+                        type="submit" 
+                        className="w-full mt-4" 
+                        disabled={loading}
+                      >
+                        {loading ? "Cadastrando..." : "Cadastrar"}
+                      </Button>
+                    </form>
+                  </Form>
+                </TabsContent>
+              </Tabs>
+              
+              <div className="flex items-center gap-2 mt-2">
+                <div className="flex-1 h-px bg-muted-foreground/20" />
+                <span className="text-xs text-muted-foreground">ou</span>
+                <div className="flex-1 h-px bg-muted-foreground/20" />
+              </div>
+              
+              <Button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 rounded-md"
+                onClick={handleGoogleAuth}
+                disabled={loading}
+                variant="outline"
+              >
+                <ExternalLink className="h-5 w-5 text-blue-600" />
+                <span>{loading ? "Entrando..." : "Continuar com Google"}</span>
+              </Button>
+            </>
           )}
         </CardContent>
       </Card>
