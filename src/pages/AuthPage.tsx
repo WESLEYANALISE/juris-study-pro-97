@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Scale } from "lucide-react";
+import { toast } from "@/components/ui/use-toast";
 
 const AuthPage = () => {
   const { user, loading, error, signIn, signUp } = useAuth();
@@ -14,16 +15,34 @@ const AuthPage = () => {
   const [pending, setPending] = useState(false);
   const navigate = useNavigate();
 
+  // Se o usuário já estiver autenticado, redirecione para a página inicial
   if (user) return <Navigate to="/" replace />;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
+    
+    let success = false;
+    
     if (mode === "login") {
-      await signIn(email, password);
+      success = await signIn(email, password);
+      if (success) {
+        toast({
+          title: "Login realizado com sucesso",
+          description: "Bem-vindo(a) de volta ao JurisStudy Pro!",
+        });
+      }
     } else {
-      await signUp(email, password);
+      success = await signUp(email, password);
+      if (success) {
+        toast({
+          title: "Cadastro realizado com sucesso",
+          description: "Uma mensagem de confirmação foi enviada para seu e-mail.",
+        });
+        setMode("login");
+      }
     }
+    
     setPending(false);
   };
 

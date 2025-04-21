@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -53,7 +54,14 @@ const App = () => {
     localStorage.setItem("juris-study-profile", profile);
   };
 
-  const auth = useAuth();
+  // Mova o hook para fora para que possamos usá-lo diretamente no componente App
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+    </div>;
+  }
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -64,39 +72,40 @@ const App = () => {
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
-              <Route path="/auth" element={<AuthPage />} />
-              <Route
-                path="/*"
-                element={
-                  auth.user
-                    ? <Routes>
-                        <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-                        <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
-                        <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
-                        <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
-                        <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
-                        <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
-                        <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
-                        <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
-                        <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Jurisprudencia /></Layout>} />
-                        <Route path="/resumos" element={<Layout userProfile={userProfile}><Resumos /></Layout>} />
-                        <Route path="/simulados" element={<Layout userProfile={userProfile}><Simulados /></Layout>} />
-                        <Route path="/peticionario" element={<Layout userProfile={userProfile}><Peticionario /></Layout>} />
-                        <Route path="/noticias" element={<Layout userProfile={userProfile}><Noticias /></Layout>} />
-                        <Route path="/assistente" element={<Layout userProfile={userProfile}><Assistente /></Layout>} />
-                        <Route path="/perfil" element={<Layout userProfile={userProfile}><Perfil /></Layout>} />
-                        <Route path="/search" element={<Layout userProfile={userProfile}><Search /></Layout>} />
-                        <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><RemoteDesktop /></Layout>} />
-                        
-                        {/* Ferramentas Jurídicas sub-routes */}
-                        <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Vademecum /></Layout>} />
-                        <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Dicionario /></Layout>} />
-                        <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Modelos /></Layout>} />
-                        <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Cronograma /></Layout>} />
-                      </Routes>
-                    : <Navigate to="/auth" replace />
-                }
-              />
+              <Route path="/auth" element={!user ? <AuthPage /> : <Navigate to="/" replace />} />
+              
+              {/* Rota catch-all para verificar autenticação */}
+              <Route path="/*" element={
+                !user ? <Navigate to="/auth" replace /> : (
+                  <Routes>
+                    <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+                    <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
+                    <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
+                    <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
+                    <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
+                    <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
+                    <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
+                    <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
+                    <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Jurisprudencia /></Layout>} />
+                    <Route path="/resumos" element={<Layout userProfile={userProfile}><Resumos /></Layout>} />
+                    <Route path="/simulados" element={<Layout userProfile={userProfile}><Simulados /></Layout>} />
+                    <Route path="/peticionario" element={<Layout userProfile={userProfile}><Peticionario /></Layout>} />
+                    <Route path="/noticias" element={<Layout userProfile={userProfile}><Noticias /></Layout>} />
+                    <Route path="/assistente" element={<Layout userProfile={userProfile}><Assistente /></Layout>} />
+                    <Route path="/perfil" element={<Layout userProfile={userProfile}><Perfil /></Layout>} />
+                    <Route path="/search" element={<Layout userProfile={userProfile}><Search /></Layout>} />
+                    <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><RemoteDesktop /></Layout>} />
+                    
+                    {/* Ferramentas Jurídicas sub-routes */}
+                    <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Vademecum /></Layout>} />
+                    <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Dicionario /></Layout>} />
+                    <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Modelos /></Layout>} />
+                    <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Cronograma /></Layout>} />
+                    
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                )
+              } />
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
