@@ -61,10 +61,10 @@ export function ProfileSwitcher({
 }: ProfileSwitcherProps) {
   const [open, setOpen] = useState(false);
   
-  // Corrigido: Certifique-se de que sempre temos um perfil válido
+  // Make sure we have a valid profile even if the passed currentProfile is invalid
   const [selectedProfile, setSelectedProfile] = useState(() => {
     const foundProfile = profiles.find(p => p.value === currentProfile);
-    return foundProfile || profiles[4]; // Use o perfil "tudo" como fallback
+    return foundProfile || profiles[4]; // Use the "tudo" profile as fallback
   });
 
   const handleProfileSelect = (profile: typeof profiles[0]) => {
@@ -99,7 +99,7 @@ export function ProfileSwitcher({
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[250px] p-0">
+      <PopoverContent className="w-[250px] p-0 bg-popover">
         <Command>
           <CommandInput placeholder="Buscar perfil..." />
           <CommandEmpty>Nenhum perfil encontrado.</CommandEmpty>

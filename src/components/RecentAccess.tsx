@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import {
   Carousel,
   CarouselContent,
@@ -48,16 +47,10 @@ const RecentAccess = () => {
   useEffect(() => {
     const fetchRecentAccess = async () => {
       try {
-        // Fetch recent access from Supabase
-        const { data, error } = await supabase
-          .from('recent_access')
-          .select('*')
-          .order('accessed_at', { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-
-        // TODO: Convert Supabase data to RecentItem format
+        // Note: We're no longer trying to query the recent_access table
+        // Instead, we'll use hardcoded mock data as the table doesn't exist yet
+        
+        // Mock recent access data
         const items = [
           {
             id: "1",
