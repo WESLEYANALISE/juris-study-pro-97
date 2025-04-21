@@ -1,9 +1,11 @@
 
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Download, Volume2, Heart, BookOpenCheck, PencilLine, X } from "lucide-react";
+import { BookOpen, Download, Volume2, Heart, BookOpenCheck, PencilLine, X, Maximize, Minimize } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { useState, useEffect } from "react";
+import MusicPlayer from "./MusicPlayer";
 
 interface Book {
   id: number;
@@ -69,27 +71,67 @@ const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({
   deleteAnnotation,
   openAnnotationsDialog,
 }) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   if (!selectedBook) return null;
 
   if (readingMode) {
     return (
-      <DialogContent className="max-w-4xl h-[80vh]">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">{selectedBook.livro}</h2>
+      <DialogContent className={`max-w-full h-[95vh] p-0 sm:p-0 md:max-w-4xl ${isFullscreen ? 'border-0 rounded-none' : ''}`}>
+        <div className="flex items-center justify-between px-4 py-2 border-b">
+          <h2 className="text-lg font-semibold truncate max-w-[200px] sm:max-w-full">{selectedBook.livro}</h2>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setReadingMode(false)}>
-              Voltar aos detalhes
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={toggleFullscreen} 
+              className="h-8 w-8"
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setReadingMode(false)}
+              className="h-8"
+            >
+              Voltar
             </Button>
             <DialogClose className="rounded-full h-8 w-8 flex items-center justify-center border">
               <X className="h-4 w-4" />
             </DialogClose>
           </div>
         </div>
-        <div className="flex-1 w-full h-full min-h-[60vh]">
+        <div className="flex-1 w-full h-[calc(100%-48px)] min-h-[60vh]">
           {selectedBook.link ? (
             <iframe
               src={selectedBook.link}
-              className="w-full h-full rounded-md border"
+              className="w-full h-full border-none"
               title={selectedBook.livro || "Leitura"}
               sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
             />
@@ -99,15 +141,16 @@ const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({
             </div>
           )}
         </div>
+        <MusicPlayer className="md:hidden" />
       </DialogContent>
     );
   }
 
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh]">
+    <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh]">
       <DialogHeader>
         <div className="flex items-center justify-between">
-          <DialogTitle className="text-xl">{selectedBook.livro}</DialogTitle>
+          <DialogTitle className="text-xl truncate max-w-[200px] sm:max-w-full">{selectedBook.livro}</DialogTitle>
           <DialogClose className="rounded-full h-6 w-6 flex items-center justify-center">
             <X className="h-4 w-4" />
           </DialogClose>
