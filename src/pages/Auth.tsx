@@ -12,7 +12,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 
-const LOGO_URL = "/placeholder.svg";
+const LOGO_URL = "/lovable-uploads/58dfe876-fea8-4a29-9b9e-a8cbd69b2c5f.png"; // Updated to your logo image url
 const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
 
 const authSchema = z.object({
@@ -147,8 +147,14 @@ const Auth = () => {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-slate-50 via-gray-100 to-primary/10 dark:from-muted dark:to-bg">
       <Card className="w-full max-w-md border shadow-xl rounded-xl bg-background animate-fade-in">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
-          <img src={LOGO_URL} alt="Logo" className="h-14 w-14 mb-2 rounded-full bg-muted shadow" />
-          <CardTitle className="text-2xl font-black text-primary tracking-tight">JurisStudy Pro</CardTitle>
+          <img
+            src={LOGO_URL}
+            alt="JurisStudy Pro Logo"
+            className="h-20 w-20 mb-2 rounded-full bg-muted shadow"
+          />
+          <CardTitle className="text-2xl font-black text-primary tracking-tight">
+            JurisStudy Pro
+          </CardTitle>
           <CardDescription className="text-center">{SUBTITLE}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4 pt-0">
@@ -168,15 +174,25 @@ const Auth = () => {
             </div>
           ) : (
             <>
-              <Tabs defaultValue="login" value={activeTab} onValueChange={(value) => setActiveTab(value as "login" | "signup")} className="w-full">
+              <Tabs
+                defaultValue="login"
+                value={activeTab}
+                onValueChange={(value) =>
+                  setActiveTab(value as "login" | "signup")
+                }
+                className="w-full"
+              >
                 <TabsList className="grid w-full grid-cols-2 mb-4">
                   <TabsTrigger value="login">Entrar</TabsTrigger>
                   <TabsTrigger value="signup">Cadastrar</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="login" className="mt-0">
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={form.control}
                         name="email"
@@ -184,18 +200,18 @@ const Auth = () => {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="seu@email.com" 
-                                disabled={loading} 
+                              <Input
+                                placeholder="seu@email.com"
+                                disabled={loading}
                                 autoComplete="email"
-                                {...field} 
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="password"
@@ -203,22 +219,22 @@ const Auth = () => {
                           <FormItem>
                             <FormLabel>Senha</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="password" 
-                                placeholder="Sua senha" 
+                              <Input
+                                type="password"
+                                placeholder="Sua senha"
                                 disabled={loading}
                                 autoComplete="current-password"
-                                {...field} 
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
-                      <Button 
-                        type="submit" 
-                        className="w-full mt-4" 
+
+                      <Button
+                        type="submit"
+                        className="w-full mt-4"
                         disabled={loading}
                       >
                         {loading ? "Entrando..." : "Entrar"}
@@ -226,10 +242,13 @@ const Auth = () => {
                     </form>
                   </Form>
                 </TabsContent>
-                
+
                 <TabsContent value="signup" className="mt-0">
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={form.control}
                         name="email"
@@ -237,18 +256,18 @@ const Auth = () => {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input 
-                                placeholder="seu@email.com" 
+                              <Input
+                                placeholder="seu@email.com"
                                 disabled={loading}
                                 autoComplete="email"
-                                {...field} 
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="password"
@@ -256,22 +275,22 @@ const Auth = () => {
                           <FormItem>
                             <FormLabel>Senha</FormLabel>
                             <FormControl>
-                              <Input 
-                                type="password" 
-                                placeholder="Mínimo 6 caracteres" 
+                              <Input
+                                type="password"
+                                placeholder="Mínimo 6 caracteres"
                                 disabled={loading}
                                 autoComplete="new-password"
-                                {...field} 
+                                {...field}
                               />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      
-                      <Button 
-                        type="submit" 
-                        className="w-full mt-4" 
+
+                      <Button
+                        type="submit"
+                        className="w-full mt-4"
                         disabled={loading}
                       >
                         {loading ? "Cadastrando..." : "Cadastrar"}
@@ -280,13 +299,13 @@ const Auth = () => {
                   </Form>
                 </TabsContent>
               </Tabs>
-              
+
               <div className="flex items-center gap-2 mt-2">
                 <div className="flex-1 h-px bg-muted-foreground/20" />
                 <span className="text-xs text-muted-foreground">ou</span>
                 <div className="flex-1 h-px bg-muted-foreground/20" />
               </div>
-              
+
               <Button
                 type="button"
                 className="w-full flex items-center justify-center gap-2 rounded-md"
