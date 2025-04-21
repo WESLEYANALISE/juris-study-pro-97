@@ -57,51 +57,108 @@ const RecentAccess = () => {
 
         if (error) throw error;
 
-        // Fallback data if no data from Supabase
-        const items = data && data.length > 0 ? data : [
-          {
-            id: "1",
-            title: "Direito Constitucional - Aula 3",
-            type: "video" as const,
-            path: "/videoaulas",
-            timestamp: "2h atrás"
-          },
-          {
-            id: "2",
-            title: "Reforma tributária 2025",
-            type: "article" as const,
-            path: "/bloger",
-            timestamp: "ontem"
-          },
-          {
-            id: "3",
-            title: "Manual de Direito Civil",
-            type: "book" as const,
-            path: "/biblioteca",
-            timestamp: "3d atrás"
-          },
-          {
-            id: "4",
-            title: "Recurso Extraordinário",
-            type: "document" as const,
-            path: "/peticionario",
-            timestamp: "5d atrás"
-          },
-          {
-            id: "5",
-            title: "Direito Administrativo - Concursos",
-            type: "video" as const,
-            path: "/videoaulas",
-            timestamp: "1 semana"
-          },
-          {
-            id: "6",
-            title: "Lei Geral de Proteção de Dados",
-            type: "article" as const,
-            path: "/bloger",
-            timestamp: "2 semanas"
-          }
-        ];
+        // Transform Supabase data to match RecentItem interface or use fallback data
+        let items: RecentItem[] = [];
+        
+        if (data && data.length > 0) {
+          // Map Supabase data to RecentItem format
+          items = data.map(item => {
+            // Default mappings based on item_type
+            let path = "/";
+            let type: "video" | "article" | "document" | "book" = "document";
+            
+            switch(item.item_type) {
+              case "video":
+                path = "/videoaulas";
+                type = "video";
+                break;
+              case "article":
+                path = "/bloger";
+                type = "article";
+                break;
+              case "book":
+                path = "/biblioteca";
+                type = "book";
+                break;
+              case "document":
+                path = "/peticionario";
+                type = "document";
+                break;
+            }
+            
+            // Format timestamp
+            const accessDate = new Date(item.accessed_at);
+            const now = new Date();
+            const diffMs = now.getTime() - accessDate.getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            
+            let timestamp = "";
+            if (diffDays > 7) {
+              timestamp = `${Math.floor(diffDays / 7)} semanas`;
+            } else if (diffDays > 0) {
+              timestamp = diffDays === 1 ? "ontem" : `${diffDays}d atrás`;
+            } else if (diffHours > 0) {
+              timestamp = `${diffHours}h atrás`;
+            } else {
+              timestamp = "recentemente";
+            }
+            
+            return {
+              id: item.id,
+              title: item.title || `Item ${item.item_id}`,
+              type,
+              path,
+              timestamp
+            };
+          });
+        } else {
+          // Fallback data if no data from Supabase
+          items = [
+            {
+              id: "1",
+              title: "Direito Constitucional - Aula 3",
+              type: "video" as const,
+              path: "/videoaulas",
+              timestamp: "2h atrás"
+            },
+            {
+              id: "2",
+              title: "Reforma tributária 2025",
+              type: "article" as const,
+              path: "/bloger",
+              timestamp: "ontem"
+            },
+            {
+              id: "3",
+              title: "Manual de Direito Civil",
+              type: "book" as const,
+              path: "/biblioteca",
+              timestamp: "3d atrás"
+            },
+            {
+              id: "4",
+              title: "Recurso Extraordinário",
+              type: "document" as const,
+              path: "/peticionario",
+              timestamp: "5d atrás"
+            },
+            {
+              id: "5",
+              title: "Direito Administrativo - Concursos",
+              type: "video" as const,
+              path: "/videoaulas",
+              timestamp: "1 semana"
+            },
+            {
+              id: "6",
+              title: "Lei Geral de Proteção de Dados",
+              type: "article" as const,
+              path: "/bloger",
+              timestamp: "2 semanas"
+            }
+          ];
+        }
         
         // Generate random transcripts for each item
         const newTranscripts: {[key: string]: string} = {};
