@@ -26,20 +26,20 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
   
   // Menu items para navegação principal
   const allMenuItems = [
-    { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "tudo"] },
-    { title: "Resumos", url: "/resumos", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
-    { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Peticionário", url: "/peticionario", icon: FilePlus, profiles: ["advogado", "tudo"] },
-    { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
-    { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
-    { title: "Assistente", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Cronograma", url: "/cronograma", icon: Calendar, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Gamificação", url: "/gamificacao", icon: Trophy, profiles: ["concurseiro", "universitario", "tudo"] },
+    { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "oab", "tudo"] },
+    { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "oab", "tudo"] },
+    { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "oab", "tudo"] },
+    { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "oab", "tudo"] },
+    { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "oab", "tudo"] },
+    { title: "Resumos", url: "/resumos", icon: Brain, profiles: ["concurseiro", "universitario", "oab", "tudo"] },
+    { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "oab", "tudo"] },
+    { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "oab", "tudo"] },
+    { title: "Peticionário", url: "/peticionario", icon: FilePlus, profiles: ["advogado", "oab", "tudo"] },
+    { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "oab", "tudo"] },
+    { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "oab", "tudo"] },
+    { title: "Assistente", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "oab", "tudo"] },
+    { title: "Cronograma", url: "/cronograma", icon: Calendar, profiles: ["concurseiro", "universitario", "oab", "tudo"] },
+    { title: "Gamificação", url: "/gamificacao", icon: Trophy, profiles: ["concurseiro", "universitario", "oab", "tudo"] },
     { title: "Remote Desktop", url: "/remote", icon: MonitorPlay, profiles: ["tudo"] },
   ];
   
@@ -64,6 +64,11 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       title: "Perfil Advogado",
       description: "Profissional em exercício",
       icon: Scale
+    },
+    oab: {
+      title: "Perfil OAB",
+      description: "Preparação específica para Exame da Ordem",
+      icon: BookOpen
     },
     tudo: {
       title: "Acesso Completo",

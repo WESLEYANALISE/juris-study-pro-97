@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-export type ProfileType = "concurseiro" | "universitario" | "advogado" | "tudo";
+export type ProfileType = "concurseiro" | "universitario" | "advogado" | "oab" | "tudo";
 
 interface ProfileOption {
   id: ProfileType;
@@ -35,6 +35,11 @@ const profileOptions: ProfileOption[] = [
     id: "advogado",
     title: "Advogado",
     description: "Profissional da advocacia em exercício",
+  },
+  {
+    id: "oab",
+    title: "Candidato OAB",
+    description: "Preparação específica para Exame da Ordem",
   },
   {
     id: "tudo",
