@@ -4,25 +4,20 @@ import { Card, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Bookmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 
 type Livro = {
   id: string;
-  titulo: string;
-  autor: string | null;
-  editora: string | null;
+  livro: string;
   area: string;
-  ano_publicacao: number | null;
-  capa_url: string | null;
-  sinopse: string | null;
-  link_leitura: string | null;
-  link_download: string | null;
-  tags: string[] | null;
+  link: string | null;
+  download: string | null;
+  imagem: string | null;
+  sobre: string | null;
 };
 
 type BookCardProps = {
   livro: Livro;
-  onCardClick?: () => void;  // Make this prop optional
+  onCardClick?: () => void;
   isFavorite?: boolean;
   showFavoriteButton?: boolean;
   onToggleFavorite?: () => void;
@@ -30,7 +25,7 @@ type BookCardProps = {
 
 export function BookCard({ 
   livro, 
-  onCardClick = () => {}, // Provide a default empty function 
+  onCardClick = () => {}, 
   isFavorite = false, 
   showFavoriteButton = false,
   onToggleFavorite 
@@ -58,34 +53,17 @@ export function BookCard({
       onMouseLeave={() => setIsHovering(false)}
     >
       <div className="relative flex-grow overflow-hidden">
-        {livro.capa_url ? (
+        {livro.imagem ? (
           <div className="w-full h-full relative">
             <img
-              src={livro.capa_url}
-              alt={livro.titulo}
+              src={livro.imagem}
+              alt={livro.livro}
               className="h-full w-full object-cover"
             />
             <div className="absolute inset-0 bg-black/70 flex items-end">
               <div className="p-3 w-full">
-                <h3 className="font-semibold text-sm text-white line-clamp-3">{livro.titulo}</h3>
-                {livro.autor && (
-                  <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.autor}</p>
-                )}
-                
-                {isHovering && livro.tags && livro.tags.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {livro.tags.slice(0, 2).map((tag, i) => (
-                      <Badge key={i} variant="secondary" className="text-[10px]">
-                        {tag}
-                      </Badge>
-                    ))}
-                    {livro.tags.length > 2 && (
-                      <Badge variant="secondary" className="text-[10px]">
-                        +{livro.tags.length - 2}
-                      </Badge>
-                    )}
-                  </div>
-                )}
+                <h3 className="font-semibold text-sm text-white line-clamp-3">{livro.livro}</h3>
+                <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.area}</p>
               </div>
             </div>
             
@@ -104,10 +82,8 @@ export function BookCard({
         ) : (
           <div className="w-full h-full bg-gray-800 flex items-end">
             <div className="p-3 w-full">
-              <h3 className="font-semibold text-sm text-white line-clamp-3">{livro.titulo}</h3>
-              {livro.autor && (
-                <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.autor}</p>
-              )}
+              <h3 className="font-semibold text-sm text-white line-clamp-3">{livro.livro}</h3>
+              <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.area}</p>
               
               {showFavoriteButton && (
                 <button 

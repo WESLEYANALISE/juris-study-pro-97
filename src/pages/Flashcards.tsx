@@ -23,9 +23,6 @@ type FlashCard = {
   pergunta: string;
   resposta: string;
   explicacao: string | null;
-  dificuldade: string | null;
-  tags: string[] | null;
-  imagem_url: string | null;
 };
 
 type ViewMode = "manual" | "auto";
@@ -34,7 +31,7 @@ export default function Flashcards() {
   const { data: cards, isLoading } = useQuery({
     queryKey: ["flashcards"],
     queryFn: async () => {
-      const { data } = await supabase.from("flash_cards_improved").select("*");
+      const { data } = await supabase.from("flash_cards").select("*");
       return (data ?? []) as FlashCard[];
     },
   });
@@ -74,11 +71,17 @@ export default function Flashcards() {
   const [index, setIndex] = useState(0);
   const [autoSpeed, setAutoSpeed] = useState(3500); // ms
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFlipped, setIsFlipped] = useState(false);
 
   useEffect(() => {
     if (viewMode === "auto" && filtered.length > 1) {
       intervalRef.current = setInterval(
-        () => setIndex((i) => (i + 1) % filtered.length),
+        () => {
+          setIsFlipped(false);
+          setTimeout(() => {
+            setIndex((i) => (i + 1) % filtered.length);
+          }, 300);
+        },
         autoSpeed
       );
       return () => {
@@ -92,6 +95,7 @@ export default function Flashcards() {
 
   useEffect(() => {
     setIndex(0); // sempre reinicia na seleção/tema/mode novo
+    setIsFlipped(false);
   }, [selectedTemas, selectedArea, viewMode, filtered.length]);
 
   // Função para lidar com a seleção de temas (múltiplos)
@@ -101,6 +105,10 @@ export default function Flashcards() {
         ? prev.filter(t => t !== tema) 
         : [...prev, tema]
     );
+  };
+
+  const handleFlip = () => {
+    setIsFlipped(!isFlipped);
   };
 
   return (
@@ -203,65 +211,73 @@ export default function Flashcards() {
           <AnimatePresence mode="wait">
             {filtered.length > 0 && (
               <motion.div
-                key={filtered[index]?.id}
-                initial={{ x: 80, opacity: 0, scale: 0.9 }}
-                animate={{ x: 0, opacity: 1, scale: 1 }}
-                exit={{ x: -40, opacity: 0, scale: 0.93 }}
+                key={filtered[index]?.id + (isFlipped ? '-flipped' : '')}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.35 }}
-                className="w-full"
+                className="w-full perspective"
+                onClick={handleFlip}
               >
-                <Card className="relative bg-gradient-to-t from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all"
-                  style={{
-                    minHeight: 280,
-                    boxShadow: "0 4px 40px #9b87f522"
-                  }}
-                >
-                  <div className="absolute top-2 right-2 flex gap-1">
-                    {filtered[index]?.dificuldade && (
-                      <Badge variant={
-                        filtered[index]?.dificuldade === 'fácil' ? "outline" :
-                        filtered[index]?.dificuldade === 'médio' ? "secondary" : "destructive"
-                      }>
-                        {filtered[index]?.dificuldade}
-                      </Badge>
-                    )}
-                  </div>
-                  
-                  <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
-                    <div>
-                      {filtered[index]?.tema} 
-                      <span className="text-sm text-muted-foreground ml-2">({filtered[index]?.area})</span>
+                <div className={`relative transform-style-3d transition-all duration-500 ${isFlipped ? 'rotate-y-180' : ''}`}>
+                  {/* Front side - Pergunta */}
+                  <Card 
+                    className={`backface-hidden relative bg-gradient-to-t from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all cursor-pointer ${isFlipped ? 'opacity-0' : 'opacity-100'}`}
+                    style={{
+                      minHeight: 280,
+                      boxShadow: "0 4px 40px #9b87f522"
+                    }}
+                  >
+                    <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
+                      <div>
+                        {filtered[index]?.tema} 
+                        <span className="text-sm text-muted-foreground ml-2">({filtered[index]?.area})</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Brain className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{filtered.length}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Brain className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{filtered.length}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="p-6 pt-4 flex flex-col gap-4">
-                    <div className="text-base font-semibold min-h-[48px]">{filtered[index]?.pergunta}</div>
-                    <div className="text-sm bg-gradient-to-br from-[#D6BCFA44] to-[#FFF] py-2 px-4 rounded-lg text-gray-800 font-medium border">{filtered[index]?.resposta}</div>
                     
-                    {filtered[index]?.explicacao && (
-                      <div className="text-xs mt-2 text-muted-foreground p-2 bg-muted/50 rounded border-l-2 border-primary/30">
-                        <div className="font-medium mb-1 flex items-center gap-1">
-                          <BookOpen className="h-3 w-3" /> Explicação:
+                    <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
+                      <div className="text-base font-semibold text-center">{filtered[index]?.pergunta}</div>
+                      <div className="mt-4 text-sm text-muted-foreground">(Clique para ver a resposta)</div>
+                    </div>
+                  </Card>
+                  
+                  {/* Back side - Resposta */}
+                  <Card 
+                    className={`backface-hidden absolute top-0 rotate-y-180 w-full bg-gradient-to-b from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all cursor-pointer ${isFlipped ? 'opacity-100' : 'opacity-0'}`}
+                    style={{
+                      minHeight: 280,
+                      boxShadow: "0 4px 40px #9b87f522"
+                    }}
+                  >
+                    <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
+                      <div>
+                        {filtered[index]?.tema} 
+                        <span className="text-sm text-muted-foreground ml-2">({filtered[index]?.area})</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Brain className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{filtered.length}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
+                      <div className="text-sm bg-gradient-to-br from-[#D6BCFA44] to-[#FFF] py-4 px-6 rounded-lg text-gray-800 font-medium border text-center">{filtered[index]?.resposta}</div>
+                      
+                      {filtered[index]?.explicacao && (
+                        <div className="text-xs mt-4 text-muted-foreground p-3 bg-muted/50 rounded border-l-2 border-primary/30 w-full">
+                          <div className="font-medium mb-1 flex items-center gap-1">
+                            <BookOpen className="h-3 w-3" /> Explicação:
+                          </div>
+                          {filtered[index]?.explicacao}
                         </div>
-                        {filtered[index]?.explicacao}
-                      </div>
-                    )}
-                    
-                    {filtered[index]?.tags && filtered[index]?.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-2">
-                        {filtered[index]?.tags.map((tag, i) => (
-                          <Badge key={i} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </Card>
+                      )}
+                    </div>
+                  </Card>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -271,13 +287,23 @@ export default function Flashcards() {
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => setIndex((i) => (i - 1 + filtered.length) % filtered.length)}
+                onClick={() => {
+                  setIsFlipped(false);
+                  setTimeout(() => {
+                    setIndex((i) => (i - 1 + filtered.length) % filtered.length);
+                  }, 200);
+                }}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setIndex(Math.floor(Math.random() * filtered.length))}
+                onClick={() => {
+                  setIsFlipped(false);
+                  setTimeout(() => {
+                    setIndex(Math.floor(Math.random() * filtered.length));
+                  }, 200);
+                }}
                 size="sm"
               >
                 <RotateCcw className="h-4 w-4 mr-1" /> Aleatório
@@ -285,7 +311,12 @@ export default function Flashcards() {
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => setIndex((i) => (i + 1) % filtered.length)}
+                onClick={() => {
+                  setIsFlipped(false);
+                  setTimeout(() => {
+                    setIndex((i) => (i + 1) % filtered.length);
+                  }, 200);
+                }}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>

@@ -1,13 +1,9 @@
+
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { BookAudio, Download, FileText, ArrowRight, ArrowLeft, BookOpen, Search, User2 } from "lucide-react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { Input } from "@/components/ui/input";
@@ -20,16 +16,12 @@ import { BookModal } from "@/components/biblioteca/BookModal";
 
 type Livro = {
   id: string;
-  titulo: string;
-  autor: string | null;
-  editora: string | null;
+  livro: string;
   area: string;
-  ano_publicacao: number | null;
-  capa_url: string | null;
-  sinopse: string | null;
-  link_leitura: string | null;
-  link_download: string | null;
-  tags: string[] | null;
+  link: string | null;
+  download: string | null;
+  imagem: string | null;
+  sobre: string | null;
 };
 
 type State =
@@ -49,7 +41,7 @@ export default function Biblioteca() {
   const { data: livros, isLoading } = useQuery({
     queryKey: ["biblioteca"],
     queryFn: async () => {
-      const { data } = await supabase.from("biblioteca_juridica_improved").select("*");
+      const { data } = await supabase.from("biblioteca_juridica").select("*");
       return (data ?? []) as Livro[];
     }
   });
@@ -71,9 +63,9 @@ export default function Biblioteca() {
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
       filtered = filtered.filter(livro => 
-        (livro.titulo || "").toLowerCase().includes(searchLower) ||
-        (livro.autor || "").toLowerCase().includes(searchLower) ||
-        (livro.sinopse || "").toLowerCase().includes(searchLower)
+        (livro.livro || "").toLowerCase().includes(searchLower) ||
+        (livro.area || "").toLowerCase().includes(searchLower) ||
+        (livro.sobre || "").toLowerCase().includes(searchLower)
       );
     }
     
@@ -88,9 +80,8 @@ export default function Biblioteca() {
       const res = livros.filter(
         l =>
           (l.area ?? "").toLowerCase().includes(aiQuery.toLowerCase()) ||
-          (l.titulo ?? "").toLowerCase().includes(aiQuery.toLowerCase()) ||
-          (l.sinopse ?? "").toLowerCase().includes(aiQuery.toLowerCase()) ||
-          (l.tags ?? []).some(tag => tag.toLowerCase().includes(aiQuery.toLowerCase()))
+          (l.livro ?? "").toLowerCase().includes(aiQuery.toLowerCase()) ||
+          (l.sobre ?? "").toLowerCase().includes(aiQuery.toLowerCase())
       );
       setAiResult(res);
     }
@@ -122,8 +113,15 @@ export default function Biblioteca() {
               onChange={e => setSearchTerm(e.target.value)}
               placeholder="Pesquisar livro, autor ou tema..."
               className="pr-10"
+              list="livros-suggestions"
             />
             <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
+            
+            <datalist id="livros-suggestions">
+              {livros?.map(livro => (
+                <option key={livro.id} value={livro.livro} />
+              ))}
+            </datalist>
           </div>
         </div>
         
@@ -218,9 +216,9 @@ export default function Biblioteca() {
       ) : state.mode === "reading" ? (
         <div className="fixed inset-0 bg-background z-50">
           <iframe
-            src={state.livro.link_leitura ?? ""}
+            src={state.livro.link ?? ""}
             className="w-full h-full"
-            title={state.livro.titulo || "Leitura"}
+            title={state.livro.livro || "Leitura"}
             allowFullScreen
           />
           <Button
@@ -291,32 +289,27 @@ export default function Biblioteca() {
                         setAiDialog(false);
                       }}
                     >
-                      {lv.capa_url ? (
+                      {lv.imagem ? (
                         <div className="h-16 w-12 flex-shrink-0 relative overflow-hidden rounded">
                           <img
-                            src={lv.capa_url}
-                            alt={lv.titulo}
+                            src={lv.imagem}
+                            alt={lv.livro}
                             className="h-full w-full object-cover absolute inset-0"
                           />
                           <div className="absolute inset-0 bg-black/70 flex items-end p-1">
-                            <span className="text-[10px] text-white line-clamp-2 font-medium">{lv.titulo}</span>
+                            <span className="text-[10px] text-white line-clamp-2 font-medium">{lv.livro}</span>
                           </div>
                         </div>
                       ) : (
                         <div className="h-16 w-12 bg-gray-800 rounded flex-shrink-0 flex items-end">
                           <div className="p-1 w-full">
-                            <span className="text-[10px] text-white line-clamp-2 font-medium">{lv.titulo}</span>
+                            <span className="text-[10px] text-white line-clamp-2 font-medium">{lv.livro}</span>
                           </div>
                         </div>
                       )}
                       <div>
-                        <div className="font-semibold text-sm">{lv.titulo}</div>
+                        <div className="font-semibold text-sm">{lv.livro}</div>
                         <div className="text-xs text-muted-foreground">{lv.area}</div>
-                        {lv.autor && (
-                          <div className="text-xs flex items-center gap-1 mt-1">
-                            <User2 size={10} /> {lv.autor}
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
