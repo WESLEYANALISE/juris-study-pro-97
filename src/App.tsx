@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -54,13 +54,15 @@ const App = () => {
     localStorage.setItem("juris-study-profile", profile);
   };
 
-  // Mova o hook para fora para que possamos usá-lo diretamente no componente App
+  // Usar o hook de autenticação
   const { user, loading } = useAuth();
 
   if (loading) {
-    return <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-    </div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   // Componente que verifica autenticação e renderiza rotas protegidas
@@ -104,7 +106,7 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="juris-study-theme">
+      <ThemeProvider defaultTheme="dark" storageKey="jurislab-theme">
         <TooltipProvider>
           <Toaster />
           <Sonner />

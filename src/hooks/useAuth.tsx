@@ -21,6 +21,7 @@ export function useAuth() {
   useEffect(() => {
     // Definir listener ANTES de buscar sessão
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed", session?.user?.email);
       setState((s) => ({
         ...s,
         user: session?.user ?? null,
@@ -31,6 +32,7 @@ export function useAuth() {
 
     // Buscar sessão atual no início
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check", session?.user?.email);
       setState((s) => ({
         ...s,
         user: session?.user ?? null,
@@ -44,22 +46,66 @@ export function useAuth() {
 
   const signIn = async (email: string, password: string) => {
     setState((s) => ({ ...s, loading: true, error: null }));
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setState((s) => ({ ...s, loading: false, error: error?.message ?? null }));
-    return !error;
+    
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      
+      if (error) {
+        console.error("Sign in error:", error.message);
+        setState((s) => ({ ...s, loading: false, error: error.message }));
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error("Unexpected error during sign in:", err);
+      setState((s) => ({ 
+        ...s, 
+        loading: false, 
+        error: err instanceof Error ? err.message : "Ocorreu um erro inesperado" 
+      }));
+      return false;
+    }
   };
 
   const signUp = async (email: string, password: string) => {
     setState((s) => ({ ...s, loading: true, error: null }));
-    const { error } = await supabase.auth.signUp({ email, password });
-    setState((s) => ({ ...s, loading: false, error: error?.message ?? null }));
-    return !error;
+    
+    try {
+      const { error } = await supabase.auth.signUp({ email, password });
+      
+      if (error) {
+        console.error("Sign up error:", error.message);
+        setState((s) => ({ ...s, loading: false, error: error.message }));
+        return false;
+      }
+      
+      return true;
+    } catch (err) {
+      console.error("Unexpected error during sign up:", err);
+      setState((s) => ({ 
+        ...s, 
+        loading: false, 
+        error: err instanceof Error ? err.message : "Ocorreu um erro inesperado" 
+      }));
+      return false;
+    }
   };
 
   const signOut = async () => {
     setState((s) => ({ ...s, loading: true }));
-    await supabase.auth.signOut();
-    setState({ user: null, session: null, loading: false, error: null });
+    
+    try {
+      await supabase.auth.signOut();
+      setState({ user: null, session: null, loading: false, error: null });
+    } catch (err) {
+      console.error("Error during sign out:", err);
+      setState((s) => ({ 
+        ...s, 
+        loading: false, 
+        error: err instanceof Error ? err.message : "Ocorreu um erro ao sair" 
+      }));
+    }
   };
 
   return {

@@ -112,7 +112,7 @@ const RecentAccess = () => {
   // Separamos o efeito de atualização das transcrições em um useEffect próprio
   useEffect(() => {
     // Só configuramos o intervalo se tivermos itens para mostrar
-    if (recentItems.length === 0) return;
+    if (!recentItems || recentItems.length === 0) return;
 
     // Função para atualizar todas as transcrições
     const updateAllTranscripts = () => {
@@ -136,7 +136,7 @@ const RecentAccess = () => {
     
     // Limpar o intervalo quando o componente for desmontado
     return () => clearInterval(interval);
-  }, [recentItems]); // Dependência direta no array de itens, não no length
+  }, [recentItems]); // Dependência direta no array de itens
 
   const getIcon = (type: string) => {
     switch (type) {
