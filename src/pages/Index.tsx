@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale, Video, BookOpen, Brain, GraduationCap, FilePlus, MessageSquare, 
@@ -16,7 +15,6 @@ import {
 import { useEffect, useState } from "react";
 import QuickAccess from "@/components/QuickAccess";
 
-// Random audio transcript generator
 const getRandomTranscript = (category: string, title: string) => {
   const transcripts = [
     `Este módulo de ${title} traz conteúdo essencial para sua preparação.`,
@@ -37,7 +35,7 @@ const getRandomTranscript = (category: string, title: string) => {
 const Index = () => {
   const navigate = useNavigate();
   const [transcripts, setTranscripts] = useState<{[key: string]: string}>({});
-  
+
   const categories = [
     {
       title: "Materiais de Estudo",
@@ -152,34 +150,27 @@ const Index = () => {
         color: "text-amber-600"
       }]
     }
-  ];
+  ] || [];
 
-  // Generate random transcripts on load and every 10 seconds
   useEffect(() => {
     const generateAllTranscripts = () => {
       const newTranscripts: {[key: string]: string} = {};
-      
-      // Verifica se categories existe e é um array antes de iterar
-      if (categories && Array.isArray(categories)) {
-        categories.forEach(category => {
-          // Verifica se category.items existe e é um array
-          if (category.items && Array.isArray(category.items)) {
-            category.items.forEach(item => {
-              const key = `${category.title}-${item.title}`;
-              newTranscripts[key] = getRandomTranscript(category.title, item.title);
-            });
-          }
+
+      (categories ?? []).forEach(category => {
+        (category.items ?? []).forEach(item => {
+          const key = `${category.title}-${item.title}`;
+          newTranscripts[key] = getRandomTranscript(category.title, item.title);
         });
-      }
-      
+      });
+
       setTranscripts(newTranscripts);
     };
-    
+
     generateAllTranscripts();
     const interval = setInterval(generateAllTranscripts, 10000);
-    
+
     return () => clearInterval(interval);
-  }, []);
+  }, [categories]);
 
   return (
     <div className="container mx-auto py-0 px-1 sm:px-4">
@@ -199,7 +190,7 @@ const Index = () => {
       <QuickAccess />
 
       <div className="space-y-6 px-1">
-        {categories && Array.isArray(categories) && categories.map((category, categoryIndex) => (
+        {(categories ?? []).map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h2 className="text-xl font-semibold mb-4 px-2 flex justify-between items-center">
               {category.title}
@@ -220,7 +211,7 @@ const Index = () => {
               className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {category.items && Array.isArray(category.items) && category.items.map((feature, index) => {
+                {(category.items ?? []).map((feature, index) => {
                   const transcriptKey = `${category.title}-${feature.title}`;
                   return (
                     <CarouselItem key={index} className="pl-2 md:pl-4 basis-[85%] sm:basis-[45%] md:basis-1/3">

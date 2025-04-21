@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -21,7 +20,6 @@ interface RecentItem {
   transcript?: string;
 }
 
-// Random audio transcript generator
 const getRandomTranscript = (type: string, title: string) => {
   const transcripts = [
     `Último acesso ao ${title}, continue de onde parou.`,
@@ -48,16 +46,6 @@ const RecentAccess = () => {
   useEffect(() => {
     const fetchRecentAccess = async () => {
       try {
-        // Fetch recent access from Supabase
-        const { data, error } = await supabase
-          .from('recent_access')
-          .select('*')
-          .order('accessed_at', { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-
-        // Dados de exemplo para desenvolvimento
         const items: RecentItem[] = [
           {
             id: "1",
@@ -102,18 +90,16 @@ const RecentAccess = () => {
             timestamp: "2 semanas"
           }
         ];
-        
-        // Generate random transcripts for each item
+
         const newTranscripts: {[key: string]: string} = {};
-        items.forEach(item => {
+        (items ?? []).forEach(item => {
           newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
-        
+
         setTranscripts(newTranscripts);
-        setRecentItems(items);
+        setRecentItems(items ?? []);
       } catch (error) {
         console.error("Error fetching recent access:", error);
-        // Em caso de erro, inicialize com array vazio para evitar undefined
         setRecentItems([]);
       } finally {
         setLoading(false);
@@ -121,18 +107,17 @@ const RecentAccess = () => {
     };
 
     fetchRecentAccess();
-    
-    // Refresh transcripts every 10 seconds, com verificação para prevenir erro
+
     const interval = setInterval(() => {
-      if (recentItems && recentItems.length > 0) {
+      if ((recentItems ?? []).length > 0) {
         const newTranscripts: {[key: string]: string} = {};
-        recentItems.forEach(item => {
+        (recentItems ?? []).forEach(item => {
           newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
         setTranscripts(newTranscripts);
       }
     }, 10000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -146,9 +131,8 @@ const RecentAccess = () => {
     }
   };
 
-  // Garantir que recentItems é sempre um array, mesmo que seja undefined
   const itemsArray = Array.isArray(recentItems) ? recentItems : [];
-  
+
   if (itemsArray.length === 0 && !loading) {
     return null;
   }
@@ -180,7 +164,7 @@ const RecentAccess = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {itemsArray.map((item) => (
+          {(itemsArray ?? []).map((item) => (
             <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
