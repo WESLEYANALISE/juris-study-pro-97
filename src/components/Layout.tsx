@@ -47,7 +47,7 @@ const Layout = ({
         <Header userProfile={userProfile} pageTitle={pageTitle} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
-          <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6 px-[24px] py-[28px] my-[7px] mx-[28px]">
+          <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6 px-0 py-0 my-0 mx-0">
             {isHomePage && <div className="w-full md:max-w-4xl mx-auto">
                 <Suspense fallback={<LoadingFallback />}>
                   <ReactErrorBoundary FallbackComponent={ErrorFallback}>
