@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -234,7 +235,7 @@ const RecentAccess = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {recentItems.map((item) => (
+          {recentItems && recentItems.map((item) => (
             <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
