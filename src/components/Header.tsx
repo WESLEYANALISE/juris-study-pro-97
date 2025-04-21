@@ -1,9 +1,9 @@
 
-import { Bell, GraduationCap, Scale, Search, User } from "lucide-react";
+import { Bell, GraduationCap, Scale, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type ProfileType } from "@/components/WelcomeModal";
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/lib/supabaseClient";
 
 interface HeaderProps {
   userProfile: ProfileType;
@@ -34,6 +35,12 @@ export function Header({ userProfile }: HeaderProps) {
   const changeProfile = (profile: ProfileType) => {
     localStorage.setItem("juris-study-profile", profile);
     window.location.reload();
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    // After logout, reload or redirect to login page
+    window.location.href = "/auth";
   };
 
   return (
@@ -70,28 +77,28 @@ export function Header({ userProfile }: HeaderProps) {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Meu Perfil</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className={userProfile === "concurseiro" ? "bg-primary/20" : ""}
                 onClick={() => changeProfile("concurseiro")}
               >
                 <GraduationCap className="h-4 w-4 mr-2" />
                 <span>Concurseiro</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className={userProfile === "universitario" ? "bg-primary/20" : ""}
                 onClick={() => changeProfile("universitario")}
               >
                 <User className="h-4 w-4 mr-2" />
                 <span>Universitário</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className={userProfile === "advogado" ? "bg-primary/20" : ""}
                 onClick={() => changeProfile("advogado")}
               >
                 <Scale className="h-4 w-4 mr-2" />
                 <span>Advogado</span>
               </DropdownMenuItem>
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 className={userProfile === "tudo" ? "bg-primary/20" : ""}
                 onClick={() => changeProfile("tudo")}
               >
@@ -101,6 +108,14 @@ export function Header({ userProfile }: HeaderProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem>
                 Fazer Login
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={handleLogout}
+                className="text-destructive"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                <span>Sair</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
