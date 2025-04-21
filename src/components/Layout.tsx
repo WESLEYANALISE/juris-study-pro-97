@@ -1,10 +1,8 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { type ProfileType } from "@/components/WelcomeModal";
 import MobileNavigation from "@/components/MobileNavigation";
-import RecentAccess from "@/components/RecentAccess";
 import { useLocation } from "react-router-dom";
 import { Suspense } from "react";
 import { ErrorBoundary as ReactErrorBoundary } from "react-error-boundary";
@@ -52,13 +50,6 @@ const Layout = ({
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
           <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6 px-0 py-0 my-0 mx-0">
-            {isHomePage && <div className="w-full md:max-w-4xl mx-auto">
-                <Suspense fallback={<LoadingFallback />}>
-                  <ReactErrorBoundary FallbackComponent={ErrorFallback}>
-                    <RecentAccess />
-                  </ReactErrorBoundary>
-                </Suspense>
-              </div>}
             <Suspense fallback={<LoadingFallback />}>
               <ReactErrorBoundary FallbackComponent={ErrorFallback}>
                 {children}
