@@ -4,8 +4,13 @@ import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 interface RecentItem {
   id: string;
@@ -19,32 +24,41 @@ interface RecentItem {
 // Random audio transcript generator
 const getRandomTranscript = (type: string, title: string) => {
   const transcripts = [
-    `Último acesso ao ${title}, continue de onde parou.`, 
-    `${title} foi visualizado recentemente.`, 
-    `Continue estudando ${title} para melhor fixação.`, 
-    `Você progrediu 45% em ${title}.`, 
-    `Revisão recomendada para ${title}.`, 
-    `O conteúdo de ${title} foi atualizado.`, 
-    `Este ${type} está relacionado aos seus interesses.`, 
-    `Retome seus estudos em ${title}.`, 
-    `Material complementar disponível para ${title}.`, 
+    `Último acesso ao ${title}, continue de onde parou.`,
+    `${title} foi visualizado recentemente.`,
+    `Continue estudando ${title} para melhor fixação.`,
+    `Você progrediu 45% em ${title}.`,
+    `Revisão recomendada para ${title}.`,
+    `O conteúdo de ${title} foi atualizado.`,
+    `Este ${type} está relacionado aos seus interesses.`,
+    `Retome seus estudos em ${title}.`,
+    `Material complementar disponível para ${title}.`,
     `${title} faz parte da sua trilha de aprendizado.`
   ];
+  
   return transcripts[Math.floor(Math.random() * transcripts.length)];
 };
 
 const RecentAccess = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [transcripts, setTranscripts] = useState<{ [key: string]: string }>({});
+  const [transcripts, setTranscripts] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     const fetchRecentAccess = async () => {
       try {
-        // Dados mockados para evitar problemas com tabelas inexistentes
-        const mockItems = [
+        // Fetch recent access from Supabase
+        const { data, error } = await supabase
+          .from('recent_access')
+          .select('*')
+          .order('accessed_at', { ascending: false })
+          .limit(10);
+
+        if (error) throw error;
+
+        // TODO: Convert Supabase data to RecentItem format
+        const items = [
           {
             id: "1",
             title: "Direito Constitucional - Aula 3",
@@ -88,71 +102,53 @@ const RecentAccess = () => {
             timestamp: "2 semanas"
           }
         ];
-
-        // Inicializar as transcrições para cada item
-        const initialTranscripts: { [key: string]: string } = {};
-        mockItems.forEach(item => {
-          initialTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        
+        // Generate random transcripts for each item
+        const newTranscripts: {[key: string]: string} = {};
+        items.forEach(item => {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
         
-        setTranscripts(initialTranscripts);
-        setRecentItems(mockItems);
+        setTranscripts(newTranscripts);
+        setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
-        // Garantir que recentItems é sempre um array vazio em caso de erro
-        setRecentItems([]);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchRecentAccess();
-  }, []);
-
-  // Separamos o efeito de atualização das transcrições em um useEffect próprio
-  useEffect(() => {
-    // Só configuramos o intervalo se tivermos itens para mostrar
-    if (!recentItems || recentItems.length === 0) return;
-
-    // Função para atualizar todas as transcrições
-    const updateAllTranscripts = () => {
-      const newTranscripts: { [key: string]: string } = {};
-      
-      // Garante que só atualizamos as transcrições se recentItems existe e tem itens
-      recentItems.forEach(item => {
-        if (item && item.id) {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-        }
-      });
-      
-      setTranscripts(prevTranscripts => ({
-        ...prevTranscripts,
-        ...newTranscripts
-      }));
-    };
-
-    // Configurar o intervalo para atualizar transcrições
-    const interval = setInterval(updateAllTranscripts, 10000);
     
-    // Limpar o intervalo quando o componente for desmontado
+    // Refresh transcripts every 10 seconds
+    const interval = setInterval(() => {
+      const newTranscripts: {[key: string]: string} = {};
+      recentItems.forEach(item => {
+        newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+      });
+      setTranscripts(newTranscripts);
+    }, 10000);
+    
     return () => clearInterval(interval);
-  }, [recentItems]); // Dependência direta no array de itens
+  }, []);
 
   const getIcon = (type: string) => {
     switch (type) {
-      case "video":
-        return <Video className="h-4 w-4 text-blue-500" />;
-      case "article":
-        return <Newspaper className="h-4 w-4 text-teal-500" />;
-      case "document":
-        return <FileText className="h-4 w-4 text-rose-500" />;
-      case "book":
-        return <BookOpen className="h-4 w-4 text-green-500" />;
-      default:
-        return <FileText className="h-4 w-4 text-gray-500" />;
+      case "video": return <Video className="h-4 w-4 text-blue-500" />;
+      case "article": return <Newspaper className="h-4 w-4 text-teal-500" />;
+      case "document": return <FileText className="h-4 w-4 text-rose-500" />;
+      case "book": return <BookOpen className="h-4 w-4 text-green-500" />;
+      default: return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
+
+  // Ensure recentItems is an array before using array methods
+  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
+  if (itemsArray.length === 0 && !loading) {
+    return null;
+  }
+
   if (loading) {
     return (
       <div className="w-full mb-4 animate-pulse">
@@ -165,43 +161,45 @@ const RecentAccess = () => {
       </div>
     );
   }
-  
-  // Se não temos itens, não mostramos nada
-  if (!recentItems || recentItems.length === 0) {
-    return null;
-  }
 
   return (
-    <div className="mb-6">
-      <h2 className="text-lg font-medium mb-3">Acessos recentes</h2>
-      <Carousel>
-        <CarouselContent>
-          {recentItems.map((item) => (
-            <CarouselItem key={item.id} className="basis-1/1 sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+    <div className="w-full mb-4">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-sm font-medium">Acessos Recentes</h2>
+      </div>
+
+      <Carousel
+        opts={{
+          align: "start",
+          containScroll: false,
+        }}
+        className="w-full"
+      >
+        <CarouselContent className="-ml-2 md:-ml-4">
+          {itemsArray.map((item) => (
+            <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
-                className="cursor-pointer hover:bg-accent/50 transition-colors" 
+                className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
                 onClick={() => navigate(item.path)}
               >
                 <CardContent className="p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="mt-1 p-1.5 bg-background border rounded-md">
-                      {getIcon(item.type)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">{item.title}</div>
-                      <div className="text-xs text-muted-foreground mt-1">{item.timestamp}</div>
-                      <div className="text-xs text-muted-foreground mt-1 italic line-clamp-2">
-                        "{transcripts[item.id] || getRandomTranscript(item.type, item.title)}"
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 mb-1">
+                    {getIcon(item.type)}
+                    <span className="text-xs text-muted-foreground">{item.timestamp}</span>
                   </div>
+                  <p className="text-sm font-medium truncate">{item.title}</p>
+                  <p className="text-xs text-muted-foreground mt-1 italic line-clamp-2 h-8">
+                    "{transcripts[item.id] || getRandomTranscript(item.type, item.title)}"
+                  </p>
                 </CardContent>
               </Card>
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="hidden md:flex" />
-        <CarouselNext className="hidden md:flex" />
+        <div className="hidden md:block">
+          <CarouselPrevious className="hidden md:flex" />
+          <CarouselNext className="hidden md:flex" />
+        </div>
       </Carousel>
     </div>
   );

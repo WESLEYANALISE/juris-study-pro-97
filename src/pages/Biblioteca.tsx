@@ -183,7 +183,10 @@ const Biblioteca = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const askAiForRecommendation = async (query: string) => {
+  const askAiForRecommendation = async (query: string): Promise<{
+    result: string;
+    books: Book[];
+  }> => {
     if (!query.trim()) return Promise.resolve({
       result: "",
       books: [] as Book[]
@@ -194,15 +197,15 @@ const Biblioteca = () => {
       if (response.error) throw new Error(response.error);
       const keywords = query.toLowerCase().split(' ');
       const recommendedBooks = books.filter(book => keywords.some(keyword => book.livro?.toLowerCase().includes(keyword) || book.area?.toLowerCase().includes(keyword) || book.sobre?.toLowerCase().includes(keyword))).slice(0, 5);
-      return Promise.resolve({
+      return {
         result: response.text,
         books: recommendedBooks
-      });
+      };
     } catch (error) {
-      return Promise.resolve({
+      return {
         result: "Desculpe, não foi possível obter recomendações. Por favor, tente novamente.",
         books: []
-      });
+      };
     }
   };
 
@@ -300,7 +303,7 @@ const Biblioteca = () => {
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <div className="ml-2">
-            <AIRecommendations askAiForRecommendation={askAiForRecommendation} books={books} openBookDialog={openBookDialog} />
+            <AIRecommendations askAiForRecommendation={() => ({ result: "", books: [] })} books={books} openBookDialog={openBookDialog} />
           </div>
         </div>
         <Button variant="outline" onClick={openAnnotationsDialog} className="sm:hidden mt-2 w-full text-xs">
