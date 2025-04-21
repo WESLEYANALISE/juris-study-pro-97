@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 const LOGO_URL = "/placeholder.svg";
 const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
 
-// Schema para validação de formulário
 const authSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres")
@@ -30,7 +28,6 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const navigate = useNavigate();
 
-  // Verifica sessão existente e redireciona se já estiver logado
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
@@ -42,7 +39,6 @@ const Auth = () => {
     checkSession();
   }, [navigate]);
 
-  // React Hook Form com validação Zod
   const form = useForm<AuthFormValues>({
     resolver: zodResolver(authSchema),
     defaultValues: {
@@ -107,7 +103,6 @@ const Auth = () => {
     setLoading(true);
     try {
       if (activeTab === "login") {
-        // Login com email/senha
         const { error, data } = await supabase.auth.signInWithPassword({
           email: values.email,
           password: values.password
@@ -120,10 +115,8 @@ const Auth = () => {
           description: "Bem-vindo de volta!"
         });
         
-        // Força redirecionamento para página inicial após login bem-sucedido
         navigate("/", { replace: true });
       } else {
-        // Cadastro com email/senha
         const { error } = await supabase.auth.signUp({
           email: values.email,
           password: values.password,
@@ -232,19 +225,6 @@ const Auth = () => {
                       </Button>
                     </form>
                   </Form>
-                  
-                  <div className="mt-4">
-                    <Button
-                      variant="outline"
-                      type="button"
-                      className="w-full flex items-center gap-2"
-                      onClick={handleMagicLink}
-                      disabled={loading}
-                    >
-                      <Mail className="h-4 w-4" />
-                      <span>Entrar com link mágico</span>
-                    </Button>
-                  </div>
                 </TabsContent>
                 
                 <TabsContent value="signup" className="mt-0">
