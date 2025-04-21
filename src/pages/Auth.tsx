@@ -5,11 +5,13 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Google } from "lucide-react";
+import { supabase } from "@/lib/supabaseClient"; // Corrigir o caminho para o cliente Supabase
+import { icons } from "lucide-react";
+
+const GoogleIcon = icons["google"];
 
 const LOGO_URL = "/placeholder.svg";
-const SUBTITLE = "Junte-se à melhor experiência de estudo jurídico: rápido, prático e seguro.";
+const SUBTITLE = "Acesse com e-mail ou Google e aproveite a experiência jurídica completa.";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +19,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
@@ -44,15 +47,11 @@ const Auth = () => {
   async function handleGoogle() {
     setGoogleLoading(true);
     setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: window.location.origin + "/" }
-      });
-      if (error) setError(error.message);
-    } catch (err: any) {
-      setError(err.message || "Erro no login com Google.");
-    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin + "/" }
+    });
+    if (error) setError(error.message || "Erro no login com Google.");
     setGoogleLoading(false);
   }
 
@@ -66,33 +65,50 @@ const Auth = () => {
         </CardHeader>
         <CardContent className="flex flex-col gap-8 pt-0">
           {!magicSent ? (
-            <form className="space-y-4" onSubmit={handleEmail}>
-              <div>
-                <label htmlFor="email" className="font-semibold text-sm mb-2 block">
-                  E-mail
-                </label>
-                <Input
-                  id="email"
-                  autoFocus
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
+            <>
+              <form className="space-y-5" onSubmit={handleEmail}>
+                <div>
+                  <label htmlFor="email" className="font-semibold text-sm mb-2 block">
+                    E-mail
+                  </label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    disabled={loading}
+                    required
+                    autoFocus
+                  />
+                </div>
+                {error && (
+                  <div className="text-sm text-destructive font-medium">{error}</div>
+                )}
+                <Button
+                  type="submit"
+                  className="w-full rounded-md text-base font-semibold shadow transition"
                   disabled={loading}
-                  required
-                />
+                >
+                  {loading ? "Enviando..." : "Entrar com link mágico"}
+                </Button>
+              </form>
+              <div className="flex items-center gap-2">
+                <div className="flex-1 h-px bg-muted-foreground/20" />
+                <span className="text-xs text-muted-foreground">ou</span>
+                <div className="flex-1 h-px bg-muted-foreground/20" />
               </div>
-              {error && (
-                <div className="text-sm text-destructive font-medium">{error}</div>
-              )}
               <Button
-                type="submit"
-                className="w-full rounded-md text-base font-semibold shadow transition"
-                disabled={loading}
+                type="button"
+                className="w-full flex items-center justify-center gap-2 rounded-md border shadow"
+                onClick={handleGoogle}
+                disabled={googleLoading}
+                variant="outline"
               >
-                {loading ? "Enviando..." : "Entrar/Cadastrar com e-mail"}
+                <GoogleIcon className="h-5 w-5 text-blue-600" />
+                <span>{googleLoading ? "Entrando..." : "Entrar com Google"}</span>
               </Button>
-            </form>
+            </>
           ) : (
             <div className="text-center py-10">
               <p className="font-semibold text-primary">Confira sua caixa de entrada!</p>
@@ -108,23 +124,6 @@ const Auth = () => {
               </Button>
             </div>
           )}
-
-          <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-muted-foreground/20" />
-            <span className="text-xs text-muted-foreground">ou</span>
-            <div className="flex-1 h-px bg-muted-foreground/20" />
-          </div>
-
-          <Button
-            type="button"
-            className="w-full flex items-center justify-center gap-2 rounded-md border shadow"
-            onClick={handleGoogle}
-            disabled={googleLoading}
-            variant="outline"
-          >
-            <Google className="h-5 w-5 text-blue-600" />
-            <span>{googleLoading ? "Entrando..." : "Entrar com Google"}</span>
-          </Button>
         </CardContent>
       </Card>
     </div>
