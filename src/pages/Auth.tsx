@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
-import { Mail, Google } from "lucide-react"; // Usar ícones permitidos
+import { Mail, LogIn } from "lucide-react"; // Using LogIn instead of Google
 import logo from "/favicon.ico"; // Substitua ou personalize se houver outro logo
 
 const motivacional = "Tenha acesso aos melhores conteúdos jurídicos e transforme seus estudos com organização e foco.";
@@ -41,7 +41,7 @@ export default function Auth() {
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
@@ -118,7 +118,7 @@ export default function Auth() {
           disabled={isLoading}
           type="button"
         >
-          <Google className="mr-2 text-[#4285F4]" />
+          <LogIn className="mr-2 text-[#4285F4]" />
           Entrar com o Google
         </Button>
       </div>
