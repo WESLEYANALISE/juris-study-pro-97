@@ -5,10 +5,8 @@ import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabaseClient"; // Corrigir o caminho para o cliente Supabase
-import { icons } from "lucide-react";
-
-const GoogleIcon = icons["google"];
+import { supabase } from "@/lib/supabaseClient";
+import { Google } from "lucide-react"; // Import the Google icon directly
 
 const LOGO_URL = "/placeholder.svg";
 const SUBTITLE = "Acesse com e-mail ou Google e aproveite a experiência jurídica completa.";
@@ -105,7 +103,7 @@ const Auth = () => {
                 disabled={googleLoading}
                 variant="outline"
               >
-                <GoogleIcon className="h-5 w-5 text-blue-600" />
+                <Google className="h-5 w-5 text-blue-600" />
                 <span>{googleLoading ? "Entrando..." : "Entrar com Google"}</span>
               </Button>
             </>
