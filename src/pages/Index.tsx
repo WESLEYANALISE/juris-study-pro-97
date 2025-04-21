@@ -86,7 +86,7 @@ const Index = () => {
       color: "text-orange-500"
     }]
   }];
-  return <div className="container mx-auto">
+  return <div className="container mx-auto px-0">
       <div className="flex flex-col items-center text-center mb-8">
         <div className="mb-4">
           <Scale className="h-12 w-12 text-primary mx-auto mb-2" />
