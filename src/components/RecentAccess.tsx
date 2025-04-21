@@ -57,8 +57,8 @@ const RecentAccess = () => {
 
         if (error) throw error;
 
-        // TODO: Convert Supabase data to RecentItem format
-        const items = [
+        // Dados de exemplo para desenvolvimento
+        const items: RecentItem[] = [
           {
             id: "1",
             title: "Direito Constitucional - Aula 3",
@@ -113,6 +113,8 @@ const RecentAccess = () => {
         setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
+        // Em caso de erro, inicialize com array vazio para evitar undefined
+        setRecentItems([]);
       } finally {
         setLoading(false);
       }
@@ -120,13 +122,15 @@ const RecentAccess = () => {
 
     fetchRecentAccess();
     
-    // Refresh transcripts every 10 seconds
+    // Refresh transcripts every 10 seconds, com verificação para prevenir erro
     const interval = setInterval(() => {
-      const newTranscripts: {[key: string]: string} = {};
-      recentItems.forEach(item => {
-        newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-      });
-      setTranscripts(newTranscripts);
+      if (recentItems && recentItems.length > 0) {
+        const newTranscripts: {[key: string]: string} = {};
+        recentItems.forEach(item => {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        });
+        setTranscripts(newTranscripts);
+      }
     }, 10000);
     
     return () => clearInterval(interval);
@@ -142,7 +146,7 @@ const RecentAccess = () => {
     }
   };
 
-  // Ensure recentItems is an array before using array methods
+  // Garantir que recentItems é sempre um array, mesmo que seja undefined
   const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
   if (itemsArray.length === 0 && !loading) {

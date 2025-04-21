@@ -159,12 +159,18 @@ const Index = () => {
     const generateAllTranscripts = () => {
       const newTranscripts: {[key: string]: string} = {};
       
-      categories.forEach(category => {
-        category.items.forEach(item => {
-          const key = `${category.title}-${item.title}`;
-          newTranscripts[key] = getRandomTranscript(category.title, item.title);
+      // Verifica se categories existe e é um array antes de iterar
+      if (categories && Array.isArray(categories)) {
+        categories.forEach(category => {
+          // Verifica se category.items existe e é um array
+          if (category.items && Array.isArray(category.items)) {
+            category.items.forEach(item => {
+              const key = `${category.title}-${item.title}`;
+              newTranscripts[key] = getRandomTranscript(category.title, item.title);
+            });
+          }
         });
-      });
+      }
       
       setTranscripts(newTranscripts);
     };
@@ -193,7 +199,7 @@ const Index = () => {
       <QuickAccess />
 
       <div className="space-y-6 px-1">
-        {categories.map((category, categoryIndex) => (
+        {categories && Array.isArray(categories) && categories.map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h2 className="text-xl font-semibold mb-4 px-2 flex justify-between items-center">
               {category.title}
@@ -214,7 +220,7 @@ const Index = () => {
               className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {category.items.map((feature, index) => {
+                {category.items && Array.isArray(category.items) && category.items.map((feature, index) => {
                   const transcriptKey = `${category.title}-${feature.title}`;
                   return (
                     <CarouselItem key={index} className="pl-2 md:pl-4 basis-[85%] sm:basis-[45%] md:basis-1/3">
