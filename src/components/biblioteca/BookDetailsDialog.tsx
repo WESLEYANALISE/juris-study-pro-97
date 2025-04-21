@@ -1,4 +1,3 @@
-
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Volume2, Heart, BookOpenCheck, PencilLine, X, Maximize, Minimize } from "lucide-react";
@@ -6,6 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { useState, useEffect } from "react";
 import MusicPlayer from "./MusicPlayer";
+import BookCoverActions from "./BookCoverActions";
+import BookSynopsis from "./BookSynopsis";
+import AnnotationEditor from "./AnnotationEditor";
+import AnnotationList from "./AnnotationList";
 
 interface Book {
   id: number;
@@ -180,121 +183,37 @@ const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({
               </div>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={e => {
-                e.stopPropagation();
-                onFavorite(selectedBook.id);
-              }}
-              className={isFavorite
-                ? "bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                : ""
-              }
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={e => {
-                e.stopPropagation();
-                onRead(selectedBook.id);
-              }}
-              className={isRead
-                ? "bg-green-100 text-green-500 hover:bg-green-200 hover:text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                : ""
-              }
-            >
-              <BookOpenCheck className="h-4 w-4" />
-            </Button>
-          </div>
+          <BookCoverActions
+            bookId={selectedBook.id}
+            isFavorite={isFavorite}
+            isRead={isRead}
+            onFavorite={onFavorite}
+            onRead={onRead}
+          />
         </div>
         <div className="md:col-span-2 space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">
-              Sinopse
-            </h3>
-            <div className="relative">
-              <p className="text-sm">{selectedBook.sobre || "Sinopse não disponível"}</p>
-              {selectedBook.sobre && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0"
-                  onClick={() => onNarrate(selectedBook.sobre || "")}
-                >
-                  <Volume2 className={`h-4 w-4 ${isNarrating ? "text-primary" : ""}`} />
-                </Button>
-              )}
-            </div>
-            {isNarrating && (
-              <div className="mt-2">
-                <p className="text-xs mb-1">
-                  Volume: {narrationVolume}%
-                </p>
-                <Slider
-                  value={[narrationVolume]}
-                  min={0}
-                  max={100}
-                  step={5}
-                  onValueChange={value => setNarrationVolume(value[0])}
-                />
-              </div>
-            )}
-          </div>
+          <BookSynopsis
+            synopsis={selectedBook.sobre}
+            isNarrating={isNarrating}
+            narrationVolume={narrationVolume}
+            onNarrate={onNarrate}
+            setNarrationVolume={setNarrationVolume}
+          />
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">Anotações</h3>
-            <div className="space-y-2">
-              <Input
-                placeholder="Adicione sua anotação sobre este livro..."
-                value={currentAnnotation}
-                onChange={e => setCurrentAnnotation(e.target.value)}
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => saveAnnotation(selectedBook.id)}
-                disabled={!currentAnnotation.trim()}
-              >
-                Salvar anotação
-              </Button>
-            </div>
-            {annotations.filter(a => a.bookId === selectedBook.id).length > 0 && (
-              <div className="mt-3 max-h-[150px] overflow-y-auto space-y-2">
-                {annotations
-                  .filter(a => a.bookId === selectedBook.id)
-                  .map(annotation => (
-                    <div key={annotation.id} className="p-2 text-sm border rounded-md">
-                      <p className="line-clamp-2">{annotation.text}</p>
-                      <div className="flex justify-end mt-1 space-x-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingAnnotation(annotation.id);
-                            setCurrentAnnotation(annotation.text);
-                          }}
-                          className="h-7 px-2"
-                        >
-                          <PencilLine className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deleteAnnotation(annotation.id)}
-                          className="h-7 px-2 text-red-500 hover:text-red-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                }
-              </div>
-            )}
+            <AnnotationEditor
+              bookId={selectedBook.id}
+              currentAnnotation={currentAnnotation}
+              setCurrentAnnotation={setCurrentAnnotation}
+              saveAnnotation={saveAnnotation}
+            />
+            <AnnotationList
+              bookId={selectedBook.id}
+              annotations={annotations}
+              setEditingAnnotation={setEditingAnnotation}
+              setCurrentAnnotation={setCurrentAnnotation}
+              deleteAnnotation={deleteAnnotation}
+            />
           </div>
         </div>
       </div>
