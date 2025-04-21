@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -18,10 +19,13 @@ const LoadingFallback = () => <div className="p-4 text-center">Carregando...</di
 interface LayoutProps {
   children: React.ReactNode;
   userProfile: ProfileType;
+  onProfileChange?: (profile: ProfileType) => void;
 }
+
 const Layout = ({
   children,
-  userProfile
+  userProfile,
+  onProfileChange
 }: LayoutProps) => {
   const location = useLocation();
   const isHomePage = location.pathname === "/";
@@ -44,7 +48,7 @@ const Layout = ({
   const pageTitle = getCurrentPageTitle();
   return <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex flex-col w-full">
-        <Header userProfile={userProfile} pageTitle={pageTitle} />
+        <Header userProfile={userProfile} pageTitle={pageTitle} onProfileChange={onProfileChange} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
           <main className="flex-1 p-3 md:p-6 overflow-auto pb-20 md:pb-6 px-0 py-0 my-0 mx-0">
