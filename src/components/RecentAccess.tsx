@@ -99,7 +99,7 @@ const RecentAccess = () => {
         setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
-        // Em caso de erro, definir um array vazio em vez de undefined
+        // Em caso de erro, garantir que recentItems seja sempre um array vazio
         setRecentItems([]);
       } finally {
         setLoading(false);
@@ -110,18 +110,26 @@ const RecentAccess = () => {
 
     // Atualizar transcrições a cada 10 segundos
     const interval = setInterval(() => {
-      // Garantir que recentItems existe e não é undefined antes de iterar
-      if (recentItems && recentItems.length > 0) {
-        const newTranscripts: { [key: string]: string } = {};
-        recentItems.forEach(item => {
-          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-        });
-        setTranscripts(newTranscripts);
-      }
+      setTranscripts(prevTranscripts => {
+        // Usar a função de atualização de estado para garantir que estamos usando o valor mais recente
+        // de recentItems e prevTranscripts
+        const newTranscripts = { ...prevTranscripts };
+        
+        // Verificar se recentItems existe antes de iterar
+        if (recentItems && recentItems.length > 0) {
+          recentItems.forEach(item => {
+            if (item && item.id) {
+              newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+            }
+          });
+        }
+        
+        return newTranscripts;
+      });
     }, 10000);
     
     return () => clearInterval(interval);
-  }, [recentItems.length]); // Adicionamos recentItems.length como dependência
+  }, []); // Remover a dependência para evitar possíveis loops ou efeitos colaterais
 
   const getIcon = (type: string) => {
     switch (type) {
