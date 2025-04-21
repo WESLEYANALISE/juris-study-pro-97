@@ -300,7 +300,7 @@ const Biblioteca = () => {
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <div className="ml-2">
-            <AIRecommendations askAiForRecommendation={() => ({ result: "", books: [] })} books={books} openBookDialog={openBookDialog} />
+            <AIRecommendations askAiForRecommendation={askAiForRecommendation} books={books} openBookDialog={openBookDialog} />
           </div>
         </div>
         <Button variant="outline" onClick={openAnnotationsDialog} className="sm:hidden mt-2 w-full text-xs">
