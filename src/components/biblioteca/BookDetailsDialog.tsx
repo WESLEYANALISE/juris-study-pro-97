@@ -1,9 +1,14 @@
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Download, Volume2, Heart, BookOpenCheck, PencilLine, X } from "lucide-react";
+import { BookOpen, Download, Volume2, Heart, BookOpenCheck, PencilLine, X, Maximize, Minimize } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import FullScreenReader from "./FullScreenReader";
+import { useState, useEffect } from "react";
+import MusicPlayer from "./MusicPlayer";
+import BookCoverActions from "./BookCoverActions";
+import BookSynopsis from "./BookSynopsis";
+import AnnotationEditor from "./AnnotationEditor";
+import AnnotationList from "./AnnotationList";
 
 interface Book {
   id: number;
@@ -46,48 +51,109 @@ interface BookDetailsDialogProps {
   openAnnotationsDialog: () => void;
 }
 
-const BookDetailsDialog: React.FC<BookDetailsDialogProps> = (props) => {
-  const {
-    selectedBook,
-    readingMode,
-    setReadingMode,
-    isNarrating,
-    narrationVolume,
-    onClose,
-    onFavorite,
-    onRead,
-    isFavorite,
-    isRead,
-    onNarrate,
-    setNarrationVolume,
-    annotations,
-    currentAnnotation,
-    setCurrentAnnotation,
-    saveAnnotation,
-    editingAnnotation,
-    setEditingAnnotation,
-    updateAnnotation,
-    deleteAnnotation,
-    openAnnotationsDialog,
-  } = props;
+const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({
+  selectedBook,
+  readingMode,
+  isNarrating,
+  narrationVolume,
+  setReadingMode,
+  onClose,
+  onFavorite,
+  onRead,
+  isFavorite,
+  isRead,
+  onNarrate,
+  setNarrationVolume,
+  annotations,
+  currentAnnotation,
+  setCurrentAnnotation,
+  saveAnnotation,
+  editingAnnotation,
+  setEditingAnnotation,
+  updateAnnotation,
+  deleteAnnotation,
+  openAnnotationsDialog,
+}) => {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(err => {
+        console.log(`Error attempting to enable full-screen mode: ${err.message}`);
+      });
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    };
+  }, []);
 
   if (!selectedBook) return null;
 
-  if (selectedBook && readingMode) {
+  if (readingMode) {
     return (
-      <FullScreenReader
-        bookTitle={selectedBook.livro}
-        link={selectedBook.link}
-        onExit={() => setReadingMode(false)}
-      />
+      <DialogContent className={`max-w-full h-[95vh] p-0 sm:p-0 md:max-w-4xl ${isFullscreen ? 'border-0 rounded-none' : ''}`}>
+        <div className="flex items-center justify-between px-4 py-2 border-b">
+          <h2 className="text-lg font-semibold truncate max-w-[200px] sm:max-w-full">{selectedBook.livro}</h2>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={toggleFullscreen} 
+              className="h-8 w-8"
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setReadingMode(false)}
+              className="h-8"
+            >
+              Voltar
+            </Button>
+            <DialogClose className="rounded-full h-8 w-8 flex items-center justify-center border">
+              <X className="h-4 w-4" />
+            </DialogClose>
+          </div>
+        </div>
+        <div className="flex-1 w-full h-[calc(100%-48px)] min-h-[60vh]">
+          {selectedBook.link ? (
+            <iframe
+              src={selectedBook.link}
+              className="w-full h-full border-none"
+              title={selectedBook.livro || "Leitura"}
+              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <p>Link de leitura não disponível para este livro.</p>
+            </div>
+          )}
+        </div>
+        <MusicPlayer className="md:hidden" />
+      </DialogContent>
     );
   }
 
   return (
-    <DialogContent className="max-w-4xl max-h-[90vh]">
+    <DialogContent className="max-w-[95vw] md:max-w-4xl max-h-[90vh]">
       <DialogHeader>
         <div className="flex items-center justify-between">
-          <DialogTitle className="text-xl">{selectedBook.livro}</DialogTitle>
+          <DialogTitle className="text-xl truncate max-w-[200px] sm:max-w-full">{selectedBook.livro}</DialogTitle>
           <DialogClose className="rounded-full h-6 w-6 flex items-center justify-center">
             <X className="h-4 w-4" />
           </DialogClose>
@@ -117,121 +183,37 @@ const BookDetailsDialog: React.FC<BookDetailsDialogProps> = (props) => {
               </div>
             )}
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={e => {
-                e.stopPropagation();
-                onFavorite(selectedBook.id);
-              }}
-              className={isFavorite
-                ? "bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-600 dark:bg-red-900/30 dark:text-red-400"
-                : ""
-              }
-            >
-              <Heart className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={e => {
-                e.stopPropagation();
-                onRead(selectedBook.id);
-              }}
-              className={isRead
-                ? "bg-green-100 text-green-500 hover:bg-green-200 hover:text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                : ""
-              }
-            >
-              <BookOpenCheck className="h-4 w-4" />
-            </Button>
-          </div>
+          <BookCoverActions
+            bookId={selectedBook.id}
+            isFavorite={isFavorite}
+            isRead={isRead}
+            onFavorite={onFavorite}
+            onRead={onRead}
+          />
         </div>
         <div className="md:col-span-2 space-y-4">
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-1">
-              Sinopse
-            </h3>
-            <div className="relative">
-              <p className="text-sm">{selectedBook.sobre || "Sinopse não disponível"}</p>
-              {selectedBook.sobre && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-0 right-0"
-                  onClick={() => onNarrate(selectedBook.sobre || "")}
-                >
-                  <Volume2 className={`h-4 w-4 ${isNarrating ? "text-primary" : ""}`} />
-                </Button>
-              )}
-            </div>
-            {isNarrating && (
-              <div className="mt-2">
-                <p className="text-xs mb-1">
-                  Volume: {narrationVolume}%
-                </p>
-                <Slider
-                  value={[narrationVolume]}
-                  min={0}
-                  max={100}
-                  step={5}
-                  onValueChange={value => setNarrationVolume(value[0])}
-                />
-              </div>
-            )}
-          </div>
+          <BookSynopsis
+            synopsis={selectedBook.sobre}
+            isNarrating={isNarrating}
+            narrationVolume={narrationVolume}
+            onNarrate={onNarrate}
+            setNarrationVolume={setNarrationVolume}
+          />
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-2">Anotações</h3>
-            <div className="space-y-2">
-              <Input
-                placeholder="Adicione sua anotação sobre este livro..."
-                value={currentAnnotation}
-                onChange={e => setCurrentAnnotation(e.target.value)}
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
-                onClick={() => saveAnnotation(selectedBook.id)}
-                disabled={!currentAnnotation.trim()}
-              >
-                Salvar anotação
-              </Button>
-            </div>
-            {annotations.filter(a => a.bookId === selectedBook.id).length > 0 && (
-              <div className="mt-3 max-h-[150px] overflow-y-auto space-y-2">
-                {annotations
-                  .filter(a => a.bookId === selectedBook.id)
-                  .map(annotation => (
-                    <div key={annotation.id} className="p-2 text-sm border rounded-md">
-                      <p className="line-clamp-2">{annotation.text}</p>
-                      <div className="flex justify-end mt-1 space-x-1">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setEditingAnnotation(annotation.id);
-                            setCurrentAnnotation(annotation.text);
-                          }}
-                          className="h-7 px-2"
-                        >
-                          <PencilLine className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => deleteAnnotation(annotation.id)}
-                          className="h-7 px-2 text-red-500 hover:text-red-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
-                }
-              </div>
-            )}
+            <AnnotationEditor
+              bookId={selectedBook.id}
+              currentAnnotation={currentAnnotation}
+              setCurrentAnnotation={setCurrentAnnotation}
+              saveAnnotation={saveAnnotation}
+            />
+            <AnnotationList
+              bookId={selectedBook.id}
+              annotations={annotations}
+              setEditingAnnotation={setEditingAnnotation}
+              setCurrentAnnotation={setCurrentAnnotation}
+              deleteAnnotation={deleteAnnotation}
+            />
           </div>
         </div>
       </div>

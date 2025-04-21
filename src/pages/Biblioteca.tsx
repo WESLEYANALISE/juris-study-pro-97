@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AnimatedTabs, AnimatedTabsList, AnimatedTabsTrigger, AnimatedTabsContent } from "@/components/ui/animated-tabs";
 import { Dialog } from "@/components/ui/dialog";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { CarouselItem } from "@/components/ui/carousel";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -14,6 +14,8 @@ import BookList from "@/components/biblioteca/BookList";
 import AnnotationsDialog from "@/components/biblioteca/AnnotationsDialog";
 import AIRecommendations from "@/components/biblioteca/AIRecommendations";
 import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
+import ResponsiveCarousel from "@/components/biblioteca/ResponsiveCarousel";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Book {
   id: number;
@@ -24,23 +26,121 @@ interface Book {
   download: string | null;
   link: string | null;
 }
-
 interface ReadBook {
   id: number;
   isRead: boolean;
 }
-
 interface FavoriteBook {
   id: number;
   isFavorite: boolean;
 }
-
 interface Annotation {
   id: string;
   bookId: number;
   text: string;
   createdAt: string;
 }
+
+const BooksByAreaSection = ({ 
+  area, 
+  books, 
+  booksPerArea, 
+  viewMode, 
+  toggleViewMode, 
+  readBooks, 
+  favoriteBooks, 
+  openBookDialog 
+}: { 
+  area: string; 
+  books: Book[]; 
+  booksPerArea: Record<string, number>; 
+  viewMode: Record<string, 'grid' | 'list'>; 
+  toggleViewMode: (area: string) => void; 
+  readBooks: ReadBook[]; 
+  favoriteBooks: FavoriteBook[]; 
+  openBookDialog: (book: Book) => void; 
+}) => {
+  const isMobile = useIsMobile();
+  
+  return (
+    <div className="mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center">
+          <h2 className="text-xl font-semibold">{area}</h2>
+          <span className="ml-2 text-sm text-muted-foreground">
+            ({booksPerArea[area] || 0} livros)
+          </span>
+        </div>
+        <Button variant="ghost" size="sm" onClick={() => toggleViewMode(area)} className="flex items-center gap-1">
+          <ListFilter className="h-4 w-4 mr-1" />
+          Ver em {viewMode[area] === "grid" ? "lista" : "grade"}
+        </Button>
+      </div>
+
+      {viewMode[area] === "grid" ? (
+        <ResponsiveCarousel>
+          {books.map(book => (
+            <CarouselItem 
+              key={book.id} 
+              className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4"
+            >
+              <BookCard 
+                book={book} 
+                isRead={!!readBooks.find(x => x.id === book.id)} 
+                isFavorite={!!favoriteBooks.find(x => x.id === book.id)} 
+                onClick={openBookDialog} 
+              />
+            </CarouselItem>
+          ))}
+        </ResponsiveCarousel>
+      ) : (
+        <BookList 
+          books={books} 
+          readBooks={readBooks} 
+          favoriteBooks={favoriteBooks} 
+          onOpenBookDialog={openBookDialog} 
+        />
+      )}
+    </div>
+  );
+};
+
+const BooksGrid = ({ 
+  books, 
+  readBooks, 
+  favoriteBooks, 
+  openBookDialog, 
+  emptyMessage 
+}: { 
+  books: Book[]; 
+  readBooks: ReadBook[]; 
+  favoriteBooks: FavoriteBook[]; 
+  openBookDialog: (book: Book) => void; 
+  emptyMessage: string;
+}) => {
+  if (books.length === 0) {
+    return (
+      <p className="text-center py-12 text-muted-foreground">
+        {emptyMessage}
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 p-2 md:p-4">
+      {books.map(book => (
+        <div key={book.id} className="flex justify-center">
+          <BookCard 
+            book={book} 
+            isRead={!!readBooks.find(x => x.id === book.id)} 
+            isFavorite={!!favoriteBooks.find(x => x.id === book.id)} 
+            onClick={openBookDialog} 
+          />
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const Biblioteca = () => {
   const [books, setBooks] = useState<Book[]>([]);
@@ -62,10 +162,10 @@ const Biblioteca = () => {
   const [currentAnnotation, setCurrentAnnotation] = useState<string>("");
   const [editingAnnotation, setEditingAnnotation] = useState<string | null>(null);
   const [isAnnotationsDialogOpen, setIsAnnotationsDialogOpen] = useState(false);
-  const {
-    toast
-  } = useToast();
-
+  const isMobile = useIsMobile();
+  
+  const { toast } = useToast();
+  
   useEffect(() => {
     const fetchBooks = async () => {
       try {
@@ -204,29 +304,6 @@ const Biblioteca = () => {
     window.speechSynthesis.speak(utterance);
   };
 
-  const askAiForRecommendation = async (query: string) => {
-    if (!query.trim()) return {
-      result: "",
-      books: [] as Book[]
-    };
-    try {
-      const prompt = `Estou procurando livros para estudar sobre: ${query}. Por favor, sugira até 3 livros que podem me ajudar, considerando que estou na área jurídica.`;
-      const response = await askGemini(prompt);
-      if (response.error) throw new Error(response.error);
-      const keywords = query.toLowerCase().split(' ');
-      const recommendedBooks = books.filter(book => keywords.some(keyword => book.livro?.toLowerCase().includes(keyword) || book.area?.toLowerCase().includes(keyword) || book.sobre?.toLowerCase().includes(keyword))).slice(0, 5);
-      return {
-        result: response.text,
-        books: recommendedBooks
-      };
-    } catch (error) {
-      return {
-        result: "Desculpe, não foi possível obter recomendações. Por favor, tente novamente.",
-        books: []
-      };
-    }
-  };
-
   const toggleViewMode = (area: string) => {
     setViewMode(prev => ({
       ...prev,
@@ -281,12 +358,35 @@ const Biblioteca = () => {
 
   const openAnnotationsDialog = () => setIsAnnotationsDialogOpen(true);
 
+  const askAiForRecommendation = async (query: string) => {
+    if (!query.trim()) return {
+      result: "",
+      books: [] as Book[]
+    };
+    try {
+      const prompt = `Estou procurando livros para estudar sobre: ${query}. Por favor, sugira até 3 livros que podem me ajudar, considerando que estou na área jurídica.`;
+      const response = await askGemini(prompt);
+      if (response.error) throw new Error(response.error);
+      const keywords = query.toLowerCase().split(' ');
+      const recommendedBooks = books.filter(book => keywords.some(keyword => book.livro?.toLowerCase().includes(keyword) || book.area?.toLowerCase().includes(keyword) || book.sobre?.toLowerCase().includes(keyword))).slice(0, 5);
+      return {
+        result: response.text,
+        books: recommendedBooks
+      };
+    } catch (error) {
+      return {
+        result: "Desculpe, não foi possível obter recomendações. Por favor, tente novamente.",
+        books: []
+      };
+    }
+  };
+
   const booksByArea = areas.reduce((acc, area) => {
     if (!area) return acc;
     acc[area] = filteredBooks.filter(book => book.area === area);
     return acc;
   }, {} as Record<string, Book[]>);
-
+  
   const favoriteBooksData = books.filter(book => favoriteBooks.some(fav => fav.id === book.id));
   const readBooksData = books.filter(book => readBooks.some(rb => rb.id === book.id));
   const totalBooks = books.length;
@@ -297,26 +397,46 @@ const Biblioteca = () => {
   }, {} as Record<string, number>);
 
   return (
-    <div className="container py-4 mx-[18px] px-0">
-      <div className="flex items-center justify-between mb-6">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+      className="container py-4 px-2 md:px-4 mx-auto"
+    >
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
+        <div className="text-sm text-muted-foreground">
+          <span className="font-semibold">{totalBooks}</span> livros disponíveis
+        </div>
         
-        <div className="flex items-center space-x-3 px-0 mx-0">
-          <div className="text-sm text-muted-foreground">
-            <span className="font-semibold">{totalBooks}</span> livros disponíveis
-          </div>
-          <div className="relative w-full max-w-sm">
-            <Input type="text" placeholder="Pesquisar livros..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10" />
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="relative flex-1 min-w-[180px] max-w-sm">
+            <Input 
+              type="text" 
+              placeholder="Pesquisar livros..." 
+              value={searchQuery} 
+              onChange={e => setSearchQuery(e.target.value)} 
+              className="pl-10" 
+            />
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           </div>
-          <AIRecommendations askAiForRecommendation={askAiForRecommendation} books={books} openBookDialog={openBookDialog} />
-          <Button variant="outline" onClick={openAnnotationsDialog} className="px-0 py-0 my-0 mx-[30px]">
-            <span className="mr-2">Anotações</span>
+          
+          <AIRecommendations 
+            askAiForRecommendation={askAiForRecommendation} 
+            books={books} 
+            openBookDialog={openBookDialog} 
+          />
+          
+          <Button 
+            variant="outline" 
+            onClick={openAnnotationsDialog}
+          >
+            Anotações
           </Button>
         </div>
       </div>
 
       <AnimatedTabs defaultValue="areas" className="w-full">
-        <AnimatedTabsList className="w-full justify-start mb-4">
+        <AnimatedTabsList className="w-full overflow-x-auto scrollbar-none justify-start mb-4">
           <AnimatedTabsTrigger value="areas">Por Área</AnimatedTabsTrigger>
           <AnimatedTabsTrigger value="recentes">Recentes</AnimatedTabsTrigger>
           <AnimatedTabsTrigger value="lidos">Lidos</AnimatedTabsTrigger>
@@ -324,75 +444,105 @@ const Biblioteca = () => {
         </AnimatedTabsList>
 
         <AnimatedTabsContent value="areas" slideDirection="right">
-          {isLoading ? <div className="flex justify-center p-12">
+          {isLoading ? (
+            <div className="flex justify-center p-12">
               <p>Carregando biblioteca...</p>
-            </div> : areas.length > 0 ? <div className="space-y-10">
-              {areas.map(area => area && booksByArea[area]?.length > 0 && <div key={area} className="mb-8">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <h2 className="text-xl font-semibold">{area}</h2>
-                      <span className="ml-2 text-sm text-muted-foreground">
-                        ({booksPerArea[area] || 0} livros)
-                      </span>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => toggleViewMode(area)} className="flex items-center gap-1">
-                      <ListFilter className="h-4 w-4 mr-1" />
-                      Ver em {viewMode[area] === "grid" ? "lista" : "grade"}
-                    </Button>
-                  </div>
-
-                  {viewMode[area] === "grid" ? <Carousel className="w-full">
-                      <CarouselContent>
-                        {booksByArea[area].map(book => <CarouselItem key={book.id} className="basis-auto md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4">
-                            <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-                          </CarouselItem>)}
-                      </CarouselContent>
-                      <CarouselPrevious className="left-0" />
-                      <CarouselNext className="right-0" />
-                    </Carousel> : <BookList books={booksByArea[area]} readBooks={readBooks} favoriteBooks={favoriteBooks} onOpenBookDialog={openBookDialog} />}
-                </div>)}
-            </div> : <p className="text-center py-12 text-muted-foreground">
+            </div>
+          ) : areas.length > 0 ? (
+            <div className="space-y-8">
+              {areas.map(area => (
+                area && booksByArea[area]?.length > 0 && (
+                  <BooksByAreaSection
+                    key={area}
+                    area={area}
+                    books={booksByArea[area]}
+                    booksPerArea={booksPerArea}
+                    viewMode={viewMode}
+                    toggleViewMode={toggleViewMode}
+                    readBooks={readBooks}
+                    favoriteBooks={favoriteBooks}
+                    openBookDialog={openBookDialog}
+                  />
+                )
+              ))}
+            </div>
+          ) : (
+            <p className="text-center py-12 text-muted-foreground">
               Nenhuma área encontrada na biblioteca.
-            </p>}
+            </p>
+          )}
         </AnimatedTabsContent>
 
         <AnimatedTabsContent value="recentes" slideDirection="right">
-          {recentBooks.length > 0 ? <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
-              {recentBooks.map(book => <div key={book.id} className="flex justify-center">
-                  <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-                </div>)}
-            </div> : <p className="text-center py-12 text-muted-foreground">
-              Você ainda não acessou nenhum livro recentemente.
-            </p>}
+          <BooksGrid
+            books={recentBooks}
+            readBooks={readBooks}
+            favoriteBooks={favoriteBooks}
+            openBookDialog={openBookDialog}
+            emptyMessage="Você ainda não acessou nenhum livro recentemente."
+          />
         </AnimatedTabsContent>
 
         <AnimatedTabsContent value="lidos" slideDirection="right">
-          {readBooksData.length > 0 ? <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
-              {readBooksData.map(book => <div key={book.id} className="flex justify-center">
-                  <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-                </div>)}
-            </div> : <p className="text-center py-12 text-muted-foreground">
-              Você ainda não marcou nenhum livro como lido.
-            </p>}
+          <BooksGrid
+            books={readBooksData}
+            readBooks={readBooks}
+            favoriteBooks={favoriteBooks}
+            openBookDialog={openBookDialog}
+            emptyMessage="Você ainda não marcou nenhum livro como lido."
+          />
         </AnimatedTabsContent>
 
         <AnimatedTabsContent value="favoritos" slideDirection="right">
-          {favoriteBooksData.length > 0 ? <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 p-4">
-              {favoriteBooksData.map(book => <div key={book.id} className="flex justify-center">
-                  <BookCard book={book} isRead={!!readBooks.find(x => x.id === book.id)} isFavorite={!!favoriteBooks.find(x => x.id === book.id)} onClick={openBookDialog} />
-                </div>)}
-            </div> : <p className="text-center py-12 text-muted-foreground">
-              Você ainda não adicionou nenhum livro aos favoritos.
-            </p>}
+          <BooksGrid
+            books={favoriteBooksData}
+            readBooks={readBooks}
+            favoriteBooks={favoriteBooks}
+            openBookDialog={openBookDialog}
+            emptyMessage="Você ainda não adicionou nenhum livro aos favoritos."
+          />
         </AnimatedTabsContent>
       </AnimatedTabs>
 
       <Dialog open={isBookDialogOpen} onOpenChange={setIsBookDialogOpen}>
-        <BookDetailsDialog selectedBook={selectedBook} readingMode={readingMode} setReadingMode={setReadingMode} isNarrating={isNarrating} narrationVolume={narrationVolume} onClose={() => setIsBookDialogOpen(false)} onFavorite={toggleFavoriteStatus} onRead={toggleReadStatus} isFavorite={!!(selectedBook && favoriteBooks.some(f => f.id === selectedBook.id))} isRead={!!(selectedBook && readBooks.some(f => f.id === selectedBook.id))} onNarrate={handleNarration} setNarrationVolume={setNarrationVolume} annotations={annotations} currentAnnotation={currentAnnotation} setCurrentAnnotation={setCurrentAnnotation} saveAnnotation={saveAnnotation} editingAnnotation={editingAnnotation} setEditingAnnotation={setEditingAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} openAnnotationsDialog={openAnnotationsDialog} />
+        <BookDetailsDialog 
+          selectedBook={selectedBook} 
+          readingMode={readingMode} 
+          setReadingMode={setReadingMode} 
+          isNarrating={isNarrating} 
+          narrationVolume={narrationVolume} 
+          onClose={() => setIsBookDialogOpen(false)} 
+          onFavorite={toggleFavoriteStatus} 
+          onRead={toggleReadStatus} 
+          isFavorite={!!(selectedBook && favoriteBooks.some(f => f.id === selectedBook.id))} 
+          isRead={!!(selectedBook && readBooks.some(f => f.id === selectedBook.id))} 
+          onNarrate={handleNarration} 
+          setNarrationVolume={setNarrationVolume} 
+          annotations={annotations} 
+          currentAnnotation={currentAnnotation} 
+          setCurrentAnnotation={setCurrentAnnotation} 
+          saveAnnotation={saveAnnotation} 
+          editingAnnotation={editingAnnotation} 
+          setEditingAnnotation={setEditingAnnotation} 
+          updateAnnotation={updateAnnotation} 
+          deleteAnnotation={deleteAnnotation} 
+          openAnnotationsDialog={openAnnotationsDialog} 
+        />
       </Dialog>
 
-      <AnnotationsDialog open={isAnnotationsDialogOpen} onOpenChange={setIsAnnotationsDialogOpen} annotations={annotations} books={books} editingAnnotation={editingAnnotation} currentAnnotation={currentAnnotation} setEditingAnnotation={setEditingAnnotation} setCurrentAnnotation={setCurrentAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} />
-    </div>
+      <AnnotationsDialog 
+        open={isAnnotationsDialogOpen} 
+        onOpenChange={setIsAnnotationsDialogOpen} 
+        annotations={annotations} 
+        books={books} 
+        editingAnnotation={editingAnnotation} 
+        currentAnnotation={currentAnnotation} 
+        setEditingAnnotation={setEditingAnnotation} 
+        setCurrentAnnotation={setCurrentAnnotation} 
+        updateAnnotation={updateAnnotation} 
+        deleteAnnotation={deleteAnnotation} 
+      />
+    </motion.div>
   );
 };
 
