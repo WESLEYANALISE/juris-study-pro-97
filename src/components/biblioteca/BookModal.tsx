@@ -1,9 +1,11 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Download, BookAudio, FileText, User2 } from "lucide-react";
+import { BookOpen, Download, BookAudio, FileText, User2, Bookmark } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type Livro = {
   id: string;
@@ -19,15 +21,116 @@ type Livro = {
   tags: string[] | null;
 };
 
+type UserLivroInfo = {
+  favorito: boolean;
+  lido: boolean;
+  progresso_leitura: number;
+  anotacoes: string | null;
+};
+
 type BookModalProps = {
   livro: Livro;
   onClose: () => void;
   onRead: () => void;
+  userId?: string | null;
 }
 
-export function BookModal({ livro, onClose, onRead }: BookModalProps) {
+export function BookModal({ livro, onClose, onRead, userId }: BookModalProps) {
   const [ttsLoading, setTtsLoading] = useState(false);
   const [ttsUrl, setTtsUrl] = useState<string | null>(null);
+  const [userLivroInfo, setUserLivroInfo] = useState<UserLivroInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (userId) {
+      fetchUserLivroInfo();
+    }
+  }, [userId, livro.id]);
+
+  async function fetchUserLivroInfo() {
+    try {
+      const { data, error } = await supabase
+        .from('user_biblioteca')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('livro_id', livro.id)
+        .maybeSingle();
+
+      if (error) throw error;
+      
+      if (data) {
+        setUserLivroInfo({
+          favorito: data.favorito || false,
+          lido: data.lido || false,
+          progresso_leitura: data.progresso_leitura || 0,
+          anotacoes: data.anotacoes
+        });
+      } else {
+        setUserLivroInfo({
+          favorito: false,
+          lido: false,
+          progresso_leitura: 0,
+          anotacoes: null
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching user book info:', error);
+    }
+  }
+
+  async function toggleFavorite() {
+    if (!userId) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para favoritar livros.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const newFavoriteState = !(userLivroInfo?.favorito || false);
+      
+      const { data, error } = await supabase
+        .from('user_biblioteca')
+        .upsert({
+          user_id: userId,
+          livro_id: livro.id,
+          favorito: newFavoriteState,
+          lido: userLivroInfo?.lido || false,
+          progresso_leitura: userLivroInfo?.progresso_leitura || 0,
+          anotacoes: userLivroInfo?.anotacoes || null
+        })
+        .select();
+
+      if (error) throw error;
+      
+      setUserLivroInfo({
+        ...userLivroInfo || {
+          lido: false,
+          progresso_leitura: 0,
+          anotacoes: null
+        },
+        favorito: newFavoriteState
+      });
+
+      toast({
+        title: newFavoriteState ? "Livro favoritado" : "Livro removido dos favoritos",
+        description: livro.titulo,
+      });
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast({
+        title: "Erro ao favoritar",
+        description: "Tente novamente mais tarde",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleNarra() {
     setTtsLoading(true);
@@ -57,6 +160,59 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
     }
   }
 
+  async function handleMarkAsRead() {
+    if (!userId) {
+      toast({
+        title: "Login necessário",
+        description: "Faça login para marcar livros como lidos.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const newReadState = !(userLivroInfo?.lido || false);
+      
+      const { data, error } = await supabase
+        .from('user_biblioteca')
+        .upsert({
+          user_id: userId,
+          livro_id: livro.id,
+          favorito: userLivroInfo?.favorito || false,
+          lido: newReadState,
+          progresso_leitura: newReadState ? 100 : userLivroInfo?.progresso_leitura || 0,
+          anotacoes: userLivroInfo?.anotacoes || null
+        })
+        .select();
+
+      if (error) throw error;
+      
+      setUserLivroInfo({
+        ...userLivroInfo || {
+          favorito: false,
+          progresso_leitura: newReadState ? 100 : 0,
+          anotacoes: null
+        },
+        lido: newReadState
+      });
+
+      toast({
+        title: newReadState ? "Livro marcado como lido" : "Livro marcado como não lido",
+        description: livro.titulo,
+      });
+    } catch (error) {
+      console.error('Error marking as read:', error);
+      toast({
+        title: "Erro ao atualizar",
+        description: "Tente novamente mais tarde",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   return (
     <Card className="w-full">
       <CardContent className="flex gap-6 p-6">
@@ -79,6 +235,35 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
               <div className="p-3 w-full">
                 <h3 className="font-semibold text-sm text-white">{livro.titulo}</h3>
               </div>
+            </div>
+          )}
+
+          {userId && (
+            <div className="mt-4 flex flex-col gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={toggleFavorite}
+                disabled={isLoading}
+              >
+                <Bookmark 
+                  size={16} 
+                  className={`mr-2 ${userLivroInfo?.favorito ? "fill-yellow-400 text-yellow-400" : ""}`} 
+                />
+                {userLivroInfo?.favorito ? "Remover favorito" : "Favoritar"}
+              </Button>
+              
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={handleMarkAsRead}
+                disabled={isLoading}
+              >
+                <BookOpen size={16} className="mr-2" />
+                {userLivroInfo?.lido ? "Marcar como não lido" : "Marcar como lido"}
+              </Button>
             </div>
           )}
         </div>
