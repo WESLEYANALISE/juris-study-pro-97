@@ -60,15 +60,22 @@ export function ProfileSwitcher({
   onProfileChange 
 }: ProfileSwitcherProps) {
   const [open, setOpen] = useState(false);
-  const [selectedProfile, setSelectedProfile] = useState(
-    profiles.find(p => p.value === currentProfile) || profiles[4]
-  );
+  
+  // Corrigido: Certifique-se de que sempre temos um perfil válido
+  const [selectedProfile, setSelectedProfile] = useState(() => {
+    const foundProfile = profiles.find(p => p.value === currentProfile);
+    return foundProfile || profiles[4]; // Use o perfil "tudo" como fallback
+  });
 
   const handleProfileSelect = (profile: typeof profiles[0]) => {
-    setSelectedProfile(profile);
-    setOpen(false);
-    if (onProfileChange) {
-      onProfileChange(profile.value as ProfileType);
+    try {
+      setSelectedProfile(profile);
+      setOpen(false);
+      if (onProfileChange) {
+        onProfileChange(profile.value as ProfileType);
+      }
+    } catch (error) {
+      console.error("Erro ao selecionar perfil:", error);
     }
   };
 
