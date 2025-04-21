@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { z } from "zod";
 import { ExternalLink, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { toast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const LOGO_URL = "/placeholder.svg";
 const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
@@ -27,6 +28,19 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const navigate = useNavigate();
+
+  // Verifica sessão existente e redireciona se já estiver logado
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate("/", { replace: true });
+      }
+    };
+    
+    checkSession();
+  }, [navigate]);
 
   // React Hook Form com validação Zod
   const form = useForm<AuthFormValues>({
@@ -94,7 +108,7 @@ const Auth = () => {
     try {
       if (activeTab === "login") {
         // Login com email/senha
-        const { error } = await supabase.auth.signInWithPassword({
+        const { error, data } = await supabase.auth.signInWithPassword({
           email: values.email,
           password: values.password
         });
@@ -105,6 +119,9 @@ const Auth = () => {
           title: "Login realizado com sucesso",
           description: "Bem-vindo de volta!"
         });
+        
+        // Força redirecionamento para página inicial após login bem-sucedido
+        navigate("/", { replace: true });
       } else {
         // Cadastro com email/senha
         const { error } = await supabase.auth.signUp({

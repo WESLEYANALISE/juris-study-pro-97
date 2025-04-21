@@ -17,6 +17,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Configure o listener de auth ANTES de buscar sessão atual.
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log("Auth state changed:", _event, session?.user?.email);
       setSession(session);
       setChecked(true);
 
@@ -32,6 +33,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
     // Checa sessão existente ao carregar
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Current session:", session?.user?.email);
       setSession(session);
       setChecked(true);
 
@@ -47,8 +49,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     return () => {
       authListener.subscription.unsubscribe();
     };
-    // eslint-disable-next-line
-  }, []);
+  }, [navigate, location.pathname]);
 
   // Evita flicker: só renderiza filhos depois que o estado for checado
   if (!checked) return null;

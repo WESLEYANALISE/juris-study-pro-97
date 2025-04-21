@@ -1,4 +1,3 @@
-
 import { Bell, GraduationCap, Scale, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,12 +11,38 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabaseClient";
+import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 interface HeaderProps {
   userProfile: ProfileType;
 }
 
 export function Header({ userProfile }: HeaderProps) {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  
+  useEffect(() => {
+    // Verificar status de autenticação ao montar o componente
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsLoggedIn(!!data.session);
+    };
+    
+    checkAuth();
+    
+    // Escutar mudanças de autenticação
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setIsLoggedIn(!!session);
+      }
+    );
+    
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
   const profileIcons = {
     concurseiro: <GraduationCap className="h-4 w-4 mr-2" />,
     universitario: <User className="h-4 w-4 mr-2" />,
@@ -39,8 +64,12 @@ export function Header({ userProfile }: HeaderProps) {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // After logout, reload or redirect to login page
-    window.location.href = "/auth";
+    // After logout, redirect to login page
+    navigate("/auth", { replace: true });
+  };
+  
+  const handleLogin = () => {
+    navigate("/auth");
   };
 
   return (
@@ -106,17 +135,20 @@ export function Header({ userProfile }: HeaderProps) {
                 <span>Acesso Completo</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
-                Fazer Login
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleLogout}
-                className="text-destructive"
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                <span>Sair</span>
-              </DropdownMenuItem>
+              {!isLoggedIn ? (
+                <DropdownMenuItem onClick={handleLogin}>
+                  <User className="h-4 w-4 mr-2" />
+                  <span>Fazer Login</span>
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
