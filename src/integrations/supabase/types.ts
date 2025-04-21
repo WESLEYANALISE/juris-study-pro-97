@@ -78,6 +78,87 @@ export type Database = {
         }
         Relationships: []
       }
+      biblioteca_juridica_improved: {
+        Row: {
+          ano_publicacao: number | null
+          area: string
+          autor: string | null
+          capa_url: string | null
+          categoria: string | null
+          created_at: string | null
+          edicao: string | null
+          editora: string | null
+          id: string
+          link_download: string | null
+          link_leitura: string | null
+          popularidade: number | null
+          sinopse: string | null
+          tags: string[] | null
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          ano_publicacao?: number | null
+          area: string
+          autor?: string | null
+          capa_url?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          edicao?: string | null
+          editora?: string | null
+          id?: string
+          link_download?: string | null
+          link_leitura?: string | null
+          popularidade?: number | null
+          sinopse?: string | null
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          ano_publicacao?: number | null
+          area?: string
+          autor?: string | null
+          capa_url?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          edicao?: string | null
+          editora?: string | null
+          id?: string
+          link_download?: string | null
+          link_leitura?: string | null
+          popularidade?: number | null
+          sinopse?: string | null
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      categorias: {
+        Row: {
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: string
+        }
+        Insert: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo: string
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+        }
+        Relationships: []
+      }
       cronograma: {
         Row: {
           concluido: boolean | null
@@ -206,6 +287,51 @@ export type Database = {
           pergunta?: string | null
           resposta?: string | null
           tema?: string | null
+        }
+        Relationships: []
+      }
+      flash_cards_improved: {
+        Row: {
+          area: string
+          created_at: string | null
+          dificuldade: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          pergunta: string
+          resposta: string
+          status: string | null
+          tags: string[] | null
+          tema: string
+          updated_at: string | null
+        }
+        Insert: {
+          area: string
+          created_at?: string | null
+          dificuldade?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          pergunta: string
+          resposta: string
+          status?: string | null
+          tags?: string[] | null
+          tema: string
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string
+          created_at?: string | null
+          dificuldade?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          pergunta?: string
+          resposta?: string
+          status?: string | null
+          tags?: string[] | null
+          tema?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -404,6 +530,94 @@ export type Database = {
         }
         Relationships: []
       }
+      user_biblioteca: {
+        Row: {
+          anotacoes: string | null
+          created_at: string | null
+          favorito: boolean | null
+          id: string
+          lido: boolean | null
+          livro_id: string | null
+          progresso_leitura: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          anotacoes?: string | null
+          created_at?: string | null
+          favorito?: boolean | null
+          id?: string
+          lido?: boolean | null
+          livro_id?: string | null
+          progresso_leitura?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          anotacoes?: string | null
+          created_at?: string | null
+          favorito?: boolean | null
+          id?: string
+          lido?: boolean | null
+          livro_id?: string | null
+          progresso_leitura?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_biblioteca_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_juridica_improved"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_flashcards: {
+        Row: {
+          conhecimento: number | null
+          created_at: string | null
+          flashcard_id: string | null
+          id: string
+          proxima_revisao: string | null
+          revisoes: number | null
+          ultima_revisao: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          conhecimento?: number | null
+          created_at?: string | null
+          flashcard_id?: string | null
+          id?: string
+          proxima_revisao?: string | null
+          revisoes?: number | null
+          ultima_revisao?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          conhecimento?: number | null
+          created_at?: string | null
+          flashcard_id?: string | null
+          id?: string
+          proxima_revisao?: string | null
+          revisoes?: number | null
+          ultima_revisao?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_flashcards_flashcard_id_fkey"
+            columns: ["flashcard_id"]
+            isOneToOne: false
+            referencedRelation: "flash_cards_improved"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_aulas: {
         Row: {
           area: string
@@ -448,7 +662,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      migrate_biblioteca_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      migrate_flashcards_data: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
