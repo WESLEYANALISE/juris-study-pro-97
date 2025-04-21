@@ -14,7 +14,6 @@ import NotFound from "./pages/NotFound";
 import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
-import Auth from "./pages/Auth"; // Import the Auth page
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -49,7 +48,6 @@ const App = () => {
               <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
               <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
               <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
-              <Route path="/auth" element={<Auth />} /> {/* Added Auth route */}
               {/* Redirect routes */}
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
