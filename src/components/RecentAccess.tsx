@@ -4,6 +4,7 @@ import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Carousel,
   CarouselContent,
@@ -41,6 +42,7 @@ const getRandomTranscript = (type: string, title: string) => {
 
 const RecentAccess = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [recentItems, setRecentItems] = useState<RecentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [transcripts, setTranscripts] = useState<{[key: string]: string}>({});
@@ -48,16 +50,21 @@ const RecentAccess = () => {
   useEffect(() => {
     const fetchRecentAccess = async () => {
       try {
-        // Fetch recent access from Supabase
-        const { data, error } = await supabase
-          .from('recent_access')
-          .select('*')
-          .order('accessed_at', { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-
-        // TODO: Convert Supabase data to RecentItem format
+        // Since there's no recent_access table yet, we'll use static sample data
+        // This avoids the error with attempting to query a non-existent table
+        
+        // In the future, you might want to create a recent_access table with:
+        // CREATE TABLE public.recent_access (
+        //   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        //   user_id uuid REFERENCES auth.users NOT NULL,
+        //   content_id text NOT NULL,
+        //   content_type text NOT NULL,
+        //   content_title text NOT NULL,
+        //   content_path text NOT NULL,
+        //   accessed_at timestamp with time zone DEFAULT now()
+        // );
+        
+        // Mock data for now
         const items = [
           {
             id: "1",

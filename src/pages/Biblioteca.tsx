@@ -184,25 +184,25 @@ const Biblioteca = () => {
   };
 
   const askAiForRecommendation = async (query: string) => {
-    if (!query.trim()) return {
+    if (!query.trim()) return Promise.resolve({
       result: "",
       books: [] as Book[]
-    };
+    });
     try {
       const prompt = `Estou procurando livros para estudar sobre: ${query}. Por favor, sugira até 3 livros que podem me ajudar, considerando que estou na área jurídica.`;
       const response = await askGemini(prompt);
       if (response.error) throw new Error(response.error);
       const keywords = query.toLowerCase().split(' ');
       const recommendedBooks = books.filter(book => keywords.some(keyword => book.livro?.toLowerCase().includes(keyword) || book.area?.toLowerCase().includes(keyword) || book.sobre?.toLowerCase().includes(keyword))).slice(0, 5);
-      return {
+      return Promise.resolve({
         result: response.text,
         books: recommendedBooks
-      };
+      });
     } catch (error) {
-      return {
+      return Promise.resolve({
         result: "Desculpe, não foi possível obter recomendações. Por favor, tente novamente.",
         books: []
-      };
+      });
     }
   };
 
