@@ -1,5 +1,4 @@
 
-import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ProfileSwitcher } from "@/components/ProfileSwitcher";
@@ -11,9 +10,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 interface HeaderProps {
   userProfile: ProfileType;
+  pageTitle?: string | null;
 }
 
-export function Header({ userProfile }: HeaderProps) {
+export function Header({ userProfile, pageTitle }: HeaderProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   
@@ -23,10 +23,16 @@ export function Header({ userProfile }: HeaderProps) {
         <SidebarTrigger />
       </div>
       
-      <div className="flex items-center mr-2 cursor-pointer" onClick={() => navigate("/")}>
-        <Scale className="h-6 w-6 text-primary mr-2" />
-        <span className="font-bold text-lg hidden sm:inline">JurisStudy Pro</span>
-      </div>
+      {pageTitle ? (
+        <div className="flex items-center">
+          <h1 className="font-bold text-lg">{pageTitle}</h1>
+        </div>
+      ) : (
+        <div className="flex items-center mr-2 cursor-pointer" onClick={() => navigate("/")}>
+          <Scale className="h-6 w-6 text-primary mr-2" />
+          <span className="font-bold text-lg hidden sm:inline">JurisStudy Pro</span>
+        </div>
+      )}
       
       {!isMobile && (
         <div className="flex-1 px-2">
@@ -35,7 +41,6 @@ export function Header({ userProfile }: HeaderProps) {
       )}
       
       <div className="ml-auto flex items-center gap-2">
-        <ThemeToggle />
         <div className="w-40">
           <ProfileSwitcher currentProfile={userProfile} />
         </div>
