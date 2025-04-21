@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale, Video, BookOpen, Brain, GraduationCap, FilePlus, MessageSquare, LibrarySquare, Gavel, Newspaper, FileText, PenTool, Monitor, MonitorCheck, Calendar, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 const Index = () => {
   const navigate = useNavigate();
   const categories = [{
@@ -86,7 +87,9 @@ const Index = () => {
       color: "text-orange-500"
     }]
   }];
-  return <div className="container mx-auto">
+
+  return (
+    <div className="container mx-auto">
       <div className="flex flex-col items-center text-center mb-8">
         <div className="mb-4">
           <Scale className="h-12 w-12 text-primary mx-auto mb-2" />
@@ -156,7 +159,18 @@ const Index = () => {
             </CardContent>
           </Card>
         </div>
+        <div className="flex justify-center mt-6">
+          <Button
+            variant="default"
+            className="rounded-lg px-6 py-2 text-base font-semibold shadow hover-scale"
+            onClick={() => navigate("/auth")}
+          >
+            Entrar ou cadastrar-se
+          </Button>
+        </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;
