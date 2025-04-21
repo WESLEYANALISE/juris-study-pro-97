@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -31,6 +30,7 @@ import Vademecum from "./pages/ferramentas/Vademecum";
 import Dicionario from "./pages/ferramentas/Dicionario";
 import Modelos from "./pages/ferramentas/Modelos";
 import Cronograma from "./pages/ferramentas/Cronograma";
+import Auth from "./pages/Auth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -78,6 +78,8 @@ const App = () => {
               <Route path="/perfil" element={<Layout userProfile={userProfile}><Perfil /></Layout>} />
               <Route path="/search" element={<Layout userProfile={userProfile}><Search /></Layout>} />
               <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><RemoteDesktop /></Layout>} />
+              
+              <Route path="/auth" element={<Auth />} />
               
               {/* Ferramentas Jurídicas sub-routes */}
               <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Vademecum /></Layout>} />
