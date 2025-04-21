@@ -231,27 +231,17 @@ export default function Biblioteca() {
         </div>
       ) : null}
 
-      <AnimatePresence>
-        {state.mode === "modal" && (
-          <Dialog open onOpenChange={() => setState({ mode: "carousel" })}>
-            <DialogContent className="max-w-3xl p-0 overflow-hidden animate-fade-in" asChild>
-              <motion.div
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: 50, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="rounded-lg bg-card"
-              >
-                <BookModal
-                  livro={state.livro}
-                  onClose={() => setState({ mode: "carousel" })}
-                  onRead={() => setState({ mode: "reading", livro: state.livro })}
-                />
-              </motion.div>
-            </DialogContent>
-          </Dialog>
-        )}
-      </AnimatePresence>
+      {state.mode === "modal" && (
+        <Dialog open onOpenChange={() => setState({ mode: "carousel" })}>
+          <DialogContent className="max-w-3xl p-0 overflow-hidden">
+            <BookModal
+              livro={state.livro}
+              onClose={() => setState({ mode: "carousel" })}
+              onRead={() => setState({ mode: "reading", livro: state.livro })}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       <Dialog open={aiDialog} onOpenChange={setAiDialog}>
         <DialogContent className="max-w-md">
