@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -14,7 +13,8 @@ import NotFound from "./pages/NotFound";
 import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
 import Bloger from "./pages/Bloger";
 import Anotacoes from "./pages/Anotacoes";
-import Auth from "./pages/Auth"; // Import the Auth page
+import Auth from "./pages/Auth";
+import { RequireAuth } from "@/components/RequireAuth";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,7 +27,6 @@ const queryClient = new QueryClient({
 
 const App = () => {
   const [userProfile, setUserProfile] = useState<ProfileType>(() => {
-    // Recuperar o perfil do localStorage, ou usar 'tudo' como padrão
     return (localStorage.getItem("juris-study-profile") as ProfileType) || "tudo";
   });
 
@@ -45,15 +44,48 @@ const App = () => {
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
-              <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
-              <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
-              <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
-              <Route path="/auth" element={<Auth />} /> {/* Added Auth route */}
-              {/* Redirect routes */}
+              <Route path="/auth" element={<Auth />} />
+              <Route
+                path="/"
+                element={
+                  <RequireAuth>
+                    <Layout userProfile={userProfile}><Index /></Layout>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/videoaulas"
+                element={
+                  <RequireAuth>
+                    <Layout userProfile={userProfile}><VideoAulas /></Layout>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/bloger"
+                element={
+                  <RequireAuth>
+                    <Layout userProfile={userProfile}><Bloger /></Layout>
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/anotacoes"
+                element={
+                  <RequireAuth>
+                    <Layout userProfile={userProfile}><Anotacoes /></Layout>
+                  </RequireAuth>
+                }
+              />
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
+              <Route
+                path="*"
+                element={
+                  <RequireAuth>
+                    <NotFound />
+                  </RequireAuth>
+                }
+              />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
