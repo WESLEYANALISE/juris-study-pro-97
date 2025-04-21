@@ -141,6 +141,44 @@ export type Database = {
         }
         Relationships: []
       }
+      estatisticas: {
+        Row: {
+          artigos_lidos: number | null
+          aulas_assistidas: number | null
+          created_at: string | null
+          flashcards_feitos: number | null
+          id: string
+          resumos_criados: number | null
+          user_id: string
+        }
+        Insert: {
+          artigos_lidos?: number | null
+          aulas_assistidas?: number | null
+          created_at?: string | null
+          flashcards_feitos?: number | null
+          id?: string
+          resumos_criados?: number | null
+          user_id: string
+        }
+        Update: {
+          artigos_lidos?: number | null
+          aulas_assistidas?: number | null
+          created_at?: string | null
+          flashcards_feitos?: number | null
+          id?: string
+          resumos_criados?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "estatisticas_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       flash_cards: {
         Row: {
           area: string | null
@@ -314,52 +352,22 @@ export type Database = {
           avatar_url: string | null
           created_at: string | null
           display_name: string | null
-          email: string | null
+          email: string
           id: string
-          updated_at: string | null
-          user_type: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
+          email: string
           id: string
-          updated_at?: string | null
-          user_type?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
           display_name?: string | null
-          email?: string | null
+          email?: string
           id?: string
-          updated_at?: string | null
-          user_type?: string | null
-        }
-        Relationships: []
-      }
-      recent_access: {
-        Row: {
-          accessed_at: string | null
-          id: string
-          item_id: string
-          item_type: string
-          user_id: string
-        }
-        Insert: {
-          accessed_at?: string | null
-          id?: string
-          item_id: string
-          item_type: string
-          user_id: string
-        }
-        Update: {
-          accessed_at?: string | null
-          id?: string
-          item_id?: string
-          item_type?: string
-          user_id?: string
         }
         Relationships: []
       }

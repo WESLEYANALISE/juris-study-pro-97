@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Scale, Video, BookOpen, Brain, GraduationCap, FilePlus, MessageSquare, 
@@ -14,8 +13,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 
-// Random audio transcript generator
 const getRandomTranscript = (category: string, title: string) => {
   const transcripts = [
     `Este módulo de ${title} traz conteúdo essencial para sua preparação.`,
@@ -34,6 +33,7 @@ const getRandomTranscript = (category: string, title: string) => {
 };
 
 const Index = () => {
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const [transcripts, setTranscripts] = useState<{[key: string]: string}>({});
   
@@ -149,7 +149,6 @@ const Index = () => {
     }
   ];
 
-  // Generate random transcripts on load and every 10 seconds
   useEffect(() => {
     const generateAllTranscripts = () => {
       const newTranscripts: {[key: string]: string} = {};
@@ -180,6 +179,15 @@ const Index = () => {
             Plataforma completa para estudos jurídicos
           </p>
           <div className="w-full max-w-lg mx-auto mb-6">
+            {user ? (
+              <Button size="sm" variant="outline" onClick={signOut} className="mb-2 float-end">
+                Sair
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => navigate("/auth")} className="mb-2 float-end">
+                Entrar
+              </Button>
+            )}
             <SearchBar />
           </div>
         </div>
