@@ -6,7 +6,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
-import { Google } from "lucide-react";
+// Fix the Google icon import
+import { LucideProps } from "lucide-react";
+
+// Create Google icon component since it's not exported directly from lucide-react
+const Google = (props: LucideProps) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    width="24"
+    height="24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M17.13 15.21c-.73.47-1.58.79-2.57.94C13.43 16.39 12.56 16.5 12 16.5c-2.36 0-4.56-.89-6.06-2.39C4.44 12.61 3.5 10.41 3.5 8c0-2.36.89-4.56 2.44-6.06C7.44 0.44 9.64 0.5 12 0.5s4.56.89 6.06 2.44C19.56 4.44 20.5 6.64 20.5 9v1.5H8.5" />
+    <path d="M12 8.5v8" />
+    <path d="M8.5 12h7" />
+  </svg>
+);
 
 const APP_LOGO_URL = "/placeholder.svg";
 
