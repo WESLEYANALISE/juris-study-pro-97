@@ -176,9 +176,7 @@ const VideoAulas = () => {
                 {LEGAL_AREAS.map(area => <motion.div key={area} whileTap={{
                 scale: 0.97
               }}>
-                    <Button id={`area-${area}`} variant={selectedArea === area ? "default" : "ghost"} className={`w-full justify-start ${selectedArea === area ? 'shadow-[0_0_10px_rgba(155,135,245,0.5)]' : ''}`} onClick={() => handleAreaChange(area)}>
-                      {area}
-                    </Button>
+                    
                   </motion.div>)}
               </div>
             </CardContent>
