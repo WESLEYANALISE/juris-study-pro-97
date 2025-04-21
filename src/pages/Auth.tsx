@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
-import { Loader2, Mail, google as Google } from "lucide-react";
+import { Loader2, Mail, Google } from "lucide-react";
 
 const LOGO_URL = "https://lovable.dev/opengraph-image-p98pqg.png"; // Você pode trocar para seu logo local depois!
 
@@ -135,3 +136,4 @@ export default function Auth() {
     </div>
   );
 }
+
