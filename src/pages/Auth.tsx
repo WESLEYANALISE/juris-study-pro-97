@@ -33,7 +33,7 @@ const AuthPage = () => {
 
     try {
       if (formType === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {
             data: { nome },
