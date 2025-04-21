@@ -15,14 +15,13 @@ import { BookCard } from "@/components/biblioteca/BookCard";
 import { BookModal } from "@/components/biblioteca/BookModal";
 
 type Livro = {
-  id: number;  // Changed from string to number to match the database
-  livro: string | null;
-  area: string | null;
+  id: string;
+  livro: string;
+  area: string;
   link: string | null;
   download: string | null;
   imagem: string | null;
   sobre: string | null;
-  created_at: string;
 };
 
 type State =

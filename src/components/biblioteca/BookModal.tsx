@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,9 +9,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 
 type Livro = {
-  id: number;
-  livro: string | null;
-  area: string | null;
+  id: string;
+  livro: string;
+  area: string;
   link: string | null;
   download: string | null;
   imagem: string | null;
@@ -107,6 +108,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   };
 
   const handleSaveAnotacoes = () => {
+    // Esta funcionalidade exigiria autenticação, por isso apenas simulamos
     toast({
       title: "Anotação salva",
       description: "Sua anotação foi salva com sucesso.",
@@ -128,7 +130,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           {livro.imagem ? (
             <img 
               src={livro.imagem} 
-              alt={livro.livro || ''}
+              alt={livro.livro} 
               className="absolute inset-0 w-full h-full object-cover opacity-20" 
             />
           ) : null}
