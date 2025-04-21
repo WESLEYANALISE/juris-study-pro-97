@@ -45,6 +45,39 @@ export type Database = {
         }
         Relationships: []
       }
+      biblioteca_juridica: {
+        Row: {
+          area: string | null
+          created_at: string
+          download: string | null
+          id: number
+          imagem: string | null
+          link: string | null
+          livro: string | null
+          sobre: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          download?: string | null
+          id?: number
+          imagem?: string | null
+          link?: string | null
+          livro?: string | null
+          sobre?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          download?: string | null
+          id?: number
+          imagem?: string | null
+          link?: string | null
+          livro?: string | null
+          sobre?: string | null
+        }
+        Relationships: []
+      }
       cronograma: {
         Row: {
           concluido: boolean | null
