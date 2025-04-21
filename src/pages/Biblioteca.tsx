@@ -14,6 +14,7 @@ import BookList from "@/components/biblioteca/BookList";
 import AnnotationsDialog from "@/components/biblioteca/AnnotationsDialog";
 import AIRecommendations from "@/components/biblioteca/AIRecommendations";
 import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
+
 interface Book {
   id: number;
   livro: string | null;
@@ -23,20 +24,24 @@ interface Book {
   download: string | null;
   link: string | null;
 }
+
 interface ReadBook {
   id: number;
   isRead: boolean;
 }
+
 interface FavoriteBook {
   id: number;
   isFavorite: boolean;
 }
+
 interface Annotation {
   id: string;
   bookId: number;
   text: string;
   createdAt: string;
 }
+
 const Biblioteca = () => {
   const [books, setBooks] = useState<Book[]>([]);
   const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
@@ -60,6 +65,7 @@ const Biblioteca = () => {
   const {
     toast
   } = useToast();
+
   useEffect(() => {
     const fetchBooks = async () => {
       try {
@@ -127,6 +133,7 @@ const Biblioteca = () => {
     };
     fetchBooks();
   }, []);
+
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredBooks(books);
@@ -135,6 +142,7 @@ const Biblioteca = () => {
       setFilteredBooks(filtered);
     }
   }, [searchQuery, books]);
+
   const toggleReadStatus = (bookId: number) => {
     const updatedReadBooks = readBooks.some(item => item.id === bookId) ? readBooks.filter(item => item.id !== bookId) : [...readBooks, {
       id: bookId,
@@ -148,6 +156,7 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
+
   const toggleFavoriteStatus = (bookId: number) => {
     const updatedFavoriteBooks = favoriteBooks.some(item => item.id === bookId) ? favoriteBooks.filter(item => item.id !== bookId) : [...favoriteBooks, {
       id: bookId,
@@ -161,6 +170,7 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
+
   const addToRecentBooks = (book: Book) => {
     const existingRecentBooks = localStorage.getItem('recentBooks');
     let recentIds: number[] = existingRecentBooks ? JSON.parse(existingRecentBooks) : [];
@@ -171,12 +181,14 @@ const Biblioteca = () => {
     const updatedRecentBooks = recentIds.map(id => books.find(book => book.id === id)).filter(Boolean) as Book[];
     setRecentBooks(updatedRecentBooks);
   };
+
   const openBookDialog = (book: Book, readingNow = false) => {
     setSelectedBook(book);
     setIsBookDialogOpen(true);
     setReadingMode(!!readingNow);
     addToRecentBooks(book);
   };
+
   const handleNarration = (text: string) => {
     if (!text) return;
     if (isNarrating) {
@@ -191,6 +203,7 @@ const Biblioteca = () => {
     setIsNarrating(true);
     window.speechSynthesis.speak(utterance);
   };
+
   const askAiForRecommendation = async (query: string) => {
     if (!query.trim()) return {
       result: "",
@@ -213,12 +226,14 @@ const Biblioteca = () => {
       };
     }
   };
+
   const toggleViewMode = (area: string) => {
     setViewMode(prev => ({
       ...prev,
       [area]: prev[area] === "grid" ? "list" : "grid"
     }));
   };
+
   const saveAnnotation = (bookId: number) => {
     if (!currentAnnotation.trim()) return;
     const newAnnotation: Annotation = {
@@ -237,6 +252,7 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
+
   const updateAnnotation = (id: string, newText: string) => {
     const updatedAnnotations = annotations.map(anno => anno.id === id ? {
       ...anno,
@@ -251,6 +267,7 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
+
   const deleteAnnotation = (id: string) => {
     const updatedAnnotations = annotations.filter(anno => anno.id !== id);
     setAnnotations(updatedAnnotations);
@@ -261,12 +278,15 @@ const Biblioteca = () => {
       duration: 2000
     });
   };
+
   const openAnnotationsDialog = () => setIsAnnotationsDialogOpen(true);
+
   const booksByArea = areas.reduce((acc, area) => {
     if (!area) return acc;
     acc[area] = filteredBooks.filter(book => book.area === area);
     return acc;
   }, {} as Record<string, Book[]>);
+
   const favoriteBooksData = books.filter(book => favoriteBooks.some(fav => fav.id === book.id));
   const readBooksData = books.filter(book => readBooks.some(rb => rb.id === book.id));
   const totalBooks = books.length;
@@ -275,7 +295,9 @@ const Biblioteca = () => {
     acc[area] = books.filter(book => book.area === area).length;
     return acc;
   }, {} as Record<string, number>);
-  return <div className="container py-4 mx-[18px] px-0">
+
+  return (
+    <div className="container py-4 mx-[18px] px-0">
       <div className="flex items-center justify-between mb-6">
         
         <div className="flex items-center space-x-3 px-0 mx-0">
@@ -370,6 +392,8 @@ const Biblioteca = () => {
       </Dialog>
 
       <AnnotationsDialog open={isAnnotationsDialogOpen} onOpenChange={setIsAnnotationsDialogOpen} annotations={annotations} books={books} editingAnnotation={editingAnnotation} currentAnnotation={currentAnnotation} setEditingAnnotation={setEditingAnnotation} setCurrentAnnotation={setCurrentAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} />
-    </div>;
+    </div>
+  );
 };
+
 export default Biblioteca;

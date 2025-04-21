@@ -1,9 +1,9 @@
-
 import { DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Download, Volume2, Heart, BookOpenCheck, PencilLine, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import FullScreenReader from "./FullScreenReader";
 
 interface Book {
   id: number;
@@ -46,60 +46,40 @@ interface BookDetailsDialogProps {
   openAnnotationsDialog: () => void;
 }
 
-const BookDetailsDialog: React.FC<BookDetailsDialogProps> = ({
-  selectedBook,
-  readingMode,
-  isNarrating,
-  narrationVolume,
-  setReadingMode,
-  onClose,
-  onFavorite,
-  onRead,
-  isFavorite,
-  isRead,
-  onNarrate,
-  setNarrationVolume,
-  annotations,
-  currentAnnotation,
-  setCurrentAnnotation,
-  saveAnnotation,
-  editingAnnotation,
-  setEditingAnnotation,
-  updateAnnotation,
-  deleteAnnotation,
-  openAnnotationsDialog,
-}) => {
+const BookDetailsDialog: React.FC<BookDetailsDialogProps> = (props) => {
+  const {
+    selectedBook,
+    readingMode,
+    setReadingMode,
+    isNarrating,
+    narrationVolume,
+    onClose,
+    onFavorite,
+    onRead,
+    isFavorite,
+    isRead,
+    onNarrate,
+    setNarrationVolume,
+    annotations,
+    currentAnnotation,
+    setCurrentAnnotation,
+    saveAnnotation,
+    editingAnnotation,
+    setEditingAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
+    openAnnotationsDialog,
+  } = props;
+
   if (!selectedBook) return null;
 
-  if (readingMode) {
+  if (selectedBook && readingMode) {
     return (
-      <DialogContent className="max-w-4xl h-[80vh]">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-lg font-semibold">{selectedBook.livro}</h2>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={() => setReadingMode(false)}>
-              Voltar aos detalhes
-            </Button>
-            <DialogClose className="rounded-full h-8 w-8 flex items-center justify-center border">
-              <X className="h-4 w-4" />
-            </DialogClose>
-          </div>
-        </div>
-        <div className="flex-1 w-full h-full min-h-[60vh]">
-          {selectedBook.link ? (
-            <iframe
-              src={selectedBook.link}
-              className="w-full h-full rounded-md border"
-              title={selectedBook.livro || "Leitura"}
-              sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <p>Link de leitura não disponível para este livro.</p>
-            </div>
-          )}
-        </div>
-      </DialogContent>
+      <FullScreenReader
+        bookTitle={selectedBook.livro}
+        link={selectedBook.link}
+        onExit={() => setReadingMode(false)}
+      />
     );
   }
 
