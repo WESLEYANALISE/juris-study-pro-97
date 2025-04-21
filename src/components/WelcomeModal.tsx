@@ -113,7 +113,7 @@ export function WelcomeModal({ onProfileSelect }: WelcomeModalProps) {
         </DialogHeader>
         <div className="py-4">
           <RadioGroup
-            value={selectedProfile || ""}
+            value={selectedProfile || undefined}
             onValueChange={(value) => setSelectedProfile(value as ProfileType)}
             className="space-y-3"
           >

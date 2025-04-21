@@ -57,8 +57,8 @@ const RecentAccess = () => {
 
         if (error) throw error;
 
-        // TODO: Convert Supabase data to RecentItem format
-        const items = [
+        // Fallback data if no data from Supabase
+        const items = data && data.length > 0 ? data : [
           {
             id: "1",
             title: "Direito Constitucional - Aula 3",
@@ -113,6 +113,8 @@ const RecentAccess = () => {
         setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
+        // Set default items on error
+        setRecentItems([]);
       } finally {
         setLoading(false);
       }
@@ -122,11 +124,13 @@ const RecentAccess = () => {
     
     // Refresh transcripts every 10 seconds
     const interval = setInterval(() => {
-      const newTranscripts: {[key: string]: string} = {};
-      recentItems.forEach(item => {
-        newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
-      });
-      setTranscripts(newTranscripts);
+      if (recentItems && recentItems.length > 0) {
+        const newTranscripts: {[key: string]: string} = {};
+        recentItems.forEach(item => {
+          newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
+        });
+        setTranscripts(newTranscripts);
+      }
     }, 10000);
     
     return () => clearInterval(interval);
@@ -141,14 +145,7 @@ const RecentAccess = () => {
       default: return <FileText className="h-4 w-4 text-gray-500" />;
     }
   };
-
-  // Ensure recentItems is an array before using array methods
-  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
   
-  if (itemsArray.length === 0 && !loading) {
-    return null;
-  }
-
   if (loading) {
     return (
       <div className="w-full mb-4 animate-pulse">
@@ -160,6 +157,11 @@ const RecentAccess = () => {
         </div>
       </div>
     );
+  }
+
+  // If there are no items, don't render anything
+  if (!recentItems || recentItems.length === 0) {
+    return null;
   }
 
   return (
@@ -176,7 +178,7 @@ const RecentAccess = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {itemsArray.map((item) => (
+          {recentItems.map((item) => (
             <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"
