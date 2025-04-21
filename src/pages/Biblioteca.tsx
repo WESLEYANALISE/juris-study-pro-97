@@ -1,23 +1,13 @@
+
 import React, { useState, useEffect } from "react";
-import { BookOpen, Search, ListFilter } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { AnimatedTabs, AnimatedTabsList, AnimatedTabsTrigger, AnimatedTabsContent } from "@/components/ui/animated-tabs";
-import { Dialog } from "@/components/ui/dialog";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { askGemini } from "@/services/ai-assistant";
-import BookCard from "@/components/biblioteca/BookCard";
-import BookList from "@/components/biblioteca/BookList";
-import AnnotationsDialog from "@/components/biblioteca/AnnotationsDialog";
-import AIRecommendations from "@/components/biblioteca/AIRecommendations";
-import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
+import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
-import BooksByAreaSection from "@/components/biblioteca/BooksByAreaSection";
-import RecentBooksGrid from "@/components/biblioteca/RecentBooksGrid";
-import ReadBooksGrid from "@/components/biblioteca/ReadBooksGrid";
-import FavoriteBooksGrid from "@/components/biblioteca/FavoriteBooksGrid";
+import BookDetailsDialog from "@/components/biblioteca/BookDetailsDialog";
+import AnnotationsDialog from "@/components/biblioteca/AnnotationsDialog";
+import BibliotecaHeader from "@/components/biblioteca/BibliotecaHeader";
+import BibliotecaSearchBar from "@/components/biblioteca/BibliotecaSearchBar";
+import BibliotecaTabs from "@/components/biblioteca/BibliotecaTabs";
 
 interface Book { id: number; livro: string | null; area: string | null; sobre: string | null; imagem: string | null; download: string | null; link: string | null; }
 interface ReadBook { id: number; isRead: boolean; }
@@ -35,7 +25,6 @@ const Biblioteca = () => {
   const [readBooks, setReadBooks] = useState<ReadBook[]>([]);
   const [favoriteBooks, setFavoriteBooks] = useState<FavoriteBook[]>([]);
   const [recentBooks, setRecentBooks] = useState<Book[]>([]);
-  const [isAiPopoverOpen, setIsAiPopoverOpen] = useState(false);
   const [narrationVolume, setNarrationVolume] = useState(70);
   const [isNarrating, setIsNarrating] = useState(false);
   const [viewMode, setViewMode] = useState<Record<string, 'grid' | 'list'>>({});
@@ -170,6 +159,12 @@ const Biblioteca = () => {
     setIsBookDialogOpen(true);
     setReadingMode(!!readingNow);
     addToRecentBooks(book);
+    setTimeout(() => {
+      const bookDialog = document.querySelector('[role="dialog"]');
+      if (bookDialog) {
+        (bookDialog as HTMLElement).focus();
+      }
+    }, 100);
   };
 
   const handleNarration = (text: string) => {
@@ -197,7 +192,7 @@ const Biblioteca = () => {
     });
     try {
       const prompt = `Estou procurando livros para estudar sobre: ${query}. Por favor, sugira até 3 livros que podem me ajudar, considerando que estou na área jurídica.`;
-      const response = await askGemini(prompt);
+      const response = await (await import("@/services/ai-assistant")).askGemini(prompt);
       if (response.error) throw new Error(response.error);
       const keywords = query.toLowerCase().split(' ');
       const recommendedBooks = books.filter(book => keywords.some(keyword => book.livro?.toLowerCase().includes(keyword) || book.area?.toLowerCase().includes(keyword) || book.sobre?.toLowerCase().includes(keyword))).slice(0, 5);
@@ -284,96 +279,71 @@ const Biblioteca = () => {
 
   return (
     <div className="container py-2 sm:py-4 mx-auto px-1 sm:px-0">
-      <div className="mb-3 sm:mb-6 flex flex-col gap-3 sm:gap-0">
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-1">
-            <BookOpen className="h-6 w-6 text-primary" />
-            <div className="text-lg sm:text-xl font-semibold pl-2">Biblioteca Jurídica</div>
-            <span className="text-xs sm:text-sm text-muted-foreground pl-2">
-              <span className="font-semibold">{totalBooks}</span> livros disponíveis
-            </span>
-          </div>
-          <Button variant="outline" onClick={openAnnotationsDialog} className="hidden sm:inline-block ml-3">
-            <span className="mr-2">Minhas Anotações</span>
-          </Button>
-        </div>
-        <div className="w-full max-w-sm mx-auto flex items-center relative mt-2">
-          <Input
-            type="text"
-            placeholder="Pesquisar livros..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <div className="ml-2">
-            <AIRecommendations 
-              askAiForRecommendation={askAiForRecommendation} 
-              books={books} 
-              openBookDialog={openBookDialog} 
-            />
-          </div>
-        </div>
-        <Button variant="outline" onClick={openAnnotationsDialog} className="sm:hidden mt-2 w-full text-xs">
-          📓 Minhas Anotações
-        </Button>
-      </div>
+      <BibliotecaHeader totalBooks={totalBooks} onOpenAnnotations={openAnnotationsDialog} />
 
-      <AnimatedTabs defaultValue="areas" className="w-full">
-        <AnimatedTabsList className="w-full justify-start mb-4">
-          <AnimatedTabsTrigger value="areas">
-            <BookOpen className="h-4 w-4 mr-1" />
-            Por Área
-          </AnimatedTabsTrigger>
-          <AnimatedTabsTrigger value="recentes">Recentes</AnimatedTabsTrigger>
-          <AnimatedTabsTrigger value="lidos">Lidos</AnimatedTabsTrigger>
-          <AnimatedTabsTrigger value="favoritos">Favoritos</AnimatedTabsTrigger>
-        </AnimatedTabsList>
+      <BibliotecaSearchBar
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        books={books}
+        onOpenAnnotations={openAnnotationsDialog}
+        askAiForRecommendation={askAiForRecommendation}
+        openBookDialog={openBookDialog}
+      />
 
-        <AnimatedTabsContent value="areas" slideDirection="right">
-          <BooksByAreaSection
-            areas={areas}
-            booksByArea={booksByArea}
-            booksPerArea={booksPerArea}
-            viewMode={viewMode}
-            readBooks={readBooks}
-            favoriteBooks={favoriteBooks}
-            toggleViewMode={toggleViewMode}
-            openBookDialog={openBookDialog}
-            isLoading={isLoading}
-          />
-        </AnimatedTabsContent>
-        <AnimatedTabsContent value="recentes" slideDirection="right">
-          <RecentBooksGrid
-            recentBooks={recentBooks}
-            readBooks={readBooks}
-            favoriteBooks={favoriteBooks}
-            openBookDialog={openBookDialog}
-          />
-        </AnimatedTabsContent>
-        <AnimatedTabsContent value="lidos" slideDirection="right">
-          <ReadBooksGrid
-            readBooks={readBooksData}
-            allRead={readBooks}
-            favoriteBooks={favoriteBooks}
-            openBookDialog={openBookDialog}
-          />
-        </AnimatedTabsContent>
-        <AnimatedTabsContent value="favoritos" slideDirection="right">
-          <FavoriteBooksGrid
-            favoriteBooks={favoriteBooksData}
-            allRead={readBooks}
-            favoriteBookIds={favoriteBooks}
-            openBookDialog={openBookDialog}
-          />
-        </AnimatedTabsContent>
-      </AnimatedTabs>
+      <BibliotecaTabs
+        areas={areas}
+        booksByArea={booksByArea}
+        booksPerArea={booksPerArea}
+        viewMode={viewMode}
+        readBooks={readBooks}
+        favoriteBooks={favoriteBooks}
+        toggleViewMode={toggleViewMode}
+        openBookDialog={openBookDialog}
+        isLoading={isLoading}
+        recentBooks={recentBooks}
+        allRead={readBooks}
+        favoriteBookIds={favoriteBooks}
+        readBooksData={readBooksData}
+        favoriteBooksData={favoriteBooksData}
+        openAnnotationsDialog={openAnnotationsDialog}
+      />
 
-      <Dialog open={isBookDialogOpen} onOpenChange={setIsBookDialogOpen}>
-        <BookDetailsDialog selectedBook={selectedBook} readingMode={readingMode} setReadingMode={setReadingMode} isNarrating={isNarrating} narrationVolume={narrationVolume} onClose={() => setIsBookDialogOpen(false)} onFavorite={id => { toggleFavoriteStatus(id); }} onRead={id => { toggleReadStatus(id); }} isFavorite={!!(selectedBook && favoriteBooks.some(f => f.id === selectedBook.id))} isRead={!!(selectedBook && readBooks.some(f => f.id === selectedBook.id))} onNarrate={() => { }} setNarrationVolume={setNarrationVolume} annotations={annotations} currentAnnotation={currentAnnotation} setCurrentAnnotation={setCurrentAnnotation} saveAnnotation={saveAnnotation} editingAnnotation={editingAnnotation} setEditingAnnotation={setEditingAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} openAnnotationsDialog={openAnnotationsDialog} />
-      </Dialog>
+      <BookDetailsDialog
+        selectedBook={selectedBook}
+        readingMode={readingMode}
+        setReadingMode={setReadingMode}
+        isNarrating={isNarrating}
+        narrationVolume={narrationVolume}
+        onClose={() => setIsBookDialogOpen(false)}
+        onFavorite={id => { toggleFavoriteStatus(id); }}
+        onRead={id => { toggleReadStatus(id); }}
+        isFavorite={!!(selectedBook && favoriteBooks.some(f => f.id === selectedBook.id))}
+        isRead={!!(selectedBook && readBooks.some(f => f.id === selectedBook.id))}
+        onNarrate={handleNarration}
+        setNarrationVolume={setNarrationVolume}
+        annotations={annotations}
+        currentAnnotation={currentAnnotation}
+        setCurrentAnnotation={setCurrentAnnotation}
+        saveAnnotation={saveAnnotation}
+        editingAnnotation={editingAnnotation}
+        setEditingAnnotation={setEditingAnnotation}
+        updateAnnotation={updateAnnotation}
+        deleteAnnotation={deleteAnnotation}
+        openAnnotationsDialog={openAnnotationsDialog}
+      />
 
-      <AnnotationsDialog open={isAnnotationsDialogOpen} onOpenChange={setIsAnnotationsDialogOpen} annotations={annotations} books={books} editingAnnotation={editingAnnotation} currentAnnotation={currentAnnotation} setEditingAnnotation={setEditingAnnotation} setCurrentAnnotation={setCurrentAnnotation} updateAnnotation={updateAnnotation} deleteAnnotation={deleteAnnotation} />
+      <AnnotationsDialog
+        open={isAnnotationsDialogOpen}
+        onOpenChange={setIsAnnotationsDialogOpen}
+        annotations={annotations}
+        books={books}
+        editingAnnotation={editingAnnotation}
+        currentAnnotation={currentAnnotation}
+        setEditingAnnotation={setEditingAnnotation}
+        setCurrentAnnotation={setCurrentAnnotation}
+        updateAnnotation={updateAnnotation}
+        deleteAnnotation={deleteAnnotation}
+      />
     </div>
   );
 };
