@@ -17,12 +17,13 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, BookOpen, Brain } from "lucide-react";
 
 type FlashCard = {
-  id: string;
-  area: string;
-  tema: string;
-  pergunta: string;
-  resposta: string;
+  id: number;  // Changed from string to number to match the database
+  area: string | null;
+  tema: string | null;
+  pergunta: string | null;
+  resposta: string | null;
   explicacao: string | null;
+  created_at: string;
 };
 
 type ViewMode = "manual" | "auto";

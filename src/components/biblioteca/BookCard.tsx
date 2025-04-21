@@ -6,9 +6,9 @@ import { BookOpen, Bookmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Livro = {
-  id: string;
-  livro: string;
-  area: string;
+  id: number;  // Changed from string to number to match the database
+  livro: string | null;
+  area: string | null;
   link: string | null;
   download: string | null;
   imagem: string | null;

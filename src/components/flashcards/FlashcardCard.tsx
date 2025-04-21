@@ -5,15 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 type Flashcard = {
-  id: string;
-  pergunta: string;
-  resposta: string;
+  id: number | string;  // Accept either number or string to be flexible
+  pergunta: string | null;
+  resposta: string | null;
   explicacao: string | null;
-  area: string;
-  tema: string;
-  tags: string[] | null;
-  dificuldade: string | null;
-  imagem_url: string | null;
+  area: string | null;
+  tema: string | null;
+  tags?: string[] | null;
+  dificuldade?: string | null;
+  imagem_url?: string | null;
 };
 
 interface FlashcardCardProps {
