@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,6 +32,7 @@ import Dicionario from "./pages/ferramentas/Dicionario";
 import Modelos from "./pages/ferramentas/Modelos";
 import Cronograma from "./pages/ferramentas/Cronograma";
 import Auth from "./pages/Auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,10 +48,35 @@ const App = () => {
     // Recuperar o perfil do localStorage, ou usar 'tudo' como padrão
     return (localStorage.getItem("juris-study-profile") as ProfileType) || "tudo";
   });
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Verificar se há uma sessão ativa
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    // Ouvir mudanças no estado da autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleProfileSelect = (profile: ProfileType) => {
     setUserProfile(profile);
     localStorage.setItem("juris-study-profile", profile);
+  };
+
+  // Componente de rota protegida que redireciona para /auth se não estiver autenticado
+  const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+    if (loading) return <div className="flex items-center justify-center h-screen">Carregando...</div>;
+    if (!session) return <Navigate to="/auth" replace />;
+    return <>{children}</>;
   };
 
   return (
@@ -61,31 +88,115 @@ const App = () => {
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
             <Routes>
-              <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
-              <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
-              <Route path="/bloger" element={<Layout userProfile={userProfile}><Bloger /></Layout>} />
-              <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
-              <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
-              <Route path="/explorar" element={<Layout userProfile={userProfile}><Explorar /></Layout>} />
-              <Route path="/ferramentas-juridicas" element={<Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>} />
-              <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
-              <Route path="/jurisprudencia" element={<Layout userProfile={userProfile}><Jurisprudencia /></Layout>} />
-              <Route path="/resumos" element={<Layout userProfile={userProfile}><Resumos /></Layout>} />
-              <Route path="/simulados" element={<Layout userProfile={userProfile}><Simulados /></Layout>} />
-              <Route path="/peticionario" element={<Layout userProfile={userProfile}><Peticionario /></Layout>} />
-              <Route path="/noticias" element={<Layout userProfile={userProfile}><Noticias /></Layout>} />
-              <Route path="/assistente" element={<Layout userProfile={userProfile}><Assistente /></Layout>} />
-              <Route path="/perfil" element={<Layout userProfile={userProfile}><Perfil /></Layout>} />
-              <Route path="/search" element={<Layout userProfile={userProfile}><Search /></Layout>} />
-              <Route path="/remote-desktop" element={<Layout userProfile={userProfile}><RemoteDesktop /></Layout>} />
-              
               <Route path="/auth" element={<Auth />} />
               
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Index /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/videoaulas" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><VideoAulas /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/bloger" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Bloger /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/anotacoes" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Anotacoes /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/biblioteca" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Biblioteca /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/explorar" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Explorar /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/ferramentas-juridicas" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/flashcards" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Flashcards /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/jurisprudencia" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Jurisprudencia /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/resumos" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Resumos /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/simulados" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Simulados /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/peticionario" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Peticionario /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/noticias" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Noticias /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/assistente" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Assistente /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/perfil" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Perfil /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/search" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Search /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/remote-desktop" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><RemoteDesktop /></Layout>
+                </ProtectedRoute>
+              } />
+              
               {/* Ferramentas Jurídicas sub-routes */}
-              <Route path="/ferramentas/vademecum" element={<Layout userProfile={userProfile}><Vademecum /></Layout>} />
-              <Route path="/ferramentas/dicionario" element={<Layout userProfile={userProfile}><Dicionario /></Layout>} />
-              <Route path="/ferramentas/modelos" element={<Layout userProfile={userProfile}><Modelos /></Layout>} />
-              <Route path="/ferramentas/cronograma" element={<Layout userProfile={userProfile}><Cronograma /></Layout>} />
+              <Route path="/ferramentas/vademecum" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Vademecum /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/ferramentas/dicionario" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Dicionario /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/ferramentas/modelos" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Modelos /></Layout>
+                </ProtectedRoute>
+              } />
+              <Route path="/ferramentas/cronograma" element={
+                <ProtectedRoute>
+                  <Layout userProfile={userProfile}><Cronograma /></Layout>
+                </ProtectedRoute>
+              } />
               
               {/* Redirect routes */}
               <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />

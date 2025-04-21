@@ -1,3 +1,4 @@
+
 import { Check, ChevronsUpDown, GraduationCap, Scale, User, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
@@ -50,7 +51,13 @@ export function ProfileSwitcher({
   };
   return <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        
+        <Button variant="outline" role="combobox" aria-expanded={open} className="w-full justify-between">
+          <div className="flex items-center gap-2 truncate">
+            <selectedProfile.icon className="h-4 w-4" />
+            <span className="truncate">{selectedProfile.label}</span>
+          </div>
+          <ChevronsUpDown className="ml-1 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[250px] p-0">
         <Command>
