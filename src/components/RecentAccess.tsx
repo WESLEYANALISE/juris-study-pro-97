@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { BookOpen, Video, Newspaper, FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -92,12 +93,12 @@ const RecentAccess = () => {
         ];
 
         const newTranscripts: {[key: string]: string} = {};
-        (items ?? []).forEach(item => {
+        items.forEach(item => {
           newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
 
         setTranscripts(newTranscripts);
-        setRecentItems(items ?? []);
+        setRecentItems(items);
       } catch (error) {
         console.error("Error fetching recent access:", error);
         setRecentItems([]);
@@ -109,9 +110,10 @@ const RecentAccess = () => {
     fetchRecentAccess();
 
     const interval = setInterval(() => {
-      if ((recentItems ?? []).length > 0) {
+      // Make sure recentItems exists and has items before updating transcripts
+      if (recentItems && recentItems.length > 0) {
         const newTranscripts: {[key: string]: string} = {};
-        (recentItems ?? []).forEach(item => {
+        recentItems.forEach(item => {
           newTranscripts[item.id] = getRandomTranscript(item.type, item.title);
         });
         setTranscripts(newTranscripts);
@@ -119,7 +121,7 @@ const RecentAccess = () => {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [recentItems]);
 
   const getIcon = (type: string) => {
     switch (type) {
@@ -131,7 +133,8 @@ const RecentAccess = () => {
     }
   };
 
-  const itemsArray = Array.isArray(recentItems) ? recentItems : [];
+  // Ensure recentItems is always an array, even if it's undefined
+  const itemsArray = recentItems || [];
 
   if (itemsArray.length === 0 && !loading) {
     return null;
@@ -164,7 +167,7 @@ const RecentAccess = () => {
         className="w-full"
       >
         <CarouselContent className="-ml-2 md:-ml-4">
-          {(itemsArray ?? []).map((item) => (
+          {itemsArray.map((item) => (
             <CarouselItem key={item.id} className="pl-2 md:pl-4 basis-[70%] sm:basis-1/2 md:basis-1/3">
               <Card 
                 className="flex-1 min-w-0 cursor-pointer hover:shadow-md transition-shadow"

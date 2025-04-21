@@ -156,12 +156,16 @@ const Index = () => {
     const generateAllTranscripts = () => {
       const newTranscripts: {[key: string]: string} = {};
 
-      categories.forEach(category => {
-        category.items.forEach(item => {
-          const key = `${category.title}-${item.title}`;
-          newTranscripts[key] = getRandomTranscript(category.title, item.title);
+      if (categories && categories.length > 0) {
+        categories.forEach(category => {
+          if (category.items && category.items.length > 0) {
+            category.items.forEach(item => {
+              const key = `${category.title}-${item.title}`;
+              newTranscripts[key] = getRandomTranscript(category.title, item.title);
+            });
+          }
         });
-      });
+      }
 
       setTranscripts(newTranscripts);
     };
@@ -190,7 +194,7 @@ const Index = () => {
       <QuickAccess />
 
       <div className="space-y-6 px-1">
-        {(categories ?? []).map((category, categoryIndex) => (
+        {(categories || []).map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h2 className="text-xl font-semibold mb-4 px-2 flex justify-between items-center">
               {category.title}
@@ -211,7 +215,7 @@ const Index = () => {
               className="w-full"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
-                {(category.items ?? []).map((feature, index) => {
+                {(category.items || []).map((feature, index) => {
                   const transcriptKey = `${category.title}-${feature.title}`;
                   return (
                     <CarouselItem key={index} className="pl-2 md:pl-4 basis-[85%] sm:basis-[45%] md:basis-1/3">
