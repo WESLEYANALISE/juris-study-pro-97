@@ -14,6 +14,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { useEffect, useState } from "react";
+import QuickAccess from "@/components/QuickAccess";
 
 // Random audio transcript generator
 const getRandomTranscript = (category: string, title: string) => {
@@ -40,6 +41,7 @@ const Index = () => {
   const categories = [
     {
       title: "Materiais de Estudo",
+      path: "/biblioteca",
       items: [{
         icon: Video,
         title: "Vídeo-aulas",
@@ -67,6 +69,7 @@ const Index = () => {
       }]
     }, {
       title: "Prática e Treinamento",
+      path: "/simulados",
       items: [{
         icon: GraduationCap,
         title: "Simulados",
@@ -94,6 +97,7 @@ const Index = () => {
       }]
     }, {
       title: "Conteúdo e Ferramentas",
+      path: "/explorar",
       items: [{
         icon: Newspaper,
         title: "Notícias Jurídicas",
@@ -121,6 +125,7 @@ const Index = () => {
       }]
     }, {
       title: "Ferramentas Jurídicas",
+      path: "/ferramentas-juridicas",
       items: [{
         icon: BookMarked,
         title: "Vade Mecum Digital",
@@ -172,7 +177,7 @@ const Index = () => {
 
   return (
     <div className="container mx-auto py-0 px-1 sm:px-4">
-      <div className="flex flex-col items-center text-center mb-8">
+      <div className="flex flex-col items-center text-center mb-6">
         <div className="mb-4">
           <Scale className="h-12 w-12 text-primary mx-auto mb-2" />
           <h1 className="text-3xl font-bold mb-1">JurisStudy Pro</h1>
@@ -185,7 +190,9 @@ const Index = () => {
         </div>
       </div>
 
-      <div className="space-y-8 px-1">
+      <QuickAccess />
+
+      <div className="space-y-6 px-1">
         {categories.map((category, categoryIndex) => (
           <div key={categoryIndex}>
             <h2 className="text-xl font-semibold mb-4 px-2 flex justify-between items-center">
@@ -193,7 +200,7 @@ const Index = () => {
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => navigate("/explorar")}
+                onClick={() => navigate(category.path)}
                 className="text-xs flex items-center"
               >
                 Ver mais <ArrowRight className="ml-1 h-3 w-3" />

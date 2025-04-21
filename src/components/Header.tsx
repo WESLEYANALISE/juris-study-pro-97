@@ -18,14 +18,14 @@ export function Header({ userProfile, pageTitle }: HeaderProps) {
   const isMobile = useIsMobile();
   
   return (
-    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-6">
+    <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <div className="hidden md:flex">
         <SidebarTrigger />
       </div>
       
       {pageTitle ? (
         <div className="flex items-center">
-          <h1 className="font-bold text-lg">{pageTitle}</h1>
+          <h1 className="font-bold text-lg truncate max-w-[200px] md:max-w-full">{pageTitle}</h1>
         </div>
       ) : (
         <div className="flex items-center mr-2 cursor-pointer" onClick={() => navigate("/")}>
@@ -41,7 +41,7 @@ export function Header({ userProfile, pageTitle }: HeaderProps) {
       )}
       
       <div className="ml-auto flex items-center gap-2">
-        <div className="w-40">
+        <div className="w-auto sm:w-40">
           <ProfileSwitcher currentProfile={userProfile} />
         </div>
       </div>
