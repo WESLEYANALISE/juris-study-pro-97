@@ -67,6 +67,7 @@ const App = () => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Handler to switch/provide user profile from header
   const handleProfileSelect = (profile: ProfileType) => {
     setUserProfile(profile);
     localStorage.setItem("juris-study-profile", profile);
@@ -103,109 +104,110 @@ const App = () => {
               
               <Route path="/" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Index /></Layout>
+                  {/* Pass handleProfileSelect to Layout/Header */}
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Index /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/videoaulas" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><VideoAulas /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><VideoAulas /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/bloger" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Bloger /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Bloger /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/anotacoes" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Anotacoes /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Anotacoes /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/biblioteca" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Biblioteca /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Biblioteca /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/explorar" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Explorar /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Explorar /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/ferramentas-juridicas" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><FerramentasJuridicas /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><FerramentasJuridicas /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/flashcards" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Flashcards /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Flashcards /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/jurisprudencia" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Jurisprudencia /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Jurisprudencia /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/resumos" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Resumos /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Resumos /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/simulados" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Simulados /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Simulados /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/peticionario" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Peticionario /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Peticionario /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/noticias" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Noticias /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Noticias /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/assistente" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Assistente /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Assistente /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/perfil" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Perfil /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Perfil /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/search" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Search /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Search /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/remote-desktop" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><RemoteDesktop /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><RemoteDesktop /></Layout>
                 </ProtectedRoute>
               } />
               
               {/* Ferramentas Jurídicas sub-routes */}
               <Route path="/ferramentas/vademecum" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Vademecum /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Vademecum /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/ferramentas/dicionario" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Dicionario /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Dicionario /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/ferramentas/modelos" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Modelos /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Modelos /></Layout>
                 </ProtectedRoute>
               } />
               <Route path="/ferramentas/cronograma" element={
                 <ProtectedRoute>
-                  <Layout userProfile={userProfile}><Cronograma /></Layout>
+                  <Layout userProfile={userProfile} onProfileChange={handleProfileSelect}><Cronograma /></Layout>
                 </ProtectedRoute>
               } />
               

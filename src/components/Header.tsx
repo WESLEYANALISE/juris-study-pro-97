@@ -11,12 +11,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 interface HeaderProps {
   userProfile: ProfileType;
   pageTitle?: string | null;
+  onProfileChange?: (profile: ProfileType) => void;
 }
 
-export function Header({ userProfile, pageTitle }: HeaderProps) {
+export function Header({ userProfile, pageTitle, onProfileChange }: HeaderProps) {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  
+
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
       <div className="hidden md:flex">
@@ -42,7 +43,11 @@ export function Header({ userProfile, pageTitle }: HeaderProps) {
       
       <div className="ml-auto flex items-center gap-2">
         <div className="w-auto sm:w-40">
-          <ProfileSwitcher currentProfile={userProfile} />
+          {/* Pass down currentProfile and handler */}
+          <ProfileSwitcher 
+            currentProfile={userProfile}
+            onProfileChange={onProfileChange}
+          />
         </div>
       </div>
     </header>

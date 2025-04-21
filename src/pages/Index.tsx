@@ -150,14 +150,14 @@ const Index = () => {
         color: "text-amber-600"
       }]
     }
-  ] || [];
+  ];
 
   useEffect(() => {
     const generateAllTranscripts = () => {
       const newTranscripts: {[key: string]: string} = {};
 
-      (categories ?? []).forEach(category => {
-        (category.items ?? []).forEach(item => {
+      categories.forEach(category => {
+        category.items.forEach(item => {
           const key = `${category.title}-${item.title}`;
           newTranscripts[key] = getRandomTranscript(category.title, item.title);
         });
