@@ -14,10 +14,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, BookOpen, Brain } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, BookOpen, Brain, Sparkles } from "lucide-react";
+import { FlashcardView } from "@/components/flashcards/FlashcardView";
+import { StudyStats } from "@/components/flashcards/StudyStats";
 
 type FlashCard = {
-  id: string;
+  id: string | number;  // Updated to accept both string and number
   area: string;
   tema: string;
   pergunta: string;
@@ -32,7 +34,7 @@ export default function Flashcards() {
     queryKey: ["flashcards"],
     queryFn: async () => {
       const { data } = await supabase.from("flash_cards").select("*");
-      return (data ?? []) as FlashCard[];
+      return (data ?? []) as FlashCard[]; // Cast to FlashCard[] now that we've updated the type
     },
   });
 
@@ -49,6 +51,7 @@ export default function Flashcards() {
   
   const [selectedTemas, setSelectedTemas] = useState<string[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [showDueOnly, setShowDueOnly] = useState(false);
   
   const filtered = useMemo(() => {
     if (!cards) return [];
@@ -62,6 +65,9 @@ export default function Flashcards() {
     if (selectedTemas.length > 0) {
       filteredCards = filteredCards.filter(c => selectedTemas.includes(c.tema));
     }
+    
+    // We would filter by due cards here if we had that data from the user_flashcards table
+    // This would require a join query or additional data fetching
     
     return filteredCards.length > 0 ? filteredCards : cards.slice(0, 12);
   }, [cards, selectedTemas, selectedArea]);
@@ -107,26 +113,45 @@ export default function Flashcards() {
     );
   };
 
-  const handleFlip = () => {
-    setIsFlipped(!isFlipped);
+  const handleNext = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setIndex((i) => (i + 1) % filtered.length);
+    }, 200);
+  };
+  
+  const handlePrevious = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setIndex((i) => (i - 1 + filtered.length) % filtered.length);
+    }, 200);
+  };
+  
+  const handleRandom = () => {
+    setIsFlipped(false);
+    setTimeout(() => {
+      setIndex(Math.floor(Math.random() * filtered.length));
+    }, 200);
   };
 
   return (
     <div className="max-w-xl mx-auto p-4 w-full">
       <div className="mb-6 space-y-4">
+        <StudyStats />
+        
         <div className="flex flex-col gap-4">
           <div>
             <label className="text-sm font-medium mb-1 block">Área</label>
             <Select
-              value={selectedArea || ""}
-              onValueChange={(value) => setSelectedArea(value || null)}
+              value={selectedArea || "all"}
+              onValueChange={(value) => setSelectedArea(value === "all" ? null : value)}
             >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Selecione uma área" />
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
-                  <SelectItem value="">Todas as áreas</SelectItem>
+                  <SelectItem value="all">Todas as áreas</SelectItem>
                   {areas.map((area) => (
                     <SelectItem key={area} value={area}>
                       {area}
@@ -211,73 +236,19 @@ export default function Flashcards() {
           <AnimatePresence mode="wait">
             {filtered.length > 0 && (
               <motion.div
-                key={filtered[index]?.id + (isFlipped ? '-flipped' : '')}
+                key={filtered[index]?.id + '-card'}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.35 }}
-                className="w-full perspective"
-                onClick={handleFlip}
+                className="w-full"
               >
-                <div className={`relative transform-style-3d transition-all duration-500 ${isFlipped ? 'rotate-y-180' : ''}`}>
-                  {/* Front side - Pergunta */}
-                  <Card 
-                    className={`backface-hidden relative bg-gradient-to-t from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all cursor-pointer ${isFlipped ? 'opacity-0' : 'opacity-100'}`}
-                    style={{
-                      minHeight: 280,
-                      boxShadow: "0 4px 40px #9b87f522"
-                    }}
-                  >
-                    <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
-                      <div>
-                        {filtered[index]?.tema} 
-                        <span className="text-sm text-muted-foreground ml-2">({filtered[index]?.area})</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Brain className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{filtered.length}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
-                      <div className="text-base font-semibold text-center">{filtered[index]?.pergunta}</div>
-                      <div className="mt-4 text-sm text-muted-foreground">(Clique para ver a resposta)</div>
-                    </div>
-                  </Card>
-                  
-                  {/* Back side - Resposta */}
-                  <Card 
-                    className={`backface-hidden absolute top-0 rotate-y-180 w-full bg-gradient-to-b from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all cursor-pointer ${isFlipped ? 'opacity-100' : 'opacity-0'}`}
-                    style={{
-                      minHeight: 280,
-                      boxShadow: "0 4px 40px #9b87f522"
-                    }}
-                  >
-                    <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
-                      <div>
-                        {filtered[index]?.tema} 
-                        <span className="text-sm text-muted-foreground ml-2">({filtered[index]?.area})</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Brain className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{filtered.length}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
-                      <div className="text-sm bg-gradient-to-br from-[#D6BCFA44] to-[#FFF] py-4 px-6 rounded-lg text-gray-800 font-medium border text-center">{filtered[index]?.resposta}</div>
-                      
-                      {filtered[index]?.explicacao && (
-                        <div className="text-xs mt-4 text-muted-foreground p-3 bg-muted/50 rounded border-l-2 border-primary/30 w-full">
-                          <div className="font-medium mb-1 flex items-center gap-1">
-                            <BookOpen className="h-3 w-3" /> Explicação:
-                          </div>
-                          {filtered[index]?.explicacao}
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                </div>
+                <FlashcardView 
+                  flashcard={filtered[index]} 
+                  index={index} 
+                  total={filtered.length}
+                  onNext={handleNext}
+                />
               </motion.div>
             )}
           </AnimatePresence>
@@ -287,23 +258,13 @@ export default function Flashcards() {
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => {
-                  setIsFlipped(false);
-                  setTimeout(() => {
-                    setIndex((i) => (i - 1 + filtered.length) % filtered.length);
-                  }, 200);
-                }}
+                onClick={handlePrevious}
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
-                onClick={() => {
-                  setIsFlipped(false);
-                  setTimeout(() => {
-                    setIndex(Math.floor(Math.random() * filtered.length));
-                  }, 200);
-                }}
+                onClick={handleRandom}
                 size="sm"
               >
                 <RotateCcw className="h-4 w-4 mr-1" /> Aleatório
@@ -311,12 +272,7 @@ export default function Flashcards() {
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => {
-                  setIsFlipped(false);
-                  setTimeout(() => {
-                    setIndex((i) => (i + 1) % filtered.length);
-                  }, 200);
-                }}
+                onClick={handleNext}
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -330,6 +286,16 @@ export default function Flashcards() {
           Nenhum flashcard disponível com os filtros selecionados.
         </div>
       )}
+      
+      <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-dashed">
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-5 w-5 text-amber-500" />
+          <h3 className="font-semibold">Sugestões de Flashcards</h3>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          O sistema de Repetição Espaçada ajuda você a memorizar melhor. Depois de responder cada cartão, avalie seu conhecimento para otimizar suas revisões futuras.
+        </p>
+      </div>
     </div>
   );
 }

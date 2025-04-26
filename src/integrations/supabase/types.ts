@@ -404,6 +404,42 @@ export type Database = {
         }
         Relationships: []
       }
+      livros: {
+        Row: {
+          autor: string | null
+          capa_url: string | null
+          created_at: string | null
+          descricao: string | null
+          id: string
+          link_pdf: string
+          materia: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          autor?: string | null
+          capa_url?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          link_pdf: string
+          materia: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          autor?: string | null
+          capa_url?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          link_pdf?: string
+          materia?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       noticias: {
         Row: {
           area_direito: string | null
@@ -533,6 +569,7 @@ export type Database = {
       user_biblioteca: {
         Row: {
           anotacoes: string | null
+          comentarios: string | null
           created_at: string | null
           favorito: boolean | null
           id: string
@@ -544,6 +581,7 @@ export type Database = {
         }
         Insert: {
           anotacoes?: string | null
+          comentarios?: string | null
           created_at?: string | null
           favorito?: boolean | null
           id?: string
@@ -555,6 +593,7 @@ export type Database = {
         }
         Update: {
           anotacoes?: string | null
+          comentarios?: string | null
           created_at?: string | null
           favorito?: boolean | null
           id?: string

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -17,6 +18,7 @@ import Auth from "./pages/Auth";
 import { RequireAuth } from "@/components/RequireAuth";
 import Biblioteca from "./pages/Biblioteca";
 import Flashcards from "./pages/Flashcards";
+import { DataMigrationAlert } from "./components/DataMigrationAlert";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -51,7 +53,10 @@ const App = () => {
                 path="/"
                 element={
                   <RequireAuth>
-                    <Layout userProfile={userProfile}><Index /></Layout>
+                    <Layout userProfile={userProfile}>
+                      <DataMigrationAlert />
+                      <Index />
+                    </Layout>
                   </RequireAuth>
                 }
               />
@@ -59,7 +64,10 @@ const App = () => {
                 path="/biblioteca"
                 element={
                   <RequireAuth>
-                    <Layout userProfile={userProfile}><Biblioteca /></Layout>
+                    <Layout userProfile={userProfile}>
+                      <DataMigrationAlert />
+                      <Biblioteca />
+                    </Layout>
                   </RequireAuth>
                 }
               />
@@ -67,7 +75,10 @@ const App = () => {
                 path="/flashcards"
                 element={
                   <RequireAuth>
-                    <Layout userProfile={userProfile}><Flashcards /></Layout>
+                    <Layout userProfile={userProfile}>
+                      <DataMigrationAlert />
+                      <Flashcards />
+                    </Layout>
                   </RequireAuth>
                 }
               />
