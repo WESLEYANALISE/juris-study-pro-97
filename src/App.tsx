@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -24,6 +23,7 @@ import { PageTransition } from "./components/PageTransition";
 import VerTudo from "./pages/VerTudo";
 import Perfil from "./pages/Perfil";
 import Noticias from "./pages/Noticias";
+import Dicionario from "./pages/Dicionario";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -167,6 +167,18 @@ const App = () => {
                   }
                 />
                 <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
+                <Route
+                  path="/dicionario"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Dicionario />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
                 <Route
                   path="*"
                   element={

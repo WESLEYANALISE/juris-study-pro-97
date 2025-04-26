@@ -222,6 +222,35 @@ export type Database = {
         }
         Relationships: []
       }
+      dicionario_termo_views: {
+        Row: {
+          id: string
+          termo_id: string
+          user_id: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          termo_id: string
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          termo_id?: string
+          user_id?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dicionario_termo_views_termo_id_fkey"
+            columns: ["termo_id"]
+            isOneToOne: false
+            referencedRelation: "dicionario_juridico"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estatisticas: {
         Row: {
           artigos_lidos: number | null
@@ -657,6 +686,39 @@ export type Database = {
           },
         ]
       }
+      user_statistics: {
+        Row: {
+          created_at: string | null
+          flashcards_estudados: number | null
+          id: string
+          livros_lidos: number | null
+          tempo_total_estudo: number | null
+          updated_at: string | null
+          user_id: string
+          videos_assistidos: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          flashcards_estudados?: number | null
+          id?: string
+          livros_lidos?: number | null
+          tempo_total_estudo?: number | null
+          updated_at?: string | null
+          user_id: string
+          videos_assistidos?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          flashcards_estudados?: number | null
+          id?: string
+          livros_lidos?: number | null
+          tempo_total_estudo?: number | null
+          updated_at?: string | null
+          user_id?: string
+          videos_assistidos?: number | null
+        }
+        Relationships: []
+      }
       video_aulas: {
         Row: {
           area: string
@@ -701,6 +763,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      increment_user_statistic: {
+        Args: { p_user_id: string; p_field: string; p_amount?: number }
+        Returns: undefined
+      }
       migrate_biblioteca_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
