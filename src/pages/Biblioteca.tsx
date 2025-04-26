@@ -15,7 +15,7 @@ import { BookCard } from "@/components/biblioteca/BookCard";
 import { BookModal } from "@/components/biblioteca/BookModal";
 
 type Livro = {
-  id: string | number;  // Updated to accept both string and number
+  id: string;  // Changed to be consistently string
   livro: string;
   area: string;
   link: string | null;
@@ -42,7 +42,11 @@ export default function Biblioteca() {
     queryKey: ["biblioteca"],
     queryFn: async () => {
       const { data } = await supabase.from("biblioteca_juridica").select("*");
-      return (data ?? []) as Livro[]; // Cast to Livro[] now that we've updated the type
+      // Convert all IDs to strings
+      return (data ?? []).map(book => ({
+        ...book,
+        id: String(book.id)  // Ensure ID is always a string
+      })) as Livro[];
     }
   });
 

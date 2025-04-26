@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 
 type FlashcardProgress = {
   id: string;
-  flashcard_id: string | number;
+  flashcard_id: string;
   user_id?: string;
   conhecimento: number;
   revisoes: number;
@@ -35,12 +35,15 @@ export function useFlashcardProgress() {
         };
       }
       
+      // Convert flashcardId to string if it's a number
+      const flashcardIdStr = String(flashcardId);
+      
       // Fetch user's progress for this flashcard
       const { data, error } = await supabase
         .from('user_flashcards')
         .select('*')
         .eq('user_id', user.id)
-        .eq('flashcard_id', flashcardId)
+        .eq('flashcard_id', flashcardIdStr)
         .single();
       
       if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned" error
@@ -82,21 +85,28 @@ export function useFlashcardProgress() {
         return null;
       }
       
+      // Convert flashcardId to string if it's a number
+      const flashcardIdStr = String(flashcardId);
+      
       // Fetch current progress
       const { data: existingProgress, error: fetchError } = await supabase
         .from('user_flashcards')
         .select('*')
         .eq('user_id', user.id)
-        .eq('flashcard_id', flashcardId)
+        .eq('flashcard_id', flashcardIdStr)
         .single();
       
       // Calculate new intervals
-      const previousInterval = existingProgress ? 
-        ((new Date(existingProgress.proxima_revisao || new Date()) - new Date(existingProgress.ultima_revisao || new Date())) / (1000 * 60 * 60 * 24)) : 0;
+      let previousInterval = 0;
+      if (existingProgress && existingProgress.ultima_revisao && existingProgress.proxima_revisao) {
+        const lastReviewDate = new Date(existingProgress.ultima_revisao);
+        const nextReviewDate = new Date(existingProgress.proxima_revisao);
+        previousInterval = Math.floor((nextReviewDate.getTime() - lastReviewDate.getTime()) / (1000 * 60 * 60 * 24));
+      }
       
       const { nextInterval, newConsecutiveCorrect } = calculateNextReview(
         knowledgeLevel,
-        Math.floor(previousInterval),
+        previousInterval,
         existingProgress ? existingProgress.revisoes : 0
       );
       
@@ -124,7 +134,7 @@ export function useFlashcardProgress() {
           .from('user_flashcards')
           .insert({
             user_id: user.id,
-            flashcard_id: flashcardId,
+            flashcard_id: flashcardIdStr,
             conhecimento: knowledgeLevel,
             revisoes: newConsecutiveCorrect,
             ultima_revisao: new Date().toISOString(),

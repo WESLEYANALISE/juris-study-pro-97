@@ -10,7 +10,7 @@ import { TextToSpeechService } from "@/services/textToSpeechService";
 
 interface FlashCardViewProps {
   flashcard: {
-    id: string | number;
+    id: string | number;  // Keep accepting either type for compatibility
     pergunta: string;
     resposta: string;
     explicacao?: string | null;
