@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,12 +9,16 @@ import { toast } from "sonner";
 
 interface QuestionConfig {
   area: string;
-  tema: string;
+  temas: string[];
   quantidade: number;
 }
 
 const Questoes = () => {
-  const [config, setConfig] = useState<QuestionConfig | null>(null);
+  const [config, setConfig] = useState<{
+    area: string;
+    temas: string[];
+    quantidade: number;
+  } | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
   const { data: questions, isLoading: isLoadingQuestions } = useQuery({
@@ -24,11 +27,11 @@ const Questoes = () => {
     queryFn: async () => {
       let query = supabase
         .from("questoes")
-        .select("*")
+        .select("*, questao_estatisticas(total_tentativas, total_acertos)")
         .eq("Area", config?.area);
 
-      if (config?.tema) {
-        query = query.eq("Tema", config.tema);
+      if (config?.temas.length) {
+        query = query.in("Tema", config.temas);
       }
 
       const { data, error } = await query
@@ -85,6 +88,11 @@ const Questoes = () => {
     }
   };
 
+  const handleReset = () => {
+    setConfig(null);
+    setCurrentQuestionIndex(0);
+  };
+
   if (!config) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -107,11 +115,18 @@ const Questoes = () => {
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-4">Banco de Questões</h1>
         <p>Nenhuma questão disponível para os filtros selecionados.</p>
+        <Button onClick={handleReset} className="mt-4">
+          Voltar
+        </Button>
       </div>
     );
   }
 
   const currentQuestion = questions[currentQuestionIndex];
+  const questionStats = currentQuestion.questao_estatisticas?.[0];
+  const percentualAcertos = questionStats?.total_tentativas 
+    ? (questionStats.total_acertos / questionStats.total_tentativas * 100).toFixed(1)
+    : null;
 
   const respostas = {
     'A': currentQuestion.AnswerA,
@@ -122,7 +137,12 @@ const Questoes = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Banco de Questões</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Banco de Questões</h1>
+        <Button variant="outline" onClick={handleReset}>
+          Voltar ao Menu
+        </Button>
+      </div>
       
       <div className="grid gap-6 md:grid-cols-[1fr_300px]">
         <div className="space-y-6">
@@ -134,6 +154,7 @@ const Questoes = () => {
             respostas={respostas}
             respostaCorreta={currentQuestion.CorrectAnswers}
             comentario={currentQuestion.CorrectAnswerInfo}
+            percentualAcertos={percentualAcertos}
             onAnswer={handleAnswer}
             onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined}
           />

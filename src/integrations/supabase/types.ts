@@ -604,6 +604,41 @@ export type Database = {
         }
         Relationships: []
       }
+      questao_estatisticas: {
+        Row: {
+          created_at: string | null
+          id: string
+          questao_id: number
+          total_acertos: number | null
+          total_tentativas: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          questao_id: number
+          total_acertos?: number | null
+          total_tentativas?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          questao_id?: number
+          total_acertos?: number | null
+          total_tentativas?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questao_estatisticas_questao_id_fkey"
+            columns: ["questao_id"]
+            isOneToOne: false
+            referencedRelation: "questoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questoes: {
         Row: {
           AnswerA: string | null
@@ -876,6 +911,16 @@ export type Database = {
       }
     }
     Views: {
+      temas_trending: {
+        Row: {
+          Area: string | null
+          percentual_acertos: number | null
+          Tema: string | null
+          total_tentativas: number | null
+          total_usuarios: number | null
+        }
+        Relationships: []
+      }
       user_questoes_stats: {
         Row: {
           acertos_area: number | null

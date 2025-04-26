@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -17,6 +16,7 @@ interface QuestionCardProps {
   respostas: { [key: string]: string | null };
   respostaCorreta: string | null;
   comentario?: string;
+  percentualAcertos: string | null;
   onAnswer: (questionId: number, answer: string, correct: boolean) => void;
   onNext?: () => void;
 }
@@ -29,6 +29,7 @@ export const QuestionCard = ({
   respostas,
   respostaCorreta,
   comentario,
+  percentualAcertos,
   onAnswer,
   onNext,
 }: QuestionCardProps) => {
@@ -58,13 +59,20 @@ export const QuestionCard = ({
     >
       <Card className="w-full">
         <CardHeader>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-            {area && <span>{area}</span>}
-            {tema && (
-              <>
-                <span>•</span>
-                <span>{tema}</span>
-              </>
+          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
+            <div className="flex items-center gap-2">
+              {area && <span>{area}</span>}
+              {tema && (
+                <>
+                  <span>•</span>
+                  <span>{tema}</span>
+                </>
+              )}
+            </div>
+            {percentualAcertos && (
+              <div className="text-sm text-muted-foreground">
+                Taxa de acerto: {percentualAcertos}%
+              </div>
             )}
           </div>
           <CardTitle className="text-lg font-medium">{pergunta}</CardTitle>
