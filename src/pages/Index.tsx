@@ -1,7 +1,22 @@
+
 import { Button } from "@/components/ui/button";
-import { Scale } from "lucide-react";
+import { 
+  Scale, 
+  Video, 
+  BookOpen, 
+  Brain, 
+  FileText, 
+  GraduationCap, 
+  FilePlus, 
+  Gavel, 
+  PenTool, 
+  Newspaper, 
+  MessageSquare, 
+  Monitor 
+} from "lucide-react";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import { useNavigate } from "react-router-dom";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 
 const Index = () => {
   const navigate = useNavigate();
