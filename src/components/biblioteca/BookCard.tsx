@@ -1,12 +1,17 @@
-
 import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { Card, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Bookmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
-import type { Livro } from "@/types/biblioteca";
-
+type Livro = {
+  id: string;
+  livro: string;
+  area: string;
+  link: string | null;
+  download: string | null;
+  imagem: string | null;
+  sobre: string | null;
+};
 type BookCardProps = {
   livro: Livro;
   onCardClick?: () => void;
@@ -14,7 +19,6 @@ type BookCardProps = {
   showFavoriteButton?: boolean;
   onToggleFavorite?: () => void;
 };
-
 export function BookCard({
   livro,
   onCardClick = () => {},
@@ -22,9 +26,10 @@ export function BookCard({
   showFavoriteButton = false,
   onToggleFavorite
 }: BookCardProps) {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [isHovering, setIsHovering] = useState(false);
-  
   const handleFavoriteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onToggleFavorite) {
@@ -36,94 +41,31 @@ export function BookCard({
       });
     }
   };
-  
-  return (
-    <motion.div
-      whileHover={{ scale: 1.03, y: -5 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: "spring", stiffness: 300, damping: 20 }}
-    >
-      <Card 
-        className="group relative flex flex-col hover:shadow-lg transition-all cursor-pointer h-[300px] overflow-hidden border-[#2C2C2C] bg-[#1E1E1E]" 
-        onClick={onCardClick} 
-        onMouseEnter={() => setIsHovering(true)} 
-        onMouseLeave={() => setIsHovering(false)}
-      >
-        <div className="relative flex-grow overflow-hidden">
-          {livro.imagem ? (
-            <div className="w-full h-full relative">
-              <img 
-                src={livro.imagem} 
-                alt={livro.livro} 
-                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-end">
-                <motion.div 
-                  className="p-4 w-full"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <h3 className="font-semibold text-sm text-white line-clamp-2">
-                    {livro.livro}
-                  </h3>
-                  <div className="flex justify-between items-center mt-2">
-                    <Badge variant="outline" className="text-xs text-white/80 bg-white/10">
-                      {livro.area}
-                    </Badge>
-                    
-                    {livro.link && (
-                      <BookOpen size={16} className="text-white/60" />
-                    )}
-                  </div>
-                  
-                  {isHovering && livro.sobre && (
-                    <motion.p 
-                      className="text-xs text-white/70 mt-2 line-clamp-2"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {livro.sobre}
-                    </motion.p>
-                  )}
-                </motion.div>
+  return <Card className="group flex flex-col hover:shadow-lg transition-all hover:scale-105 cursor-pointer h-[300px] overflow-hidden" onClick={onCardClick} onMouseEnter={() => setIsHovering(true)} onMouseLeave={() => setIsHovering(false)}>
+      <div className="relative flex-grow overflow-hidden">
+        {livro.imagem ? <div className="w-full h-full relative">
+            <img src={livro.imagem} alt={livro.livro} className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-black/70 flex items-end">
+              <div className="p-3 w-full">
+                <h3 className="font-semibold text-sm text-white line-clamp-3">{livro.livro}</h3>
+                <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.area}</p>
               </div>
+            </div>
+            
+            {showFavoriteButton && <button onClick={handleFavoriteClick} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors">
+                <Bookmark size={16} className={isFavorite ? "fill-yellow-400 text-yellow-400" : ""} />
+              </button>}
+          </div> : <div className="w-full h-full bg-gray-800 flex items-end">
+            <div className="p-3 w-full">
+              <h3 className="font-semibold text-sm text-white line-clamp-3">{livro.livro}</h3>
+              <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.area}</p>
               
-              {showFavoriteButton && (
-                <button 
-                  onClick={handleFavoriteClick} 
-                  className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white hover:bg-[#D32F2F]/80 transition-colors"
-                >
-                  <Bookmark size={16} className={isFavorite ? "fill-[#D32F2F] text-[#D32F2F]" : ""} />
-                </button>
-              )}
+              {showFavoriteButton && <button onClick={handleFavoriteClick} className="absolute top-2 right-2 p-1 bg-black/50 rounded-full text-white hover:bg-black/70 transition-colors">
+                  <Bookmark size={16} className={isFavorite ? "fill-yellow-400 text-yellow-400" : ""} />
+                </button>}
             </div>
-          ) : (
-            <div className="w-full h-full bg-[#2a2a2a] flex items-end">
-              <div className="p-4 w-full">
-                <h3 className="font-semibold text-sm text-white line-clamp-2">
-                  {livro.livro}
-                </h3>
-                <div className="flex justify-between items-center mt-2">
-                  <Badge variant="outline" className="text-xs text-white/80 bg-white/10">
-                    {livro.area}
-                  </Badge>
-                </div>
-                
-                {showFavoriteButton && (
-                  <button 
-                    onClick={handleFavoriteClick} 
-                    className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white hover:bg-red-600/80 transition-colors"
-                  >
-                    <Bookmark size={16} className={isFavorite ? "fill-red-500 text-red-500" : ""} />
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-      </Card>
-    </motion.div>
-  );
+          </div>}
+      </div>
+      
+    </Card>;
 }

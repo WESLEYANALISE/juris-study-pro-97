@@ -1,3 +1,4 @@
+
 export interface Livro {
   id: string;
   livro: string;
@@ -6,9 +7,4 @@ export interface Livro {
   download: string | null;
   imagem: string | null;
   sobre: string | null;
-}
-
-export interface BibliotecaStats {
-  total: number;
-  byArea: Record<string, number>;
 }
