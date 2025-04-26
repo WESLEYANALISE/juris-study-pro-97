@@ -6,6 +6,7 @@ import { QuestionStats } from "@/components/questoes/QuestionStats";
 import { QuestionSetup } from "@/components/questoes/QuestionSetup";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 interface QuestionConfig {
   area: string;
