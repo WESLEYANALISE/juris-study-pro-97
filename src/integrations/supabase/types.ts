@@ -614,7 +614,7 @@ export type Database = {
           CorrectAnswerInfo: string | null
           CorrectAnswers: string | null
           id: number
-          QuestionType: string | null
+          QuestionText: string | null
           Tema: string | null
         }
         Insert: {
@@ -626,7 +626,7 @@ export type Database = {
           CorrectAnswerInfo?: string | null
           CorrectAnswers?: string | null
           id?: number
-          QuestionType?: string | null
+          QuestionText?: string | null
           Tema?: string | null
         }
         Update: {
@@ -638,7 +638,7 @@ export type Database = {
           CorrectAnswerInfo?: string | null
           CorrectAnswers?: string | null
           id?: number
-          QuestionType?: string | null
+          QuestionText?: string | null
           Tema?: string | null
         }
         Relationships: []
