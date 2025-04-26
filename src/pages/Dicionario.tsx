@@ -1,12 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, Volume2, Copy, Filter } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { TextToSpeechService } from "@/services/textToSpeechService";
-import { toast } from "@/hooks/use-toast";
+import { DicionarioSearch } from "@/components/dicionario/DicionarioSearch";
+import { DicionarioFilter } from "@/components/dicionario/DicionarioFilter";
+import { PalavraDoDia } from "@/components/dicionario/PalavraDoDia";
+import { TermosPopulares } from "@/components/dicionario/TermosPopulares";
+import { TermosSearchResults } from "@/components/dicionario/TermosSearchResults";
+import { useTermoView } from "@/hooks/use-termo-view";
 
 interface DicionarioTermo {
   id: string;
@@ -22,22 +22,99 @@ const Dicionario: React.FC = () => {
   const [filteredTermos, setFilteredTermos] = useState<DicionarioTermo[]>([]);
   const [selectedAreas, setSelectedAreas] = useState<string[]>([]);
   const [moreViewedTerms, setMoreViewedTerms] = useState<DicionarioTermo[]>([]);
+  const [palavraDoDia, setPalavraDoDia] = useState<DicionarioTermo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingPopular, setIsLoadingPopular] = useState(true);
+  const { trackView } = useTermoView();
 
-  // Fetch terms and track view on component mount
+  // Fetch terms and word of the day on component mount
   useEffect(() => {
     const fetchTermos = async () => {
-      const { data, error } = await supabase
-        .from('dicionario_juridico')
-        .select('*');
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('dicionario_juridico')
+          .select('*')
+          .order('termo');
 
-      if (data) {
-        setTermos(data);
-        setFilteredTermos(data);
+        if (data) {
+          setTermos(data);
+          setFilteredTermos(data.slice(0, 10)); // Show first 10 by default
+        }
+      } catch (error) {
+        console.error('Error fetching terms:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
-    const fetchMostViewedTerms = async () => {
-      // Fix: Change the query to avoid using count(*) which causes the TypeScript error
+    const fetchPalavraDoDia = async () => {
+      try {
+        // Get a random term as word of the day
+        // Using a deterministic approach based on the current date
+        const today = new Date();
+        const dateString = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+        
+        // Use a hash function to get a deterministic "random" number from the date
+        const hash = Array.from(dateString).reduce((acc, char) => {
+          return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
+        }, 0);
+
+        const { data: count } = await supabase
+          .from('dicionario_juridico')
+          .select('id', { count: 'exact', head: true });
+
+        if (count) {
+          const total = count;
+          // Get a deterministic index based on the hash and total count
+          const index = Math.abs(hash) % total;
+          
+          const { data } = await supabase
+            .from('dicionario_juridico')
+            .select('*')
+            .range(index, index);
+          
+          if (data && data.length > 0) {
+            setPalavraDoDia(data[0]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching word of the day:', error);
+      }
+    };
+
+    fetchTermos();
+    fetchPalavraDoDia();
+    fetchMostViewedTerms();
+  }, []);
+
+  // Search and filter logic
+  useEffect(() => {
+    let filtered = termos;
+
+    if (searchTerm) {
+      filtered = filtered.filter(termo => 
+        termo.termo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        termo.definicao.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedAreas.length > 0) {
+      filtered = filtered.filter(termo => 
+        termo.area_direito && 
+        selectedAreas.some(area => 
+          termo.area_direito?.split(',').map(a => a.trim()).includes(area)
+        )
+      );
+    }
+
+    setFilteredTermos(filtered);
+  }, [searchTerm, selectedAreas, termos]);
+
+  const fetchMostViewedTerms = async () => {
+    setIsLoadingPopular(true);
+    try {
+      // Get view counts for terms
       const { data: viewCounts } = await supabase
         .from('dicionario_termo_views')
         .select('termo_id')
@@ -68,128 +145,82 @@ const Dicionario: React.FC = () => {
           }
         }
       }
-    };
-
-    fetchTermos();
-    fetchMostViewedTerms();
-  }, []);
-
-  // Search and filter logic
-  useEffect(() => {
-    let filtered = termos;
-
-    if (searchTerm) {
-      filtered = filtered.filter(termo => 
-        termo.termo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        termo.definicao.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    } catch (error) {
+      console.error('Error fetching popular terms:', error);
+    } finally {
+      setIsLoadingPopular(false);
     }
-
-    if (selectedAreas.length > 0) {
-      filtered = filtered.filter(termo => 
-        termo.area_direito && 
-        selectedAreas.some(area => 
-          termo.area_direito?.split(',').map(a => a.trim()).includes(area)
-        )
-      );
-    }
-
-    setFilteredTermos(filtered);
-  }, [searchTerm, selectedAreas, termos]);
-
-  const handleTextToSpeech = (text: string) => {
-    TextToSpeechService.speak(text);
   };
 
-  const handleCopyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Texto copiado!",
-      description: "O texto foi copiado para a área de transferência."
-    });
+  const handleSearch = (term: string) => {
+    setSearchTerm(term);
+  };
+
+  const handleFilterChange = (areas: string[]) => {
+    setSelectedAreas(areas);
+  };
+
+  const handleTermoSelect = (termo: string) => {
+    setSearchTerm(termo);
+    // Scroll to top to see results
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTermoView = (termoId: string) => {
+    trackView(termoId);
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex space-x-2 mb-4">
-        <div className="relative flex-grow">
-          <Input 
-            placeholder="Buscar termo jurídico..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pr-10"
-          />
-          <Search className="absolute right-3 top-3 text-muted-foreground" />
-        </div>
-        <Button variant="outline" size="icon">
-          <Filter />
-        </Button>
-      </div>
+    <div className="container mx-auto p-4 max-w-6xl">
+      <div className="space-y-6">
+        <header className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">Dicionário Jurídico</h1>
+          <p className="text-muted-foreground">
+            Pesquise e descubra termos e definições do mundo jurídico
+          </p>
+        </header>
 
-      <div className="grid md:grid-cols-3 gap-4">
-        <div className="md:col-span-2">
-          <ScrollArea className="h-[70vh] pr-4">
-            {filteredTermos.map((termo) => (
-              <div 
-                key={termo.id} 
-                className="bg-card border rounded-lg p-4 mb-4 hover:shadow-md transition-shadow"
-              >
-                <h2 className="text-xl font-bold mb-2 flex items-center justify-between">
-                  {termo.termo}
-                  <div className="flex space-x-2">
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleTextToSpeech(termo.definicao)}
-                    >
-                      <Volume2 />
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      onClick={() => handleCopyText(termo.definicao)}
-                    >
-                      <Copy />
-                    </Button>
-                  </div>
-                </h2>
-                <p className="mb-2">{termo.definicao}</p>
-                {termo.exemplo_uso && (
-                  <div className="bg-muted p-2 rounded">
-                    <strong>Exemplo de uso:</strong> {termo.exemplo_uso}
-                  </div>
-                )}
-                {termo.area_direito && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {termo.area_direito.split(',').map((area) => (
-                      <span 
-                        key={area} 
-                        className="bg-primary/10 text-primary px-2 py-1 rounded-full text-xs"
-                      >
-                        {area.trim()}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </ScrollArea>
+        {palavraDoDia && (
+          <section className="mb-8">
+            <PalavraDoDia termo={palavraDoDia} isLoading={false} />
+          </section>
+        )}
+
+        <div className="flex items-center space-x-2">
+          <DicionarioSearch 
+            onSearch={handleSearch} 
+            className="flex-grow" 
+          />
+          <DicionarioFilter onFilterChange={handleFilterChange} />
         </div>
-        <div>
-          <h3 className="text-lg font-semibold mb-4">Termos Mais Vistos</h3>
-          <ScrollArea className="h-[70vh]">
-            {moreViewedTerms.map((termo) => (
-              <div 
-                key={termo.id} 
-                className="bg-card border rounded-lg p-3 mb-2 hover:bg-accent transition-colors"
-              >
-                <h4 className="font-medium">{termo.termo}</h4>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {termo.definicao}
-                </p>
-              </div>
-            ))}
-          </ScrollArea>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <h2 className="text-lg font-semibold mb-4">
+              {searchTerm ? 'Resultados da pesquisa' : 'Termos jurídicos'}
+              {filteredTermos.length > 0 && (
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  ({filteredTermos.length} {filteredTermos.length === 1 ? 'termo' : 'termos'})
+                </span>
+              )}
+            </h2>
+            
+            <TermosSearchResults
+              termos={filteredTermos}
+              isLoading={isLoading}
+              searchTerm={searchTerm}
+              onTermoView={handleTermoView}
+            />
+          </div>
+
+          <div>
+            <TermosPopulares 
+              termos={moreViewedTerms} 
+              isLoading={isLoadingPopular}
+              onTermoSelect={handleTermoSelect}
+              className="sticky top-24"
+            />
+          </div>
         </div>
       </div>
     </div>
