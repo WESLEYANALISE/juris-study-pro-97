@@ -19,6 +19,11 @@ import { RequireAuth } from "@/components/RequireAuth";
 import Biblioteca from "./pages/Biblioteca";
 import Flashcards from "./pages/Flashcards";
 import { DataMigrationAlert } from "./components/DataMigrationAlert";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "./components/PageTransition";
+import VerTudo from "./pages/VerTudo";
+import Perfil from "./pages/Perfil";
+import Noticias from "./pages/Noticias";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -47,75 +52,131 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <WelcomeModal onProfileSelect={handleProfileSelect} />
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route
-                path="/"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}>
-                      <DataMigrationAlert />
-                      <Index />
-                    </Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/biblioteca"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}>
-                      <DataMigrationAlert />
-                      <Biblioteca />
-                    </Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/flashcards"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}>
-                      <DataMigrationAlert />
-                      <Flashcards />
-                    </Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/videoaulas"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}><VideoAulas /></Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/bloger"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}><Bloger /></Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route
-                path="/anotacoes"
-                element={
-                  <RequireAuth>
-                    <Layout userProfile={userProfile}><Anotacoes /></Layout>
-                  </RequireAuth>
-                }
-              />
-              <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
-              <Route
-                path="*"
-                element={
-                  <RequireAuth>
-                    <NotFound />
-                  </RequireAuth>
-                }
-              />
-            </Routes>
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route
+                  path="/"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <DataMigrationAlert />
+                          <Index />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/biblioteca"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <DataMigrationAlert />
+                          <Biblioteca />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/flashcards"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <DataMigrationAlert />
+                          <Flashcards />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/videoaulas"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VideoAulas />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/bloger"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Bloger />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/anotacoes"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Anotacoes />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/ver-tudo"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VerTudo />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/perfil"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Perfil />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/noticias"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Noticias />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
+                <Route
+                  path="*"
+                  element={
+                    <RequireAuth>
+                      <NotFound />
+                    </RequireAuth>
+                  }
+                />
+              </Routes>
+            </AnimatePresence>
           </BrowserRouter>
         </TooltipProvider>
         <ReactQueryDevtools initialIsOpen={false} />
