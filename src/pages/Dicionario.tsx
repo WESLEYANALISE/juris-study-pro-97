@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Volume2, Copy, Filter } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { textToSpeech } from "@/services/textToSpeechService";
+import { TextToSpeechService } from "@/services/textToSpeechService";
+import { toast } from "@/hooks/use-toast";
 
 interface DicionarioTermo {
   id: string;
@@ -36,11 +37,25 @@ const Dicionario: React.FC = () => {
     };
 
     const fetchMostViewedTerms = async () => {
+      // Instead of using RPC, let's query the view counts directly
       const { data, error } = await supabase
-        .rpc('get_most_viewed_terms', { limit: 5 });
+        .from('dicionario_termo_views')
+        .select('termo_id, count(*)')
+        .group('termo_id')
+        .order('count', { ascending: false })
+        .limit(5);
 
-      if (data) {
-        setMoreViewedTerms(data);
+      if (data && data.length > 0) {
+        // Fetch the actual term data for these IDs
+        const ids = data.map(item => item.termo_id);
+        const { data: termData } = await supabase
+          .from('dicionario_juridico')
+          .select('*')
+          .in('id', ids);
+
+        if (termData) {
+          setMoreViewedTerms(termData);
+        }
       }
     };
 
@@ -72,11 +87,15 @@ const Dicionario: React.FC = () => {
   }, [searchTerm, selectedAreas, termos]);
 
   const handleTextToSpeech = (text: string) => {
-    textToSpeech(text);
+    TextToSpeechService.speak(text);
   };
 
   const handleCopyText = (text: string) => {
     navigator.clipboard.writeText(text);
+    toast({
+      title: "Texto copiado!",
+      description: "O texto foi copiado para a área de transferência."
+    });
   };
 
   return (
