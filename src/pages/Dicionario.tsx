@@ -60,12 +60,13 @@ const Dicionario: React.FC = () => {
           return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
         }, 0);
 
-        const { data: count } = await supabase
+        const { data: countData } = await supabase
           .from('dicionario_juridico')
           .select('id', { count: 'exact', head: true });
 
-        if (count) {
-          const total = count;
+        if (countData) {
+          // Fix: Ensure we have a numeric value for total by using the count property
+          const total = countData.length || 1; // Fallback to 1 if length is 0
           // Get a deterministic index based on the hash and total count
           const index = Math.abs(hash) % total;
           
