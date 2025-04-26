@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -111,7 +110,6 @@ export default function Biblioteca() {
     setAiResult(res);
   }
 
-  // Animation variants for list items
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
