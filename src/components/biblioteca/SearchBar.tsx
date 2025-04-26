@@ -28,7 +28,7 @@ export function SearchBar({
             value={searchTerm}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder="Pesquisar livro, autor ou tema..."
-            className="pr-10 bg-black/20 border-gray-700 focus:border-primary text-white placeholder:text-gray-400"
+            className="pr-10"
             list="livros-suggestions"
           />
           <Search className="absolute right-3 top-2.5 h-5 w-5 text-muted-foreground" />
@@ -46,7 +46,6 @@ export function SearchBar({
           variant="ghost"
           size="sm"
           onClick={onViewChange}
-          className="text-white hover:bg-gray-800"
         >
           {isCarouselView ? (
             <>Lista</>
@@ -54,12 +53,7 @@ export function SearchBar({
             <>Carousel</>
           )}
         </Button>
-        <Button 
-          variant="secondary" 
-          size="sm" 
-          onClick={onAIHelp}
-          className="bg-[#D32F2F] hover:bg-[#E53935] text-white"
-        >
+        <Button variant="secondary" size="sm" onClick={onAIHelp}>
           Ajuda IA
         </Button>
       </div>

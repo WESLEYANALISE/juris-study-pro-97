@@ -19,9 +19,9 @@
     --primary: 222 47% 31%;
     --primary-foreground: 210 40% 98%;
     
-    /* Cores secundárias - Vermelho Jurídico */
-    --secondary: 0 65% 50%;
-    --secondary-foreground: 210 40% 98%;
+    /* Cores secundárias - Dourado */
+    --secondary: 43 96% 56%;
+    --secondary-foreground: 220 33% 98%;
     
     /* Estados e feedback */
     --success: 142 72% 29%;
@@ -40,29 +40,29 @@
     /* Bordas e inputs */
     --border: 220 33% 90%;
     --input: 220 33% 90%;
-    --ring: 0 65% 50%;
+    --ring: 222 47% 31%;
 
     /* Raio padrão para elementos */
-    --radius: 0.5rem;
+    --radius: 0.75rem;
   }
 
   .dark {
     /* Tema escuro - cores base */
-    --background: 0 0% 7%;
+    --background: 222 47% 7%;
     --foreground: 220 33% 98%;
     
     /* Cores de cartões e elementos */
-    --card: 0 0% 12%;
+    --card: 222 47% 10%;
     --card-foreground: 220 33% 98%;
-    --popover: 0 0% 12%;
+    --popover: 222 47% 10%;
     --popover-foreground: 220 33% 98%;
     
     /* Cores primárias - Azul Marinho mais claro */
     --primary: 222 47% 40%;
     --primary-foreground: 220 33% 98%;
     
-    /* Cores secundárias - Vermelho Jurídico */
-    --secondary: 0 65% 50%;
+    /* Cores secundárias - Dourado mais escuro */
+    --secondary: 43 96% 46%;
     --secondary-foreground: 220 33% 98%;
     
     /* Estados e feedback */
@@ -74,15 +74,15 @@
     --destructive-foreground: 210 40% 98%;
     
     /* Elementos de interface */
-    --muted: 0 0% 15%;
+    --muted: 222 47% 15%;
     --muted-foreground: 220 33% 70%;
-    --accent: 0 65% 50%;
+    --accent: 222 47% 40%;
     --accent-foreground: 220 33% 98%;
     
     /* Bordas e inputs */
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 65% 50%;
+    --border: 222 47% 20%;
+    --input: 222 47% 20%;
+    --ring: 222 47% 40%;
   }
 }
 
@@ -126,21 +126,6 @@
   .enter-animation {
     @apply animate-fade-in motion-reduce:animate-none;
   }
-  
-  /* Netflix-style cards */
-  .netflix-card {
-    @apply bg-[#1E1E1E] text-white overflow-hidden rounded-md transition-all duration-300 hover:scale-105;
-  }
-  
-  /* Netflix-style hover effect */
-  .netflix-hover {
-    @apply transform transition-transform duration-300 hover:scale-110 hover:z-10;
-  }
-  
-  /* Netflix-style info overlay */
-  .info-overlay {
-    @apply absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100;
-  }
 }
 
 /* Melhorias em scrollbars */
@@ -154,15 +139,4 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
-}
-
-/* Melhorias para mobile */
-@media (max-width: 640px) {
-  .carousel-container {
-    @apply px-2;
-  }
-  
-  .carousel-item {
-    @apply min-w-[160px] max-w-[190px];
-  }
 }

@@ -7,11 +7,4 @@ export interface Livro {
   download: string | null;
   imagem: string | null;
   sobre: string | null;
-  favorito?: boolean;
-}
-
-export interface BibliotecaStats {
-  totalLivros: number;
-  totalAreas: number;
-  areasPopulares: { area: string; count: number }[];
 }
