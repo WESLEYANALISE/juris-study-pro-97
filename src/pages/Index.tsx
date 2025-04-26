@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Scale, Video, BookOpen, Brain, GraduationCap, FilePlus, MessageSquare, LibrarySquare, Gavel, Newspaper, FileText, PenTool, Monitor, MonitorCheck, Calendar, Search } from "lucide-react";
+import { Scale } from "lucide-react";
+import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import { useNavigate } from "react-router-dom";
+
 const Index = () => {
   const navigate = useNavigate();
   const categories = [{
@@ -86,77 +87,62 @@ const Index = () => {
       color: "text-orange-500"
     }]
   }];
-  return <div className="container mx-auto px-0">
+
+  return (
+    <div className="container mx-auto px-4 py-6">
       <div className="flex flex-col items-center text-center mb-8">
-        <div className="mb-4">
-          <Scale className="h-12 w-12 text-primary mx-auto mb-2" />
-          <h1 className="text-3xl font-bold mb-1">JurisStudy Pro</h1>
-          <p className="text-lg text-muted-foreground">
+        <div className="mb-6">
+          <Scale className="h-16 w-16 text-primary mx-auto mb-3" />
+          <h1 className="text-4xl font-bold mb-2">JurisStudy Pro</h1>
+          <p className="text-xl text-muted-foreground">
             Plataforma completa para estudos jurídicos
           </p>
         </div>
-        <div className="max-w-2xl mb-4">
-          
-          <div className="flex gap-2 justify-center">
-            
-            
-          </div>
-        </div>
       </div>
 
-      <div className="space-y-8">
-        {categories.map((category, categoryIndex) => <div key={categoryIndex}>
-            <h2 className="text-xl font-semibold mb-4 px-2">{category.title}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              {category.items.map((feature, index) => <Card key={index} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow border">
-                  <CardHeader className="p-3 md:p-4">
-                    <div className="flex items-center gap-2">
-                      <feature.icon className={`h-5 w-5 ${feature.color}`} />
-                      <CardTitle className="text-sm md:text-base">{feature.title}</CardTitle>
-                    </div>
-                    <CardDescription className="text-xs mt-1">{feature.description}</CardDescription>
-                  </CardHeader>
-                  <CardFooter className="p-2 md:p-3 pt-0">
-                    <Button className="w-full text-xs py-1 h-8" variant="outline" onClick={() => navigate(feature.path)}>
-                      Acessar
-                    </Button>
-                  </CardFooter>
-                </Card>)}
-            </div>
-          </div>)}
+      <div className="space-y-10">
+        {categories.map((category, categoryIndex) => (
+          <CategoryCarousel
+            key={categoryIndex}
+            title={category.title}
+            items={category.items}
+          />
+        ))}
       </div>
 
-      <div className="bg-card p-4 rounded-lg shadow-sm mt-8 mb-6">
-        <h2 className="text-xl font-bold mb-3">Escolha seu perfil de estudos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="bg-card p-6 rounded-lg shadow-sm mt-10 mb-6">
+        <h2 className="text-2xl font-bold mb-4">Escolha seu perfil de estudos</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
-            <CardHeader className="p-3">
-              <CardTitle className="text-base">Concurseiro</CardTitle>
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">Concurseiro</CardTitle>
+              <CardDescription className="text-sm">
+                Foco em conteúdos para concursos públicos
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <p className="text-xs">Foco em conteúdos para concursos públicos</p>
-            </CardContent>
           </Card>
           
           <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
-            <CardHeader className="p-3">
-              <CardTitle className="text-base">Universitário</CardTitle>
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">Universitário</CardTitle>
+              <CardDescription className="text-sm">
+                Material para graduação em Direito
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <p className="text-xs">Material para graduação em Direito</p>
-            </CardContent>
           </Card>
           
           <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
-            <CardHeader className="p-3">
-              <CardTitle className="text-base">Advogado</CardTitle>
+            <CardHeader className="p-4">
+              <CardTitle className="text-lg">Advogado</CardTitle>
+              <CardDescription className="text-sm">
+                Recursos para a prática profissional
+              </CardDescription>
             </CardHeader>
-            <CardContent className="p-3 pt-0">
-              <p className="text-xs">Recursos para a prática profissional</p>
-            </CardContent>
           </Card>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Index;

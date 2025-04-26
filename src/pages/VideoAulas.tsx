@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,8 +6,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchIcon, BookOpen, Brain, FileText, MessageSquare } from "lucide-react";
 import { getJuridicPlaylists, getPlaylistVideos, type YouTubePlaylist, type YouTubeVideo } from "@/lib/youtube-service";
+import { AreaSelector } from "@/components/videoaulas/AreaSelector";
 
-// Legal areas without prefixing "Direito"
 const LEGAL_AREAS = [
   "Constitucional",
   "Civil",
@@ -24,7 +23,6 @@ const LEGAL_AREAS = [
   "Consumidor"
 ];
 
-// Topics within each area
 const TOPICS_MAP: Record<string, string[]> = {
   "Constitucional": [
     "Controle de Constitucionalidade",
@@ -48,7 +46,6 @@ const TOPICS_MAP: Record<string, string[]> = {
     "Crimes contra o Patrimônio",
     "Execução Penal"
   ]
-  // Add more topics for other areas
 };
 
 const VideoAulas = () => {
@@ -98,7 +95,7 @@ const VideoAulas = () => {
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="container mx-auto px-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Vídeo-aulas</h1>
         <p className="text-muted-foreground">
@@ -108,24 +105,13 @@ const VideoAulas = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Áreas</CardTitle>
-            </CardHeader>
-            <CardContent className="max-h-[400px] overflow-y-auto">
-              <div className="space-y-1">
-                {LEGAL_AREAS.map((area) => (
-                  <Button
-                    key={area}
-                    variant={selectedArea === area ? "default" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedArea(area)}
-                  >
-                    {area}
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
+          <Card className="p-4">
+            <h3 className="font-semibold mb-3">Área do Direito</h3>
+            <AreaSelector
+              areas={LEGAL_AREAS}
+              selectedArea={selectedArea}
+              onAreaSelect={setSelectedArea}
+            />
           </Card>
 
           <Card>
