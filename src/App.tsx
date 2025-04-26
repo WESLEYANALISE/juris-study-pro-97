@@ -24,6 +24,7 @@ import VerTudo from "./pages/VerTudo";
 import Perfil from "./pages/Perfil";
 import Noticias from "./pages/Noticias";
 import Dicionario from "./pages/Dicionario";
+import JurisFlix from "./pages/JurisFlix";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -180,13 +181,18 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="*"
+                  path="/jurisflix"
                   element={
                     <RequireAuth>
-                      <NotFound />
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <JurisFlix />
+                        </PageTransition>
+                      </Layout>
                     </RequireAuth>
                   }
                 />
+                <Route path="*" element={<RequireAuth><NotFound /></RequireAuth>} />
               </Routes>
             </AnimatePresence>
           </BrowserRouter>
