@@ -37,17 +37,18 @@ const Dicionario: React.FC = () => {
     };
 
     const fetchMostViewedTerms = async () => {
-      // Instead of using RPC, let's query the view counts directly
-      const { data, error } = await supabase
+      // Query to get most viewed terms directly
+      const { data: viewData } = await supabase
         .from('dicionario_termo_views')
         .select('termo_id, count(*)')
-        .group('termo_id')
         .order('count', { ascending: false })
         .limit(5);
 
-      if (data && data.length > 0) {
+      if (viewData && viewData.length > 0) {
+        // Extract term IDs
+        const ids = viewData.map(item => item.termo_id);
+        
         // Fetch the actual term data for these IDs
-        const ids = data.map(item => item.termo_id);
         const { data: termData } = await supabase
           .from('dicionario_juridico')
           .select('*')
