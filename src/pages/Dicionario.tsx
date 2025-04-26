@@ -37,25 +37,35 @@ const Dicionario: React.FC = () => {
     };
 
     const fetchMostViewedTerms = async () => {
-      // Query to get most viewed terms directly
-      const { data: viewData } = await supabase
+      // Fix: Change the query to avoid using count(*) which causes the TypeScript error
+      const { data: viewCounts } = await supabase
         .from('dicionario_termo_views')
-        .select('termo_id, count(*)')
-        .order('count', { ascending: false })
-        .limit(5);
+        .select('termo_id')
+        .limit(100);
 
-      if (viewData && viewData.length > 0) {
-        // Extract term IDs
-        const ids = viewData.map(item => item.termo_id);
+      if (viewCounts && viewCounts.length > 0) {
+        // Count occurrences of each termo_id in JavaScript
+        const termCounts = viewCounts.reduce((acc: Record<string, number>, item: { termo_id: string }) => {
+          acc[item.termo_id] = (acc[item.termo_id] || 0) + 1;
+          return acc;
+        }, {});
         
-        // Fetch the actual term data for these IDs
-        const { data: termData } = await supabase
-          .from('dicionario_juridico')
-          .select('*')
-          .in('id', ids);
-
-        if (termData) {
-          setMoreViewedTerms(termData);
+        // Sort by count and get top 5
+        const topTermIds = Object.entries(termCounts)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 5)
+          .map(([id]) => id);
+        
+        if (topTermIds.length > 0) {
+          // Fetch the actual term data for these IDs
+          const { data: termData } = await supabase
+            .from('dicionario_juridico')
+            .select('*')
+            .in('id', topTermIds);
+  
+          if (termData) {
+            setMoreViewedTerms(termData);
+          }
         }
       }
     };
