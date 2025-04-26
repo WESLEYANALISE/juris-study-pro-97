@@ -11,7 +11,7 @@ import { BookCard } from "@/components/biblioteca/BookCard";
 import { BookModal } from "@/components/biblioteca/BookModal";
 import { BibliotecaStats } from "@/components/biblioteca/BibliotecaStats";
 import { motion } from "framer-motion";
-import type { Livro, BibliotecaStats } from "@/types/biblioteca";
+import type { Livro, BibliotecaStats as BibliotecaStatsType } from "@/types/biblioteca";
 
 type State =
   | { mode: "carousel" }
@@ -79,8 +79,8 @@ export default function Biblioteca() {
     return grouped;
   }, [filteredLivros]);
   
-  const bibliotecaStats = useMemo((): BibliotecaStats => {
-    const stats: BibliotecaStats = {
+  const bibliotecaStats = useMemo((): BibliotecaStatsType => {
+    const stats: BibliotecaStatsType = {
       total: livros?.length || 0,
       byArea: {}
     };
