@@ -1,105 +1,142 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Tema claro - não será usado como padrão */
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 260 50% 60%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 260 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 260 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 260 50% 60%;
-    --radius: 0.5rem;
+    /* Tema claro - cores base */
+    --background: 220 33% 98%;
+    --foreground: 224 71% 4%;
     
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 260 50% 60%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 260 50% 60%;
+    /* Cores de cartões e elementos */
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+    
+    /* Cores primárias - Azul Marinho */
+    --primary: 222 47% 31%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Cores secundárias - Dourado */
+    --secondary: 43 96% 56%;
+    --secondary-foreground: 220 33% 98%;
+    
+    /* Estados e feedback */
+    --success: 142 72% 29%;
+    --success-foreground: 210 40% 98%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 224 71% 4%;
+    --destructive: 0 84% 43%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Elementos de interface */
+    --muted: 220 33% 96%;
+    --muted-foreground: 224 71% 45%;
+    --accent: 222 47% 40%;
+    --accent-foreground: 220 33% 98%;
+    
+    /* Bordas e inputs */
+    --border: 220 33% 90%;
+    --input: 220 33% 90%;
+    --ring: 222 47% 31%;
+
+    /* Raio padrão para elementos */
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Tema escuro - será o padrão */
-    --background: 0 0% 7%;  /* #121212 */
-    --foreground: 0 0% 100%;  /* #ffffff */
+    /* Tema escuro - cores base */
+    --background: 222 47% 7%;
+    --foreground: 220 33% 98%;
     
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 100%;
+    /* Cores de cartões e elementos */
+    --card: 222 47% 10%;
+    --card-foreground: 220 33% 98%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 220 33% 98%;
     
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 100%;
+    /* Cores primárias - Azul Marinho mais claro */
+    --primary: 222 47% 40%;
+    --primary-foreground: 220 33% 98%;
     
-    --primary: 260 50% 60%;  /* Roxo - cor primária jurídica */
-    --primary-foreground: 0 0% 100%;
+    /* Cores secundárias - Dourado mais escuro */
+    --secondary: 43 96% 46%;
+    --secondary-foreground: 220 33% 98%;
     
-    --secondary: 260 30% 15%;
-    --secondary-foreground: 0 0% 100%;
+    /* Estados e feedback */
+    --success: 142 72% 35%;
+    --success-foreground: 210 40% 98%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 224 71% 4%;
+    --destructive: 0 84% 43%;
+    --destructive-foreground: 210 40% 98%;
     
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 70%;
+    /* Elementos de interface */
+    --muted: 222 47% 15%;
+    --muted-foreground: 220 33% 70%;
+    --accent: 222 47% 40%;
+    --accent-foreground: 220 33% 98%;
     
-    --accent: 260 30% 20%;
-    --accent-foreground: 0 0% 100%;
-    
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 100%;
-    
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 260 50% 60%;
-    
-    --sidebar-background: 0 0% 10%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 260 50% 60%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 260 50% 60%;
+    /* Bordas e inputs */
+    --border: 222 47% 20%;
+    --input: 222 47% 20%;
+    --ring: 222 47% 40%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border selection:bg-primary/10 selection:text-primary;
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
-/* Card Flip Effects */
-.perspective {
-  perspective: 1500px;
+@layer utilities {
+  /* Utility classes para cards */
+  .card-hover {
+    @apply transition-all duration-200 hover:shadow-hover hover:-translate-y-1;
+  }
+
+  /* Classes para inputs e controles */
+  .input-elegant {
+    @apply rounded-lg border-2 border-input bg-transparent px-3 py-2 text-sm 
+           ring-offset-background transition-colors placeholder:text-muted-foreground 
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring 
+           focus-visible:ring-offset-2;
+  }
+
+  /* Classes para botões */
+  .btn-elegant {
+    @apply rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 
+           active:scale-95 disabled:pointer-events-none disabled:opacity-50;
+  }
+
+  /* Efeitos de glassmorfismo */
+  .glass {
+    @apply bg-background/80 backdrop-blur-sm border border-border/50;
+  }
+
+  /* Animações de entrada */
+  .enter-animation {
+    @apply animate-fade-in motion-reduce:animate-none;
+  }
 }
 
-.transform-style-3d {
-  transform-style: preserve-3d;
+/* Melhorias em scrollbars */
+::-webkit-scrollbar {
+  @apply w-2;
 }
 
-.backface-hidden {
-  backface-visibility: hidden;
+::-webkit-scrollbar-track {
+  @apply bg-muted;
 }
 
-.rotate-y-180 {
-  transform: rotateY(180deg);
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
 }
