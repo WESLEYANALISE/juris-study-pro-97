@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,6 @@ import { BookmarkIcon, Share2Icon, Newspaper, SearchIcon, Calendar, User, Tag, I
 import { Skeleton } from "@/components/ui/skeleton";
 import { Drawer, DrawerClose, DrawerContent, DrawerDescription, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from "@/components/ui/drawer";
 import { motion } from "framer-motion";
-
 interface NewsItem {
   id: string;
   title: string;
@@ -23,7 +21,6 @@ interface NewsItem {
   tags: string[];
   url: string;
 }
-
 const Noticias = () => {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,89 +29,78 @@ const Noticias = () => {
   const [selectedArticle, setSelectedArticle] = useState<NewsItem | null>(null);
   const [summary, setSummary] = useState("");
   const [summaryLoading, setSummaryLoading] = useState(false);
-
-  const mockNews: NewsItem[] = [
-    {
-      id: "1",
-      title: "STF decide sobre constitucionalidade da Lei de Responsabilidade Fiscal",
-      description: "O Supremo Tribunal Federal decidiu hoje sobre a constitucionalidade de dispositivos da Lei de Responsabilidade Fiscal que estavam sendo questionados.",
-      content: "Em sessão virtual encerrada nesta sexta-feira (26), o Supremo Tribunal Federal (STF) decidiu que estados e municípios não podem editar normas que dificultem o pagamento de precatórios. O tema foi analisado na Ação Direta de Inconstitucionalidade (ADI) 4425. A maioria dos ministros entendeu que os precatórios são uma forma de execução de decisão judicial contra a Fazenda Pública e que sua quitação é obrigatória...",
-      source: "STF",
-      category: "Constitucional",
-      date: "2025-04-26",
-      author: "Redação JurisNews",
-      image: "https://source.unsplash.com/random/800x600/?court",
-      tags: ["STF", "Constitucional", "LRF"],
-      url: "#"
-    },
-    {
-      id: "2",
-      title: "Conselho Nacional de Justiça aprova novas diretrizes para conciliação",
-      description: "O CNJ aprovou hoje novas diretrizes para conciliação e mediação nos tribunais brasileiros, buscando ampliar os métodos alternativos de resolução de conflitos.",
-      content: "O Conselho Nacional de Justiça (CNJ) aprovou nesta terça-feira novas diretrizes para os procedimentos de conciliação e mediação nos tribunais brasileiros. As mudanças visam padronizar as práticas e ampliar os métodos alternativos de resolução de conflitos no país...",
-      source: "CNJ",
-      category: "Processual",
-      date: "2025-04-25",
-      author: "Maria Silva",
-      image: "https://source.unsplash.com/random/800x600/?agreement",
-      tags: ["CNJ", "Conciliação", "Mediação"],
-      url: "#"
-    },
-    {
-      id: "3",
-      title: "Nova lei altera regras para registro de imóveis no Brasil",
-      description: "O presidente sancionou hoje uma nova lei que altera regras para registro de imóveis, simplificando procedimentos e reduzindo custos.",
-      content: "Foi sancionada nesta semana a Lei 14.382/22, que simplifica o registro de imóveis no Brasil. A norma altera a Lei de Registros Públicos (Lei 6.015/73) e traz diversas mudanças que visam desburocratizar os atos cartorários, além de permitir a realização de procedimentos por meio eletrônico...",
-      source: "Governo Federal",
-      category: "Civil",
-      date: "2025-04-24",
-      author: "João Santos",
-      image: "https://source.unsplash.com/random/800x600/?realestate",
-      tags: ["Imóveis", "Registro", "Civil"],
-      url: "#"
-    },
-    {
-      id: "4",
-      title: "Superior Tribunal de Justiça define tese sobre contratos de planos de saúde",
-      description: "O STJ definiu hoje importante tese sobre a aplicação do Código de Defesa do Consumidor em contratos de planos de saúde coletivos.",
-      content: "A Segunda Seção do Superior Tribunal de Justiça (STJ) definiu, em julgamento sob o rito dos recursos repetitivos, que o Código de Defesa do Consumidor (CDC) é aplicável aos contratos de planos de saúde coletivos. A decisão, que afetará milhares de processos sobrestados em todo o país, estabelece que as cláusulas desses contratos estão sujeitas ao controle de abusividade...",
-      source: "STJ",
-      category: "Consumidor",
-      date: "2025-04-23",
-      author: "Ana Oliveira",
-      image: "https://source.unsplash.com/random/800x600/?health",
-      tags: ["STJ", "Plano de Saúde", "Consumidor"],
-      url: "#"
-    },
-    {
-      id: "5",
-      title: "Tribunal Superior do Trabalho define nova súmula sobre horas extras",
-      description: "O TST publicou nova súmula que consolida o entendimento sobre pagamento de horas extras para trabalhadores em regime de teletrabalho.",
-      content: "O Tribunal Superior do Trabalho (TST) publicou nesta segunda-feira a Súmula 464, que consolida o entendimento da corte sobre o pagamento de horas extras para trabalhadores em regime de teletrabalho. Segundo o novo enunciado, 'são devidas horas extras ao empregado em teletrabalho quando comprovado o controle da jornada pelo empregador, direta ou indiretamente'...",
-      source: "TST",
-      category: "Trabalho",
-      date: "2025-04-22",
-      author: "Marcos Pereira",
-      image: "https://source.unsplash.com/random/800x600/?work",
-      tags: ["TST", "Horas Extras", "Teletrabalho"],
-      url: "#"
-    }
-  ];
-
+  const mockNews: NewsItem[] = [{
+    id: "1",
+    title: "STF decide sobre constitucionalidade da Lei de Responsabilidade Fiscal",
+    description: "O Supremo Tribunal Federal decidiu hoje sobre a constitucionalidade de dispositivos da Lei de Responsabilidade Fiscal que estavam sendo questionados.",
+    content: "Em sessão virtual encerrada nesta sexta-feira (26), o Supremo Tribunal Federal (STF) decidiu que estados e municípios não podem editar normas que dificultem o pagamento de precatórios. O tema foi analisado na Ação Direta de Inconstitucionalidade (ADI) 4425. A maioria dos ministros entendeu que os precatórios são uma forma de execução de decisão judicial contra a Fazenda Pública e que sua quitação é obrigatória...",
+    source: "STF",
+    category: "Constitucional",
+    date: "2025-04-26",
+    author: "Redação JurisNews",
+    image: "https://source.unsplash.com/random/800x600/?court",
+    tags: ["STF", "Constitucional", "LRF"],
+    url: "#"
+  }, {
+    id: "2",
+    title: "Conselho Nacional de Justiça aprova novas diretrizes para conciliação",
+    description: "O CNJ aprovou hoje novas diretrizes para conciliação e mediação nos tribunais brasileiros, buscando ampliar os métodos alternativos de resolução de conflitos.",
+    content: "O Conselho Nacional de Justiça (CNJ) aprovou nesta terça-feira novas diretrizes para os procedimentos de conciliação e mediação nos tribunais brasileiros. As mudanças visam padronizar as práticas e ampliar os métodos alternativos de resolução de conflitos no país...",
+    source: "CNJ",
+    category: "Processual",
+    date: "2025-04-25",
+    author: "Maria Silva",
+    image: "https://source.unsplash.com/random/800x600/?agreement",
+    tags: ["CNJ", "Conciliação", "Mediação"],
+    url: "#"
+  }, {
+    id: "3",
+    title: "Nova lei altera regras para registro de imóveis no Brasil",
+    description: "O presidente sancionou hoje uma nova lei que altera regras para registro de imóveis, simplificando procedimentos e reduzindo custos.",
+    content: "Foi sancionada nesta semana a Lei 14.382/22, que simplifica o registro de imóveis no Brasil. A norma altera a Lei de Registros Públicos (Lei 6.015/73) e traz diversas mudanças que visam desburocratizar os atos cartorários, além de permitir a realização de procedimentos por meio eletrônico...",
+    source: "Governo Federal",
+    category: "Civil",
+    date: "2025-04-24",
+    author: "João Santos",
+    image: "https://source.unsplash.com/random/800x600/?realestate",
+    tags: ["Imóveis", "Registro", "Civil"],
+    url: "#"
+  }, {
+    id: "4",
+    title: "Superior Tribunal de Justiça define tese sobre contratos de planos de saúde",
+    description: "O STJ definiu hoje importante tese sobre a aplicação do Código de Defesa do Consumidor em contratos de planos de saúde coletivos.",
+    content: "A Segunda Seção do Superior Tribunal de Justiça (STJ) definiu, em julgamento sob o rito dos recursos repetitivos, que o Código de Defesa do Consumidor (CDC) é aplicável aos contratos de planos de saúde coletivos. A decisão, que afetará milhares de processos sobrestados em todo o país, estabelece que as cláusulas desses contratos estão sujeitas ao controle de abusividade...",
+    source: "STJ",
+    category: "Consumidor",
+    date: "2025-04-23",
+    author: "Ana Oliveira",
+    image: "https://source.unsplash.com/random/800x600/?health",
+    tags: ["STJ", "Plano de Saúde", "Consumidor"],
+    url: "#"
+  }, {
+    id: "5",
+    title: "Tribunal Superior do Trabalho define nova súmula sobre horas extras",
+    description: "O TST publicou nova súmula que consolida o entendimento sobre pagamento de horas extras para trabalhadores em regime de teletrabalho.",
+    content: "O Tribunal Superior do Trabalho (TST) publicou nesta segunda-feira a Súmula 464, que consolida o entendimento da corte sobre o pagamento de horas extras para trabalhadores em regime de teletrabalho. Segundo o novo enunciado, 'são devidas horas extras ao empregado em teletrabalho quando comprovado o controle da jornada pelo empregador, direta ou indiretamente'...",
+    source: "TST",
+    category: "Trabalho",
+    date: "2025-04-22",
+    author: "Marcos Pereira",
+    image: "https://source.unsplash.com/random/800x600/?work",
+    tags: ["TST", "Horas Extras", "Teletrabalho"],
+    url: "#"
+  }];
   useEffect(() => {
     // Simulando carregamento de notícias
     const timer = setTimeout(() => {
       setNews(mockNews);
       setLoading(false);
     }, 1000);
-
     return () => clearTimeout(timer);
   }, []);
-
   const handleGenerateSummary = async (article: NewsItem) => {
     setSelectedArticle(article);
     setSummaryLoading(true);
-    
     try {
       // Simulating API call to Gemini
       const summaryText = await generateSummaryWithGemini(article.content);
@@ -131,30 +117,21 @@ const Noticias = () => {
   const generateSummaryWithGemini = async (content: string): Promise<string> => {
     // In a real implementation, this would call the Gemini API with the API key
     // const apiKey = "AIzaSyBto9zJDNJCvz76qz56oeMPOBfHhxjPTKA";
-    
+
     // Simulating API delay
     await new Promise(resolve => setTimeout(resolve, 1500));
-    
     return `Este é um resumo gerado pela IA Gemini do conteúdo fornecido. Em uma implementação real, 
     a API do Gemini seria chamada com a chave fornecida (AIzaSyBto9zJDNJCvz76qz56oeMPOBfHhxjPTKA) e 
     retornaria um resumo conciso do texto original, destacando os pontos principais da notícia 
     jurídica e permitindo ao leitor entender rapidamente o conteúdo essencial do artigo.`;
   };
-
   const filteredNews = news.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                        item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || item.description.toLowerCase().includes(searchTerm.toLowerCase()) || item.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesCategory = category === "all" || item.category === category;
-    
     return matchesSearch && matchesCategory;
   });
-
   const categories = ["all", ...Array.from(new Set(news.map(item => item.category)))];
-
-  return (
-    <div className="container mx-auto px-4 py-6">
+  return <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2 flex items-center">
           <Newspaper className="mr-2 h-8 w-8 text-primary" />
@@ -168,12 +145,7 @@ const Noticias = () => {
       <div className="flex flex-col md:flex-row gap-4 mb-6">
         <div className="relative flex-1">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input 
-            className="pl-10" 
-            placeholder="Buscar notícias..." 
-            value={searchTerm}
-            onChange={e => setSearchTerm(e.target.value)}
-          />
+          <Input className="pl-10" placeholder="Buscar notícias..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         <Select value={category} onValueChange={setCategory}>
           <SelectTrigger className="w-full md:w-[180px]">
@@ -181,9 +153,7 @@ const Noticias = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas as categorias</SelectItem>
-            {categories.filter(c => c !== "all").map(cat => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
+            {categories.filter(c => c !== "all").map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -196,10 +166,8 @@ const Noticias = () => {
         </TabsList>
         
         <TabsContent value="latest">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {loading ? (
-              Array(6).fill(0).map((_, idx) => (
-                <Card key={idx} className="overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-0 py-0 my-0 mx-0">
+            {loading ? Array(6).fill(0).map((_, idx) => <Card key={idx} className="overflow-hidden">
                   <Skeleton className="h-48 rounded-b-none" />
                   <CardHeader className="p-4">
                     <Skeleton className="h-6 w-full mb-2" />
@@ -210,23 +178,18 @@ const Noticias = () => {
                     <Skeleton className="h-4 w-full mb-2" />
                     <Skeleton className="h-4 w-2/3" />
                   </CardContent>
-                </Card>
-              ))
-            ) : filteredNews.length > 0 ? (
-              filteredNews.map((item) => (
-                <motion.div
-                  key={item.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
+                </Card>) : filteredNews.length > 0 ? filteredNews.map(item => <motion.div key={item.id} initial={{
+            opacity: 0,
+            y: 20
+          }} animate={{
+            opacity: 1,
+            y: 0
+          }} transition={{
+            duration: 0.3
+          }}>
                   <Card className="overflow-hidden h-full flex flex-col hover:shadow-md transition-shadow">
                     <div className="w-full h-48 overflow-hidden">
-                      <img 
-                        src={item.image} 
-                        alt={item.title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                      />
+                      <img src={item.image} alt={item.title} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
                     </div>
                     <CardHeader className="p-4">
                       <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
@@ -247,14 +210,9 @@ const Noticias = () => {
                       </div>
                       
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {item.tags.map((tag, idx) => (
-                          <span 
-                            key={idx} 
-                            className="bg-muted px-2 py-0.5 rounded-md text-xs"
-                          >
+                        {item.tags.map((tag, idx) => <span key={idx} className="bg-muted px-2 py-0.5 rounded-md text-xs">
                             {tag}
-                          </span>
-                        ))}
+                          </span>)}
                       </div>
                     </CardContent>
                     <CardFooter className="p-4 pt-0 flex justify-between">
@@ -273,17 +231,13 @@ const Noticias = () => {
                             </DrawerDescription>
                           </DrawerHeader>
                           <div className="px-4">
-                            {summaryLoading ? (
-                              <div className="space-y-2">
+                            {summaryLoading ? <div className="space-y-2">
                                 <Skeleton className="h-4 w-full" />
                                 <Skeleton className="h-4 w-full" />
                                 <Skeleton className="h-4 w-3/4" />
                                 <Skeleton className="h-4 w-full" />
                                 <Skeleton className="h-4 w-5/6" />
-                              </div>
-                            ) : (
-                              <p className="text-sm whitespace-pre-line">{summary}</p>
-                            )}
+                              </div> : <p className="text-sm whitespace-pre-line">{summary}</p>}
                           </div>
                           <DrawerFooter>
                             <div className="flex items-center text-xs text-muted-foreground">
@@ -307,13 +261,9 @@ const Noticias = () => {
                       </div>
                     </CardFooter>
                   </Card>
-                </motion.div>
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12">
+                </motion.div>) : <div className="col-span-full text-center py-12">
                 <p className="text-muted-foreground">Nenhuma notícia encontrada para os critérios selecionados.</p>
-              </div>
-            )}
+              </div>}
           </div>
         </TabsContent>
         
@@ -329,8 +279,6 @@ const Noticias = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
-  );
+    </div>;
 };
-
 export default Noticias;
