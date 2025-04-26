@@ -604,6 +604,45 @@ export type Database = {
         }
         Relationships: []
       }
+      questoes: {
+        Row: {
+          AnswerA: string | null
+          AnswerB: string | null
+          AnswerC: string | null
+          AnswerD: string | null
+          Area: string | null
+          CorrectAnswerInfo: string | null
+          CorrectAnswers: string | null
+          id: number
+          QuestionType: string | null
+          Tema: string | null
+        }
+        Insert: {
+          AnswerA?: string | null
+          AnswerB?: string | null
+          AnswerC?: string | null
+          AnswerD?: string | null
+          Area?: string | null
+          CorrectAnswerInfo?: string | null
+          CorrectAnswers?: string | null
+          id?: number
+          QuestionType?: string | null
+          Tema?: string | null
+        }
+        Update: {
+          AnswerA?: string | null
+          AnswerB?: string | null
+          AnswerC?: string | null
+          AnswerD?: string | null
+          Area?: string | null
+          CorrectAnswerInfo?: string | null
+          CorrectAnswers?: string | null
+          id?: number
+          QuestionType?: string | null
+          Tema?: string | null
+        }
+        Relationships: []
+      }
       resumos: {
         Row: {
           area_direito: string
@@ -728,6 +767,41 @@ export type Database = {
           },
         ]
       }
+      user_questoes: {
+        Row: {
+          acertou: boolean
+          created_at: string | null
+          id: string
+          questao_id: number | null
+          resposta_selecionada: string
+          user_id: string | null
+        }
+        Insert: {
+          acertou: boolean
+          created_at?: string | null
+          id?: string
+          questao_id?: number | null
+          resposta_selecionada: string
+          user_id?: string | null
+        }
+        Update: {
+          acertou?: boolean
+          created_at?: string | null
+          id?: string
+          questao_id?: number | null
+          resposta_selecionada?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_questoes_questao_id_fkey"
+            columns: ["questao_id"]
+            isOneToOne: false
+            referencedRelation: "questoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_statistics: {
         Row: {
           created_at: string | null
@@ -802,7 +876,19 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      user_questoes_stats: {
+        Row: {
+          acertos_area: number | null
+          area: string | null
+          percentual_acertos: number | null
+          percentual_area: number | null
+          questoes_area: number | null
+          total_acertos: number | null
+          total_respondidas: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       increment_user_statistic: {

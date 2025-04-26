@@ -25,6 +25,7 @@ import Perfil from "./pages/Perfil";
 import Noticias from "./pages/Noticias";
 import Dicionario from "./pages/Dicionario";
 import JurisFlix from "./pages/JurisFlix";
+import Questoes from "./pages/Questoes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -162,6 +163,18 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <Noticias />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/questoes"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Questoes />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>

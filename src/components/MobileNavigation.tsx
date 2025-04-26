@@ -1,6 +1,6 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, BookOpen, Compass, Film, User } from "lucide-react";
+import { Home, BookOpen, Compass, Film, User, ScrollText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -25,9 +25,9 @@ const MobileNavigation = () => {
       path: "/jurisflix"
     },
     {
-      name: "Explorar",
-      icon: Compass,
-      path: "/explorar"
+      name: "Questões",
+      icon: ScrollText,
+      path: "/questoes"
     },
     {
       name: "Perfil",
