@@ -1,7 +1,9 @@
+
 import { Bell, GraduationCap, Scale, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { type ProfileType } from "@/components/WelcomeModal";
+import MobileMenu from "@/components/MobileMenu";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,7 +77,8 @@ export function Header({ userProfile }: HeaderProps) {
   return (
     <header className="border-b border-border bg-card">
       <div className="container flex h-16 items-center px-4 md:px-6">
-        <div className="mr-auto">
+        <div className="flex items-center">
+          <MobileMenu userProfile={userProfile} />
           <div className="text-sm text-muted-foreground hidden md:block">
             Seu perfil:
             <span className="ml-2 bg-primary/10 text-primary px-2 py-1 rounded-md font-medium inline-flex items-center">
@@ -84,7 +87,8 @@ export function Header({ userProfile }: HeaderProps) {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+
+        <div className="flex items-center gap-4 ml-auto">
           <div className="relative w-full max-w-sm md:w-80">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
