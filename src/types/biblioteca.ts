@@ -8,3 +8,8 @@ export interface Livro {
   imagem: string | null;
   sobre: string | null;
 }
+
+export interface BibliotecaStats {
+  total: number;
+  byArea: Record<string, number>;
+}

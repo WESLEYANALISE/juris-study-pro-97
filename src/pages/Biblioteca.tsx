@@ -9,7 +9,9 @@ import { SearchBar } from "@/components/biblioteca/SearchBar";
 import { AIHelperDialog } from "@/components/biblioteca/AIHelperDialog";
 import { BookCard } from "@/components/biblioteca/BookCard";
 import { BookModal } from "@/components/biblioteca/BookModal";
-import type { Livro } from "@/types/biblioteca";
+import { BibliotecaStats } from "@/components/biblioteca/BibliotecaStats";
+import { motion } from "framer-motion";
+import type { Livro, BibliotecaStats } from "@/types/biblioteca";
 
 type State =
   | { mode: "carousel" }
@@ -76,6 +78,25 @@ export default function Biblioteca() {
     
     return grouped;
   }, [filteredLivros]);
+  
+  const bibliotecaStats = useMemo((): BibliotecaStats => {
+    const stats: BibliotecaStats = {
+      total: livros?.length || 0,
+      byArea: {}
+    };
+    
+    if (!livros) return stats;
+    
+    livros.forEach(livro => {
+      const area = livro.area || "Não categorizado";
+      if (!stats.byArea[area]) {
+        stats.byArea[area] = 0;
+      }
+      stats.byArea[area]++;
+    });
+    
+    return stats;
+  }, [livros]);
 
   async function handleAIHelp() {
     if (!livros) return;
@@ -90,6 +111,22 @@ export default function Biblioteca() {
     setAiResult(res);
   }
 
+  // Animation variants for list items
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
       <SearchBar
@@ -101,9 +138,15 @@ export default function Biblioteca() {
         livrosSuggestions={livros}
       />
       
+      {!isLoading && <BibliotecaStats stats={bibliotecaStats} />}
+      
       <Tabs defaultValue="todas" className="mb-6">
-        <TabsList className="mb-2 flex flex-wrap">
-          <TabsTrigger value="todas" onClick={() => setSelectedArea(null)}>
+        <TabsList className="mb-2 flex flex-wrap bg-[#1d1d1d] p-1">
+          <TabsTrigger 
+            value="todas" 
+            onClick={() => setSelectedArea(null)}
+            className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
+          >
             Todas as áreas
           </TabsTrigger>
           {areas.map(area => (
@@ -111,6 +154,7 @@ export default function Biblioteca() {
               key={area} 
               value={area}
               onClick={() => setSelectedArea(area)}
+              className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
             >
               {area}
             </TabsTrigger>
@@ -119,51 +163,71 @@ export default function Biblioteca() {
       </Tabs>
       
       {isLoading ? (
-        <div className="text-center py-20">Carregando…</div>
+        <div className="text-center py-20 text-white/70">Carregando…</div>
       ) : state.mode === "carousel" ? (
         <div className="space-y-10">
           {Array.from(livrosPorArea.entries()).map(([area, livrosArea]) => (
-            <div key={area} className="space-y-3">
-              <h2 className="text-xl font-semibold text-primary">{area}</h2>
+            <motion.div 
+              key={area} 
+              className="space-y-3"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h2 className="text-xl font-semibold text-white flex items-center">
+                <span className="mr-2 w-1 h-6 bg-red-600 inline-block"></span>
+                {area} <span className="text-sm ml-2 text-white/60">({livrosArea.length} livros)</span>
+              </h2>
               <Carousel className="w-full">
-                <CarouselContent>
+                <CarouselContent className="-ml-2 md:-ml-4">
                   {livrosArea.map(livro => (
                     <CarouselItem
                       key={livro.id}
-                      className="basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                      className="pl-2 md:pl-4 basis-3/4 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                     >
                       <BookCard 
                         livro={livro} 
                         onCardClick={() => setState({ mode: "modal", livro })}
+                        showFavoriteButton
                       />
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious />
-                <CarouselNext />
+                <CarouselPrevious className="bg-[#1d1d1d] text-white border-[#333] hover:bg-red-600" />
+                <CarouselNext className="bg-[#1d1d1d] text-white border-[#333] hover:bg-red-600" />
               </Carousel>
-            </div>
+            </motion.div>
           ))}
         </div>
       ) : state.mode === "list" ? (
-        <div className="space-y-8">
+        <motion.div 
+          className="space-y-8"
+          variants={containerVariants}
+          initial="hidden"
+          animate="show"
+        >
           {Array.from(livrosPorArea.entries()).map(([area, livrosArea]) => (
-            <div key={area} className="space-y-3">
-              <h2 className="text-xl font-semibold text-primary">{area}</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <motion.div key={area} className="space-y-3" variants={itemVariants}>
+              <h2 className="text-xl font-semibold text-white flex items-center">
+                <span className="mr-2 w-1 h-6 bg-red-600 inline-block"></span>
+                {area} <span className="text-sm ml-2 text-white/60">({livrosArea.length} livros)</span>
+              </h2>
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {livrosArea.map(livro => (
-                  <BookCard 
-                    key={livro.id}
-                    livro={livro} 
-                    onCardClick={() => setState({ mode: "modal", livro })}
-                  />
+                  <motion.div key={livro.id} variants={itemVariants}>
+                    <BookCard 
+                      livro={livro} 
+                      onCardClick={() => setState({ mode: "modal", livro })}
+                      showFavoriteButton
+                    />
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : state.mode === "reading" ? (
-        <div className="fixed inset-0 bg-background z-50">
+        <div className="fixed inset-0 bg-[#0c0c0c] z-50">
           <iframe
             src={state.livro.link ?? ""}
             className="w-full h-full"
@@ -172,7 +236,7 @@ export default function Biblioteca() {
           />
           <Button
             variant="secondary"
-            className="fixed top-4 left-4 z-60 shadow-lg"
+            className="fixed top-4 left-4 z-60 shadow-lg bg-[#1d1d1d] border-[#333] text-white hover:bg-red-600"
             onClick={() => setState({ mode: "carousel" })}
           >
             Voltar
