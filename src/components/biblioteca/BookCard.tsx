@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Card, CardDescription } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Bookmark } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -22,9 +22,7 @@ export function BookCard({
   showFavoriteButton = false,
   onToggleFavorite
 }: BookCardProps) {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [isHovering, setIsHovering] = useState(false);
   
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -41,12 +39,12 @@ export function BookCard({
   
   return (
     <motion.div
-      whileHover={{ scale: 1.03 }}
+      whileHover={{ scale: 1.03, y: -5 }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
       <Card 
-        className="group flex flex-col hover:shadow-lg transition-all cursor-pointer h-[300px] overflow-hidden border-[#2a2a2a] bg-[#141414]" 
+        className="group relative flex flex-col hover:shadow-lg transition-all cursor-pointer h-[300px] overflow-hidden border-[#2C2C2C] bg-[#1E1E1E]" 
         onClick={onCardClick} 
         onMouseEnter={() => setIsHovering(true)} 
         onMouseLeave={() => setIsHovering(false)}
@@ -57,10 +55,15 @@ export function BookCard({
               <img 
                 src={livro.imagem} 
                 alt={livro.livro} 
-                className="h-full w-full object-cover transition-transform group-hover:scale-110"
+                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-end">
-                <div className="p-4 w-full">
+                <motion.div 
+                  className="p-4 w-full"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
                   <h3 className="font-semibold text-sm text-white line-clamp-2">
                     {livro.livro}
                   </h3>
@@ -73,15 +76,26 @@ export function BookCard({
                       <BookOpen size={16} className="text-white/60" />
                     )}
                   </div>
-                </div>
+                  
+                  {isHovering && livro.sobre && (
+                    <motion.p 
+                      className="text-xs text-white/70 mt-2 line-clamp-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {livro.sobre}
+                    </motion.p>
+                  )}
+                </motion.div>
               </div>
               
               {showFavoriteButton && (
                 <button 
                   onClick={handleFavoriteClick} 
-                  className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white hover:bg-red-600/80 transition-colors"
+                  className="absolute top-2 right-2 p-1.5 bg-black/50 rounded-full text-white hover:bg-[#D32F2F]/80 transition-colors"
                 >
-                  <Bookmark size={16} className={isFavorite ? "fill-red-500 text-red-500" : ""} />
+                  <Bookmark size={16} className={isFavorite ? "fill-[#D32F2F] text-[#D32F2F]" : ""} />
                 </button>
               )}
             </div>

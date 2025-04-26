@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,6 +33,22 @@ export default function Biblioteca() {
         ...book,
         id: String(book.id)
       })) as Livro[];
+    }
+  });
+
+  const { data: userStats } = useQuery({
+    queryKey: ["user-stats"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data } = await supabase
+        .from("user_statistics")
+        .select("*")
+        .eq("user_id", user.id)
+        .single();
+        
+      return data;
     }
   });
 
@@ -126,7 +142,7 @@ export default function Biblioteca() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6">
+    <div className="max-w-6xl mx-auto px-4 py-6 bg-[#121212] min-h-screen">
       <SearchBar
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
@@ -136,32 +152,23 @@ export default function Biblioteca() {
         livrosSuggestions={livros}
       />
       
-      {!isLoading && <BibliotecaStats stats={bibliotecaStats} />}
+      {!isLoading && <BibliotecaStats stats={bibliotecaStats} userStats={userStats} />}
       
-      <Tabs defaultValue="todas" className="mb-6">
-        <TabsList className="mb-2 flex flex-wrap bg-[#1d1d1d] p-1">
-          <TabsTrigger 
-            value="todas" 
-            onClick={() => setSelectedArea(null)}
-            className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-          >
-            Todas as áreas
-          </TabsTrigger>
+      <div className="mb-6">
+        <select
+          className="w-full md:w-auto px-4 py-2 rounded-lg bg-[#1E1E1E] text-white border border-[#2C2C2C] focus:outline-none focus:ring-2 focus:ring-[#D32F2F]"
+          onChange={(e) => setSelectedArea(e.target.value === "todas" ? null : e.target.value)}
+          value={selectedArea || "todas"}
+        >
+          <option value="todas">Todas as áreas</option>
           {areas.map(area => (
-            <TabsTrigger 
-              key={area} 
-              value={area}
-              onClick={() => setSelectedArea(area)}
-              className="data-[state=active]:bg-red-600 data-[state=active]:text-white"
-            >
-              {area}
-            </TabsTrigger>
+            <option key={area} value={area}>{area}</option>
           ))}
-        </TabsList>
-      </Tabs>
+        </select>
+      </div>
       
       {isLoading ? (
-        <div className="text-center py-20 text-white/70">Carregando…</div>
+        <div className="text-center py-20 text-[#B0B0B0]">Carregando…</div>
       ) : state.mode === "carousel" ? (
         <div className="space-y-10">
           {Array.from(livrosPorArea.entries()).map(([area, livrosArea]) => (
@@ -173,15 +180,15 @@ export default function Biblioteca() {
               transition={{ duration: 0.3 }}
             >
               <h2 className="text-xl font-semibold text-white flex items-center">
-                <span className="mr-2 w-1 h-6 bg-red-600 inline-block"></span>
-                {area} <span className="text-sm ml-2 text-white/60">({livrosArea.length} livros)</span>
+                <span className="mr-2 w-1 h-6 bg-[#D32F2F] inline-block"></span>
+                {area} <span className="text-sm ml-2 text-[#B0B0B0]">({livrosArea.length} livros)</span>
               </h2>
               <Carousel className="w-full">
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {livrosArea.map(livro => (
                     <CarouselItem
                       key={livro.id}
-                      className="pl-2 md:pl-4 basis-3/4 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
+                      className="pl-2 md:pl-4 basis-[85%] sm:basis-1/2 md:basis-1/3 lg:basis-1/4 xl:basis-1/5"
                     >
                       <BookCard 
                         livro={livro} 
@@ -191,8 +198,8 @@ export default function Biblioteca() {
                     </CarouselItem>
                   ))}
                 </CarouselContent>
-                <CarouselPrevious className="bg-[#1d1d1d] text-white border-[#333] hover:bg-red-600" />
-                <CarouselNext className="bg-[#1d1d1d] text-white border-[#333] hover:bg-red-600" />
+                <CarouselPrevious className="bg-[#1E1E1E] text-white border-[#2C2C2C] hover:bg-[#D32F2F]" />
+                <CarouselNext className="bg-[#1E1E1E] text-white border-[#2C2C2C] hover:bg-[#D32F2F]" />
               </Carousel>
             </motion.div>
           ))}
@@ -207,8 +214,8 @@ export default function Biblioteca() {
           {Array.from(livrosPorArea.entries()).map(([area, livrosArea]) => (
             <motion.div key={area} className="space-y-3" variants={itemVariants}>
               <h2 className="text-xl font-semibold text-white flex items-center">
-                <span className="mr-2 w-1 h-6 bg-red-600 inline-block"></span>
-                {area} <span className="text-sm ml-2 text-white/60">({livrosArea.length} livros)</span>
+                <span className="mr-2 w-1 h-6 bg-[#D32F2F] inline-block"></span>
+                {area} <span className="text-sm ml-2 text-[#B0B0B0]">({livrosArea.length} livros)</span>
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                 {livrosArea.map(livro => (
