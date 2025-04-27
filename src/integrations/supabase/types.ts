@@ -391,6 +391,30 @@ export type Database = {
         }
         Relationships: []
       }
+      folder_links: {
+        Row: {
+          created_at: string | null
+          document_links: string[] | null
+          id: number
+          image_links: string[] | null
+          video_links: string[] | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_links?: string[] | null
+          id?: never
+          image_links?: string[] | null
+          video_links?: string[] | null
+        }
+        Update: {
+          created_at?: string | null
+          document_links?: string[] | null
+          id?: never
+          image_links?: string[] | null
+          video_links?: string[] | null
+        }
+        Relationships: []
+      }
       gamificacao: {
         Row: {
           conquistas: string[] | null
