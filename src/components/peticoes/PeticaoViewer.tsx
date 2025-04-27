@@ -15,8 +15,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [loadingState, setLoadingState] = useState<"loading" | "direct" | "fallback">("loading");
-  const [loadError, setLoadError] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   
   // Update container width when the window resizes
   useEffect(() => {
@@ -34,20 +34,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     };
   }, []);
 
-  // Attempt direct viewing first, then fallback to Google Viewer if needed
-  useEffect(() => {
-    // Start with loading state
-    setLoadingState("loading");
-    setLoadError(false);
-    
-    // Try direct first after a short delay
-    const timer = setTimeout(() => {
-      setLoadingState("direct");
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [url]);
-
   const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 2));
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const resetZoom = () => setScale(1);
@@ -57,16 +43,21 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
   };
 
-  // Handle error in the primary viewer
-  const handlePrimaryViewerError = () => {
-    console.log("Primary PDF viewer failed, switching to fallback");
-    setLoadingState("fallback");
+  // Handle successful load
+  const handleLoad = () => {
+    setLoading(false);
+    setError(false);
+  };
+
+  // Handle error
+  const handleError = () => {
+    setLoading(false);
+    setError(true);
     
-    // Notify user
     toast({
-      title: "Visualizador alternativo",
-      description: "Usando visualizador alternativo para exibir o documento",
-      duration: 3000,
+      title: "Erro ao carregar documento",
+      description: "Tentando visualizador alternativo ou você pode baixá-lo diretamente",
+      variant: "destructive",
     });
   };
 
@@ -108,76 +99,70 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           className="flex-1 overflow-auto rounded-lg border bg-stone-100 dark:bg-stone-800"
         >
           <div className="min-h-full w-full flex items-center justify-center p-4">
-            {loadingState === "loading" && (
+            {loading && (
               <div className="flex flex-col items-center justify-center">
                 <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
                 <p className="text-muted-foreground">Carregando documento...</p>
               </div>
             )}
             
-            {loadingState === "direct" && (
-              <iframe 
-                src={url}
+            {!error ? (
+              // Primary PDF viewer - simple and direct embed
+              <object
+                data={url}
+                type="application/pdf"
                 className="w-full h-full rounded-md shadow-md"
                 style={{ 
                   height: `calc(100vh - 160px)`,
+                  display: loading ? 'none' : 'block',
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'center top'
                 }}
-                title="PDF Viewer"
-                frameBorder="0"
-                onError={handlePrimaryViewerError}
-                onLoad={(e) => {
-                  try {
-                    // Try to access the iframe content
-                    const iframe = e.currentTarget;
-                    const iframeDoc = iframe.contentWindow?.document;
-                    
-                    // Check if iframe loaded an error page or empty content
-                    if (!iframeDoc || 
-                        iframeDoc.body.innerHTML === "" || 
-                        iframeDoc.body.innerHTML.includes('Error') ||
-                        iframeDoc.body.innerHTML.includes('error')) {
-                      console.log("Empty or error content detected");
-                      handlePrimaryViewerError();
-                      return;
-                    }
-                    
-                    console.log("PDF loaded successfully");
-                  } catch (error) {
-                    // If we can't access the contentWindow, it's likely due to CORS
-                    // This is normal and we should continue showing the PDF
-                    console.log("Could not access iframe content due to security restrictions, but PDF may still be loading");
-                  }
-                }}
-              />
-            )}
-            
-            {loadingState === "fallback" && (
+                onLoad={handleLoad}
+                onError={handleError}
+              >
+                <iframe 
+                  src={getGoogleViewerUrl()}
+                  className="w-full h-full rounded-md shadow-md"
+                  style={{ 
+                    height: `calc(100vh - 160px)`,
+                  }}
+                  onLoad={handleLoad}
+                  onError={handleError}
+                  title="PDF Viewer Fallback"
+                >
+                  Este navegador não suporta visualização de PDF. Por favor, <a href={url} download target="_blank" rel="noopener noreferrer">baixe o PDF</a> para visualizá-lo.
+                </iframe>
+              </object>
+            ) : (
+              // Fallback to Google Viewer when direct embed fails
               <iframe 
                 src={getGoogleViewerUrl()}
                 className="w-full h-full rounded-md shadow-md"
                 style={{ 
                   height: `calc(100vh - 160px)`,
+                  transform: `scale(${scale})`,
+                  transformOrigin: 'center top'
                 }}
+                onLoad={handleLoad}
                 title="PDF Viewer Fallback"
                 frameBorder="0"
-                onError={() => {
-                  setLoadError(true);
-                  console.error("Even fallback viewer failed");
-                }}
               >
                 Este navegador não suporta visualização de PDF. Por favor, <a href={url} download target="_blank" rel="noopener noreferrer">baixe o PDF</a> para visualizá-lo.
               </iframe>
             )}
             
-            {loadError && (
-              <div className="text-center p-8">
-                <p className="text-destructive mb-4">Não foi possível carregar o documento</p>
-                <Button asChild>
-                  <a href={url} download target="_blank" rel="noopener noreferrer">
-                    <Download className="h-4 w-4 mr-2" />
-                    Baixar PDF
-                  </a>
-                </Button>
+            {error && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center p-8 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg">
+                  <p className="text-destructive font-medium mb-4">Não foi possível carregar o documento</p>
+                  <Button asChild>
+                    <a href={url} download target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar PDF
+                    </a>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
