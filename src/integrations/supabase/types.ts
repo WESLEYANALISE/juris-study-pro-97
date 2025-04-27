@@ -159,6 +159,33 @@ export type Database = {
         }
         Relationships: []
       }
+      Código_Brasileiro_de_Telecomunicações: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
       codigo_civil: {
         Row: {
           artigo: string | null
@@ -173,6 +200,222 @@ export type Database = {
           exemplo?: string | null
           formal?: string | null
           id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_Comercial: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_de_Defesa_do_Consumidor: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_de_Processo_Civil: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_de_Processo_Penal: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_de_Trânsito_Brasileiro: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_Eleitoral: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_Penal: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Código_Tributário_Nacional: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
           numero?: string | null
           tecnica?: string | null
         }
@@ -315,6 +558,276 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      Estatuto_da_Advocacia_e_da_OAB: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_da_Cidade: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_da_Criança_e_do_Adolescente: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_da_Igualdade_Racial: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_da_Pessoa_com_Deficiência: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_da_Terra: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_do_Desarmamento: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_do_Idoso: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_do_Torcedor: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Estatuto_dos_Servidores_Públicos_Civis_da_União: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
       }
       flash_cards: {
         Row: {
