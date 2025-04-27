@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -33,7 +34,8 @@ const VadeMecum = () => {
         }
         
         console.log("Codes tables fetched:", data);
-        return data || [];
+        // Extract the table_name values from the returned objects
+        return data ? data.map(item => item.table_name) : [];
       } catch (err) {
         console.error("Failed to fetch codes tables:", err);
         return [];
@@ -59,7 +61,8 @@ const VadeMecum = () => {
         }
         
         console.log("Statute tables fetched:", data);
-        return data || [];
+        // Extract the table_name values from the returned objects
+        return data ? data.map(item => item.table_name) : [];
       } catch (err) {
         console.error("Failed to fetch statute tables:", err);
         return [];
