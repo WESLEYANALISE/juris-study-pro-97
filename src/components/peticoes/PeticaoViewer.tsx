@@ -1,7 +1,7 @@
 
 import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
@@ -32,6 +32,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const [viewMode, setViewMode] = useState<"fit-width" | "fit-page" | "custom">("fit-width");
   const [swipeDirection, setSwipeDirection] = useState<string | null>(null);
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
+  const [pageTransitionDirection, setPageTransitionDirection] = useState<"next" | "prev" | "none">("none");
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -136,7 +138,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   };
   
   const changePage = (delta: number) => {
-    if (!numPages) return;
+    if (!numPages || isAnimating) return;
     
     let newPage = pageNumber + delta;
     
@@ -145,15 +147,31 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     }
     
     if (newPage >= 1 && newPage <= numPages) {
-      setPageNumber(newPage);
+      setPageTransitionDirection(delta > 0 ? "next" : "prev");
+      setIsAnimating(true);
+      // Small delay to ensure animation starts before changing page
+      setTimeout(() => {
+        setPageNumber(newPage);
+      }, 50);
+      
+      // Add haptic feedback on mobile if available
+      if (navigator.vibrate && isMobile.current) {
+        navigator.vibrate(30);
+      }
     }
   };
   
   const goToPage = (page: number) => {
-    if (!numPages) return;
+    if (!numPages || isAnimating) return;
     
     if (page >= 1 && page <= numPages) {
-      setPageNumber(page);
+      const direction = page > pageNumber ? "next" : "prev";
+      setPageTransitionDirection(direction);
+      setIsAnimating(true);
+      // Small delay to ensure animation starts before changing page
+      setTimeout(() => {
+        setPageNumber(page);
+      }, 50);
     }
   };
   
@@ -183,6 +201,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     toast({
       title: "Marcador adicionado",
       description: `Página ${pageNumber} marcada como "${title}"`,
+      variant: "success",
     });
   };
   
@@ -226,6 +245,61 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     setSwipeDirection(null);
   };
   
+  // Animation variants for page transitions
+  const pageAnimationVariants = {
+    initial: (direction: string) => ({
+      rotateY: direction === "next" ? -90 : 90,
+      opacity: 0,
+      scale: 0.9,
+    }),
+    animate: {
+      rotateY: 0,
+      opacity: 1,
+      scale: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 20,
+        duration: 0.4,
+        onComplete: () => setIsAnimating(false)
+      }
+    },
+    exit: (direction: string) => ({
+      rotateY: direction === "next" ? 90 : -90,
+      opacity: 0,
+      scale: 0.9,
+      transition: { 
+        duration: 0.3 
+      }
+    })
+  };
+  
+  // Animation variants for dual page view
+  const dualPageAnimationVariants = {
+    initial: (direction: string) => ({
+      x: direction === "next" ? 300 : -300,
+      opacity: 0,
+    }),
+    animate: {
+      x: 0,
+      opacity: 1,
+      transition: { 
+        type: "spring", 
+        stiffness: 200, 
+        damping: 20,
+        duration: 0.5,
+        onComplete: () => setIsAnimating(false)
+      }
+    },
+    exit: (direction: string) => ({
+      x: direction === "next" ? -300 : 300,
+      opacity: 0,
+      transition: { 
+        duration: 0.3 
+      }
+    })
+  };
+  
   const pageSequence = isDualPageView 
     ? (pageNumber % 2 === 1 
         ? [pageNumber, pageNumber + 1] 
@@ -256,7 +330,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
             </span>
             
             <div className="hidden md:flex items-center gap-1">
-              <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
+              <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1 || isAnimating}>
                 <ArrowLeft size={18} />
               </Button>
               
@@ -268,9 +342,10 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 onChange={e => setPageNumber(Number(e.target.value))}
                 onBlur={e => goToPage(Number(e.target.value))}
                 className="w-16 text-center h-8"
+                disabled={isAnimating}
               />
               
-              <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={numPages !== null && pageNumber >= numPages}>
+              <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={numPages !== null && pageNumber >= numPages || isAnimating}>
                 <ArrowRight size={18} />
               </Button>
             </div>
@@ -424,92 +499,161 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
+            style={{ perspective: "1000px" }}
           >
-            <div 
-              className={`relative mx-auto ${isDualPageView ? 'flex gap-2' : ''} p-4`}
-              style={{
-                width: isDualPageView ? 'auto' : '100%',
-                maxWidth: isDualPageView ? 'none' : '100%',
-                transition: 'transform 0.3s ease'
-              }}
-            >
-              {loading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
-                  <div className="flex flex-col items-center justify-center">
-                    <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
-                    <p className="text-muted-foreground">Carregando documento...</p>
-                  </div>
-                </div>
-              )}
-              
-              {pageSequence.map((pageNum, index) => (
-                <div
-                  key={`page-${pageNum}`}
-                  className="page-container overflow-hidden bg-white shadow-lg rounded-lg"
-                  style={{
-                    flex: isDualPageView ? '1' : 'none',
-                    maxWidth: isDualPageView ? '50%' : '100%',
-                    transform: `scale(${scale}) rotate(${rotation}deg)`,
-                    transformOrigin: 'center',
-                    transition: 'transform 0.3s ease'
-                  }}
-                >
-                  {!error ? (
-                    <iframe
-                      ref={index === 0 ? iframeRef : undefined}
-                      src={`${url}#page=${pageNum}`}
-                      className="w-full h-full border-0"
-                      style={{ 
-                        height: `calc(100vh - ${isDualPageView ? '100px' : '140px'})`,
-                        minHeight: '500px'
+            {isDualPageView ? (
+              <div className="relative mx-auto p-4">
+                <AnimatePresence initial={false} mode="wait" custom={pageTransitionDirection}>
+                  <motion.div
+                    key={`dual-${pageNumber}`}
+                    custom={pageTransitionDirection}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    variants={dualPageAnimationVariants}
+                    className="flex gap-2"
+                  >
+                    {pageSequence.map((pageNum, index) => (
+                      <div
+                        key={`page-${pageNum}`}
+                        className="page-container overflow-hidden bg-white shadow-lg rounded-lg flex-1 max-w-[50%]"
+                        style={{
+                          transform: `scale(${scale}) rotate(${rotation}deg)`,
+                          transformOrigin: 'center',
+                          transition: 'transform 0.3s ease'
+                        }}
+                      >
+                        {!error ? (
+                          <iframe
+                            ref={index === 0 ? iframeRef : undefined}
+                            src={`${url}#page=${pageNum}`}
+                            className="w-full h-full border-0"
+                            style={{ 
+                              height: `calc(100vh - 100px)`,
+                              minHeight: '500px'
+                            }}
+                            onLoad={index === 0 ? handleLoad : undefined}
+                            onError={index === 0 ? handleError : undefined}
+                            title={`PDF Page ${pageNum}`}
+                          />
+                        ) : null}
+                        
+                        {/* Page corner hint */}
+                        <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-black/10 pointer-events-none rounded-bl" />
+                      </div>
+                    ))}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="relative mx-auto p-4">
+                <AnimatePresence initial={false} mode="wait" custom={pageTransitionDirection}>
+                  <motion.div
+                    key={`page-${pageNumber}`}
+                    custom={pageTransitionDirection}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                    variants={pageAnimationVariants}
+                    style={{ perspective: "1000px" }}
+                    className="w-full"
+                  >
+                    <div
+                      className="page-container overflow-hidden bg-white shadow-lg rounded-lg mx-auto"
+                      style={{
+                        transform: `scale(${scale}) rotate(${rotation}deg)`,
+                        transformOrigin: 'center',
+                        transition: 'transform 0.3s ease'
                       }}
-                      onLoad={index === 0 ? handleLoad : undefined}
-                      onError={index === 0 ? handleError : undefined}
-                      title={`PDF Page ${pageNum}`}
-                    />
-                  ) : null}
-                </div>
-              ))}
+                    >
+                      {!error ? (
+                        <iframe
+                          ref={iframeRef}
+                          src={`${url}#page=${pageNumber}`}
+                          className="w-full h-full border-0"
+                          style={{ 
+                            height: `calc(100vh - 140px)`,
+                            minHeight: '500px'
+                          }}
+                          onLoad={handleLoad}
+                          onError={handleError}
+                          title={`PDF Page ${pageNumber}`}
+                        />
+                      ) : null}
+                      
+                      {/* Page corner hint */}
+                      <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-black/10 pointer-events-none rounded-bl" />
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            )}
               
-              {error && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="text-center p-8 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg">
-                    <p className="text-destructive font-medium mb-4">Não foi possível carregar o documento</p>
-                    
-                    <iframe 
-                      src={getGoogleViewerUrl()}
-                      className="w-full rounded-md mb-4"
-                      style={{ 
-                        height: '50vh',
-                        minHeight: '300px'
-                      }}
-                      onLoad={handleLoad}
-                      title="PDF Viewer Fallback"
-                    />
-                    
-                    <Button asChild>
-                      <a href={url} download target="_blank" rel="noopener noreferrer">
-                        <Download className="h-4 w-4 mr-2" />
-                        Baixar PDF
-                      </a>
-                    </Button>
-                  </div>
+            {loading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
+                <div className="flex flex-col items-center justify-center">
+                  <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
+                  <p className="text-muted-foreground">Carregando documento...</p>
                 </div>
-              )}
-              
-              {swipeDirection && (
-                <div 
-                  className={`fixed inset-y-0 ${swipeDirection === 'left' ? 'right-0' : 'left-0'} w-16 bg-primary/10 flex items-center justify-center`}
-                  style={{
-                    animation: 'fadeOut 0.5s forwards'
-                  }}
-                >
-                  <ArrowLeft 
-                    className={`h-8 w-8 text-primary ${swipeDirection === 'left' ? 'rotate-180' : ''}`} 
+              </div>
+            )}
+            
+            {error && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center p-8 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg">
+                  <p className="text-destructive font-medium mb-4">Não foi possível carregar o documento</p>
+                  
+                  <iframe 
+                    src={getGoogleViewerUrl()}
+                    className="w-full rounded-md mb-4"
+                    style={{ 
+                      height: '50vh',
+                      minHeight: '300px'
+                    }}
+                    onLoad={handleLoad}
+                    title="PDF Viewer Fallback"
                   />
+                  
+                  <Button asChild>
+                    <a href={url} download target="_blank" rel="noopener noreferrer">
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar PDF
+                    </a>
+                  </Button>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+            
+            {/* Swipe direction indicator */}
+            {swipeDirection && (
+              <motion.div 
+                className={`fixed inset-y-0 ${swipeDirection === 'left' ? 'right-0' : 'left-0'} w-16 bg-primary/10 flex items-center justify-center`}
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <ArrowLeft 
+                  className={`h-8 w-8 text-primary ${swipeDirection === 'left' ? 'rotate-180' : ''}`} 
+                />
+              </motion.div>
+            )}
+            
+            {/* First time user hint */}
+            {numPages && pageNumber === 1 && (
+              <motion.div 
+                className="fixed bottom-36 left-1/2 transform -translate-x-1/2 bg-card/90 backdrop-blur-sm rounded-lg border shadow-lg p-3 pointer-events-none"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ delay: 1.5, duration: 0.5 }}
+              >
+                <p className="text-sm text-center">
+                  {isMobile.current ? 
+                    "Deslize para mudar de página" : 
+                    "Use as setas ou números para navegar"}
+                </p>
+              </motion.div>
+            )}
           </div>
           
           <div className="hidden lg:block w-64 bg-card border-l overflow-y-auto">
@@ -554,30 +698,36 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                   </p>
                 ) : (
                   <div className="space-y-1">
-                    {bookmarks.map(bookmark => (
-                      <div 
-                        key={bookmark.id}
-                        className={`flex items-center justify-between p-2 rounded-md ${bookmark.page === pageNumber ? 'bg-accent' : 'hover:bg-muted'}`}
-                      >
-                        <button 
-                          className="flex items-center gap-2 text-left flex-1"
-                          onClick={() => goToPage(bookmark.page)}
+                    <AnimatePresence>
+                      {bookmarks.map(bookmark => (
+                        <motion.div 
+                          key={bookmark.id}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className={`flex items-center justify-between p-2 rounded-md ${bookmark.page === pageNumber ? 'bg-accent' : 'hover:bg-muted'}`}
                         >
-                          <Bookmark className="h-4 w-4 flex-shrink-0" />
-                          <span className="text-sm truncate">
-                            {bookmark.title}
-                          </span>
-                        </button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100"
-                          onClick={() => removeBookmark(bookmark.id)}
-                        >
-                          <X className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    ))}
+                          <button 
+                            className="flex items-center gap-2 text-left flex-1"
+                            onClick={() => goToPage(bookmark.page)}
+                          >
+                            <Bookmark className="h-4 w-4 flex-shrink-0" />
+                            <span className="text-sm truncate">
+                              {bookmark.title}
+                            </span>
+                          </button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            className="h-6 w-6 opacity-0 group-hover:opacity-100 hover:opacity-100"
+                            onClick={() => removeBookmark(bookmark.id)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
                   </div>
                 )}
               </TabsContent>
@@ -596,7 +746,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         </div>
         
         <div className="md:hidden flex items-center justify-between border-t p-2 bg-card">
-          <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
+          <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1 || isAnimating}>
             <ArrowLeft size={18} />
           </Button>
           
@@ -613,7 +763,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
             <span className="text-sm text-muted-foreground">/ {numPages || '?'}</span>
           </div>
           
-          <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={numPages !== null && pageNumber >= numPages}>
+          <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={(numPages !== null && pageNumber >= numPages) || isAnimating}>
             <ArrowRight size={18} />
           </Button>
         </div>
@@ -683,8 +833,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         </div>
       </div>
       
-      <style>
-        {`
+      <style jsx>{`
         @keyframes fadeOut {
           0% { opacity: 0.8; }
           100% { opacity: 0; }
@@ -704,8 +853,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           80% { opacity: 0.7; }
           100% { transform: translateX(100px); opacity: 0; }
         }
-        `}
-      </style>
+      `}</style>
     </motion.div>
   );
 }
