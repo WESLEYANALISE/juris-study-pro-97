@@ -6,10 +6,11 @@ import Layout from "@/components/Layout";
 import { PageTransition } from "@/components/PageTransition";
 import Peticoes from "./pages/Peticoes";
 import { useState } from "react";
+import { type ProfileType } from "@/components/WelcomeModal";
 
 function App() {
   // Temporary userProfile for development purposes
-  const [userProfile] = useState("advogado");
+  const [userProfile] = useState<ProfileType>("advogado");
 
   return (
     <Router>
