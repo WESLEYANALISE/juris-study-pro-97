@@ -1,5 +1,5 @@
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -25,7 +25,9 @@ import {
   Minus,
   RotateCw,
   RotateCcw,
-  Maximize2
+  Maximize2,
+  Columns,
+  LayoutGrid
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,7 +60,14 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
   const [bookmarkTitle, setBookmarkTitle] = useState("");
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [searchResults, setSearchResults] = useState<number[]>([]);
+  const [selectedText, setSelectedText] = useState("");
+  const [isTextSelected, setIsTextSelected] = useState(false);
+  const [isDualPageView, setIsDualPageView] = useState(false);
+  const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+  const [viewMode, setViewMode] = useState<"fit-width" | "fit-page" | "custom">("fit-width");
+  
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const textLayerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
   // Get reading progress
@@ -178,6 +187,42 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     }
   });
 
+  // Add highlight mutation
+  const addHighlight = useMutation({
+    mutationFn: async ({ text, color }: { text: string, color: string }) => {
+      if (!user || !text) return null;
+      
+      const newHighlight = {
+        livro_id: livro.id,
+        user_id: user.id,
+        pagina: pageNumber,
+        texto: text,
+        cor: color,
+      };
+      
+      await supabase
+        .from("livrospro_anotacoes")
+        .insert(newHighlight);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["anotacoes", livro.id, user?.id] });
+      setSelectedText("");
+      setIsTextSelected(false);
+      toast({
+        title: "Destaque adicionado",
+        description: "O texto selecionado foi destacado com sucesso.",
+      });
+    },
+    onError: (error) => {
+      console.error("Erro ao adicionar destaque:", error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível destacar o texto selecionado.",
+      });
+    }
+  });
+
   // Add bookmark mutation
   const addBookmark = useMutation({
     mutationFn: async () => {
@@ -262,6 +307,55 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     }
   });
 
+  // Update container size
+  useEffect(() => {
+    const updateSize = () => {
+      if (pdfContainerRef.current) {
+        setContainerSize({
+          width: pdfContainerRef.current.clientWidth,
+          height: pdfContainerRef.current.clientHeight
+        });
+      }
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
+
+  // Calculate appropriate scale based on view mode
+  useEffect(() => {
+    if (viewMode === "custom") return; // Don't adjust scale if in custom mode
+    
+    // Wait for container and page to be measured
+    const timeout = setTimeout(() => {
+      if (containerSize.width > 0 && containerSize.height > 0) {
+        if (viewMode === "fit-width") {
+          // Scale to fit width, accounting for container padding
+          const containerWidth = isDualPageView 
+            ? (containerSize.width - 48) / 2 // Adjusted width for dual page mode
+            : containerSize.width - 48;      // Single page with padding
+          
+          setScale(containerWidth / 595); // Assuming standard PDF width of 595pt
+        } else if (viewMode === "fit-page") {
+          // Scale to fit both width and height
+          const containerWidth = isDualPageView 
+            ? (containerSize.width - 48) / 2
+            : containerSize.width - 48;
+          
+          const widthScale = containerWidth / 595; // Width scale factor
+          const heightScale = (containerSize.height - 48) / 842; // Height scale factor (standard A4)
+          
+          // Use the smaller scale to ensure entire page fits
+          setScale(Math.min(widthScale, heightScale));
+        }
+      }
+    }, 100);
+    
+    return () => clearTimeout(timeout);
+  }, [containerSize, viewMode, isDualPageView]);
+
   // Set initial page from saved progress
   useEffect(() => {
     if (progresso && progresso.pagina_atual > 0) {
@@ -304,6 +398,36 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     };
   }, []);
 
+  // Handle text selection
+  useEffect(() => {
+    const handleSelectionChange = () => {
+      const selection = window.getSelection();
+      const selectedText = selection?.toString() || "";
+      
+      setSelectedText(selectedText);
+      setIsTextSelected(selectedText.length > 0);
+    };
+    
+    document.addEventListener('selectionchange', handleSelectionChange);
+    return () => {
+      document.removeEventListener('selectionchange', handleSelectionChange);
+    };
+  }, []);
+
+  // Watch for window resize to adjust dual page mode
+  useEffect(() => {
+    const handleResize = () => {
+      // Only enable dual page mode on large screens
+      if (window.innerWidth < 1024 && isDualPageView) {
+        setIsDualPageView(false);
+      }
+    };
+
+    handleResize(); // Check on initial load
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isDualPageView]);
+
   const toggleFullScreen = async () => {
     if (!document.fullscreenElement) {
       if (pdfContainerRef.current?.requestFullscreen) {
@@ -334,7 +458,13 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
   const changePage = (delta: number) => {
     if (!numPages) return;
     
-    const newPage = pageNumber + delta;
+    let newPage = pageNumber + delta;
+    
+    // In dual page mode, move by 2 pages
+    if (isDualPageView && delta !== 0) {
+      newPage = pageNumber + (delta * 2);
+    }
+    
     if (newPage >= 1 && newPage <= numPages) {
       setPageNumber(newPage);
     }
@@ -347,6 +477,19 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
       setPageNumber(page);
     }
   };
+
+  // Page sequence for dual page view
+  const pageSequence = useMemo(() => {
+    if (!isDualPageView) return [pageNumber];
+    
+    // If we're showing two pages, calculate the pair
+    // For first page, show only the first page (like a book cover)
+    if (pageNumber === 1) return [1];
+    
+    // For the rest, show pairs (even, odd)
+    const startPage = pageNumber % 2 === 0 ? pageNumber : pageNumber - 1;
+    return [startPage, startPage + 1].filter(p => p <= (numPages || 0));
+  }, [pageNumber, isDualPageView, numPages]);
 
   // Save progress when page changes
   useEffect(() => {
@@ -389,17 +532,109 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     }
   };
 
+  // Handle highlight text
+  const handleHighlightText = (color: string = annotationColor) => {
+    if (selectedText && isTextSelected) {
+      addHighlight.mutate({ text: selectedText, color });
+    }
+  };
+
   // Annotations for current page
   const currentPageAnnotations = anotacoes.filter(note => note.pagina === pageNumber);
   
   // Check if current page is bookmarked
   const currentPageBookmark = marcadores.find(mark => mark.pagina === pageNumber);
 
+  // CSS styles for PDF text layer
+  const textLayerStyles = `
+    .react-pdf__Page__textContent {
+      z-index: 1;
+      cursor: text;
+    }
+    
+    .react-pdf__Page__textContent ::selection {
+      background-color: ${annotationColor}80;
+    }
+    
+    .textLayer {
+      position: absolute;
+      text-align: initial;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+      opacity: 0.2;
+      line-height: 1;
+      user-select: text;
+      -webkit-user-select: text;
+      cursor: text;
+    }
+
+    .textLayer span,
+    .textLayer br {
+      color: transparent;
+      position: absolute;
+      white-space: pre;
+      cursor: text;
+      transform-origin: 0% 0%;
+    }
+
+    .textLayer .highlight {
+      margin: -1px;
+      padding: 1px;
+      background-color: rgba(180, 0, 170, 0.2);
+      border-radius: 4px;
+    }
+
+    .textLayer .highlight.active {
+      background-color: rgba(0, 100, 0, 0.2);
+    }
+    
+    .textLayer ::selection {
+      background: ${annotationColor}80;
+    }
+    
+    .annotationLayer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+    }
+    
+    .context-menu {
+      position: absolute;
+      z-index: 10;
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 4px;
+      padding: 8px 0;
+    }
+    
+    .context-menu button {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+    }
+    
+    .context-menu button:hover {
+      background-color: #f1f5f9;
+    }
+  `;
+
   return (
     <div 
       ref={pdfContainerRef}
       className="fixed inset-0 bg-background z-50 flex flex-col"
     >
+      <style>{textLayerStyles}</style>
+      
       {/* Header toolbar */}
       <div className="bg-card border-b shadow-sm p-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
@@ -441,13 +676,64 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
               <ZoomOut size={18} />
             </Button>
             
-            <Button variant="ghost" size="icon" onClick={() => setScale(1)}>
+            <Button variant="ghost" size="sm" onClick={() => setScale(1)}>
               {Math.round(scale * 100)}%
             </Button>
             
             <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.1))}>
               <ZoomIn size={18} />
             </Button>
+          </div>
+          
+          <div className="hidden md:flex items-center gap-1">
+            <Button 
+              variant={isDualPageView ? "default" : "ghost"}
+              size="icon"
+              onClick={() => setIsDualPageView(!isDualPageView)}
+              disabled={window.innerWidth < 1024}
+              title={isDualPageView ? "Modo de página única" : "Modo de página dupla"}
+            >
+              {isDualPageView ? <LayoutGrid size={18} /> : <Columns size={18} />}
+            </Button>
+            
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="ghost" size="icon" title="Opções de visualização">
+                  <Settings size={18} />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent side="bottom" align="end" className="w-56">
+                <div className="space-y-4">
+                  <h4 className="font-medium text-sm">Modo de visualização</h4>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant={viewMode === "fit-width" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("fit-width")}
+                      className="justify-start"
+                    >
+                      Ajustar à largura
+                    </Button>
+                    <Button 
+                      variant={viewMode === "fit-page" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("fit-page")}
+                      className="justify-start"
+                    >
+                      Ajustar à página
+                    </Button>
+                    <Button 
+                      variant={viewMode === "custom" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("custom")}
+                      className="justify-start"
+                    >
+                      Tamanho personalizado
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           
           <div className="flex items-center gap-1">
@@ -528,6 +814,30 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
             </div>
             
             <div className="space-y-2">
+              <h3 className="text-sm font-medium">Visualização</h3>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <Button 
+                    variant={viewMode === "fit-width" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setViewMode("fit-width")}
+                    className="flex-1"
+                  >
+                    Ajustar largura
+                  </Button>
+                  <Button 
+                    variant={viewMode === "fit-page" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setViewMode("fit-page")}
+                    className="flex-1"
+                  >
+                    Ajustar página
+                  </Button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-2">
               <h3 className="text-sm font-medium">Leitura automática</h3>
               <div className="flex items-center gap-2">
                 <Button 
@@ -556,11 +866,12 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
       {/* Main content */}
       <div className="flex-1 flex">
         {/* PDF Document */}
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-stone-200 dark:bg-stone-900">
+        <div className="flex-1 overflow-auto flex items-center justify-center bg-stone-100 dark:bg-stone-900 p-4" ref={textLayerRef}>
           <div 
-            className="page-flip-container" 
+            className={`relative mx-auto ${isDualPageView ? 'flex gap-2' : ''}`}
             style={{
-              perspective: "1000px",
+              width: isDualPageView ? 'auto' : '100%',
+              maxWidth: isDualPageView ? 'none' : '1200px',
             }}
           >
             <Document
@@ -583,17 +894,113 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
                 </div>
               }
               className="transition-transform duration-300"
+              options={{ cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/` }}
             >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                rotate={rotation}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                className="transition-transform duration-300"
-              />
+              {pageSequence.map((pageNum) => (
+                <div 
+                  key={pageNum} 
+                  className="page-container shadow-lg mb-2 bg-white"
+                  style={{ 
+                    display: 'inline-block',
+                    verticalAlign: 'middle',
+                  }}
+                >
+                  <Page
+                    pageNumber={pageNum}
+                    scale={scale}
+                    rotate={rotation}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="transition-transform duration-300"
+                    width={isDualPageView ? containerSize.width / 2 - 24 : undefined}
+                    canvasBackground="white"
+                  />
+                  
+                  {/* Overlay annotations on current page */}
+                  {currentPageAnnotations
+                    .filter(note => note.pagina === pageNum)
+                    .map((note) => (
+                      <div 
+                        key={note.id}
+                        className="absolute p-1 rounded"
+                        style={{
+                          backgroundColor: `${note.cor}40`,
+                          border: `2px solid ${note.cor}`,
+                          maxWidth: '90%',
+                          // If we have position data, use it, otherwise just show at top
+                          top: note.posicao?.y || "10px",
+                          left: note.posicao?.x || "10px",
+                        }}
+                      >
+                        <div className="text-xs p-1 bg-background/80 backdrop-blur-sm rounded">
+                          {note.texto}
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+              ))}
             </Document>
           </div>
+
+          {/* Highlighted text context menu */}
+          {isTextSelected && (
+            <div 
+              className="fixed z-20 bg-card/95 backdrop-blur-sm shadow-lg rounded-lg overflow-hidden border"
+              style={{
+                top: window.getSelection()?.getRangeAt(0).getBoundingClientRect().bottom || 0 + 10,
+                left: window.getSelection()?.getRangeAt(0).getBoundingClientRect().left || 0,
+              }}
+            >
+              <div className="flex p-1">
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => navigator.clipboard.writeText(selectedText)}
+                  className="text-xs"
+                >
+                  Copiar
+                </Button>
+                
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-xs">
+                      Destacar
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2">
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Escolha uma cor</h4>
+                      <div className="grid grid-cols-5 gap-1">
+                        {["#FFFF00", "#90EE90", "#ADD8E6", "#FFA07A", "#D8BFD8"].map(color => (
+                          <div
+                            key={color}
+                            className="w-8 h-8 rounded-full cursor-pointer border hover:scale-110 transition-transform"
+                            style={{ backgroundColor: color }}
+                            onClick={() => {
+                              handleHighlightText(color);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setAnnotation(selectedText);
+                    setShowAnnotationTool(true);
+                  }}
+                  className="text-xs"
+                >
+                  Anotar
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Sidebar */}
