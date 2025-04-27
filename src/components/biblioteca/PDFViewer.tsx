@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -17,7 +16,7 @@ import {
   ZoomOut,
   Bookmark,
   BookmarkPlus,
-  Annotation,
+  Pen,
   X,
   Settings,
   Menu,
@@ -25,7 +24,7 @@ import {
   Minus,
   RotateCw,
   RotateCcw,
-  FullScreen
+  Maximize2
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
@@ -452,7 +451,7 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
           
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon" onClick={toggleFullScreen}>
-              <FullScreen size={18} />
+              <Maximize2 size={18} />
             </Button>
             
             <Button variant="ghost" size="icon" onClick={() => setIsMenuOpen(true)} className="md:hidden">
@@ -677,7 +676,7 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
                   size="icon"
                   onClick={() => setShowAnnotationTool(true)}
                 >
-                  <Annotation size={16} />
+                  <Pen size={16} />
                 </Button>
               </div>
               
@@ -896,142 +895,5 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
         </Popover>
         
         <Button variant="ghost" size="icon" className="rounded-full" onClick={() => setShowAnnotationTool(true)}>
-          <Annotation size={18} />
-          {currentPageAnnotations.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full w-4 h-4 flex items-center justify-center">
-              {currentPageAnnotations.length}
-            </span>
-          )}
-        </Button>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Search size={18} />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent side="top" className="w-80">
-            <div className="space-y-4">
-              <h4 className="font-medium">Pesquisar no documento</h4>
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Pesquisar..."
-                  value={searchText}
-                  onChange={e => setSearchText(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") searchInDocument();
-                  }}
-                />
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={searchInDocument}
-                  disabled={!searchText}
-                >
-                  <Search size={16} />
-                </Button>
-              </div>
-              
-              {showSearchResults && searchResults.length > 0 && (
-                <div className="max-h-[200px] overflow-y-auto">
-                  <h5 className="text-sm font-medium mb-2">
-                    {searchResults.length} resultados
-                  </h5>
-                  <div className="space-y-1">
-                    {searchResults.map((page, index) => (
-                      <button
-                        key={index}
-                        className="flex items-center gap-2 p-2 w-full text-left rounded hover:bg-muted"
-                        onClick={() => goToPage(page)}
-                      >
-                        <span className="text-sm text-muted-foreground">
-                          Página {page}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </PopoverContent>
-        </Popover>
-        
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className={`rounded-full ${isPlaying ? "text-primary" : ""}`}
-            >
-              {isPlaying ? (
-                <div className="relative">
-                  <div className="absolute inset-0 animate-ping rounded-full bg-primary/20"></div>
-                  <Settings size={18} />
-                </div>
-              ) : (
-                <Settings size={18} />
-              )}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent side="top">
-            <div className="space-y-4 w-72">
-              <h4 className="font-medium">Configurações</h4>
-              <div className="space-y-2">
-                <h5 className="text-sm">Leitura automática</h5>
-                <div className="flex items-center justify-between">
-                  <Button 
-                    variant={isPlaying ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setIsPlaying(!isPlaying)}
-                  >
-                    {isPlaying ? "Pausar" : "Iniciar"}
-                  </Button>
-                  
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => setPlaySpeed(s => Math.min(30, s + 1))}>
-                      <Plus size={16} />
-                    </Button>
-                    <span className="text-sm min-w-12 text-center">{playSpeed}s</span>
-                    <Button variant="ghost" size="icon" onClick={() => setPlaySpeed(s => Math.max(1, s - 1))}>
-                      <Minus size={16} />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h5 className="text-sm">Zoom</h5>
-                <div className="flex items-center justify-between">
-                  <Button variant="outline" size="sm" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}>
-                    <ZoomOut size={16} />
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setScale(1)}>
-                    {Math.round(scale * 100)}%
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => setScale(s => Math.min(3, s + 0.1))}>
-                    <ZoomIn size={16} />
-                  </Button>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <h5 className="text-sm">Rotação</h5>
-                <div className="flex items-center justify-between">
-                  <Button variant="outline" size="sm" onClick={() => setRotation(r => (r - 90) % 360)}>
-                    <RotateCcw size={16} />
-                  </Button>
-                  <span className="text-sm">
-                    {rotation}°
-                  </span>
-                  <Button variant="outline" size="sm" onClick={() => setRotation(r => (r + 90) % 360)}>
-                    <RotateCw size={16} />
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-    </div>
-  );
-}
+          <Pen size={18} />
+          {currentPageAnnotations.length >
