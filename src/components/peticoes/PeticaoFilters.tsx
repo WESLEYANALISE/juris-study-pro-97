@@ -43,14 +43,14 @@ export const PeticaoFilters: React.FC<PeticaoFiltersProps> = ({
 
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="flex-grow">
+      <div className="flex-grow relative">
         <Input 
           placeholder="Pesquisar petições..." 
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full"
-          icon={<Search className="text-muted-foreground" />}
+          className="w-full pl-10"
         />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       </div>
       <div className="flex gap-4">
         <Select 
