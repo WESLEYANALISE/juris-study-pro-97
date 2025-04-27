@@ -26,6 +26,7 @@ import Noticias from "./pages/Noticias";
 import Dicionario from "./pages/Dicionario";
 import JurisFlix from "./pages/JurisFlix";
 import Questoes from "./pages/Questoes";
+import Peticoes from "./pages/Peticoes";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -200,6 +201,18 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <JurisFlix />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/peticoes"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Peticoes />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>
