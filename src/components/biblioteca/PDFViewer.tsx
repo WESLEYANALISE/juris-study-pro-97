@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,14 +26,20 @@ import {
   RotateCcw,
   Maximize2,
   Columns,
-  LayoutGrid
+  LayoutGrid,
+  AlertTriangle,
+  Download
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import type { LivroPro, Anotacao, Marcador, Progresso } from "@/types/livrospro";
 
-// Set up the worker for PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up the worker for PDF.js with error handling
+try {
+  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+} catch (error) {
+  console.error("Error initializing PDF.js worker:", error);
+}
 
 interface PDFViewerProps {
   livro: LivroPro;
@@ -65,6 +70,9 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
   const [isDualPageView, setIsDualPageView] = useState(false);
   const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
   const [viewMode, setViewMode] = useState<"fit-width" | "fit-page" | "custom">("fit-width");
+  const [pdfLoadError, setPdfLoadError] = useState<Error | null>(null);
+  const [pdfLoadRetries, setPdfLoadRetries] = useState(0);
+  const [useAlternativeViewer, setUseAlternativeViewer] = useState(false);
   
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
@@ -455,6 +463,11 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     }
   };
 
+  const onDocumentLoadError = (error: Error) => {
+    console.error("PDF load error:", error);
+    setPdfLoadError(error);
+  };
+
   const changePage = (delta: number) => {
     if (!numPages) return;
     
@@ -476,6 +489,11 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     if (page >= 1 && page <= numPages) {
       setPageNumber(page);
     }
+  };
+
+  // Get Google Docs viewer URL as fallback
+  const getGoogleViewerUrl = () => {
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(livro.pdf)}&embedded=true`;
   };
 
   // Page sequence for dual page view
@@ -628,6 +646,73 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     }
   `;
 
+  // Retry loading PDF if there's an error
+  useEffect(() => {
+    if (pdfLoadError && pdfLoadRetries < 3 && !useAlternativeViewer) {
+      const retryTimeout = setTimeout(() => {
+        console.log(`Retrying PDF load, attempt ${pdfLoadRetries + 1}`);
+        setPdfLoadRetries(prev => prev + 1);
+        setPdfLoadError(null);
+      }, 2000); // Wait 2 seconds before retrying
+      
+      return () => clearTimeout(retryTimeout);
+    } else if (pdfLoadError && pdfLoadRetries >= 3 && !useAlternativeViewer) {
+      console.log("Maximum retries reached, switching to alternative viewer");
+      setUseAlternativeViewer(true);
+      toast({
+        title: "Visualizador alternativo ativado",
+        description: "Tivemos um problema ao carregar o PDF, usando visualizador alternativo.",
+        variant: "warning",
+      });
+    }
+  }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer]);
+
+  const renderAlternativeViewer = () => {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="bg-card/90 backdrop-blur-sm p-4 text-center mb-4 rounded-lg border">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <h3 className="font-medium">Visualizador alternativo</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Estamos usando um visualizador alternativo para este documento.
+          </p>
+        </div>
+        
+        <iframe
+          src={getGoogleViewerUrl()}
+          className="flex-1 w-full rounded-lg border shadow-lg bg-white"
+          title="Visualizador de PDF alternativo"
+        />
+        
+        <div className="flex justify-between mt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPdfLoadRetries(0);
+              setPdfLoadError(null);
+              setUseAlternativeViewer(false);
+            }}
+            className="gap-2"
+          >
+            <RotateCw className="h-4 w-4" />
+            Tentar visualizador normal
+          </Button>
+          
+          <Button
+            variant="default"
+            onClick={() => window.open(livro.pdf, '_blank')}
+            className="gap-2"
+          >
+            <Download className="h-4 w-4" />
+            Baixar PDF
+          </Button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div 
       ref={pdfContainerRef}
@@ -647,54 +732,60 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
         </div>
         
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">
-            {pageNumber} / {numPages || '?'}
-          </span>
+          {!useAlternativeViewer && (
+            <>
+              <span className="text-sm text-muted-foreground">
+                {pageNumber} / {numPages || '?'}
+              </span>
+              
+              <div className="hidden md:flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
+                  <ArrowLeft size={18} />
+                </Button>
+                
+                <Input
+                  type="number"
+                  min={1}
+                  max={numPages || 1}
+                  value={pageNumber}
+                  onChange={e => setPageNumber(Number(e.target.value))}
+                  onBlur={e => goToPage(Number(e.target.value))}
+                  className="w-16 text-center h-8"
+                />
+                
+                <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 1)}>
+                  <ArrowRight size={18} />
+                </Button>
+              </div>
+              
+              <div className="hidden md:flex items-center gap-1">
+                <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}>
+                  <ZoomOut size={18} />
+                </Button>
+                
+                <Button variant="ghost" size="sm" onClick={() => setScale(1)}>
+                  {Math.round(scale * 100)}%
+                </Button>
+                
+                <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.1))}>
+                  <ZoomIn size={18} />
+                </Button>
+              </div>
+            </>
+          )}
           
           <div className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
-              <ArrowLeft size={18} />
-            </Button>
-            
-            <Input
-              type="number"
-              min={1}
-              max={numPages || 1}
-              value={pageNumber}
-              onChange={e => setPageNumber(Number(e.target.value))}
-              onBlur={e => goToPage(Number(e.target.value))}
-              className="w-16 text-center h-8"
-            />
-            
-            <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 1)}>
-              <ArrowRight size={18} />
-            </Button>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}>
-              <ZoomOut size={18} />
-            </Button>
-            
-            <Button variant="ghost" size="sm" onClick={() => setScale(1)}>
-              {Math.round(scale * 100)}%
-            </Button>
-            
-            <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.1))}>
-              <ZoomIn size={18} />
-            </Button>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-1">
-            <Button 
-              variant={isDualPageView ? "default" : "ghost"}
-              size="icon"
-              onClick={() => setIsDualPageView(!isDualPageView)}
-              disabled={window.innerWidth < 1024}
-              title={isDualPageView ? "Modo de página única" : "Modo de página dupla"}
-            >
-              {isDualPageView ? <LayoutGrid size={18} /> : <Columns size={18} />}
-            </Button>
+            {!useAlternativeViewer && (
+              <Button 
+                variant={isDualPageView ? "default" : "ghost"}
+                size="icon"
+                onClick={() => setIsDualPageView(!isDualPageView)}
+                disabled={window.innerWidth < 1024}
+                title={isDualPageView ? "Modo de página única" : "Modo de página dupla"}
+              >
+                {isDualPageView ? <LayoutGrid size={18} /> : <Columns size={18} />}
+              </Button>
+            )}
             
             <Popover>
               <PopoverTrigger asChild>
@@ -706,29 +797,57 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm">Modo de visualização</h4>
                   <div className="flex flex-col gap-2">
+                    {!useAlternativeViewer ? (
+                      <>
+                        <Button 
+                          variant={viewMode === "fit-width" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setViewMode("fit-width")}
+                          className="justify-start"
+                        >
+                          Ajustar à largura
+                        </Button>
+                        <Button 
+                          variant={viewMode === "fit-page" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setViewMode("fit-page")}
+                          className="justify-start"
+                        >
+                          Ajustar à página
+                        </Button>
+                        <Button 
+                          variant={viewMode === "custom" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setViewMode("custom")}
+                          className="justify-start"
+                        >
+                          Tamanho personalizado
+                        </Button>
+                      </>
+                    ) : (
+                      <Button 
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setUseAlternativeViewer(false);
+                          setPdfLoadRetries(0);
+                          setPdfLoadError(null);
+                        }}
+                        className="justify-start"
+                      >
+                        <RotateCw className="mr-2 h-4 w-4" />
+                        Usar visualizador normal
+                      </Button>
+                    )}
+                    
                     <Button 
-                      variant={viewMode === "fit-width" ? "default" : "outline"}
+                      variant="outline"
                       size="sm"
-                      onClick={() => setViewMode("fit-width")}
+                      onClick={() => window.open(livro.pdf, '_blank')}
                       className="justify-start"
                     >
-                      Ajustar à largura
-                    </Button>
-                    <Button 
-                      variant={viewMode === "fit-page" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setViewMode("fit-page")}
-                      className="justify-start"
-                    >
-                      Ajustar à página
-                    </Button>
-                    <Button 
-                      variant={viewMode === "custom" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setViewMode("custom")}
-                      className="justify-start"
-                    >
-                      Tamanho personalizado
+                      <Download className="mr-2 h-4 w-4" />
+                      Baixar PDF original
                     </Button>
                   </div>
                 </div>
@@ -867,81 +986,130 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
       <div className="flex-1 flex">
         {/* PDF Document */}
         <div className="flex-1 overflow-auto flex items-center justify-center bg-stone-100 dark:bg-stone-900 p-4" ref={textLayerRef}>
-          <div 
-            className={`relative mx-auto ${isDualPageView ? 'flex gap-2' : ''}`}
-            style={{
-              width: isDualPageView ? 'auto' : '100%',
-              maxWidth: isDualPageView ? 'none' : '1200px',
-            }}
-          >
-            <Document
-              file={livro.pdf}
-              onLoadSuccess={onDocumentLoadSuccess}
-              loading={
-                <div className="flex items-center justify-center h-full min-h-[300px]">
-                  <div className="text-center">
-                    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                    <p className="text-muted-foreground">Carregando documento...</p>
-                  </div>
-                </div>
-              }
-              error={
-                <div className="flex items-center justify-center h-full min-h-[300px]">
-                  <div className="text-center p-8">
-                    <p className="text-destructive mb-2">Erro ao carregar documento</p>
-                    <p className="text-sm text-muted-foreground">Não foi possível carregar o documento PDF. Verifique se o link está correto.</p>
-                  </div>
-                </div>
-              }
-              className="transition-transform duration-300"
-              options={{ cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/` }}
+          {useAlternativeViewer ? (
+            renderAlternativeViewer()
+          ) : (
+            <div 
+              className={`relative mx-auto ${isDualPageView ? 'flex gap-2' : ''}`}
+              style={{
+                width: isDualPageView ? 'auto' : '100%',
+                maxWidth: isDualPageView ? 'none' : '1200px',
+              }}
             >
-              {pageSequence.map((pageNum) => (
-                <div 
-                  key={pageNum} 
-                  className="page-container shadow-lg mb-2 bg-white"
-                  style={{ 
-                    display: 'inline-block',
-                    verticalAlign: 'middle',
-                  }}
-                >
-                  <Page
-                    pageNumber={pageNum}
-                    scale={scale}
-                    rotate={rotation}
-                    renderTextLayer={true}
-                    renderAnnotationLayer={true}
-                    className="transition-transform duration-300"
-                    width={isDualPageView ? containerSize.width / 2 - 24 : undefined}
-                    canvasBackground="white"
-                  />
-                  
-                  {/* Overlay annotations on current page */}
-                  {currentPageAnnotations
-                    .filter(note => note.pagina === pageNum)
-                    .map((note) => (
-                      <div 
-                        key={note.id}
-                        className="absolute p-1 rounded"
-                        style={{
-                          backgroundColor: `${note.cor}40`,
-                          border: `2px solid ${note.cor}`,
-                          maxWidth: '90%',
-                          // If we have position data, use it, otherwise just show at top
-                          top: note.posicao?.y || "10px",
-                          left: note.posicao?.x || "10px",
-                        }}
-                      >
-                        <div className="text-xs p-1 bg-background/80 backdrop-blur-sm rounded">
-                          {note.texto}
-                        </div>
+              <Document
+                file={livro.pdf}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={
+                  <div className="flex items-center justify-center h-full min-h-[300px]">
+                    <div className="text-center">
+                      <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                      <p className="text-muted-foreground">Carregando documento...</p>
+                    </div>
+                  </div>
+                }
+                error={
+                  <div className="flex items-center justify-center h-full min-h-[300px]">
+                    <div className="text-center p-8 max-w-md mx-auto">
+                      <div className="bg-destructive/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                        <AlertTriangle className="h-6 w-6 text-destructive" />
                       </div>
-                    ))
-                  }
-                </div>
-              ))}
-            </Document>
-          </div>
+                      <p className="font-semibold mb-2">Erro ao carregar documento</p>
+                      <p className="text-sm text-muted-foreground mb-6">
+                        Ocorreu um problema ao carregar o documento PDF. 
+                        {pdfLoadRetries > 0 && ` Tentativa ${pdfLoadRetries} de 3.`}
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setPdfLoadError(null);
+                            setPdfLoadRetries(prev => prev + 1);
+                          }}
+                          disabled={pdfLoadRetries >= 3}
+                          className="w-full"
+                        >
+                          <RotateCw className="mr-2 h-4 w-4" />
+                          Tentar novamente
+                        </Button>
+                        <Button 
+                          variant="default"
+                          onClick={() => setUseAlternativeViewer(true)}
+                          className="w-full"
+                        >
+                          Usar visualizador alternativo
+                        </Button>
+                        <Button
+                          variant="link"
+                          onClick={() => window.open(livro.pdf, '_blank')}
+                          className="w-full"
+                        >
+                          <Download className="mr-2 h-4 w-4" />
+                          Baixar PDF
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                }
+                className="transition-transform duration-300"
+                options={{ 
+                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                  isEvalSupported: false,
+                  disableWorker: pdfLoadRetries > 0
+                }}
+              >
+                {pageSequence.map((pageNum) => (
+                  <div 
+                    key={pageNum} 
+                    className="page-container shadow-lg mb-2 bg-white"
+                    style={{ 
+                      display: 'inline-block',
+                      verticalAlign: 'middle',
+                    }}
+                  >
+                    <Page
+                      pageNumber={pageNum}
+                      scale={scale}
+                      rotate={rotation}
+                      renderTextLayer={true}
+                      renderAnnotationLayer={true}
+                      className="transition-transform duration-300"
+                      width={isDualPageView ? containerSize.width / 2 - 24 : undefined}
+                      canvasBackground="white"
+                      error={
+                        <div className="flex items-center justify-center p-4 h-[200px]">
+                          <p className="text-sm text-muted-foreground">Erro ao renderizar página {pageNum}</p>
+                        </div>
+                      }
+                    />
+                    
+                    {/* Overlay annotations on current page */}
+                    {currentPageAnnotations
+                      .filter(note => note.pagina === pageNum)
+                      .map((note) => (
+                        <div 
+                          key={note.id}
+                          className="absolute p-1 rounded"
+                          style={{
+                            backgroundColor: `${note.cor}40`,
+                            border: `2px solid ${note.cor}`,
+                            maxWidth: '90%',
+                            // If we have position data, use it, otherwise just show at top
+                            top: note.posicao?.y || "10px",
+                            left: note.posicao?.x || "10px",
+                          }}
+                        >
+                          <div className="text-xs p-1 bg-background/80 backdrop-blur-sm rounded">
+                            {note.texto}
+                          </div>
+                        </div>
+                      ))
+                    }
+                  </div>
+                ))}
+              </Document>
+            </div>
+          )}
 
           {/* Highlighted text context menu */}
           {isTextSelected && (
