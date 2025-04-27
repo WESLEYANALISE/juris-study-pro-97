@@ -1,4 +1,3 @@
-
 import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
@@ -149,12 +148,10 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     if (newPage >= 1 && newPage <= numPages) {
       setPageTransitionDirection(delta > 0 ? "next" : "prev");
       setIsAnimating(true);
-      // Small delay to ensure animation starts before changing page
       setTimeout(() => {
         setPageNumber(newPage);
       }, 50);
       
-      // Add haptic feedback on mobile if available
       if (navigator.vibrate && isMobile.current) {
         navigator.vibrate(30);
       }
@@ -168,7 +165,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
       const direction = page > pageNumber ? "next" : "prev";
       setPageTransitionDirection(direction);
       setIsAnimating(true);
-      // Small delay to ensure animation starts before changing page
       setTimeout(() => {
         setPageNumber(page);
       }, 50);
@@ -245,7 +241,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     setSwipeDirection(null);
   };
   
-  // Animation variants for page transitions
   const pageAnimationVariants = {
     initial: (direction: string) => ({
       rotateY: direction === "next" ? -90 : 90,
@@ -274,7 +269,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     })
   };
   
-  // Animation variants for dual page view
   const dualPageAnimationVariants = {
     initial: (direction: string) => ({
       x: direction === "next" ? 300 : -300,
@@ -538,7 +532,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                           />
                         ) : null}
                         
-                        {/* Page corner hint */}
                         <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-black/10 pointer-events-none rounded-bl" />
                       </div>
                     ))}
@@ -581,7 +574,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                         />
                       ) : null}
                       
-                      {/* Page corner hint */}
                       <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-black/10 pointer-events-none rounded-bl" />
                     </div>
                   </motion.div>
@@ -624,7 +616,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
               </div>
             )}
             
-            {/* Swipe direction indicator */}
             {swipeDirection && (
               <motion.div 
                 className={`fixed inset-y-0 ${swipeDirection === 'left' ? 'right-0' : 'left-0'} w-16 bg-primary/10 flex items-center justify-center`}
@@ -638,7 +629,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
               </motion.div>
             )}
             
-            {/* First time user hint */}
             {numPages && pageNumber === 1 && (
               <motion.div 
                 className="fixed bottom-36 left-1/2 transform -translate-x-1/2 bg-card/90 backdrop-blur-sm rounded-lg border shadow-lg p-3 pointer-events-none"
@@ -833,27 +823,29 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         </div>
       </div>
       
-      <style jsx>{`
-        @keyframes fadeOut {
-          0% { opacity: 0.8; }
-          100% { opacity: 0; }
-        }
-        
-        .swipe-hint {
-          position: absolute;
-          width: 40px;
-          height: 40px;
-          opacity: 0;
-          animation: swipeHint 2s ease-in-out infinite;
-        }
-        
-        @keyframes swipeHint {
-          0% { transform: translateX(0); opacity: 0; }
-          20% { opacity: 0.7; }
-          80% { opacity: 0.7; }
-          100% { transform: translateX(100px); opacity: 0; }
-        }
-      `}</style>
+      <style>
+        {`
+          @keyframes fadeOut {
+            0% { opacity: 0.8; }
+            100% { opacity: 0; }
+          }
+          
+          .swipe-hint {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            opacity: 0;
+            animation: swipeHint 2s ease-in-out infinite;
+          }
+          
+          @keyframes swipeHint {
+            0% { transform: translateX(0); opacity: 0; }
+            20% { opacity: 0.7; }
+            80% { opacity: 0.7; }
+            100% { transform: translateX(100px); opacity: 0; }
+          }
+        `}
+      </style>
     </motion.div>
   );
 }
