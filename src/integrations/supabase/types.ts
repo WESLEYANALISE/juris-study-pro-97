@@ -1428,6 +1428,497 @@ export type Database = {
         }
         Relationships: []
       }
+      simulado_estatisticas: {
+        Row: {
+          area: string | null
+          categoria: string
+          id: string
+          percentual: number | null
+          total_acertos: number | null
+          total_respondidas: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          area?: string | null
+          categoria: string
+          id?: string
+          percentual?: number | null
+          total_acertos?: number | null
+          total_respondidas?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          area?: string | null
+          categoria?: string
+          id?: string
+          percentual?: number | null
+          total_acertos?: number | null
+          total_respondidas?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      simulado_respostas: {
+        Row: {
+          acertou: boolean | null
+          created_at: string | null
+          id: string
+          questao_id: string
+          resposta_selecionada: string | null
+          sessao_id: string
+          tempo_resposta: number | null
+        }
+        Insert: {
+          acertou?: boolean | null
+          created_at?: string | null
+          id?: string
+          questao_id: string
+          resposta_selecionada?: string | null
+          sessao_id: string
+          tempo_resposta?: number | null
+        }
+        Update: {
+          acertou?: boolean | null
+          created_at?: string | null
+          id?: string
+          questao_id?: string
+          resposta_selecionada?: string | null
+          sessao_id?: string
+          tempo_resposta?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_respostas_sessao_id_fkey"
+            columns: ["sessao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_sessoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulado_sessoes: {
+        Row: {
+          acertos: number | null
+          categoria: string
+          completo: boolean | null
+          created_at: string | null
+          data_fim: string | null
+          data_inicio: string | null
+          id: string
+          pontuacao: number | null
+          tempo_total: number | null
+          total_questoes: number
+          user_id: string
+        }
+        Insert: {
+          acertos?: number | null
+          categoria: string
+          completo?: boolean | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          pontuacao?: number | null
+          tempo_total?: number | null
+          total_questoes: number
+          user_id: string
+        }
+        Update: {
+          acertos?: number | null
+          categoria?: string
+          completo?: boolean | null
+          created_at?: string | null
+          data_fim?: string | null
+          data_inicio?: string | null
+          id?: string
+          pontuacao?: number | null
+          tempo_total?: number | null
+          total_questoes?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      simulados_delegado: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      simulados_juiz: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      simulados_oab: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      simulados_pf: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      simulados_prf: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      simulados_promotor: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      simulados_tjsp: {
+        Row: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area: string | null
+          banca: string
+          created_at: string | null
+          explicacao: string | null
+          id: string
+          imagem_url: string | null
+          numero_questao: number
+          questao: string
+          updated_at: string | null
+        }
+        Insert: {
+          alternativa_a: string
+          alternativa_b: string
+          alternativa_c: string
+          alternativa_correta: string
+          alternativa_d: string
+          ano: number
+          area?: string | null
+          banca: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao: number
+          questao: string
+          updated_at?: string | null
+        }
+        Update: {
+          alternativa_a?: string
+          alternativa_b?: string
+          alternativa_c?: string
+          alternativa_correta?: string
+          alternativa_d?: string
+          ano?: number
+          area?: string | null
+          banca?: string
+          created_at?: string | null
+          explicacao?: string | null
+          id?: string
+          imagem_url?: string | null
+          numero_questao?: number
+          questao?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_biblioteca: {
         Row: {
           anotacoes: string | null
@@ -1712,6 +2203,16 @@ export type Database = {
       }
     }
     Views: {
+      simulado_areas_dificeis: {
+        Row: {
+          area: string | null
+          categoria: string | null
+          media_percentual: number | null
+          total_questoes: number | null
+          total_usuarios: number | null
+        }
+        Relationships: []
+      }
       temas_trending: {
         Row: {
           Area: string | null
@@ -1737,6 +2238,16 @@ export type Database = {
       }
     }
     Functions: {
+      get_simulado_leaderboard: {
+        Args: { _categoria: string; _limit?: number }
+        Returns: {
+          user_id: string
+          total_respondidas: number
+          total_acertos: number
+          percentual: number
+          rank: number
+        }[]
+      }
       increment_user_statistic: {
         Args: { p_user_id: string; p_field: string; p_amount?: number }
         Returns: undefined

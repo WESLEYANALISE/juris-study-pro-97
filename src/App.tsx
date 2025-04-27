@@ -32,6 +32,8 @@ import MapasMentais from "./pages/MapasMentais";
 import VadeMecum from "./pages/VadeMecum";
 import VadeMecumViewer from "./pages/VadeMecumViewer";
 import AssistenteJuridico from "./pages/AssistenteJuridico";
+import Simulados from "./pages/Simulados";
+import SimuladoSessao from "./pages/SimuladoSessao";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -282,6 +284,30 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <AssistenteJuridico />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/simulados"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Simulados />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/simulados/sessao/:id"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <SimuladoSessao />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>
