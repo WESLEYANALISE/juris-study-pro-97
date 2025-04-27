@@ -1,56 +1,219 @@
-
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { RequireAuth } from "@/components/RequireAuth";
-import Layout from "@/components/Layout";
-import { PageTransition } from "@/components/PageTransition";
-import Peticoes from "./pages/Peticoes";
-import NotFound from "./pages/NotFound";
 import { useState } from "react";
-import { type ProfileType } from "@/components/WelcomeModal";
-import { Toaster } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/components/theme-provider";
+import Layout from "./components/Layout";
+import Index from "./pages/Index";
+import VideoAulas from "./pages/VideoAulas";
+import NotFound from "./pages/NotFound";
+import { WelcomeModal, type ProfileType } from "./components/WelcomeModal";
+import Bloger from "./pages/Bloger";
+import Anotacoes from "./pages/Anotacoes";
+import Auth from "./pages/Auth";
+import { RequireAuth } from "@/components/RequireAuth";
+import Biblioteca from "./pages/Biblioteca";
+import Flashcards from "./pages/Flashcards";
+import { DataMigrationAlert } from "./components/DataMigrationAlert";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "./components/PageTransition";
+import VerTudo from "./pages/VerTudo";
+import Perfil from "./pages/Perfil";
+import Noticias from "./pages/Noticias";
+import Dicionario from "./pages/Dicionario";
+import JurisFlix from "./pages/JurisFlix";
+import Questoes from "./pages/Questoes";
 
-function App() {
-  // Temporary userProfile for development purposes
-  const [userProfile] = useState<ProfileType>("advogado");
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutos
+      refetchOnWindowFocus: false,
+    },
+  },
+});
+
+const App = () => {
+  const [userProfile, setUserProfile] = useState<ProfileType>(() => {
+    return (localStorage.getItem("juris-study-profile") as ProfileType) || "tudo";
+  });
+
+  const handleProfileSelect = (profile: ProfileType) => {
+    setUserProfile(profile);
+    localStorage.setItem("juris-study-profile", profile);
+  };
 
   return (
-    <Router>
-      <Toaster />
-      <Routes>
-        {/* Home page - will redirect to peticoes for now */}
-        <Route path="/" element={<Navigate to="/peticoes" replace />} />
-        
-        {/* Peticoes page */}
-        <Route
-          path="/peticoes"
-          element={
-            <RequireAuth>
-              <Layout userProfile={userProfile}>
-                <PageTransition>
-                  <Peticoes />
-                </PageTransition>
-              </Layout>
-            </RequireAuth>
-          }
-        />
-        
-        {/* Add other routes here in the future */}
-        
-        {/* Not found page */}
-        <Route
-          path="*"
-          element={
-            <Layout userProfile={userProfile}>
-              <PageTransition>
-                <NotFound />
-              </PageTransition>
-            </Layout>
-          }
-        />
-      </Routes>
-    </Router>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider defaultTheme="dark" storageKey="juris-study-theme">
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <WelcomeModal onProfileSelect={handleProfileSelect} />
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route
+                  path="/"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <DataMigrationAlert />
+                          <Index />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/biblioteca"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <DataMigrationAlert />
+                          <Biblioteca />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/flashcards"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <DataMigrationAlert />
+                          <Flashcards />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/videoaulas"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VideoAulas />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/bloger"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Bloger />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/anotacoes"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Anotacoes />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/ver-tudo"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VerTudo />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/perfil"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Perfil />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/noticias"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Noticias />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/questoes"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Questoes />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route path="/videoaulas.html" element={<Navigate to="/videoaulas" replace />} />
+                <Route
+                  path="/dicionario"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Dicionario />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/jurisflix"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <JurisFlix />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route path="*" element={<RequireAuth><NotFound /></RequireAuth>} />
+              </Routes>
+            </AnimatePresence>
+          </BrowserRouter>
+        </TooltipProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </ThemeProvider>
+    </QueryClientProvider>
   );
-}
+};
 
 export default App;

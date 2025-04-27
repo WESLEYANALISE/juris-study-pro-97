@@ -546,31 +546,37 @@ export type Database = {
       }
       peticoes: {
         Row: {
-          area: string
-          descricao: string
+          area_direito: string
+          conteudo: string
+          created_at: string | null
+          descricao: string | null
+          downloads: number | null
           id: string
-          link: string
-          sub_area: string | null
           tags: string[] | null
-          tipo: string
+          tipo_peca: string
+          titulo: string
         }
         Insert: {
-          area: string
-          descricao: string
+          area_direito: string
+          conteudo: string
+          created_at?: string | null
+          descricao?: string | null
+          downloads?: number | null
           id?: string
-          link: string
-          sub_area?: string | null
           tags?: string[] | null
-          tipo: string
+          tipo_peca: string
+          titulo: string
         }
         Update: {
-          area?: string
-          descricao?: string
+          area_direito?: string
+          conteudo?: string
+          created_at?: string | null
+          descricao?: string | null
+          downloads?: number | null
           id?: string
-          link?: string
-          sub_area?: string | null
           tags?: string[] | null
-          tipo?: string
+          tipo_peca?: string
+          titulo?: string
         }
         Relationships: []
       }
