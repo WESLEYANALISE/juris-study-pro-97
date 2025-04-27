@@ -26,7 +26,11 @@ export function BibliotecaRecomendacoes() {
   const { data: livros, isLoading } = useQuery({
     queryKey: ["livrospro"],
     queryFn: async () => {
-      const { data } = await supabase.from("livrospro").select("*");
+      const { data, error } = await supabase.from("livrospro").select("*");
+      if (error) {
+        console.error("Error fetching books:", error);
+        return [];
+      }
       return (data as any[] ?? []) as LivroPro[];
     }
   });
