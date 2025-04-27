@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const VadeMecum = () => {
   const [activeTab, setActiveTab] = useState<"codigos" | "estatutos">("codigos");
-  const { searchQuery, setSearchQuery } = useVadeMecumSearch([]);
+  const { searchQuery, setSearchQuery } = useVadeMecumSearch();
   const { toast } = useToast();
 
   // Get list of all Codes tables using custom RPC function
