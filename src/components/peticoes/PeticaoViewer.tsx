@@ -2,7 +2,7 @@
 import { ArrowLeft, Download, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface PeticaoViewerProps {
@@ -13,26 +13,8 @@ interface PeticaoViewerProps {
 export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const { toast } = useToast();
   const [scale, setScale] = useState(1);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [containerWidth, setContainerWidth] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  
-  // Update container width when the window resizes
-  useEffect(() => {
-    const updateWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
-    };
-    
-    updateWidth();
-    window.addEventListener("resize", updateWidth);
-    
-    return () => {
-      window.removeEventListener("resize", updateWidth);
-    };
-  }, []);
 
   const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 2));
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
@@ -94,10 +76,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           </div>
         </div>
         
-        <div 
-          ref={containerRef}
-          className="flex-1 overflow-auto rounded-lg border bg-stone-100 dark:bg-stone-800"
-        >
+        <div className="flex-1 overflow-auto rounded-lg border bg-stone-100 dark:bg-stone-800">
           <div className="min-h-full w-full flex items-center justify-center p-4">
             {loading && (
               <div className="flex flex-col items-center justify-center">
@@ -107,10 +86,9 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
             )}
             
             {!error ? (
-              // Primary PDF viewer - simple and direct embed
-              <object
-                data={url}
-                type="application/pdf"
+              // Primary PDF viewer using iframe
+              <iframe
+                src={url}
                 className="w-full h-full rounded-md shadow-md"
                 style={{ 
                   height: `calc(100vh - 160px)`,
@@ -120,20 +98,10 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 }}
                 onLoad={handleLoad}
                 onError={handleError}
+                title="PDF Viewer"
               >
-                <iframe 
-                  src={getGoogleViewerUrl()}
-                  className="w-full h-full rounded-md shadow-md"
-                  style={{ 
-                    height: `calc(100vh - 160px)`,
-                  }}
-                  onLoad={handleLoad}
-                  onError={handleError}
-                  title="PDF Viewer Fallback"
-                >
-                  Este navegador não suporta visualização de PDF. Por favor, <a href={url} download target="_blank" rel="noopener noreferrer">baixe o PDF</a> para visualizá-lo.
-                </iframe>
-              </object>
+                Este navegador não suporta visualização de PDF. Por favor, <a href={url} download target="_blank" rel="noopener noreferrer">baixe o PDF</a> para visualizá-lo.
+              </iframe>
             ) : (
               // Fallback to Google Viewer when direct embed fails
               <iframe 
