@@ -94,9 +94,7 @@ const App = () => {
                   element={
                     <RequireAuth>
                       <Layout userProfile={userProfile}>
-                        <PageTransition>
-                          <BibliotecaRecomendacoes />
-                        </PageTransition>
+                        <BibliotecaRecomendacoes />
                       </Layout>
                     </RequireAuth>
                   }

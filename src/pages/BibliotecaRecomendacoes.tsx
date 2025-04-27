@@ -1,6 +1,11 @@
 
 import { BibliotecaRecomendacoes } from "@/components/biblioteca/BibliotecaRecomendacoes";
+import { PageTransition } from "@/components/PageTransition";
 
 export default function BibliotecaRecomendacoesPage() {
-  return <BibliotecaRecomendacoes />;
+  return (
+    <PageTransition>
+      <BibliotecaRecomendacoes />
+    </PageTransition>
+  );
 }
