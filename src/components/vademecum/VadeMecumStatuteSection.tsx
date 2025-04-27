@@ -109,7 +109,7 @@ const VadeMecumStatuteSection: React.FC<VadeMecumStatuteSectionProps> = ({ table
           <p className="text-muted-foreground">Nenhum estatuto encontrado.</p>
         </div>
       ) : (
-        filteredStatutes.map((statuteName, index) => {
+        filteredStatutes.map((statuteName) => {
           const displayName = statuteDisplayNames[statuteName] || statuteName.replace(/_/g, " ");
           const info = statuteInfo[statuteName] || { 
             description: "Conjunto de normas que regulam direitos específicos", 
