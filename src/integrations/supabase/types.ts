@@ -186,7 +186,7 @@ export type Database = {
         }
         Relationships: []
       }
-      codigo_civil: {
+      Código_Civil: {
         Row: {
           artigo: string | null
           exemplo: string | null
@@ -1440,6 +1440,90 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           videos_assistidos?: number | null
+        }
+        Relationships: []
+      }
+      user_vademecum_preferences: {
+        Row: {
+          created_at: string | null
+          font_size: number
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          font_size?: number
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          font_size?: number
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vademecum_favorites: {
+        Row: {
+          article_id: string
+          article_number: string | null
+          article_text: string
+          created_at: string | null
+          id: string
+          law_name: string
+          user_id: string
+        }
+        Insert: {
+          article_id: string
+          article_number?: string | null
+          article_text: string
+          created_at?: string | null
+          id?: string
+          law_name: string
+          user_id: string
+        }
+        Update: {
+          article_id?: string
+          article_number?: string | null
+          article_text?: string
+          created_at?: string | null
+          id?: string
+          law_name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      vademecum_history: {
+        Row: {
+          article_id: string
+          article_number: string | null
+          article_text: string
+          id: string
+          law_name: string
+          user_id: string
+          viewed_at: string | null
+        }
+        Insert: {
+          article_id: string
+          article_number?: string | null
+          article_text: string
+          id?: string
+          law_name: string
+          user_id: string
+          viewed_at?: string | null
+        }
+        Update: {
+          article_id?: string
+          article_number?: string | null
+          article_text?: string
+          id?: string
+          law_name?: string
+          user_id?: string
+          viewed_at?: string | null
         }
         Relationships: []
       }
