@@ -30,13 +30,13 @@ export default function Peticoes() {
     queryFn: async () => {
       let query = supabase.from("peticoes").select("*");
 
-      if (filters.area) {
+      if (filters.area && filters.area !== "all") {
         query = query.eq("area", filters.area);
       }
-      if (filters.subArea) {
+      if (filters.subArea && filters.subArea !== "all") {
         query = query.eq("sub_area", filters.subArea);
       }
-      if (filters.tipo) {
+      if (filters.tipo && filters.tipo !== "all") {
         query = query.eq("tipo", filters.tipo);
       }
       if (filters.tags.length > 0) {

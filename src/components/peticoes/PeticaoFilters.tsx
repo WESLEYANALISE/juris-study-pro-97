@@ -76,7 +76,7 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
             <SelectValue placeholder="Área do Direito" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas as áreas</SelectItem>
+            <SelectItem value="all">Todas as áreas</SelectItem>
             {areas?.map((area) => (
               <SelectItem key={area} value={area}>
                 {area}
@@ -96,7 +96,7 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
               <SelectValue placeholder="Subárea" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">Todas as subáreas</SelectItem>
+              <SelectItem value="all">Todas as subáreas</SelectItem>
               {subAreas?.map((subArea) => (
                 <SelectItem key={subArea} value={subArea}>
                   {subArea}
@@ -116,7 +116,7 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
             <SelectValue placeholder="Tipo de Petição" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os tipos</SelectItem>
+            <SelectItem value="all">Todos os tipos</SelectItem>
             {tipos?.map((tipo) => (
               <SelectItem key={tipo} value={tipo}>
                 {tipo}
