@@ -30,7 +30,6 @@ import Peticoes from "./pages/Peticoes";
 import MapasMentais from "./pages/MapasMentais";
 import VadeMecum from "./pages/VadeMecum";
 import VadeMecumViewer from "./pages/VadeMecumViewer";
-import AssistenteJuridico from "./pages/AssistenteJuridico";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -257,18 +256,6 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <VadeMecumViewer />
-                        </PageTransition>
-                      </Layout>
-                    </RequireAuth>
-                  }
-                />
-                <Route
-                  path="/assistente-juridico"
-                  element={
-                    <RequireAuth>
-                      <Layout userProfile={userProfile}>
-                        <PageTransition>
-                          <AssistenteJuridico />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>

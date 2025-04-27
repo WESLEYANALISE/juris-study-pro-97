@@ -23,6 +23,7 @@ interface AppSidebarProps {
 export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
   
+  // Menu items for main navigation
   const menuItems = [
     { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
     { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
@@ -37,16 +38,17 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
     { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
     { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
     { title: "Assistente", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Assistente Jurídico", url: "/assistente-juridico", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
     { title: "Cronograma", url: "/cronograma", icon: Calendar, profiles: ["concurseiro", "universitario", "tudo"] },
     { title: "Gamificação", url: "/gamificacao", icon: Trophy, profiles: ["concurseiro", "universitario", "tudo"] },
     { title: "Remote Desktop", url: "/remote", icon: MonitorPlay, profiles: ["tudo"] },
   ];
   
+  // Filter menu items based on user profile
   const mainMenuItems = menuItems.filter(item => 
     item.profiles.includes(userProfile)
   );
 
+  // Define profile configurations for header display
   const profileConfig = {
     concurseiro: {
       title: "Perfil Concurseiro",
