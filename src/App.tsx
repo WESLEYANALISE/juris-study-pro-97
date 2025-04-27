@@ -31,6 +31,8 @@ import MapasMentais from "./pages/MapasMentais";
 import VadeMecum from "./pages/VadeMecum";
 import VadeMecumViewer from "./pages/VadeMecumViewer";
 import AssistenteJuridico from "./pages/AssistenteJuridico";
+import BibliotecaRecomendacoes from "./pages/BibliotecaRecomendacoes";
+import BibliotecaViewer from "./pages/BibliotecaViewer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,10 +83,17 @@ const App = () => {
                     <RequireAuth>
                       <Layout userProfile={userProfile}>
                         <PageTransition>
-                          <DataMigrationAlert />
-                          <Biblioteca />
+                          <BibliotecaRecomendacoes />
                         </PageTransition>
                       </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/biblioteca/:id"
+                  element={
+                    <RequireAuth>
+                      <BibliotecaViewer />
                     </RequireAuth>
                   }
                 />
