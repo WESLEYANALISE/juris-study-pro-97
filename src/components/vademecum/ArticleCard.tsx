@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { BookmarkButton } from './article/BookmarkButton';
 import { FontSizeControls } from './article/FontSizeControls';
 import { ArticleExplanation } from './article/ArticleExplanation';
 import { PracticalExample } from './article/PracticalExample';
+import { supabase } from '@/lib/supabaseClient';
 
 interface ArticleCardProps {
   lawName: string;
