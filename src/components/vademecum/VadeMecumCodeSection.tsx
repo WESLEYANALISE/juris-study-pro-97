@@ -1,5 +1,4 @@
-
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -23,7 +22,6 @@ const codeDisplayNames: Record<string, string> = {
   "Código_Brasileiro_de_Telecomunicações": "Código Brasileiro de Telecomunicações",
 };
 
-// Information about each code
 const codeInfo: Record<string, { description: string; color: string }> = {
   "Código_Civil": { 
     description: "Regula os direitos e obrigações de ordem privada das pessoas", 
@@ -67,14 +65,18 @@ const codeInfo: Record<string, { description: string; color: string }> = {
   },
 };
 
-const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({ tableNames, searchQuery }) => {
+const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({ 
+  tableNames, 
+  searchQuery 
+}) => {
   const navigate = useNavigate();
 
-  // Filter codes based on search query
-  const filteredCodes = tableNames.filter((codeName) => {
-    const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
-    return displayName.toLowerCase().includes(searchQuery.toLowerCase());
-  });
+  const filteredCodes = useMemo(() => {
+    return tableNames.filter((codeName) => {
+      const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
+      return displayName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
+  }, [tableNames, searchQuery]);
 
   const handleCodeClick = (codeName: string) => {
     navigate(`/vademecum/${codeName}`);
@@ -84,9 +86,7 @@ const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({ tableNames,
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
+      transition: { staggerChildren: 0.1 }
     }
   };
 
@@ -102,7 +102,7 @@ const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({ tableNames,
       animate="show"
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      {filteredCodes.map((codeName, index) => {
+      {filteredCodes.map((codeName) => {
         const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
         const info = codeInfo[codeName] || { 
           description: "Conjunto de leis e normas jurídicas", 
