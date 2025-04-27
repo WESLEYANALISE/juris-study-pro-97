@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Select, 
   SelectContent, 
@@ -36,21 +36,28 @@ export const PeticaoFilters: React.FC<PeticaoFiltersProps> = ({
   onFilterChange,
   availableTags = ["Urgente", "Modelo", "Importante", "Criminal", "Civil", "Trabalhista", "Administrativo"]
 }) => {
-  const [area, setArea] = useState('');
-  const [tipo, setTipo] = useState('');
-  const [search, setSearch] = useState('');
-  const [dateFrom, setDateFrom] = useState<Date>();
-  const [dateTo, setDateTo] = useState<Date>();
+  const [selectedArea, setSelectedArea] = useState<string>('');
+  const [selectedTipo, setSelectedTipo] = useState<string>('');
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [dateFrom, setDateFrom] = useState<Date | undefined>();
+  const [dateTo, setDateTo] = useState<Date | undefined>();
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
   const handleFilterChange = () => {
-    onFilterChange({ area, tipo, search, dateFrom, dateTo, tags: selectedTags.length > 0 ? selectedTags : undefined });
+    onFilterChange({ 
+      area: selectedArea, 
+      tipo: selectedTipo, 
+      search: searchValue, 
+      dateFrom, 
+      dateTo, 
+      tags: selectedTags.length > 0 ? selectedTags : undefined 
+    });
   };
 
   const resetFilters = () => {
-    setArea('');
-    setTipo('');
-    setSearch('');
+    setSelectedArea('');
+    setSelectedTipo('');
+    setSearchValue('');
     setDateFrom(undefined);
     setDateTo(undefined);
     setSelectedTags([]);
@@ -71,8 +78,8 @@ export const PeticaoFilters: React.FC<PeticaoFiltersProps> = ({
         <div className="flex-grow relative">
           <Input 
             placeholder="Pesquisar petições..." 
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
             className="w-full pl-10"
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -80,8 +87,8 @@ export const PeticaoFilters: React.FC<PeticaoFiltersProps> = ({
         
         <div className="flex gap-2 flex-wrap md:flex-nowrap">
           <Select 
-            value={area} 
-            onValueChange={setArea}
+            value={selectedArea} 
+            onValueChange={setSelectedArea}
           >
             <SelectTrigger className="min-w-[150px]">
               <SelectValue placeholder="Área" />
@@ -96,8 +103,8 @@ export const PeticaoFilters: React.FC<PeticaoFiltersProps> = ({
           </Select>
 
           <Select 
-            value={tipo} 
-            onValueChange={setTipo}
+            value={selectedTipo} 
+            onValueChange={setSelectedTipo}
           >
             <SelectTrigger className="min-w-[150px]">
               <SelectValue placeholder="Tipo" />
