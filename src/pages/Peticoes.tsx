@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { PeticaoCard } from "@/components/peticoes/PeticaoCard";
 import { PeticaoFilters } from "@/components/peticoes/PeticaoFilters";
 import { PeticaoSearch } from "@/components/peticoes/PeticaoSearch";
@@ -73,7 +74,7 @@ export default function Peticoes() {
             className="container mx-auto p-6 space-y-6"
           >
             <div className="flex flex-col md:flex-row gap-4 items-start">
-              <Card className="w-full md:w-64 p-4 sticky top-4">
+              <Card className="w-full md:w-64 p-4 sticky top-4 hover:shadow-hover transition-all">
                 <PeticaoFilters filters={filters} setFilters={setFilters} />
               </Card>
               
@@ -83,22 +84,32 @@ export default function Peticoes() {
                   onChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
                 />
                 
-                <motion.div 
-                  layout
-                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                >
-                  {isLoading ? (
-                    <div>Carregando...</div>
-                  ) : (
-                    peticoes?.map((peticao) => (
+                {isLoading ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                      <motion.div 
+                        key={i}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="h-64 bg-muted/20 animate-pulse rounded-lg"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <motion.div 
+                    layout
+                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                  >
+                    {peticoes?.map((peticao) => (
                       <PeticaoCard 
                         key={peticao.id} 
                         peticao={peticao} 
                         onView={setViewingPeticao}
                       />
-                    ))
-                  )}
-                </motion.div>
+                    ))}
+                  </motion.div>
+                )}
               </div>
             </div>
           </motion.div>

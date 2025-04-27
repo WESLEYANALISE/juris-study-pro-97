@@ -4,12 +4,12 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useState } from "react";
 
-interface PeticaoViewerProps {
+interface MapaMentalViewerProps {
   url: string;
   onBack: () => void;
 }
 
-export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
+export function MapaMentalViewer({ url, onBack }: MapaMentalViewerProps) {
   const [scale, setScale] = useState(1);
 
   const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 2));

@@ -511,6 +511,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mapas_mentais: {
+        Row: {
+          area: string | null
+          created_at: string
+          id: number
+          link: string | null
+          mapa: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          id?: number
+          link?: string | null
+          mapa?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          id?: number
+          link?: string | null
+          mapa?: string | null
+        }
+        Relationships: []
+      }
       noticias: {
         Row: {
           area_direito: string | null

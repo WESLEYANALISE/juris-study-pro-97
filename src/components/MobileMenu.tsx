@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -23,7 +22,7 @@ const menuItems = [
   { title: "Resumos", url: "/resumos", icon: "Brain" },
   { title: "Simulados", url: "/simulados", icon: "GraduationCap" },
   { title: "Flashcards", url: "/flashcards", icon: "Brain" },
-  { title: "Peticionário", url: "/peticionario", icon: "FilePlus" },
+  { title: "Peticionário", url: "/peticoes", icon: "FilePlus" },
   { title: "JurisFlix", url: "/jurisflix", icon: "Film" },
   { title: "Jurisprudência", url: "/jurisprudencia", icon: "Gavel" },
   { title: "Notícias", url: "/noticias", icon: "Newspaper" },

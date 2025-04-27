@@ -27,6 +27,7 @@ import Dicionario from "./pages/Dicionario";
 import JurisFlix from "./pages/JurisFlix";
 import Questoes from "./pages/Questoes";
 import Peticoes from "./pages/Peticoes";
+import MapasMentais from "./pages/MapasMentais";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -217,6 +218,18 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <Peticoes />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/mapas-mentais"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <MapasMentais />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>
