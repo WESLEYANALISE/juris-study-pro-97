@@ -1,48 +1,56 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { PageTransition } from "@/components/PageTransition";
 import VadeMecumCodeSection from "@/components/vademecum/VadeMecumCodeSection";
 import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSection";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useVadeMecumSearch } from "@/hooks/useVadeMecumSearch";
 
 const VadeMecum = () => {
-  const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState<"codigos" | "estatutos">("codigos");
+  const { searchQuery, setSearchQuery } = useVadeMecumSearch([]);
 
-  // Get list of all Codes tables
+  // Get list of all Codes tables - FIXED to use information_schema instead of pg_catalog
   const { data: codesTableNames, isLoading: isLoadingCodes } = useQuery({
     queryKey: ["codesTables"],
     queryFn: async () => {
+      // Use information_schema.tables instead of pg_catalog.pg_tables
       const { data, error } = await supabase
-        .from("pg_catalog.pg_tables")
-        .select("tablename")
-        .ilike("tablename", "Código_%");
+        .from("information_schema.tables")
+        .select("table_name")
+        .eq("table_schema", "public")
+        .ilike("table_name", "Código_%");
 
       if (error) {
+        console.error("Error fetching code tables:", error);
         throw error;
       }
-      return data.map(item => item.tablename);
+      
+      return data ? data.map(item => item.table_name) : [];
     },
   });
 
-  // Get list of all Estatutos tables
+  // Get list of all Estatutos tables - FIXED to use information_schema
   const { data: statutesTableNames, isLoading: isLoadingStatutes } = useQuery({
     queryKey: ["statutesTables"],
     queryFn: async () => {
+      // Use information_schema.tables instead of pg_catalog.pg_tables
       const { data, error } = await supabase
-        .from("pg_catalog.pg_tables")
-        .select("tablename")
-        .ilike("tablename", "Estatuto_%");
+        .from("information_schema.tables")
+        .select("table_name")
+        .eq("table_schema", "public")
+        .ilike("table_name", "Estatuto_%");
         
       if (error) {
+        console.error("Error fetching statute tables:", error);
         throw error;
       }
-      return data.map(item => item.tablename);
+      
+      return data ? data.map(item => item.table_name) : [];
     },
   });
 
