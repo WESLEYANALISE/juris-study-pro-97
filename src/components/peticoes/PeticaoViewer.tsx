@@ -13,6 +13,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const [scale, setScale] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const [loadFallback, setLoadFallback] = useState(false);
 
   // Update container width when the window resizes
   useEffect(() => {
@@ -34,21 +35,21 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const resetZoom = () => setScale(1);
 
-  // Create a sanitized URL with correct parameters for Google PDF Viewer
-  // This avoids issues with PDF.js worker and provides a more reliable viewer
-  const getSafeViewerUrl = () => {
-    // Using Google PDF Viewer as a fallback which is more reliable
+  // Create a sanitized URL for Google PDF Viewer as a reliable fallback
+  const getGoogleViewerUrl = () => {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
   };
   
   // For direct embedding, ensure we append proper parameters
   const getEmbedUrl = () => {
     // Try to use direct embedding first with proper parameters
-    // The #toolbar=1&navpanes=1 parameters help with display
-    if (url.endsWith('.pdf')) {
-      return url;
-    }
     return url;
+  };
+
+  // Handle error when the primary PDF viewer fails
+  const handlePrimaryViewerError = () => {
+    console.log("Primary PDF viewer failed, switching to fallback");
+    setLoadFallback(true);
   };
 
   return (
@@ -89,27 +90,43 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           className="flex-1 overflow-auto rounded-lg border bg-stone-100 dark:bg-stone-800"
         >
           <div className="min-h-full w-full flex items-center justify-center p-4">
-            {/* Using object tag instead of iframe for better PDF handling */}
-            <object
-              data={getEmbedUrl()}
-              type="application/pdf"
-              className="w-full h-full rounded-md shadow-md"
-              style={{ 
-                height: `calc(100vh - 160px)`,
-              }}
-            >
+            {!loadFallback ? (
               <iframe 
-                src={getSafeViewerUrl()}
+                src={getEmbedUrl()}
                 className="w-full h-full rounded-md shadow-md"
                 style={{ 
                   height: `calc(100vh - 160px)`,
                 }}
                 title="PDF Viewer"
                 frameBorder="0"
+                onError={handlePrimaryViewerError}
+                onLoad={(e) => {
+                  // Check if iframe loaded successfully
+                  try {
+                    // Access contentWindow to check if PDF loaded correctly
+                    const iframe = e.currentTarget;
+                    if (iframe.contentWindow?.document?.body?.innerHTML?.includes('Error')) {
+                      handlePrimaryViewerError();
+                    }
+                  } catch (error) {
+                    console.error("Error checking iframe content:", error);
+                    handlePrimaryViewerError();
+                  }
+                }}
+              />
+            ) : (
+              <iframe 
+                src={getGoogleViewerUrl()}
+                className="w-full h-full rounded-md shadow-md"
+                style={{ 
+                  height: `calc(100vh - 160px)`,
+                }}
+                title="PDF Viewer Fallback"
+                frameBorder="0"
               >
                 Este navegador não suporta visualização de PDF. Por favor, <a href={url} download target="_blank" rel="noopener noreferrer">baixe o PDF</a> para visualizá-lo.
               </iframe>
-            </object>
+            )}
           </div>
         </div>
         
