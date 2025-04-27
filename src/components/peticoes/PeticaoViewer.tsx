@@ -1,13 +1,23 @@
-import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight } from "lucide-react";
+
+import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { Document, Page, pdfjs } from "react-pdf";
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
+
+// Set up the worker for PDF.js
+try {
+  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+} catch (error) {
+  console.error("Error initializing PDF.js worker:", error);
+}
 
 interface PeticaoViewerProps {
   url: string;
@@ -33,9 +43,11 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null);
   const [pageTransitionDirection, setPageTransitionDirection] = useState<"next" | "prev" | "none">("none");
   const [isAnimating, setIsAnimating] = useState(false);
+  const [pdfLoadError, setPdfLoadError] = useState<Error | null>(null);
+  const [pdfLoadRetries, setPdfLoadRetries] = useState(0);
+  const [useAlternativeViewer, setUseAlternativeViewer] = useState(false);
 
   const pdfContainerRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
   
   useEffect(() => {
     const updateSize = () => {
@@ -108,6 +120,25 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     return () => window.removeEventListener('resize', handleResize);
   }, [isDualPageView]);
 
+  // PDF retry mechanism
+  useEffect(() => {
+    if (pdfLoadError && pdfLoadRetries < 3 && !useAlternativeViewer) {
+      const retryTimeout = setTimeout(() => {
+        setPdfLoadRetries(prev => prev + 1);
+        setPdfLoadError(null);
+      }, 2000);
+      
+      return () => clearTimeout(retryTimeout);
+    } else if (pdfLoadError && pdfLoadRetries >= 3 && !useAlternativeViewer) {
+      setUseAlternativeViewer(true);
+      toast({
+        title: "Erro ao carregar documento",
+        description: "Utilizando visualizador alternativo",
+        variant: "destructive",
+      });
+    }
+  }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer]);
+
   const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3));
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const resetZoom = () => setScale(1);
@@ -116,26 +147,12 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
   };
 
-  const handleLoad = () => {
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
+    setNumPages(numPages);
     setLoading(false);
     setError(false);
-    
-    setTimeout(() => {
-      setNumPages(Math.floor(Math.random() * 30) + 10);
-    }, 500);
   };
 
-  const handleError = () => {
-    setLoading(false);
-    setError(true);
-    
-    toast({
-      title: "Erro ao carregar documento",
-      description: "Tentando visualizador alternativo ou você pode baixá-lo diretamente",
-      variant: "destructive",
-    });
-  };
-  
   const changePage = (delta: number) => {
     if (!numPages || isAnimating) return;
     
@@ -197,7 +214,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     toast({
       title: "Marcador adicionado",
       description: `Página ${pageNumber} marcada como "${title}"`,
-      variant: "success",
     });
   };
   
@@ -300,6 +316,55 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         : [pageNumber - 1, pageNumber]
       ).filter(p => p > 0 && (!numPages || p <= numPages))
     : [pageNumber];
+
+  const renderAlternativeViewer = () => {
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div className="bg-card/90 backdrop-blur-sm p-4 text-center mb-4 rounded-lg border">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <AlertTriangle className="h-5 w-5 text-amber-500" />
+            <h3 className="font-medium">Visualizador alternativo</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-2">
+            Estamos usando um visualizador alternativo para este documento.
+          </p>
+        </div>
+        
+        <iframe
+          src={getGoogleViewerUrl()}
+          className="flex-1 w-full rounded-lg border shadow-lg bg-white"
+          title="Visualizador de PDF alternativo"
+          onLoad={() => setLoading(false)}
+        />
+        
+        <div className="flex justify-between mt-4">
+          <Button
+            variant="outline"
+            onClick={() => {
+              setPdfLoadRetries(0);
+              setPdfLoadError(null);
+              setUseAlternativeViewer(false);
+            }}
+            className="gap-2"
+          >
+            <RotateCw className="h-4 w-4" />
+            Tentar visualizador normal
+          </Button>
+          
+          <Button
+            variant="default"
+            asChild
+            className="gap-2"
+          >
+            <a href={url} download target="_blank" rel="noopener noreferrer">
+              <Download className="h-4 w-4" />
+              Baixar PDF
+            </a>
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -495,123 +560,133 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
             onTouchEnd={handleTouchEnd}
             style={{ perspective: "1000px" }}
           >
-            {isDualPageView ? (
-              <div className="relative mx-auto p-4">
-                <AnimatePresence initial={false} mode="wait" custom={pageTransitionDirection}>
-                  <motion.div
-                    key={`dual-${pageNumber}`}
-                    custom={pageTransitionDirection}
-                    initial="initial"
-                    animate="animate"
-                    exit="exit"
-                    variants={dualPageAnimationVariants}
-                    className="flex gap-2"
-                  >
-                    {pageSequence.map((pageNum, index) => (
-                      <div
-                        key={`page-${pageNum}`}
-                        className="page-container overflow-hidden bg-white shadow-lg rounded-lg flex-1 max-w-[50%]"
-                        style={{
-                          transform: `scale(${scale}) rotate(${rotation}deg)`,
-                          transformOrigin: 'center',
-                          transition: 'transform 0.3s ease'
-                        }}
-                      >
-                        {!error ? (
-                          <iframe
-                            ref={index === 0 ? iframeRef : undefined}
-                            src={`${url}#page=${pageNum}`}
-                            className="w-full h-full border-0"
-                            style={{ 
-                              height: `calc(100vh - 100px)`,
-                              minHeight: '500px'
-                            }}
-                            onLoad={index === 0 ? handleLoad : undefined}
-                            onError={index === 0 ? handleError : undefined}
-                            title={`PDF Page ${pageNum}`}
-                          />
-                        ) : null}
-                        
-                        <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-black/10 pointer-events-none rounded-bl" />
-                      </div>
-                    ))}
-                  </motion.div>
-                </AnimatePresence>
-              </div>
+            {useAlternativeViewer ? (
+              renderAlternativeViewer()
             ) : (
               <div className="relative mx-auto p-4">
                 <AnimatePresence initial={false} mode="wait" custom={pageTransitionDirection}>
                   <motion.div
-                    key={`page-${pageNumber}`}
+                    key={`pdf-${isDualPageView ? 'dual' : 'single'}-${pageNumber}-${scale}-${rotation}`}
                     custom={pageTransitionDirection}
                     initial="initial"
                     animate="animate"
                     exit="exit"
-                    variants={pageAnimationVariants}
-                    style={{ perspective: "1000px" }}
-                    className="w-full"
+                    variants={isDualPageView ? dualPageAnimationVariants : pageAnimationVariants}
+                    className={`${isDualPageView ? 'flex gap-2' : ''}`}
+                    onAnimationComplete={() => setIsAnimating(false)}
                   >
-                    <div
-                      className="page-container overflow-hidden bg-white shadow-lg rounded-lg mx-auto"
-                      style={{
-                        transform: `scale(${scale}) rotate(${rotation}deg)`,
-                        transformOrigin: 'center',
-                        transition: 'transform 0.3s ease'
+                    <Document
+                      file={url}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      onLoadError={(error) => {
+                        console.error("Error loading PDF:", error);
+                        setPdfLoadError(error);
+                        setError(true);
+                        setLoading(false);
                       }}
+                      loading={
+                        <div className="flex items-center justify-center h-full min-h-[300px]">
+                          <div className="text-center">
+                            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                            <p className="text-muted-foreground">Carregando documento...</p>
+                          </div>
+                        </div>
+                      }
+                      error={
+                        <div className="flex items-center justify-center h-full min-h-[300px]">
+                          <div className="text-center p-8 max-w-md mx-auto">
+                            <div className="bg-destructive/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                              <AlertTriangle className="h-6 w-6 text-destructive" />
+                            </div>
+                            <p className="font-semibold mb-2">Erro ao carregar documento</p>
+                            <p className="text-sm text-muted-foreground mb-6">
+                              Ocorreu um problema ao carregar o documento PDF.
+                              {pdfLoadRetries > 0 && ` Tentativa ${pdfLoadRetries} de 3.`}
+                            </p>
+                            <div className="flex flex-col gap-2">
+                              <Button 
+                                variant="outline"
+                                onClick={() => {
+                                  setPdfLoadError(null);
+                                  setPdfLoadRetries(prev => prev + 1);
+                                }}
+                                disabled={pdfLoadRetries >= 3}
+                                className="w-full"
+                              >
+                                <RotateCw className="mr-2 h-4 w-4" />
+                                Tentar novamente
+                              </Button>
+                              <Button 
+                                variant="default"
+                                onClick={() => setUseAlternativeViewer(true)}
+                                className="w-full"
+                              >
+                                Usar visualizador alternativo
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                asChild
+                                className="w-full"
+                              >
+                                <a href={url} download target="_blank" rel="noopener noreferrer">
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Baixar PDF
+                                </a>
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                      options={{
+                        cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                        cMapPacked: true,
+                        worker: pdfLoadRetries > 0 ? null : undefined
+                      }}
+                      className="transition-transform duration-300"
                     >
-                      {!error ? (
-                        <iframe
-                          ref={iframeRef}
-                          src={`${url}#page=${pageNumber}`}
-                          className="w-full h-full border-0"
-                          style={{ 
-                            height: `calc(100vh - 140px)`,
-                            minHeight: '500px'
-                          }}
-                          onLoad={handleLoad}
-                          onError={handleError}
-                          title={`PDF Page ${pageNumber}`}
-                        />
-                      ) : null}
-                      
-                      <div className="absolute bottom-0 right-0 w-12 h-12 bg-gradient-to-br from-transparent to-black/10 pointer-events-none rounded-bl" />
-                    </div>
+                      {isDualPageView ? (
+                        <div className="flex gap-2">
+                          {pageSequence.map(pageNum => (
+                            <div
+                              key={`page-${pageNum}`}
+                              className="page-container overflow-hidden bg-white shadow-lg rounded-lg"
+                            >
+                              <Page
+                                key={`page-content-${pageNum}`}
+                                pageNumber={pageNum}
+                                scale={scale}
+                                rotate={rotation}
+                                renderTextLayer={true}
+                                renderAnnotationLayer={true}
+                                width={containerSize.width / 2 - 24}
+                                className="transition-all duration-300 shadow-lg rounded"
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="page-container overflow-hidden bg-white shadow-lg rounded-lg">
+                          <Page
+                            pageNumber={pageNumber}
+                            scale={scale}
+                            rotate={rotation}
+                            renderTextLayer={true}
+                            renderAnnotationLayer={true}
+                            className="transition-all duration-300 shadow-lg rounded"
+                          />
+                        </div>
+                      )}
+                    </Document>
                   </motion.div>
                 </AnimatePresence>
               </div>
             )}
               
-            {loading && (
+            {loading && !error && !useAlternativeViewer && (
               <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
                 <div className="flex flex-col items-center justify-center">
                   <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mb-4"></div>
                   <p className="text-muted-foreground">Carregando documento...</p>
-                </div>
-              </div>
-            )}
-            
-            {error && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center p-8 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg">
-                  <p className="text-destructive font-medium mb-4">Não foi possível carregar o documento</p>
-                  
-                  <iframe 
-                    src={getGoogleViewerUrl()}
-                    className="w-full rounded-md mb-4"
-                    style={{ 
-                      height: '50vh',
-                      minHeight: '300px'
-                    }}
-                    onLoad={handleLoad}
-                    title="PDF Viewer Fallback"
-                  />
-                  
-                  <Button asChild>
-                    <a href={url} download target="_blank" rel="noopener noreferrer">
-                      <Download className="h-4 w-4 mr-2" />
-                      Baixar PDF
-                    </a>
-                  </Button>
                 </div>
               </div>
             )}
