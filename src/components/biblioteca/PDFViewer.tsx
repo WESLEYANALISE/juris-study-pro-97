@@ -662,7 +662,7 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
       toast({
         title: "Visualizador alternativo ativado",
         description: "Tivemos um problema ao carregar o PDF, usando visualizador alternativo.",
-        variant: "warning",
+        variant: "destructive",
       });
     }
   }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer]);
@@ -1055,7 +1055,7 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
                 options={{ 
                   cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
                   isEvalSupported: false,
-                  disableWorker: pdfLoadRetries > 0
+                  worker: pdfLoadRetries > 0 ? null : undefined
                 }}
               >
                 {pageSequence.map((pageNum) => (
