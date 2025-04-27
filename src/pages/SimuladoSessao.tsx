@@ -9,12 +9,14 @@ import { Progress } from "@/components/ui/progress";
 import { useSimulado } from "@/hooks/use-simulado";
 import type { SimuladoCategoria, Questao } from "@/types/simulados";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 const SimuladoSessao = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   
@@ -23,6 +25,13 @@ const SimuladoSessao = () => {
   const { data: questoes } = useQuestoes();
   const submitResposta = useSubmitResposta();
 
+  // Redirect to auth if not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate("/auth");
+    }
+  }, [user, navigate]);
+  
   if (!questoes?.length) {
     return <div>Carregando questões...</div>;
   }
