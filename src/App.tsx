@@ -28,6 +28,8 @@ import JurisFlix from "./pages/JurisFlix";
 import Questoes from "./pages/Questoes";
 import Peticoes from "./pages/Peticoes";
 import MapasMentais from "./pages/MapasMentais";
+import VadeMecum from "./pages/VadeMecum";
+import VadeMecumViewer from "./pages/VadeMecumViewer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -230,6 +232,30 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <MapasMentais />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/vademecum"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VadeMecum />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/vademecum/:tableName"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VadeMecumViewer />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>

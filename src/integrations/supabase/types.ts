@@ -159,6 +159,33 @@ export type Database = {
         }
         Relationships: []
       }
+      Código_Civil: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
+          id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
       cronograma: {
         Row: {
           concluido: boolean | null

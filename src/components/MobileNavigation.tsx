@@ -15,9 +15,9 @@ const MobileNavigation = () => {
       path: "/"
     },
     {
-      name: "Biblioteca",
+      name: "Vade-Mecum",
       icon: BookOpen,
-      path: "/biblioteca"
+      path: "/vademecum"
     },
     {
       name: "JurisFlix",

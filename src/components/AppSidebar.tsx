@@ -1,4 +1,3 @@
-
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay } from "lucide-react";
 import {
   Sidebar,
@@ -24,7 +23,7 @@ interface AppSidebarProps {
 export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
   
-  // Menu items para navegação principal
+  // Menu items for main navigation
   const menuItems = [
     { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
     { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
@@ -44,12 +43,12 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
     { title: "Remote Desktop", url: "/remote", icon: MonitorPlay, profiles: ["tudo"] },
   ];
   
-  // Filtrar itens do menu com base no perfil do usuário
+  // Filter menu items based on user profile
   const mainMenuItems = menuItems.filter(item => 
     item.profiles.includes(userProfile)
   );
 
-  // Definições de perfil para exibir no cabeçalho
+  // Define profile configurations for header display
   const profileConfig = {
     concurseiro: {
       title: "Perfil Concurseiro",

@@ -1,5 +1,7 @@
 
-// Simple text-to-speech service using browser's native Speech Synthesis API
+// Text-to-speech service using browser's native Speech Synthesis API and Supabase edge function
+
+import { supabase } from "@/lib/supabaseClient";
 
 interface SpeechOptions {
   voice?: SpeechSynthesisVoice;
@@ -7,6 +9,7 @@ interface SpeechOptions {
   pitch?: number;
   volume?: number;
   lang?: string;
+  useEdgeFunction?: boolean;
 }
 
 // Default options for Brazilian Portuguese
@@ -15,10 +18,14 @@ const defaultOptions: SpeechOptions = {
   pitch: 1.0,
   volume: 1.0,
   lang: 'pt-BR',
+  useEdgeFunction: true, // By default, use the edge function for better voice quality
 };
 
 // Cache of available voices
 let cachedVoices: SpeechSynthesisVoice[] = [];
+
+// Audio element for playing edge function generated audio
+let audioElement: HTMLAudioElement | null = null;
 
 // Initialize speech synthesis
 const initSpeechSynthesis = (): Promise<boolean> => {
@@ -69,11 +76,54 @@ const getPortugueseVoices = async (): Promise<SpeechSynthesisVoice[]> => {
   );
 };
 
-// Speak text
-const speak = async (text: string, options: SpeechOptions = {}): Promise<void> => {
+// Use Supabase edge function for speech synthesis
+const speakWithEdgeFunction = async (text: string): Promise<void> => {
+  try {
+    // Cancel any ongoing speech
+    stop();
+    
+    const { data, error } = await supabase.functions.invoke('text-to-speech', {
+      body: { text },
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (!data.audioContent) {
+      throw new Error('No audio content received');
+    }
+    
+    // Create audio element if it doesn't exist
+    if (!audioElement) {
+      audioElement = new Audio();
+    }
+    
+    // Convert base64 to audio
+    const base64Audio = data.audioContent;
+    audioElement.src = `data:audio/mp3;base64,${base64Audio}`;
+    
+    return new Promise((resolve, reject) => {
+      if (audioElement) {
+        audioElement.onended = () => resolve();
+        audioElement.onerror = (e) => reject(e);
+        audioElement.play().catch(reject);
+      } else {
+        reject(new Error('Audio element not created'));
+      }
+    });
+  } catch (error) {
+    console.error('Error with edge function TTS:', error);
+    // Fallback to browser TTS
+    return speakWithBrowser(text);
+  }
+};
+
+// Use browser's native Speech Synthesis API
+const speakWithBrowser = async (text: string, options: SpeechOptions = {}): Promise<void> => {
   if (!('speechSynthesis' in window)) {
     console.warn('Text-to-speech not supported in this browser');
-    return;
+    return Promise.reject(new Error('Text-to-speech not supported in this browser'));
   }
   
   // Cancel any ongoing speech
@@ -110,10 +160,26 @@ const speak = async (text: string, options: SpeechOptions = {}): Promise<void> =
   });
 };
 
+// Speak text - decides whether to use edge function or browser
+const speak = async (text: string, options: SpeechOptions = {}): Promise<void> => {
+  const mergedOptions = { ...defaultOptions, ...options };
+  
+  if (mergedOptions.useEdgeFunction) {
+    return speakWithEdgeFunction(text);
+  } else {
+    return speakWithBrowser(text, options);
+  }
+};
+
 // Stop speaking
 const stop = (): void => {
   if ('speechSynthesis' in window) {
     speechSynthesis.cancel();
+  }
+  
+  if (audioElement) {
+    audioElement.pause();
+    audioElement.currentTime = 0;
   }
 };
 
