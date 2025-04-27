@@ -682,7 +682,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         </div>
       </div>
       
-      <style jsx global>{`
+      <style>
+        {`
         @keyframes fadeOut {
           0% { opacity: 0.8; }
           100% { opacity: 0; }
@@ -702,7 +703,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           80% { opacity: 0.7; }
           100% { transform: translateX(100px); opacity: 0; }
         }
-      `}</style>
+        `}
+      </style>
     </motion.div>
   );
 }
