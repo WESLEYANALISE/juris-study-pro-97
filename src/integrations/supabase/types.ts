@@ -1075,6 +1075,150 @@ export type Database = {
         }
         Relationships: []
       }
+      livrospro: {
+        Row: {
+          capa_url: string | null
+          categoria: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome: string
+          pdf: string
+          total_paginas: number | null
+          updated_at: string
+        }
+        Insert: {
+          capa_url?: string | null
+          categoria: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome: string
+          pdf: string
+          total_paginas?: number | null
+          updated_at?: string
+        }
+        Update: {
+          capa_url?: string | null
+          categoria?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome?: string
+          pdf?: string
+          total_paginas?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      livrospro_anotacoes: {
+        Row: {
+          cor: string | null
+          created_at: string
+          id: string
+          livro_id: string
+          pagina: number
+          posicao: Json | null
+          texto: string
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          livro_id: string
+          pagina: number
+          posicao?: Json | null
+          texto: string
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string
+          id?: string
+          livro_id?: string
+          pagina?: number
+          posicao?: Json | null
+          texto?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livrospro_anotacoes_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "livrospro"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      livrospro_marcadores: {
+        Row: {
+          created_at: string
+          id: string
+          livro_id: string
+          pagina: number
+          titulo: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          livro_id: string
+          pagina: number
+          titulo?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          livro_id?: string
+          pagina?: number
+          titulo?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livrospro_marcadores_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "livrospro"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      livrospro_progresso: {
+        Row: {
+          id: string
+          livro_id: string
+          pagina_atual: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          livro_id: string
+          pagina_atual?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          livro_id?: string
+          pagina_atual?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "livrospro_progresso_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "livrospro"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mapas_mentais: {
         Row: {
           area: string | null

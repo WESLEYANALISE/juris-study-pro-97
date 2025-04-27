@@ -16,6 +16,7 @@ import Anotacoes from "./pages/Anotacoes";
 import Auth from "./pages/Auth";
 import { RequireAuth } from "@/components/RequireAuth";
 import Biblioteca from "./pages/Biblioteca";
+import BibliotecaRecomendacoes from "./pages/BibliotecaRecomendacoes";
 import Flashcards from "./pages/Flashcards";
 import { DataMigrationAlert } from "./components/DataMigrationAlert";
 import { AnimatePresence } from "framer-motion";
@@ -83,6 +84,18 @@ const App = () => {
                         <PageTransition>
                           <DataMigrationAlert />
                           <Biblioteca />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/biblioteca/recomendacoes"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <BibliotecaRecomendacoes />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>
