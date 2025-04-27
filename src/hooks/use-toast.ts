@@ -1,16 +1,16 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-type ToastVariant = "default" | "destructive" | "success";
+export type ToastVariant = "default" | "destructive" | "success";
 
-type ToastProps = {
+export type ToastProps = {
   title?: string;
   description?: string;
   variant?: ToastVariant;
   duration?: number;
 };
 
-type Toast = ToastProps & {
+export type Toast = ToastProps & {
   id: string;
   visible: boolean;
 };

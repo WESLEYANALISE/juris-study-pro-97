@@ -1,5 +1,4 @@
-
-import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw } from "lucide-react";
+import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
@@ -36,7 +35,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   
-  // Update container size when window resizes
   useEffect(() => {
     const updateSize = () => {
       if (pdfContainerRef.current) {
@@ -53,30 +51,25 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     return () => window.removeEventListener('resize', updateSize);
   }, []);
   
-  // Calculate appropriate scale based on view mode
   useEffect(() => {
     if (viewMode === "custom") return;
     
-    // Wait for container to be measured
     const timeout = setTimeout(() => {
       if (containerSize.width > 0 && containerSize.height > 0) {
         if (viewMode === "fit-width") {
-          // Scale to fit width, accounting for container padding
-          const containerWidth = isDualPageView 
-            ? (containerSize.width - 48) / 2 // Adjusted width for dual page mode
-            : containerSize.width - 48;      // Single page with padding
-          
-          setScale(containerWidth / 595); // Assuming standard PDF width of 595pt
-        } else if (viewMode === "fit-page") {
-          // Scale to fit both width and height
           const containerWidth = isDualPageView 
             ? (containerSize.width - 48) / 2
             : containerSize.width - 48;
           
-          const widthScale = containerWidth / 595; // Width scale factor
-          const heightScale = (containerSize.height - 48) / 842; // Height scale factor (standard A4)
+          setScale(containerWidth / 595);
+        } else if (viewMode === "fit-page") {
+          const containerWidth = isDualPageView 
+            ? (containerSize.width - 48) / 2
+            : containerSize.width - 48;
           
-          // Use the smaller scale to ensure entire page fits
+          const widthScale = containerWidth / 595;
+          const heightScale = (containerSize.height - 48) / 842;
+          
           setScale(Math.min(widthScale, heightScale));
         }
       }
@@ -85,7 +78,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     return () => clearTimeout(timeout);
   }, [containerSize, viewMode, isDualPageView]);
 
-  // Handle fullscreen changes
   useEffect(() => {
     const handleFullScreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
@@ -97,10 +89,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     };
   }, []);
 
-  // Check if we're on mobile
   const isMobile = useRef(window.innerWidth < 768);
   
-  // Disable dual page view on mobile
   useEffect(() => {
     const handleResize = () => {
       const mobile = window.innerWidth < 768;
@@ -120,24 +110,19 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const resetZoom = () => setScale(1);
 
-  // For Google Docs PDF Viewer as fallback
   const getGoogleViewerUrl = () => {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
   };
 
-  // Handle successful load
   const handleLoad = () => {
     setLoading(false);
     setError(false);
     
-    // Try to get number of pages (this is a simplified approach)
-    // In a real implementation, you would use PDF.js to get the exact number
     setTimeout(() => {
-      setNumPages(Math.floor(Math.random() * 30) + 10); // Mock number of pages between 10-40
+      setNumPages(Math.floor(Math.random() * 30) + 10);
     }, 500);
   };
 
-  // Handle error
   const handleError = () => {
     setLoading(false);
     setError(true);
@@ -154,7 +139,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     
     let newPage = pageNumber + delta;
     
-    // In dual page mode, move by 2 pages
     if (isDualPageView && delta !== 0) {
       newPage = pageNumber + (delta * 2);
     }
@@ -205,10 +189,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     setBookmarks(prev => prev.filter(bookmark => bookmark.id !== id));
   };
   
-  // Check if current page is bookmarked
   const currentPageBookmarked = bookmarks.some(bookmark => bookmark.page === pageNumber);
   
-  // Handle touch events for swipe navigation
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart({
       x: e.touches[0].clientX,
@@ -223,7 +205,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     const xDiff = touchStart.x - e.touches[0].clientX;
     const yDiff = touchStart.y - e.touches[0].clientY;
     
-    // Determine if horizontal swipe
     if (Math.abs(xDiff) > Math.abs(yDiff) && Math.abs(xDiff) > 50) {
       if (xDiff > 0) {
         setSwipeDirection("left");
@@ -235,16 +216,15 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   
   const handleTouchEnd = () => {
     if (swipeDirection === "left") {
-      changePage(1); // Next page
+      changePage(1);
     } else if (swipeDirection === "right") {
-      changePage(-1); // Previous page
+      changePage(-1);
     }
     
     setTouchStart(null);
     setSwipeDirection(null);
   };
   
-  // Page sequence for dual page view
   const pageSequence = isDualPageView 
     ? (pageNumber % 2 === 1 
         ? [pageNumber, pageNumber + 1] 
@@ -261,7 +241,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
       className="fixed inset-0 z-50 bg-background"
     >
       <div className="flex h-full flex-col">
-        {/* Header toolbar */}
         <div className="bg-card border-b shadow-sm p-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={onBack} className="gap-2">
@@ -336,7 +315,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           </div>
         </div>
         
-        {/* Mobile menu */}
         <Sheet open={isMenuOpen} onOpenChange={setIsMenuOpen}>
           <SheetContent side="right">
             <SheetHeader>
@@ -436,12 +414,10 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           </SheetContent>
         </Sheet>
         
-        {/* PDF Container */}
         <div 
           ref={pdfContainerRef}
           className="flex-1 flex overflow-hidden"
         >
-          {/* Main PDF Display */}
           <div 
             className="flex-1 overflow-auto bg-stone-100 dark:bg-stone-900 flex items-center justify-center"
             onTouchStart={handleTouchStart}
@@ -456,7 +432,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 transition: 'transform 0.3s ease'
               }}
             >
-              {/* Show loading spinner */}
               {loading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm z-10">
                   <div className="flex flex-col items-center justify-center">
@@ -466,7 +441,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 </div>
               )}
               
-              {/* Display PDF pages based on view mode */}
               {pageSequence.map((pageNum, index) => (
                 <div
                   key={`page-${pageNum}`}
@@ -496,7 +470,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 </div>
               ))}
               
-              {/* Error overlay */}
               {error && (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center p-8 bg-background/80 backdrop-blur-sm rounded-lg shadow-lg">
@@ -523,7 +496,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 </div>
               )}
               
-              {/* Swipe indicator animation for mobile */}
               {swipeDirection && (
                 <div 
                   className={`fixed inset-y-0 ${swipeDirection === 'left' ? 'right-0' : 'left-0'} w-16 bg-primary/10 flex items-center justify-center`}
@@ -539,7 +511,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
             </div>
           </div>
           
-          {/* Sidebar Panel for Bookmarks and Navigation (desktop only) */}
           <div className="hidden lg:block w-64 bg-card border-l overflow-y-auto">
             <Tabs defaultValue="bookmarks">
               <TabsList className="w-full">
@@ -623,7 +594,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           </div>
         </div>
         
-        {/* Bottom toolbar (mobile) */}
         <div className="md:hidden flex items-center justify-between border-t p-2 bg-card">
           <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
             <ArrowLeft size={18} />
@@ -647,7 +617,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           </Button>
         </div>
         
-        {/* Floating action buttons */}
         <div className="fixed bottom-16 md:bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full border shadow-lg p-1">
           <Popover>
             <PopoverTrigger asChild>
@@ -703,7 +672,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           </Button>
         </div>
         
-        {/* Download button (desktop) */}
         <div className="hidden md:block mt-4 pb-4 px-4">
           <Button asChild className="w-full md:w-auto gap-2">
             <a href={url} download target="_blank" rel="noopener noreferrer">
@@ -720,7 +688,6 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
           100% { opacity: 0; }
         }
         
-        /* Additional style for swipe hint animation */
         .swipe-hint {
           position: absolute;
           width: 40px;
