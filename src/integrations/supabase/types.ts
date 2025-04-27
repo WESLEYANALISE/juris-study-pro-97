@@ -159,7 +159,7 @@ export type Database = {
         }
         Relationships: []
       }
-      Código_Civil: {
+      codigo_civil: {
         Row: {
           artigo: string | null
           exemplo: string | null
@@ -725,34 +725,25 @@ export type Database = {
       }
       resumos: {
         Row: {
-          area_direito: string
-          autor: string | null
-          conteudo: string
-          created_at: string | null
+          area: string
           id: string
-          likes: number | null
-          tags: string[] | null
-          titulo: string
+          resumo: string | null
+          tema: string
+          topico: string
         }
         Insert: {
-          area_direito: string
-          autor?: string | null
-          conteudo: string
-          created_at?: string | null
+          area: string
           id?: string
-          likes?: number | null
-          tags?: string[] | null
-          titulo: string
+          resumo?: string | null
+          tema: string
+          topico: string
         }
         Update: {
-          area_direito?: string
-          autor?: string | null
-          conteudo?: string
-          created_at?: string | null
+          area?: string
           id?: string
-          likes?: number | null
-          tags?: string[] | null
-          titulo?: string
+          resumo?: string | null
+          tema?: string
+          topico?: string
         }
         Relationships: []
       }
