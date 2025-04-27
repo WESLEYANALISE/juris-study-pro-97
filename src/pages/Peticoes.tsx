@@ -30,6 +30,15 @@ const Peticoes: React.FC = () => {
   const [areas, setAreas] = useState<string[]>([]);
   const [tipos, setTipos] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<string[]>([]);
+  
+  // Define filter state variables
+  const [areaFilter, setAreaFilter] = useState('');
+  const [tipoFilter, setTipoFilter] = useState('');
+  const [searchFilter, setSearchFilter] = useState('');
+  const [dateFromFilter, setDateFromFilter] = useState<Date | undefined>(undefined);
+  const [dateToFilter, setDateToFilter] = useState<Date | undefined>(undefined);
+  const [tagsFilter, setTagsFilter] = useState<string[]>([]);
+  
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -78,6 +87,14 @@ const Peticoes: React.FC = () => {
     dateTo?: Date;
     tags?: string[];
   }) => {
+    // Update filter state variables
+    setAreaFilter(area || '');
+    setTipoFilter(tipo || '');
+    setSearchFilter(search || '');
+    setDateFromFilter(dateFrom);
+    setDateToFilter(dateTo);
+    setTagsFilter(tags || []);
+    
     let filtered = peticoes;
 
     if (area) {
@@ -132,6 +149,16 @@ const Peticoes: React.FC = () => {
     setFilteredPeticoes(filtered);
     setTotalPages(Math.ceil(filtered.length / itemsPerPage));
     setCurrentPage(1);
+  };
+  
+  const resetFilters = () => {
+    setAreaFilter('');
+    setTipoFilter('');
+    setSearchFilter('');
+    setDateFromFilter(undefined);
+    setDateToFilter(undefined);
+    setTagsFilter([]);
+    handleFilterChange({});
   };
 
   const paginatedPeticoes = filteredPeticoes.slice(
@@ -207,11 +234,11 @@ const Peticoes: React.FC = () => {
             <Badge className="bg-primary">
               <Filter className="h-3 w-3 mr-1" />
               Filtros ativos: {
-                (area ? 1 : 0) + 
-                (tipo ? 1 : 0) + 
-                (search ? 1 : 0) + 
-                ((dateFrom || dateTo) ? 1 : 0) +
-                (tags && tags.length > 0 ? 1 : 0)
+                (areaFilter ? 1 : 0) + 
+                (tipoFilter ? 1 : 0) + 
+                (searchFilter ? 1 : 0) + 
+                ((dateFromFilter || dateToFilter) ? 1 : 0) +
+                (tagsFilter && tagsFilter.length > 0 ? 1 : 0)
               }
             </Badge>
           </div>

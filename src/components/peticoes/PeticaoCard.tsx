@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -50,7 +49,7 @@ export const PeticaoCard: React.FC<PeticaoCardProps> = ({ peticao }) => {
   const getBadgeVariant = (tag: string) => {
     const tagLower = tag.toLowerCase();
     if (tagLower === 'urgente') return "destructive";
-    if (tagLower === 'importante') return "warning";
+    if (tagLower === 'importante') return "outline";
     if (tagLower === 'modelo') return "default";
     return "secondary";
   };
