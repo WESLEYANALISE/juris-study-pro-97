@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useMemo } from "react";
+
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabaseClient";
@@ -111,7 +112,7 @@ const VadeMecumViewer = () => {
     if (inView && visibleBatch < filteredArticles.length) {
       setVisibleBatch(prev => Math.min(prev + BATCH_SIZE, filteredArticles.length));
     }
-  }, [inView, filteredArticles.length]);
+  }, [inView, filteredArticles.length, visibleBatch]);
 
   const scrollToTop = useCallback(() => {
     window.scrollTo({

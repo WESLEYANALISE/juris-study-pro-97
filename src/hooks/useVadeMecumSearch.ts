@@ -2,9 +2,9 @@
 import { useState, useCallback, useMemo } from 'react';
 
 interface VadeMecumSearchOptions {
-  exactMatch?: boolean;
-  ignoreAccents?: boolean;
-  searchByNumber?: boolean;
+  exactMatch: boolean; // Changed from optional to required
+  ignoreAccents: boolean;
+  searchByNumber: boolean;
 }
 
 export const useVadeMecumSearch = () => {
