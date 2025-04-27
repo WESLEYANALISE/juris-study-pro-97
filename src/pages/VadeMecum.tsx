@@ -9,48 +9,68 @@ import VadeMecumCodeSection from "@/components/vademecum/VadeMecumCodeSection";
 import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVadeMecumSearch } from "@/hooks/useVadeMecumSearch";
+import { useToast } from "@/hooks/use-toast";
 
 const VadeMecum = () => {
   const [activeTab, setActiveTab] = useState<"codigos" | "estatutos">("codigos");
   const { searchQuery, setSearchQuery } = useVadeMecumSearch([]);
+  const { toast } = useToast();
 
-  // Get list of all Codes tables - FIXED to use information_schema instead of pg_catalog
+  // Get list of all Codes tables using SQL query instead of information_schema
   const { data: codesTableNames, isLoading: isLoadingCodes } = useQuery({
     queryKey: ["codesTables"],
     queryFn: async () => {
-      // Use information_schema.tables instead of pg_catalog.pg_tables
-      const { data, error } = await supabase
-        .from("information_schema.tables")
-        .select("table_name")
-        .eq("table_schema", "public")
-        .ilike("table_name", "Código_%");
+      try {
+        // Execute a SQL query to list all tables starting with 'Código_'
+        const { data, error } = await supabase
+          .from('pg_catalog')
+          .rpc('list_tables', { prefix: 'Código_' });
 
-      if (error) {
-        console.error("Error fetching code tables:", error);
-        throw error;
+        if (error) {
+          console.error("Error fetching code tables:", error);
+          toast({
+            title: "Erro ao carregar códigos",
+            description: "Não foi possível carregar a lista de códigos. Por favor, tente novamente.",
+            variant: "destructive"
+          });
+          throw error;
+        }
+        
+        console.log("Codes tables fetched:", data);
+        return data ? data.map(item => item.table_name) : [];
+      } catch (err) {
+        console.error("Failed to fetch codes tables:", err);
+        return [];
       }
-      
-      return data ? data.map(item => item.table_name) : [];
     },
   });
 
-  // Get list of all Estatutos tables - FIXED to use information_schema
+  // Get list of all Estatutos tables using SQL query instead of information_schema
   const { data: statutesTableNames, isLoading: isLoadingStatutes } = useQuery({
     queryKey: ["statutesTables"],
     queryFn: async () => {
-      // Use information_schema.tables instead of pg_catalog.pg_tables
-      const { data, error } = await supabase
-        .from("information_schema.tables")
-        .select("table_name")
-        .eq("table_schema", "public")
-        .ilike("table_name", "Estatuto_%");
+      try {
+        // Execute a SQL query to list all tables starting with 'Estatuto_'
+        const { data, error } = await supabase
+          .from('pg_catalog')
+          .rpc('list_tables', { prefix: 'Estatuto_' });
+          
+        if (error) {
+          console.error("Error fetching statute tables:", error);
+          toast({
+            title: "Erro ao carregar estatutos",
+            description: "Não foi possível carregar a lista de estatutos. Por favor, tente novamente.",
+            variant: "destructive"
+          });
+          throw error;
+        }
         
-      if (error) {
-        console.error("Error fetching statute tables:", error);
-        throw error;
+        console.log("Statute tables fetched:", data);
+        return data ? data.map(item => item.table_name) : [];
+      } catch (err) {
+        console.error("Failed to fetch statute tables:", err);
+        return [];
       }
-      
-      return data ? data.map(item => item.table_name) : [];
     },
   });
 

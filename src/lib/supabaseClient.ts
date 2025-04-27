@@ -14,3 +14,22 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     detectSessionInUrl: true
   }
 });
+
+// Database helper functions
+export const fetchTablesByPrefix = async (prefix: string) => {
+  try {
+    // This query selects table names from pg_tables where the table name starts with the prefix
+    // and is in the public schema
+    const { data, error } = await supabase.rpc('list_tables', { prefix });
+    
+    if (error) {
+      console.error('Error fetching tables:', error);
+      return [];
+    }
+    
+    return data || [];
+  } catch (err) {
+    console.error('Exception while fetching tables:', err);
+    return [];
+  }
+};

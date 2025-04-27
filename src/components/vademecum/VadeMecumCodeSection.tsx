@@ -1,3 +1,4 @@
+
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { BookOpen } from "lucide-react";
@@ -71,6 +72,8 @@ const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({
 }) => {
   const navigate = useNavigate();
 
+  console.log("CodeSection received tableNames:", tableNames);
+
   const filteredCodes = useMemo(() => {
     return tableNames.filter((codeName) => {
       const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
@@ -102,35 +105,41 @@ const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({
       animate="show"
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      {filteredCodes.map((codeName) => {
-        const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
-        const info = codeInfo[codeName] || { 
-          description: "Conjunto de leis e normas jurídicas", 
-          color: "bg-primary" 
-        };
-        
-        return (
-          <motion.div key={codeName} variants={item}>
-            <Card 
-              className="cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-1"
-              onClick={() => handleCodeClick(codeName)}
-            >
-              <CardContent className="p-0">
-                <div className="flex items-center">
-                  <div className={`${info.color} h-full w-2 rounded-l-lg`}></div>
-                  <div className="p-5 flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="font-semibold">{displayName}</h3>
+      {filteredCodes.length === 0 ? (
+        <div className="col-span-full text-center p-10">
+          <p className="text-muted-foreground">Nenhum código encontrado.</p>
+        </div>
+      ) : (
+        filteredCodes.map((codeName) => {
+          const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
+          const info = codeInfo[codeName] || { 
+            description: "Conjunto de leis e normas jurídicas", 
+            color: "bg-primary" 
+          };
+          
+          return (
+            <motion.div key={codeName} variants={item}>
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+                onClick={() => handleCodeClick(codeName)}
+              >
+                <CardContent className="p-0">
+                  <div className="flex items-center">
+                    <div className={`${info.color} h-full w-2 rounded-l-lg`}></div>
+                    <div className="p-5 flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="font-semibold">{displayName}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{info.description}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{info.description}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        );
-      })}
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })
+      )}
     </motion.div>
   );
 };

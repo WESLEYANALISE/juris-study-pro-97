@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollText } from "lucide-react";
@@ -69,6 +70,8 @@ const statuteInfo: Record<string, { description: string; color: string }> = {
 const VadeMecumStatuteSection: React.FC<VadeMecumStatuteSectionProps> = ({ tableNames, searchQuery }) => {
   const navigate = useNavigate();
 
+  console.log("StatuteSection received tableNames:", tableNames);
+
   // Filter statutes based on search query
   const filteredStatutes = tableNames.filter((statuteName) => {
     const displayName = statuteDisplayNames[statuteName] || statuteName.replace(/_/g, " ");
@@ -101,35 +104,41 @@ const VadeMecumStatuteSection: React.FC<VadeMecumStatuteSectionProps> = ({ table
       animate="show"
       className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
     >
-      {filteredStatutes.map((statuteName, index) => {
-        const displayName = statuteDisplayNames[statuteName] || statuteName.replace(/_/g, " ");
-        const info = statuteInfo[statuteName] || { 
-          description: "Conjunto de normas que regulam direitos específicos", 
-          color: "bg-secondary" 
-        };
-        
-        return (
-          <motion.div key={statuteName} variants={item}>
-            <Card 
-              className="cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-1"
-              onClick={() => handleStatuteClick(statuteName)}
-            >
-              <CardContent className="p-0">
-                <div className="flex items-center">
-                  <div className={`${info.color} h-full w-2 rounded-l-lg`}></div>
-                  <div className="p-5 flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ScrollText className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="font-semibold">{displayName}</h3>
+      {filteredStatutes.length === 0 ? (
+        <div className="col-span-full text-center p-10">
+          <p className="text-muted-foreground">Nenhum estatuto encontrado.</p>
+        </div>
+      ) : (
+        filteredStatutes.map((statuteName, index) => {
+          const displayName = statuteDisplayNames[statuteName] || statuteName.replace(/_/g, " ");
+          const info = statuteInfo[statuteName] || { 
+            description: "Conjunto de normas que regulam direitos específicos", 
+            color: "bg-secondary" 
+          };
+          
+          return (
+            <motion.div key={statuteName} variants={item}>
+              <Card 
+                className="cursor-pointer hover:shadow-md transition-all duration-200 hover:-translate-y-1"
+                onClick={() => handleStatuteClick(statuteName)}
+              >
+                <CardContent className="p-0">
+                  <div className="flex items-center">
+                    <div className={`${info.color} h-full w-2 rounded-l-lg`}></div>
+                    <div className="p-5 flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <ScrollText className="h-4 w-4 text-muted-foreground" />
+                        <h3 className="font-semibold">{displayName}</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{info.description}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{info.description}</p>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        );
-      })}
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })
+      )}
     </motion.div>
   );
 };
