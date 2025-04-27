@@ -1,124 +1,154 @@
 
-import React, { useState, useRef, useEffect } from 'react'
-import { supabase } from "@/integrations/supabase/client"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { toast } from "@/components/ui/use-toast"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Loader2, Send } from "lucide-react"
+import { useState } from "react";
+import { useLegalAssistant } from "@/hooks/use-legal-assistant";
+import { ChatMessage } from "@/components/assistente/ChatMessage";
+import { ChatInput } from "@/components/assistente/ChatInput";
+import { ContextPanel } from "@/components/assistente/ContextPanel";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Trash2, Info } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: number;
-}
+export default function AssistenteJuridico() {
+  const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState("chat");
+  const {
+    messages,
+    sendMessage,
+    clearChat,
+    isLoading,
+    context,
+    updateContext
+  } = useLegalAssistant();
 
-const AssistenteJuridico: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([])
-  const [input, setInput] = useState('')
-  const [context, setContext] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-  const scrollRef = useRef<HTMLDivElement>(null)
-
-  const handleSendMessage = async () => {
-    if (!input.trim()) return
-
-    const newMessage: Message = {
-      role: 'user',
-      content: input,
-      timestamp: Date.now()
-    }
-
-    setMessages(prev => [...prev, newMessage])
-    setIsLoading(true)
-    setInput('')
-
-    try {
-      const response = await supabase.functions.invoke('legal-assistant', {
-        body: JSON.stringify({ prompt: input, context })
-      })
-
-      if (response.error) throw response.error
-
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: response.data.response,
-        timestamp: Date.now()
-      }
-
-      setMessages(prev => [...prev, assistantMessage])
-      setIsLoading(false)
-    } catch (error) {
-      toast({
-        title: "Erro na consulta",
-        description: "Não foi possível processar sua pergunta. Tente novamente.",
-        variant: "destructive"
-      })
-      setIsLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-    }
-  }, [messages])
+  const handleSendMessage = async (message: string) => {
+    await sendMessage(message);
+  };
 
   return (
-    <div className="flex flex-col h-full">
-      <Card className="flex flex-col flex-1">
-        <CardHeader>
-          <CardTitle>Assistente Jurídico</CardTitle>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col">
-          <ScrollArea className="flex-1 mb-4" ref={scrollRef}>
-            {messages.map((msg, index) => (
-              <div 
-                key={index} 
-                className={`mb-4 p-3 rounded-lg max-w-[80%] ${
-                  msg.role === 'user' 
-                  ? 'bg-primary/10 self-end ml-auto' 
-                  : 'bg-muted self-start'
-                }`}
-              >
-                {msg.content}
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-center items-center">
-                <Loader2 className="animate-spin" />
-              </div>
-            )}
-          </ScrollArea>
-          <div className="space-y-2">
-            <Textarea 
-              placeholder="Contextualização (opcional)"
-              value={context}
-              onChange={(e) => setContext(e.target.value)}
-              className="mb-2"
-            />
-            <div className="flex space-x-2">
-              <Input 
-                placeholder="Faça sua pergunta jurídica..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                className="flex-1"
-              />
-              <Button 
-                onClick={handleSendMessage}
-                disabled={isLoading || !input.trim()}
-              >
-                {isLoading ? <Loader2 className="animate-spin" /> : <Send />}
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  )
-}
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Assistente Jurídico</h1>
+      </div>
 
-export default AssistenteJuridico
+      <div className="grid gap-6 md:grid-cols-[1fr_300px]">
+        <div className="space-y-6">
+          <Alert variant="default" className="bg-primary/10 border-primary/20">
+            <Info className="h-4 w-4" />
+            <AlertTitle>Assistente Jurídico</AlertTitle>
+            <AlertDescription>
+              Este assistente utiliza IA para auxiliar em consultas jurídicas. 
+              As respostas devem ser verificadas por um profissional qualificado.
+            </AlertDescription>
+          </Alert>
+
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-card p-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg">Conversa</CardTitle>
+                {messages.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearChat}
+                    className="h-8 px-2"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Limpar
+                  </Button>
+                )}
+              </div>
+              <CardDescription>
+                Faça perguntas sobre leis, procedimentos ou conceitos jurídicos
+              </CardDescription>
+            </CardHeader>
+            
+            <CardContent className="p-0">
+              {isMobile ? (
+                <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="chat">Chat</TabsTrigger>
+                    <TabsTrigger value="context">Contexto</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="chat" className="p-0">
+                    <div className="flex flex-col h-[60vh]">
+                      <ScrollArea className="flex-1 p-4">
+                        {messages.length === 0 ? (
+                          <div className="h-full flex items-center justify-center text-center p-8">
+                            <div className="max-w-md space-y-2">
+                              <h3 className="text-lg font-medium">Bem-vindo ao Assistente Jurídico</h3>
+                              <p className="text-muted-foreground">
+                                Faça uma pergunta sobre qualquer tema jurídico para começar.
+                              </p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {messages.map((message, index) => (
+                              <ChatMessage key={index} message={message} />
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                      
+                      <div className="border-t p-4">
+                        <ChatInput 
+                          onSendMessage={handleSendMessage} 
+                          isLoading={isLoading}
+                          placeholder="Digite sua pergunta jurídica..."
+                        />
+                      </div>
+                    </div>
+                  </TabsContent>
+                  
+                  <TabsContent value="context" className="p-4">
+                    <ContextPanel context={context} onContextChange={updateContext} />
+                  </TabsContent>
+                </Tabs>
+              ) : (
+                <div className="flex flex-col h-[60vh]">
+                  <ScrollArea className="flex-1 p-4">
+                    {messages.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-center p-8">
+                        <div className="max-w-md space-y-2">
+                          <h3 className="text-lg font-medium">Bem-vindo ao Assistente Jurídico</h3>
+                          <p className="text-muted-foreground">
+                            Faça uma pergunta sobre qualquer tema jurídico para começar.
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {messages.map((message, index) => (
+                          <ChatMessage key={index} message={message} />
+                        ))}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  
+                  <div className="border-t p-4">
+                    <ChatInput 
+                      onSendMessage={handleSendMessage} 
+                      isLoading={isLoading}
+                      placeholder="Digite sua pergunta jurídica..."
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {!isMobile && (
+          <div className="space-y-6">
+            <ContextPanel context={context} onContextChange={updateContext} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
