@@ -1,10 +1,9 @@
-
 import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import VadeMecumCodeSection from "@/components/vademecum/VadeMecumCodeSection";
 import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSection";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,15 +15,12 @@ const VadeMecum = () => {
   const { searchQuery, setSearchQuery } = useVadeMecumSearch([]);
   const { toast } = useToast();
 
-  // Get list of all Codes tables using SQL query instead of information_schema
+  // Get list of all Codes tables using custom RPC function
   const { data: codesTableNames, isLoading: isLoadingCodes } = useQuery({
     queryKey: ["codesTables"],
     queryFn: async () => {
       try {
-        // Execute a SQL query to list all tables starting with 'Código_'
-        const { data, error } = await supabase
-          .from('pg_catalog')
-          .rpc('list_tables', { prefix: 'Código_' });
+        const { data, error } = await supabase.rpc('list_tables', { prefix: 'Código_' });
 
         if (error) {
           console.error("Error fetching code tables:", error);
@@ -37,7 +33,7 @@ const VadeMecum = () => {
         }
         
         console.log("Codes tables fetched:", data);
-        return data ? data.map(item => item.table_name) : [];
+        return data || [];
       } catch (err) {
         console.error("Failed to fetch codes tables:", err);
         return [];
@@ -45,15 +41,12 @@ const VadeMecum = () => {
     },
   });
 
-  // Get list of all Estatutos tables using SQL query instead of information_schema
+  // Get list of all Estatutos tables using custom RPC function
   const { data: statutesTableNames, isLoading: isLoadingStatutes } = useQuery({
     queryKey: ["statutesTables"],
     queryFn: async () => {
       try {
-        // Execute a SQL query to list all tables starting with 'Estatuto_'
-        const { data, error } = await supabase
-          .from('pg_catalog')
-          .rpc('list_tables', { prefix: 'Estatuto_' });
+        const { data, error } = await supabase.rpc('list_tables', { prefix: 'Estatuto_' });
           
         if (error) {
           console.error("Error fetching statute tables:", error);
@@ -66,7 +59,7 @@ const VadeMecum = () => {
         }
         
         console.log("Statute tables fetched:", data);
-        return data ? data.map(item => item.table_name) : [];
+        return data || [];
       } catch (err) {
         console.error("Failed to fetch statute tables:", err);
         return [];

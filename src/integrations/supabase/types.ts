@@ -1513,6 +1513,12 @@ export type Database = {
         Args: { p_user_id: string; p_field: string; p_amount?: number }
         Returns: undefined
       }
+      list_tables: {
+        Args: { prefix: string }
+        Returns: {
+          table_name: string
+        }[]
+      }
       migrate_biblioteca_data: {
         Args: Record<PropertyKey, never>
         Returns: undefined
