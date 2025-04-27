@@ -207,6 +207,10 @@ const App = () => {
                   }
                 />
                 <Route
+                  path="/peticionario"
+                  element={<Navigate to="/peticoes" replace />}
+                />
+                <Route
                   path="/peticoes"
                   element={
                     <RequireAuth>

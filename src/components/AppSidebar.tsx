@@ -1,4 +1,3 @@
-
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay } from "lucide-react";
 import {
   Sidebar,
@@ -25,7 +24,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
   
   // Menu items para navegação principal
-  const allMenuItems = [
+  const menuItems = [
     { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
     { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
     { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
@@ -34,7 +33,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
     { title: "Resumos", url: "/resumos", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
     { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
     { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Peticionário", url: "/peticionario", icon: FilePlus, profiles: ["advogado", "tudo"] },
+    { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
     { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
     { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
     { title: "Assistente", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
@@ -44,7 +43,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
   ];
   
   // Filtrar itens do menu com base no perfil do usuário
-  const mainMenuItems = allMenuItems.filter(item => 
+  const mainMenuItems = menuItems.filter(item => 
     item.profiles.includes(userProfile)
   );
 

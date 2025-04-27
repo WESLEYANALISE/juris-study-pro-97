@@ -1,12 +1,13 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PeticaoCard } from "@/components/peticoes/PeticaoCard";
 import { PeticaoFilters } from "@/components/peticoes/PeticaoFilters";
 import { PeticaoSearch } from "@/components/peticoes/PeticaoSearch";
+import { PeticaoViewer } from "@/components/peticoes/PeticaoViewer";
 import { Card } from "@/components/ui/card";
 import { PageTransition } from "@/components/PageTransition";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface FiltersState {
   area: string;
@@ -24,6 +25,8 @@ export default function Peticoes() {
     tags: [],
     search: "",
   });
+
+  const [viewingPeticao, setViewingPeticao] = useState<string | null>(null);
 
   const { data: peticoes, isLoading } = useQuery({
     queryKey: ["peticoes", filters],
@@ -56,30 +59,51 @@ export default function Peticoes() {
 
   return (
     <PageTransition>
-      <div className="container mx-auto p-6 space-y-6">
-        <div className="flex flex-col md:flex-row gap-4 items-start">
-          <Card className="w-full md:w-64 p-4 sticky top-4">
-            <PeticaoFilters filters={filters} setFilters={setFilters} />
-          </Card>
-          
-          <div className="flex-1 space-y-6">
-            <PeticaoSearch 
-              value={filters.search}
-              onChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
-            />
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {isLoading ? (
-                <div>Carregando...</div>
-              ) : (
-                peticoes?.map((peticao) => (
-                  <PeticaoCard key={peticao.id} peticao={peticao} />
-                ))
-              )}
+      <AnimatePresence mode="wait">
+        {viewingPeticao ? (
+          <PeticaoViewer 
+            url={viewingPeticao} 
+            onBack={() => setViewingPeticao(null)} 
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="container mx-auto p-6 space-y-6"
+          >
+            <div className="flex flex-col md:flex-row gap-4 items-start">
+              <Card className="w-full md:w-64 p-4 sticky top-4">
+                <PeticaoFilters filters={filters} setFilters={setFilters} />
+              </Card>
+              
+              <div className="flex-1 space-y-6">
+                <PeticaoSearch 
+                  value={filters.search}
+                  onChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
+                />
+                
+                <motion.div 
+                  layout
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+                >
+                  {isLoading ? (
+                    <div>Carregando...</div>
+                  ) : (
+                    peticoes?.map((peticao) => (
+                      <PeticaoCard 
+                        key={peticao.id} 
+                        peticao={peticao} 
+                        onView={setViewingPeticao}
+                      />
+                    ))
+                  )}
+                </motion.div>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </PageTransition>
   );
 }
