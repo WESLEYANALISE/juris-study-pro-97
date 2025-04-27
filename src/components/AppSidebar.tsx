@@ -37,7 +37,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
     { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
     { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
     { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
-    { title: "Assistente", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+    { title: "Assistente Jurídico", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
     { title: "Cronograma", url: "/cronograma", icon: Calendar, profiles: ["concurseiro", "universitario", "tudo"] },
     { title: "Gamificação", url: "/gamificacao", icon: Trophy, profiles: ["concurseiro", "universitario", "tudo"] },
     { title: "Remote Desktop", url: "/remote", icon: MonitorPlay, profiles: ["tudo"] },
