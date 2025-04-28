@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import { Clock, BookmarkPlus, MessageSquare } from "lucide-react";
+import { Clock, BookmarkPlus, MessageSquare, RefreshCcw, AlertTriangle } from "lucide-react";
 
 interface VideoPlayerProps {
   videoId: string;
@@ -15,6 +15,8 @@ interface VideoPlayerProps {
 export function VideoPlayer({ videoId, onTimeUpdate, onStateChange, setPlayerRef }: VideoPlayerProps) {
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
   const [player, setPlayer] = useState<YT.Player | null>(null);
   const timeTrackingRef = useRef<number | null>(null);
@@ -27,24 +29,44 @@ export function VideoPlayer({ videoId, onTimeUpdate, onStateChange, setPlayerRef
 
   const [playerHeight, setPlayerHeight] = useState(calculatePlayerHeight());
 
-  // Initialize YouTube player
-  useEffect(() => {
-    // Load YouTube iframe API if not already loaded
+  // Function to initialize or reinitialize the player
+  const initializePlayer = () => {
+    setIsLoading(true);
+    setHasError(false);
+    
     if (!window.YT) {
       const tag = document.createElement('script');
       tag.src = 'https://www.youtube.com/iframe_api';
       const firstScriptTag = document.getElementsByTagName('script')[0];
       firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+      
+      // Set a timeout to catch if YouTube API fails to load
+      setTimeout(() => {
+        if (!window.YT) {
+          setHasError(true);
+          setIsLoading(false);
+        }
+      }, 5000);
+      return;
     }
 
-    // Initialize player when API is ready
-    const initPlayer = () => {
-      if (playerRef.current && videoId) {
+    // Clean up any existing player
+    if (player) {
+      player.destroy();
+    }
+
+    if (playerRef.current && videoId) {
+      try {
         const ytPlayer = new window.YT.Player(playerRef.current, {
           videoId: videoId,
+          playerVars: {
+            rel: 0, // Don't show related videos
+            modestbranding: 1 // Hide YouTube logo
+          },
           events: {
             onReady: () => {
               console.log('Player ready');
+              setIsLoading(false);
               setPlayer(ytPlayer);
               if (setPlayerRef) {
                 setPlayerRef(ytPlayer);
@@ -61,22 +83,37 @@ export function VideoPlayer({ videoId, onTimeUpdate, onStateChange, setPlayerRef
                   clearInterval(timeTrackingRef.current);
                   timeTrackingRef.current = null;
                 }
+              } else if (event.data === -1 || event.data === 3) {
+                // Unstarted or buffering - potential issues
+                console.log(`Player state: ${event.data}`);
               }
               
               if (onStateChange) {
                 onStateChange(event);
               }
             },
+            onError: (event) => {
+              console.error('YouTube player error:', event);
+              setHasError(true);
+              setIsLoading(false);
+            }
           },
         });
+      } catch (error) {
+        console.error('Error initializing YouTube player:', error);
+        setHasError(true);
+        setIsLoading(false);
       }
-    };
+    }
+  };
 
+  // Initialize YouTube player
+  useEffect(() => {
     // Wait for the YouTube API to load before initializing the player
     if (window.YT && window.YT.Player) {
-      initPlayer();
+      initializePlayer();
     } else {
-      window.onYouTubeIframeAPIReady = initPlayer;
+      window.onYouTubeIframeAPIReady = initializePlayer;
     }
 
     return () => {
@@ -90,7 +127,7 @@ export function VideoPlayer({ videoId, onTimeUpdate, onStateChange, setPlayerRef
         timeTrackingRef.current = null;
       }
     };
-  }, [videoId, setPlayerRef]);
+  }, [videoId]);
 
   // Track video time and notify parent component
   const startTimeTracking = (ytPlayer: YT.Player) => {
@@ -135,9 +172,40 @@ export function VideoPlayer({ videoId, onTimeUpdate, onStateChange, setPlayerRef
 
   return (
     <div className="w-full">
-      <div className="video-container w-full">
-        <div ref={playerRef} style={{ width: '100%', height: playerHeight }} />
+      <div className="video-container w-full relative">
+        {isLoading && (
+          <div className="absolute inset-0 bg-muted flex items-center justify-center" style={{ height: playerHeight }}>
+            <div className="flex flex-col items-center">
+              <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mb-2"></div>
+              <span className="text-sm text-muted-foreground">Carregando vídeo...</span>
+            </div>
+          </div>
+        )}
+        
+        {hasError && (
+          <div className="absolute inset-0 bg-muted flex items-center justify-center" style={{ height: playerHeight }}>
+            <div className="flex flex-col items-center text-center p-4">
+              <AlertTriangle className="h-12 w-12 text-orange-500 mb-2" />
+              <p className="text-sm text-muted-foreground mb-4">Erro ao carregar o vídeo. Verifique sua conexão ou tente novamente.</p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={initializePlayer}
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Tentar novamente
+              </Button>
+            </div>
+          </div>
+        )}
+        
+        <div 
+          ref={playerRef} 
+          style={{ width: '100%', height: playerHeight }}
+          className={hasError ? "invisible h-0" : ""}
+        />
       </div>
+      
       {showNotes && (
         <Card className="mt-4">
           <CardContent className="p-4">

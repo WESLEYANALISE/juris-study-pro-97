@@ -10,7 +10,7 @@ import { TextToSpeechService } from "@/services/textToSpeechService";
 
 interface FlashCardViewProps {
   flashcard: {
-    id: string | number;  // Keep accepting either type for compatibility
+    id: string | number;
     pergunta: string;
     resposta: string;
     explicacao?: string | null;
@@ -65,27 +65,26 @@ export function FlashcardView({ flashcard, index, total, onNext }: FlashCardView
       >
         {/* Front side - Pergunta */}
         <Card 
-          className={`backface-hidden relative bg-gradient-to-t from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all ${isFlipped ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+          className={`backface-hidden relative bg-gradient-to-br from-card via-[#9b87f508] to-card shadow-lg border-primary/20 rounded-xl overflow-hidden transition-all ${isFlipped ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
           style={{
-            minHeight: 280,
-            boxShadow: "0 4px 40px #9b87f522"
+            minHeight: 300,
           }}
         >
           <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
-            <div>
-              {flashcard.tema} 
-              <span className="text-sm text-muted-foreground ml-2">({flashcard.area})</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm bg-primary/10 px-2 py-0.5 rounded">{flashcard.area}</span>
+              <span className="text-muted-foreground text-sm font-normal">{flashcard.tema}</span>
             </div>
             <div className="flex items-center gap-1">
               <Brain className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{total}</span>
+              <span className="text-xs font-normal text-muted-foreground">{index + 1}/{total}</span>
             </div>
           </div>
           
-          <div className="p-6 flex flex-col items-center justify-center min-h-[200px]">
-            <div className="text-base font-semibold text-center">{flashcard.pergunta}</div>
+          <div className="p-8 flex flex-col items-center justify-center min-h-[220px]">
+            <div className="text-lg font-semibold text-center mb-8">{flashcard.pergunta}</div>
             
-            <div className="mt-6 flex flex-col gap-2 w-full">
+            <div className="mt-auto flex flex-col gap-3 w-full max-w-xs mx-auto">
               <Button 
                 variant="outline" 
                 size="sm"
@@ -110,30 +109,29 @@ export function FlashcardView({ flashcard, index, total, onNext }: FlashCardView
         
         {/* Back side - Resposta */}
         <Card 
-          className={`backface-hidden absolute top-0 rotate-y-180 w-full bg-gradient-to-b from-[#F1F0FB] via-[#9b87f519] to-card shadow-lg border-primary/30 rounded-xl overflow-hidden transition-all ${isFlipped ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+          className={`backface-hidden absolute top-0 rotate-y-180 w-full bg-gradient-to-br from-[#F8F9FC] via-white to-card shadow-lg border-primary/20 rounded-xl overflow-hidden transition-all ${isFlipped ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
           style={{
-            minHeight: 280,
-            boxShadow: "0 4px 40px #9b87f522"
+            minHeight: 300,
           }}
         >
           <div className="text-primary font-bold px-6 py-3 text-lg border-b flex items-center justify-between">
-            <div>
-              {flashcard.tema} 
-              <span className="text-sm text-muted-foreground ml-2">({flashcard.area})</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm bg-primary/10 px-2 py-0.5 rounded">{flashcard.area}</span>
+              <span className="text-muted-foreground text-sm font-normal">{flashcard.tema}</span>
             </div>
             <div className="flex items-center gap-1">
               <Brain className="h-4 w-4 text-muted-foreground" />
-              <span className="text-xs font-normal text-muted-foreground">Card {index + 1}/{total}</span>
+              <span className="text-xs font-normal text-muted-foreground">{index + 1}/{total}</span>
             </div>
           </div>
           
-          <div className="p-6 flex flex-col items-center justify-center min-h-[200px] gap-4">
-            <div className="text-sm bg-gradient-to-br from-[#D6BCFA44] to-[#FFF] py-4 px-6 rounded-lg text-gray-800 font-medium border text-center">{flashcard.resposta}</div>
+          <div className="p-6 flex flex-col items-center justify-center min-h-[220px] gap-4">
+            <div className="text-base bg-gradient-to-br from-[#D6BCFA22] to-[#FFF] py-4 px-6 rounded-lg text-gray-800 font-medium border text-center">{flashcard.resposta}</div>
             
             <Button 
               variant="outline" 
               size="sm"
-              className="w-full"
+              className="w-full max-w-xs"
               onClick={() => handleSpeak(flashcard.resposta)}
             >
               <Volume2 className="mr-2 h-4 w-4" />
@@ -141,7 +139,7 @@ export function FlashcardView({ flashcard, index, total, onNext }: FlashCardView
             </Button>
             
             {flashcard.explicacao && (
-              <div className="text-xs mt-1 text-muted-foreground p-3 bg-muted/50 rounded border-l-2 border-primary/30 w-full">
+              <div className="text-xs mt-1 text-muted-foreground p-3 bg-muted/50 rounded border-l-2 border-primary/30 w-full max-w-xs">
                 <div className="font-medium mb-1 flex items-center gap-1">
                   <BookOpen className="h-3 w-3" /> Explicação:
                 </div>
@@ -150,7 +148,7 @@ export function FlashcardView({ flashcard, index, total, onNext }: FlashCardView
             )}
             
             {!rated && (
-              <div className="mt-3 w-full">
+              <div className="mt-3 w-full max-w-xs">
                 <p className="text-sm text-center text-muted-foreground mb-2">Como você avalia seu conhecimento neste card?</p>
                 <FlashcardRating onRate={handleRate} />
               </div>

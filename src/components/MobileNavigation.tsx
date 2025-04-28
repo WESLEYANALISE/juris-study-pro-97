@@ -1,6 +1,6 @@
 
 import * as React from "react";
-import { Home, BookOpenText, Video, GraduationCap, Brain, FileText, FilePlus, MessageSquare, Library, BookOpen, Film, Newspaper, Gavel, PenTool, User } from "lucide-react";
+import { Home, BookOpenText, Video, Brain, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
@@ -19,14 +19,10 @@ export default function MobileNavigation() {
   const location = useLocation();
   const { state } = useSidebar();
   
-  // Não renderizar a navegação móvel se o sidebar estiver expandido
-  // Isso evita duplicação de menus quando o sidebar já está sendo mostrado em tela
-  if (state === 'expanded') {
-    return null;
-  }
-  
+  // Renderizar a navegação móvel em todas as páginas, exceto quando o sidebar estiver expandido
+  // A checagem original estava impedindo que a navegação fosse mostrada em certas páginas
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background p-2 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden">
       <ul className="flex justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 

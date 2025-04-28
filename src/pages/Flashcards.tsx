@@ -14,12 +14,12 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, BookOpen, Brain, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Sparkles } from "lucide-react";
 import { FlashcardView } from "@/components/flashcards/FlashcardView";
 import { StudyStats } from "@/components/flashcards/StudyStats";
 
 type FlashCard = {
-  id: string | number;  // Updated to accept both string and number
+  id: string | number;
   area: string;
   tema: string;
   pergunta: string;
@@ -34,7 +34,7 @@ export default function Flashcards() {
     queryKey: ["flashcards"],
     queryFn: async () => {
       const { data } = await supabase.from("flash_cards").select("*");
-      return (data ?? []) as FlashCard[]; // Cast to FlashCard[] now that we've updated the type
+      return (data ?? []) as FlashCard[];
     },
   });
 
@@ -65,9 +65,6 @@ export default function Flashcards() {
     if (selectedTemas.length > 0) {
       filteredCards = filteredCards.filter(c => selectedTemas.includes(c.tema));
     }
-    
-    // We would filter by due cards here if we had that data from the user_flashcards table
-    // This would require a join query or additional data fetching
     
     return filteredCards.length > 0 ? filteredCards : cards.slice(0, 12);
   }, [cards, selectedTemas, selectedArea]);
@@ -135,11 +132,13 @@ export default function Flashcards() {
   };
 
   return (
-    <div className="max-w-xl mx-auto p-4 w-full">
-      <div className="mb-6 space-y-4">
+    <div className="container max-w-xl mx-auto p-4 w-full pb-20 md:pb-6">
+      <h1 className="text-2xl font-bold mb-4">Flashcards</h1>
+
+      <Card className="p-4 mb-6 shadow-sm">
         <StudyStats />
         
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
           <div>
             <label className="text-sm font-medium mb-1 block">Área</label>
             <Select
@@ -163,76 +162,82 @@ export default function Flashcards() {
           </div>
           
           <div>
-            <label className="text-sm font-medium mb-1 block">Temas</label>
-            <div className="flex flex-wrap gap-2 p-1">
-              {temas.map((tema) => (
-                <Badge 
-                  key={tema}
-                  variant={selectedTemas.includes(tema) ? "default" : "outline"}
-                  className="cursor-pointer"
-                  onClick={() => handleTemaSelect(tema)}
-                >
-                  {tema}
-                </Badge>
-              ))}
-              {selectedTemas.length > 0 && (
-                <Badge 
-                  variant="secondary"
-                  className="cursor-pointer ml-auto"
-                  onClick={() => setSelectedTemas([])}
-                >
-                  Limpar seleção
-                </Badge>
-              )}
+            <label className="text-sm font-medium mb-1 block">Modo de Estudo</label>
+            <div className="flex gap-2">
+              <Button
+                variant={viewMode === "manual" ? "default" : "outline"}
+                onClick={() => setViewMode("manual")}
+                size="sm"
+                className="flex-1"
+              >
+                <ChevronLeft className="mr-1 h-4 w-4" />
+                Manual
+              </Button>
+              <Button
+                variant={viewMode === "auto" ? "default" : "outline"}
+                onClick={() => setViewMode("auto")}
+                size="sm"
+                className="flex-1"
+              >
+                {viewMode === "auto" ? <Pause className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}
+                Automático
+              </Button>
             </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className="text-sm font-medium mb-1 block">Temas</label>
+          <div className="flex flex-wrap gap-2 p-1">
+            {temas.map((tema) => (
+              <Badge 
+                key={tema}
+                variant={selectedTemas.includes(tema) ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => handleTemaSelect(tema)}
+              >
+                {tema}
+              </Badge>
+            ))}
+            {selectedTemas.length > 0 && (
+              <Badge 
+                variant="secondary"
+                className="cursor-pointer"
+                onClick={() => setSelectedTemas([])}
+              >
+                Limpar
+              </Badge>
+            )}
           </div>
         </div>
         
-        <div className="flex justify-between items-center border-t border-b py-2">
-          <div className="flex gap-2">
-            <Button
-              variant={viewMode === "manual" ? "default" : "outline"}
-              onClick={() => setViewMode("manual")}
-              size="sm"
+        {viewMode === "auto" && (
+          <div className="flex items-center gap-2 mt-4">
+            <span className="text-sm">Velocidade:</span>
+            <Select
+              value={String(autoSpeed)}
+              onValueChange={(value) => setAutoSpeed(Number(value))}
             >
-              <ChevronLeft className="mr-1 h-4 w-4" />
-              Manual
-            </Button>
-            <Button
-              variant={viewMode === "auto" ? "default" : "outline"}
-              onClick={() => setViewMode("auto")}
-              size="sm"
-            >
-              {viewMode === "auto" ? <Pause className="mr-1 h-4 w-4" /> : <Play className="mr-1 h-4 w-4" />}
-              Automático
-            </Button>
+              <SelectTrigger className="h-8 w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2000">Rápida</SelectItem>
+                <SelectItem value="3500">Média</SelectItem>
+                <SelectItem value="5000">Lenta</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          
-          {viewMode === "auto" && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs">Velocidade:</span>
-              <Select
-                value={String(autoSpeed)}
-                onValueChange={(value) => setAutoSpeed(Number(value))}
-              >
-                <SelectTrigger className="h-8 w-24">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2000">Rápida</SelectItem>
-                  <SelectItem value="3500">Média</SelectItem>
-                  <SelectItem value="5000">Lenta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-        </div>
-      </div>
+        )}
+      </Card>
 
       {isLoading ? (
-        <div className="py-20 text-center">Carregando cards…</div>
+        <div className="flex items-center justify-center py-20">
+          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+          <span className="ml-3 text-muted-foreground">Carregando flashcards...</span>
+        </div>
       ) : (
-        <div className="relative min-h-[320px] flex flex-col items-center">
+        <div className="relative min-h-[340px] flex flex-col items-center">
           <AnimatePresence mode="wait">
             {filtered.length > 0 && (
               <motion.div
@@ -254,7 +259,7 @@ export default function Flashcards() {
           </AnimatePresence>
           
           {viewMode === "manual" && filtered.length > 1 && (
-            <div className="flex gap-4 mt-6">
+            <div className="flex justify-center gap-3 mt-6">
               <Button
                 size="icon"
                 variant="outline"
@@ -282,20 +287,33 @@ export default function Flashcards() {
       )}
       
       {filtered.length === 0 && !isLoading && (
-        <div className="text-center py-8 text-muted-foreground">
-          Nenhum flashcard disponível com os filtros selecionados.
-        </div>
+        <Card className="p-6 text-center">
+          <p className="text-muted-foreground">
+            Nenhum flashcard disponível com os filtros selecionados.
+          </p>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              setSelectedArea(null);
+              setSelectedTemas([]);
+            }}
+            className="mt-4"
+          >
+            Limpar filtros
+          </Button>
+        </Card>
       )}
       
-      <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-dashed">
+      <Card className="mt-6 p-4 border border-primary/20 bg-primary/5">
         <div className="flex items-center gap-2 mb-3">
           <Sparkles className="h-5 w-5 text-amber-500" />
-          <h3 className="font-semibold">Sugestões de Flashcards</h3>
+          <h3 className="font-semibold">Dica de Estudo</h3>
         </div>
         <p className="text-sm text-muted-foreground">
-          O sistema de Repetição Espaçada ajuda você a memorizar melhor. Depois de responder cada cartão, avalie seu conhecimento para otimizar suas revisões futuras.
+          Avalie seu conhecimento após responder cada cartão para otimizar suas revisões futuras com o sistema de Repetição Espaçada.
         </p>
-      </div>
+      </Card>
     </div>
   );
 }
