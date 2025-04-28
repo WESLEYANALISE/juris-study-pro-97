@@ -31,6 +31,9 @@ export function useCursoViewer() {
   const location = useLocation();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLIFrameElement>(null);
+  const initialized = useRef(false);
+  const mountedRef = useRef(true);
+  
   const [state, setState] = useState<CursoViewerState>({
     curso: location.state?.curso || null,
     loading: !location.state?.curso,
@@ -42,27 +45,42 @@ export function useCursoViewer() {
     isComplete: false,
   });
 
+  // Set mountedRef to false when component unmounts
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // Load saved progress and notes from localStorage
   useEffect(() => {
+    // Skip if already initialized in StrictMode
+    if (initialized.current) return;
+    
     if (id) {
       const savedProgress = localStorage.getItem(`curso_${id}_progress`);
       const savedNotes = localStorage.getItem(`curso_${id}_notes`);
       const isComplete = localStorage.getItem(`curso_${id}_complete`) === 'true';
       
       if (savedProgress || savedNotes || isComplete) {
-        setState(prev => ({ 
-          ...prev, 
-          progress: savedProgress ? Number(savedProgress) : 0,
-          notes: savedNotes || "",
-          hasNotes: !!savedNotes,
-          isComplete
-        }));
+        if (mountedRef.current) {
+          setState(prev => ({ 
+            ...prev, 
+            progress: savedProgress ? Number(savedProgress) : 0,
+            notes: savedNotes || "",
+            hasNotes: !!savedNotes,
+            isComplete
+          }));
+        }
       }
+      
+      initialized.current = true;
     }
   }, [id]);
 
   useEffect(() => {
     const getCurso = async () => {
+      // Only fetch if we don't have curso data and have an ID
       if (!state.curso && id) {
         setState(prev => ({ ...prev, loading: true }));
         try {
@@ -73,23 +91,35 @@ export function useCursoViewer() {
             .single();
             
           if (error) throw error;
-          setState(prev => ({ ...prev, curso: data as Curso, loading: false }));
+          
+          // Only update state if component is still mounted
+          if (mountedRef.current) {
+            setState(prev => ({ ...prev, curso: data as Curso, loading: false }));
+          }
         } catch (error) {
           console.error("Error fetching course:", error);
-          toast({
-            variant: "destructive",
-            title: "Erro ao carregar curso",
-            description: "Não foi possível carregar as informações do curso.",
-          });
-          setState(prev => ({ ...prev, loading: false }));
+          if (mountedRef.current) {
+            toast({
+              variant: "destructive",
+              title: "Erro ao carregar curso",
+              description: "Não foi possível carregar as informações do curso.",
+            });
+            setState(prev => ({ ...prev, loading: false }));
+          }
         }
       }
     };
     
     getCurso();
-  }, [id, state.curso]);
+    
+    // Cleanup function
+    return () => {
+      // Any cleanup needed (handled by mountedRef)
+    };
+  }, [id]);
 
   const handleStartCourse = useCallback(() => {
+    // Batch state updates to avoid multiple renders
     setState(prev => ({ 
       ...prev, 
       menuOpen: false, 
@@ -98,11 +128,12 @@ export function useCursoViewer() {
   }, []);
 
   const handleBack = useCallback(() => {
-    if (state.progress > 0) {
+    if (state.progress > 0 && id) {
       // Save progress before going back to menu
       localStorage.setItem(`curso_${id}_progress`, state.progress.toString());
     }
     
+    // Batch state updates to avoid multiple renders
     setState(prev => ({ 
       ...prev, 
       showCourse: false, 
@@ -120,37 +151,48 @@ export function useCursoViewer() {
   }, []);
 
   const updateProgress = useCallback((newProgress: number) => {
-    setState(prev => ({ ...prev, progress: newProgress }));
-    localStorage.setItem(`curso_${id}_progress`, newProgress.toString());
+    if (!mountedRef.current) return;
     
-    // If progress is 100%, mark as complete
-    if (newProgress >= 100) {
-      setState(prev => ({ ...prev, isComplete: true }));
-      localStorage.setItem(`curso_${id}_complete`, 'true');
+    setState(prev => ({ ...prev, progress: newProgress }));
+    
+    if (id) {
+      localStorage.setItem(`curso_${id}_progress`, newProgress.toString());
       
-      toast({
-        title: "Curso concluído!",
-        description: "Parabéns por concluir este curso.",
-        variant: "success",
-      });
+      // If progress is 100%, mark as complete
+      if (newProgress >= 100) {
+        setState(prev => ({ ...prev, isComplete: true }));
+        localStorage.setItem(`curso_${id}_complete`, 'true');
+        
+        toast({
+          title: "Curso concluído!",
+          description: "Parabéns por concluir este curso.",
+          variant: "success",
+        });
+      }
     }
   }, [id]);
 
   const saveNotes = useCallback((notes: string) => {
+    if (!mountedRef.current) return;
+    
     setState(prev => ({ 
       ...prev, 
       notes, 
       hasNotes: !!notes.trim() 
     }));
     
-    if (notes.trim()) {
-      localStorage.setItem(`curso_${id}_notes`, notes);
-    } else {
-      localStorage.removeItem(`curso_${id}_notes`);
+    if (id) {
+      if (notes.trim()) {
+        localStorage.setItem(`curso_${id}_notes`, notes);
+      } else {
+        localStorage.removeItem(`curso_${id}_notes`);
+      }
     }
   }, [id]);
 
   const toggleBookmark = useCallback(() => {
+    if (!id) return false;
+    
     const bookmarks = JSON.parse(localStorage.getItem('curso_bookmarks') || '[]');
     const isBookmarked = bookmarks.includes(Number(id));
     
@@ -174,6 +216,7 @@ export function useCursoViewer() {
   }, [id]);
   
   const isBookmarked = useCallback(() => {
+    if (!id) return false;
     const bookmarks = JSON.parse(localStorage.getItem('curso_bookmarks') || '[]');
     return bookmarks.includes(Number(id));
   }, [id]);

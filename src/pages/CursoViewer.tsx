@@ -4,7 +4,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CourseMenu } from "@/components/cursos/CourseMenu";
 import { CourseViewer } from "@/components/cursos/CourseViewer";
 import { useCursoViewer } from "@/hooks/use-curso-viewer";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const CursoViewer = () => {
   const {
@@ -28,11 +28,25 @@ const CursoViewer = () => {
   } = useCursoViewer();
 
   const [showNotesPanel, setShowNotesPanel] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
+  // Set mounted state to true after component mounts
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  // If not mounted yet, show loading spinner
+  if (!mounted) {
+    return <LoadingSpinner />;
+  }
+
+  // During loading, show loading spinner
   if (loading) {
     return <LoadingSpinner />;
   }
 
+  // If no course data, show error UI
   if (!curso) {
     return (
       <div className="fixed inset-0 flex flex-col items-center justify-center bg-background">
@@ -42,6 +56,7 @@ const CursoViewer = () => {
     );
   }
 
+  // If not in course view yet, show menu
   if (!showCourse) {
     return (
       <CourseMenu
@@ -64,6 +79,7 @@ const CursoViewer = () => {
     );
   }
 
+  // Show course content
   return (
     <CourseViewer
       title={curso.materia}
@@ -77,6 +93,8 @@ const CursoViewer = () => {
       isBookmarked={isBookmarked}
       onToggleBookmark={toggleBookmark}
       videoRef={videoRef}
+      initialShowNotes={showNotesPanel}
+      onNotesVisibilityChange={setShowNotesPanel}
     />
   );
 };

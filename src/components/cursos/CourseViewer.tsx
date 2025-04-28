@@ -26,6 +26,8 @@ interface CourseViewerProps {
   isBookmarked?: boolean;
   onToggleBookmark?: () => void;
   videoRef?: React.RefObject<HTMLIFrameElement>;
+  initialShowNotes?: boolean;
+  onNotesVisibilityChange?: (visible: boolean) => void;
 }
 
 export function CourseViewer({
@@ -39,39 +41,73 @@ export function CourseViewer({
   onSaveNotes,
   isBookmarked = false,
   onToggleBookmark,
-  videoRef
+  videoRef,
+  initialShowNotes = false,
+  onNotesVisibilityChange
 }: CourseViewerProps) {
   const [notes, setNotes] = useState(savedNotes);
-  const [showNotes, setShowNotes] = useState(false);
+  const [showNotes, setShowNotes] = useState(initialShowNotes);
   const [volume, setVolume] = useState<"muted" | "low" | "normal">("normal");
   const localVideoRef = useRef<HTMLIFrameElement>(null);
   const actualVideoRef = videoRef || localVideoRef;
+  const notesTimeoutRef = useRef<number | null>(null);
+  const progressIntervalRef = useRef<number | null>(null);
+  
+  // Handle initial notes panel visibility
+  useEffect(() => {
+    setShowNotes(initialShowNotes);
+  }, [initialShowNotes]);
+  
+  // Notify parent of notes visibility changes
+  useEffect(() => {
+    if (onNotesVisibilityChange) {
+      onNotesVisibilityChange(showNotes);
+    }
+  }, [showNotes, onNotesVisibilityChange]);
   
   // Track progress simulation
   useEffect(() => {
     if (!updateProgress) return;
     
-    const interval = setInterval(() => {
+    progressIntervalRef.current = window.setInterval(() => {
       // Simulate progress update - in a real app this would come from the video player API
       if (progress < 100) {
         updateProgress(Math.min(progress + 5, 100));
       } else {
-        clearInterval(interval);
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
       }
     }, 30000); // Update every 30 seconds
     
-    return () => clearInterval(interval);
+    return () => {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
+      }
+    };
   }, [progress, updateProgress]);
 
-  // Handle notes autosave
+  // Handle notes autosave with cleanup
   useEffect(() => {
     if (notes !== savedNotes && onSaveNotes) {
-      const saveTimeout = setTimeout(() => {
-        onSaveNotes(notes);
-      }, 1000);
+      if (notesTimeoutRef.current !== null) {
+        clearTimeout(notesTimeoutRef.current);
+      }
       
-      return () => clearTimeout(saveTimeout);
+      notesTimeoutRef.current = window.setTimeout(() => {
+        onSaveNotes(notes);
+        notesTimeoutRef.current = null;
+      }, 1000);
     }
+    
+    return () => {
+      if (notesTimeoutRef.current !== null) {
+        clearTimeout(notesTimeoutRef.current);
+        notesTimeoutRef.current = null;
+      }
+    };
   }, [notes, savedNotes, onSaveNotes]);
   
   // Extract YouTube video ID from URL if it's a YouTube link

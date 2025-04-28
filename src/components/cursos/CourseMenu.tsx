@@ -3,6 +3,7 @@ import { Play, Download, PencilLine, Star, BookmarkPlus, Bookmark, CheckCircle }
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "@/components/ui/use-toast";
+import { useRef, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,43 @@ export function CourseMenu({
   isBookmarked = false,
   onToggleBookmark
 }: CourseMenuProps) {
+  const startCourseClickedRef = useRef(false);
+  
+  // Reset the clicked state when dialog opens/closes
+  useEffect(() => {
+    startCourseClickedRef.current = false;
+  }, [open]);
+
+  // Handler to prevent double-click issues
+  const handleStartCourseClick = () => {
+    // Prevent duplicate calls due to StrictMode double rendering
+    if (startCourseClickedRef.current) return;
+    
+    startCourseClickedRef.current = true;
+    onStartCourse();
+    onOpenChange(false);
+  };
+  
+  // Handler for notes click with protection
+  const handleOpenNotes = () => {
+    if (startCourseClickedRef.current) return;
+    
+    if (onOpenNotes) {
+      startCourseClickedRef.current = true;
+      onOpenNotes();
+      onOpenChange(false);
+    } else {
+      onStartCourse();
+      onOpenChange(false);
+      setTimeout(() => {
+        toast({
+          title: "Anotações disponíveis",
+          description: "Clique no botão 'Mostrar notas' para visualizar suas anotações.",
+        });
+      }, 1000);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -63,10 +101,7 @@ export function CourseMenu({
         
         <div className="grid gap-4 py-4">
           <Button 
-            onClick={() => {
-              onStartCourse();
-              onOpenChange(false);
-            }} 
+            onClick={handleStartCourseClick} 
             className="w-full"
           >
             <Play className="mr-2 h-4 w-4" />
@@ -90,16 +125,7 @@ export function CourseMenu({
             
             <Button
               variant={hasNotes ? "secondary" : "outline"}
-              onClick={onOpenNotes || (() => {
-                onStartCourse();
-                onOpenChange(false);
-                setTimeout(() => {
-                  toast({
-                    title: "Anotações disponíveis",
-                    description: "Clique no botão 'Mostrar notas' para visualizar suas anotações.",
-                  });
-                }, 1000);
-              })}
+              onClick={handleOpenNotes}
             >
               <PencilLine className="mr-2 h-4 w-4" />
               {hasNotes ? "Ver anotações" : "Anotações"}
