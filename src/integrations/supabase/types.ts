@@ -465,6 +465,39 @@ export type Database = {
         }
         Relationships: []
       }
+      cursos_narrados: {
+        Row: {
+          area: string | null
+          capa: string | null
+          download: string | null
+          id: number
+          link: string | null
+          materia: string | null
+          sequencia: number | null
+          sobre: string | null
+        }
+        Insert: {
+          area?: string | null
+          capa?: string | null
+          download?: string | null
+          id?: number
+          link?: string | null
+          materia?: string | null
+          sequencia?: number | null
+          sobre?: string | null
+        }
+        Update: {
+          area?: string | null
+          capa?: string | null
+          download?: string | null
+          id?: number
+          link?: string | null
+          materia?: string | null
+          sequencia?: number | null
+          sobre?: string | null
+        }
+        Relationships: []
+      }
       dicionario_juridico: {
         Row: {
           area_direito: string | null
