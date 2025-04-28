@@ -14,9 +14,27 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronLeft, ChevronRight, Play, Pause, RotateCcw, Sparkles } from "lucide-react";
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Play, 
+  Pause, 
+  RotateCcw, 
+  Sparkles,
+  Filter,
+  X,
+  MoreHorizontal
+} from "lucide-react";
 import { FlashcardView } from "@/components/flashcards/FlashcardView";
 import { StudyStats } from "@/components/flashcards/StudyStats";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type FlashCard = {
   id: string | number;
@@ -33,7 +51,8 @@ export default function Flashcards() {
   const { data: cards, isLoading } = useQuery({
     queryKey: ["flashcards"],
     queryFn: async () => {
-      const { data } = await supabase.from("flash_cards").select("*");
+      const { data, error } = await supabase.from("flash_cards").select("*");
+      if (error) throw error;
       return (data ?? []) as FlashCard[];
     },
   });
@@ -52,6 +71,7 @@ export default function Flashcards() {
   const [selectedTemas, setSelectedTemas] = useState<string[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [showDueOnly, setShowDueOnly] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   
   const filtered = useMemo(() => {
     if (!cards) return [];
@@ -132,10 +152,21 @@ export default function Flashcards() {
   };
 
   return (
-    <div className="container max-w-xl mx-auto p-4 w-full pb-20 md:pb-6">
-      <h1 className="text-2xl font-bold mb-4">Flashcards</h1>
+    <div className="container max-w-3xl mx-auto p-4 w-full pb-28 md:pb-6">
+      <h1 className="text-2xl font-bold mb-4 flex items-center justify-between">
+        <span>Flashcards</span>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setShowFilters(!showFilters)}
+          className="md:hidden"
+        >
+          {showFilters ? <X className="h-4 w-4 mr-1" /> : <Filter className="h-4 w-4 mr-1" />}
+          {showFilters ? 'Ocultar filtros' : 'Filtros'}
+        </Button>
+      </h1>
 
-      <Card className="p-4 mb-6 shadow-sm">
+      <Card className={`p-4 mb-6 shadow-sm transition-all duration-300 ${showFilters ? 'block' : 'hidden md:block'}`}>
         <StudyStats />
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
@@ -187,28 +218,58 @@ export default function Flashcards() {
         </div>
 
         <div className="mt-4">
-          <label className="text-sm font-medium mb-1 block">Temas</label>
-          <div className="flex flex-wrap gap-2 p-1">
-            {temas.map((tema) => (
-              <Badge 
-                key={tema}
-                variant={selectedTemas.includes(tema) ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => handleTemaSelect(tema)}
-              >
-                {tema}
-              </Badge>
-            ))}
-            {selectedTemas.length > 0 && (
-              <Badge 
-                variant="secondary"
-                className="cursor-pointer"
-                onClick={() => setSelectedTemas([])}
-              >
-                Limpar
-              </Badge>
-            )}
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-sm font-medium">Temas</label>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setSelectedTemas(temas)}>
+                  Selecionar todos
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSelectedTemas([])}>
+                  Limpar seleção
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+          
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="w-full justify-between text-left font-normal"
+                size="lg"
+              >
+                {selectedTemas.length === 0 ? (
+                  <span className="text-muted-foreground">Selecione temas...</span>
+                ) : (
+                  <span>
+                    {selectedTemas.length} {selectedTemas.length === 1 ? 'tema selecionado' : 'temas selecionados'}
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-2 max-h-[300px] overflow-y-auto" align="start">
+              <div className="flex flex-wrap gap-2">
+                {temas.map((tema) => (
+                  <Badge 
+                    key={tema}
+                    variant={selectedTemas.includes(tema) ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => handleTemaSelect(tema)}
+                  >
+                    {tema}
+                  </Badge>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         
         {viewMode === "auto" && (
@@ -237,7 +298,7 @@ export default function Flashcards() {
           <span className="ml-3 text-muted-foreground">Carregando flashcards...</span>
         </div>
       ) : (
-        <div className="relative min-h-[340px] flex flex-col items-center">
+        <div className="relative min-h-[500px] flex flex-col items-center">
           <AnimatePresence mode="wait">
             {filtered.length > 0 && (
               <motion.div
@@ -261,25 +322,28 @@ export default function Flashcards() {
           {viewMode === "manual" && filtered.length > 1 && (
             <div className="flex justify-center gap-3 mt-6">
               <Button
-                size="icon"
+                size="lg"
                 variant="outline"
                 onClick={handlePrevious}
+                className="px-6 py-6 text-lg"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-6 w-6" />
               </Button>
               <Button
                 variant="outline"
                 onClick={handleRandom}
-                size="sm"
+                size="lg"
+                className="px-6 py-6"
               >
-                <RotateCcw className="h-4 w-4 mr-1" /> Aleatório
+                <RotateCcw className="h-5 w-5 mr-2" /> Aleatório
               </Button>
               <Button
-                size="icon"
+                size="lg"
                 variant="outline"
                 onClick={handleNext}
+                className="px-6 py-6 text-lg"
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-6 w-6" />
               </Button>
             </div>
           )}
