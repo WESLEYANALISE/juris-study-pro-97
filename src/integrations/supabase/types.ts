@@ -465,36 +465,99 @@ export type Database = {
         }
         Relationships: []
       }
+      curso_feedback: {
+        Row: {
+          avaliacao: number
+          comentario: string | null
+          created_at: string | null
+          curso_id: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          avaliacao: number
+          comentario?: string | null
+          created_at?: string | null
+          curso_id: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          avaliacao?: number
+          comentario?: string | null
+          created_at?: string | null
+          curso_id?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      curso_progress: {
+        Row: {
+          concluido: boolean
+          created_at: string | null
+          curso_id: number
+          id: string
+          progresso: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          concluido?: boolean
+          created_at?: string | null
+          curso_id: number
+          id?: string
+          progresso?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          concluido?: boolean
+          created_at?: string | null
+          curso_id?: number
+          id?: string
+          progresso?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cursos_narrados: {
         Row: {
           area: string | null
           capa: string | null
+          dificuldade: string | null
           download: string | null
           id: number
           link: string | null
           materia: string | null
           sequencia: number | null
           sobre: string | null
+          tipo_acesso: string | null
         }
         Insert: {
           area?: string | null
           capa?: string | null
+          dificuldade?: string | null
           download?: string | null
           id?: number
           link?: string | null
           materia?: string | null
           sequencia?: number | null
           sobre?: string | null
+          tipo_acesso?: string | null
         }
         Update: {
           area?: string | null
           capa?: string | null
+          dificuldade?: string | null
           download?: string | null
           id?: number
           link?: string | null
           materia?: string | null
           sequencia?: number | null
           sobre?: string | null
+          tipo_acesso?: string | null
         }
         Relationships: []
       }
@@ -1949,6 +2012,39 @@ export type Database = {
           numero_questao?: number
           questao?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_badges: {
+        Row: {
+          achieved: boolean
+          achieved_at: string | null
+          badge_name: string
+          created_at: string | null
+          id: string
+          progress: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          achieved?: boolean
+          achieved_at?: string | null
+          badge_name: string
+          created_at?: string | null
+          id?: string
+          progress?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          achieved?: boolean
+          achieved_at?: string | null
+          badge_name?: string
+          created_at?: string | null
+          id?: string
+          progress?: number | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }

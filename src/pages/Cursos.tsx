@@ -31,9 +31,11 @@ interface Curso {
   capa: string;
   sobre: string;
   download: string | null;
+  dificuldade?: string;
+  tipo_acesso?: string;
 }
 
-// Levels will be determined by tags in the 'sobre' field
+// Levels will be determined by the 'dificuldade' field
 type LevelType = "Iniciante" | "Intermediário" | "Avançado" | "Todos";
 type PaymentType = "Gratuito" | "Pago" | "Todos";
 
@@ -52,20 +54,34 @@ const Cursos = () => {
   const { data: cursos = [], isLoading } = useQuery({
     queryKey: ["cursos_narrados"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("cursos_narrados")
-        .select("*")
-        .order("sequencia", { ascending: true });
+      try {
+        console.log("Fetching courses...");
+        const { data, error } = await supabase
+          .from("cursos_narrados")
+          .select("*")
+          .order("sequencia", { ascending: true });
 
-      if (error) {
+        if (error) {
+          console.error("Error fetching courses:", error);
+          toast({
+            variant: "destructive",
+            title: "Erro ao carregar cursos",
+            description: error.message,
+          });
+          return [];
+        }
+        
+        console.log(`Fetched ${data?.length || 0} courses`);
+        return data as Curso[];
+      } catch (err) {
+        console.error("Exception while fetching courses:", err);
         toast({
           variant: "destructive",
           title: "Erro ao carregar cursos",
-          description: error.message,
+          description: "Ocorreu um erro inesperado",
         });
         return [];
       }
-      return data as Curso[];
     },
   });
 
@@ -89,16 +105,22 @@ const Cursos = () => {
     });
   };
 
-  // Function to determine level from description (for demonstration purposes)
+  // Function to determine level from the dificuldade field or fallback to description
   const getCursoLevel = (curso: Curso): LevelType => {
+    if (curso.dificuldade) return curso.dificuldade as LevelType;
+    
+    // Fallback to description parsing for older data
     const desc = curso.sobre?.toLowerCase() || "";
     if (desc.includes("iniciante") || desc.includes("básico")) return "Iniciante";
     if (desc.includes("avançado")) return "Avançado";
     return "Intermediário";
   };
 
-  // Function to determine payment status (for demonstration purposes)
+  // Function to determine payment status from tipo_acesso field or fallback to description
   const getCursoPaymentType = (curso: Curso): PaymentType => {
+    if (curso.tipo_acesso) return curso.tipo_acesso as PaymentType;
+    
+    // Fallback to description parsing for older data
     const desc = curso.sobre?.toLowerCase() || "";
     return desc.includes("gratuito") ? "Gratuito" : "Pago";
   };

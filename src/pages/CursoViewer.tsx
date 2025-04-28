@@ -29,6 +29,8 @@ interface Curso {
   capa: string;
   sobre: string;
   download: string | null;
+  dificuldade?: string;
+  tipo_acesso?: string;
 }
 
 // Type for user progress
@@ -50,6 +52,10 @@ interface CursoFeedback {
   avaliacao: number;
   comentario: string | null;
   created_at?: string;
+  profiles?: {
+    display_name?: string;
+    avatar_url?: string;
+  }
 }
 
 const CursoViewer = () => {
@@ -494,11 +500,11 @@ const CursoViewer = () => {
                             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
                               <span className="text-xs font-medium">
                                 {/* Display first letter of name or default */}
-                                {(feedback as any).profiles?.display_name?.charAt(0) || "U"}
+                                {feedback.profiles?.display_name?.charAt(0) || "U"}
                               </span>
                             </div>
                             <span className="ml-2 text-sm font-medium">
-                              {(feedback as any).profiles?.display_name || "Usuário"}
+                              {feedback.profiles?.display_name || "Usuário"}
                             </span>
                           </div>
                           <div className="flex">
