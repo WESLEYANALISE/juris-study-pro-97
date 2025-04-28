@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { VideoPlayer } from "@/components/VideoPlayer";
@@ -22,7 +21,6 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
   const [videoEnded, setVideoEnded] = useState(false);
   const questionsShown = useRef<{[key: string]: boolean}>({});
 
-  // Load questions when videoId changes
   useEffect(() => {
     loadQuestions();
     setVideoEnded(false);
@@ -32,7 +30,6 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
   const loadQuestions = async () => {
     setLoading(true);
     try {
-      // Get questions for this video
       const { data, error } = await supabase
         .from("video_questions")
         .select("*")
@@ -47,7 +44,6 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
         setQuestions(data);
       }
 
-      // Also load existing user responses
       if (supabase.auth.getUser()) {
         const { data: responseData } = await supabase
           .from("user_question_responses")
@@ -73,38 +69,30 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
     }
   };
 
-  // Handle time updates from the video player
   const handleTimeUpdate = useCallback((time: number) => {
     setCurrentTime(time);
     
-    // Find if there's a question that should be shown at this time
     const question = questions.find(
       q => !questionsShown.current[q.id] && Math.abs(q.timestamp - time) < 2
     );
 
     if (question) {
-      // Mark this question as shown so we don't show it again
       questionsShown.current[question.id] = true;
       
-      // Pause the video
       if (playerRef) {
         playerRef.pauseVideo();
       }
       
-      // Show the question
       onQuestionAppear(question);
     }
   }, [questions, playerRef, onQuestionAppear]);
 
-  // Handle video state changes
   const handleVideoStateChange = (event: YT.PlayerStateChangeEvent) => {
-    // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
-    if (event.data === 0) { // Using 0 instead of YT.PlayerState.ENDED
+    if (event.data === 0) {
       setVideoEnded(true);
     }
   };
 
-  // Get YouTube video info
   useEffect(() => {
     const fetchVideoData = async () => {
       try {
@@ -130,7 +118,6 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
     }
   }, [videoId]);
 
-  // Calculate performance statistics
   const calculateStats = () => {
     const totalQuestions = questions.length;
     const answeredQuestions = Object.keys(userResponses).length;
@@ -176,12 +163,16 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
                 variant={stats.percentageCorrect >= 70 ? "default" : 
                        stats.percentageCorrect >= 40 ? "secondary" : "destructive"}
               >
-                {stats.correctAnswers} corretas ({stats.percentageCorrect}%)
+                {stats.correctAnswers} corretas ({stats.percentageCorrect}%) 
               </Badge>
             </div>
             <Progress 
               value={stats.percentageCompleted} 
-              className="h-2" 
+              className={cn("h-4", {
+                "bg-green-500": stats.percentageCorrect >= 70,
+                "bg-yellow-500": stats.percentageCorrect >= 40,
+                "bg-red-500": stats.percentageCorrect < 40
+              })}
             />
           </CardFooter>
         )}
@@ -207,12 +198,11 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
               
               <Progress 
                 value={stats.percentageCorrect} 
-                className="h-4"
-                // Fix the color attribute (we'll use className instead)
-                className={`h-4 ${
-                  stats.percentageCorrect >= 70 ? "bg-green-500" : 
-                  stats.percentageCorrect >= 40 ? "bg-yellow-500" : "bg-red-500"
-                }`}
+                className={cn("h-4", {
+                  "bg-green-500": stats.percentageCorrect >= 70,
+                  "bg-yellow-500": stats.percentageCorrect >= 40,
+                  "bg-red-500": stats.percentageCorrect < 40
+                })}
               />
               
               <p className="text-center pt-2">
