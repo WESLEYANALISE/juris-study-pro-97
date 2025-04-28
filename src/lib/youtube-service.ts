@@ -155,10 +155,10 @@ export async function getStoredPlaylists(): Promise<StoredPlaylist[]> {
       return [];
     }
     
-    // Ensure the returned data includes the optional properties
-    const typedPlaylists = (data || []).map(playlist => ({
+    // Cast the returned data to include the optional properties
+    const typedPlaylists = (data || []).map((playlist: any) => ({
       ...playlist,
-      is_single_video: playlist.is_single_video || false,
+      is_single_video: Boolean(playlist.is_single_video || false),
       video_id: playlist.video_id || undefined
     })) as StoredPlaylist[];
     
