@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,65 +8,40 @@ import { Clock, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabaseClient";
 import { useState, useEffect } from "react";
-
 interface WelcomeCardProps {
   userName?: string;
   progress?: number;
   nextTaskTitle?: string;
   nextTaskTime?: string;
 }
-
 const WelcomeCard = ({
   userName,
   progress = 0,
   nextTaskTitle,
-  nextTaskTime,
+  nextTaskTime
 }: WelcomeCardProps) => {
   const navigate = useNavigate();
   const [lastStudyContent, setLastStudyContent] = useState<string | null>(null);
-
   useEffect(() => {
     // Aqui poderíamos buscar o último conteúdo acessado pelo usuário
     // Por enquanto, vamos simplesmente direcionar para a página de videoaulas
     setLastStudyContent("/videoaulas");
   }, []);
-
   const handleContinueStudying = () => {
     navigate(lastStudyContent || "/videoaulas");
   };
-
   const handleViewSchedule = () => {
     navigate("/inicie");
   };
-
-  return (
-    <Card className="shadow-md bg-gradient-to-r from-primary/10 to-background border-primary/20 mb-6">
-      <CardContent className="p-6">
+  return <Card className="shadow-md bg-gradient-to-r from-primary/10 to-background border-primary/20 mb-6 px-0 mx-[10px]">
+      <CardContent className="p-6 py-[15px] px-[8px] mx-[16px]">
         <div className="flex flex-col md:flex-row items-center gap-6">
           {/* Círculo de progresso */}
           <div className="relative w-32 h-32 min-w-32 flex items-center justify-center">
             <div className="absolute inset-0">
               <svg viewBox="0 0 100 100" className="w-full h-full rotate-[-90deg]">
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="transparent"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  className="text-muted/20"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="transparent"
-                  stroke="currentColor"
-                  strokeWidth="8"
-                  strokeDasharray={`${2 * Math.PI * 45}`}
-                  strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`}
-                  className="text-primary"
-                />
+                <circle cx="50" cy="50" r="45" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-muted/20" />
+                <circle cx="50" cy="50" r="45" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray={`${2 * Math.PI * 45}`} strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`} className="text-primary" />
               </svg>
             </div>
             <div className="text-center z-10">
@@ -88,20 +62,16 @@ const WelcomeCard = ({
             </div>
 
             {/* Próxima tarefa */}
-            {nextTaskTitle && (
-              <div className="bg-background rounded-lg p-3 border">
+            {nextTaskTitle && <div className="bg-background rounded-lg p-3 border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Clock size={16} />
                   <span>Próxima tarefa</span>
-                  {nextTaskTime && (
-                    <Badge variant="secondary" className="ml-auto">
+                  {nextTaskTime && <Badge variant="secondary" className="ml-auto">
                       {nextTaskTime}
-                    </Badge>
-                  )}
+                    </Badge>}
                 </div>
                 <p className="font-medium">{nextTaskTitle}</p>
-              </div>
-            )}
+              </div>}
 
             {/* Botões */}
             <div className="flex flex-wrap gap-3 mt-4">
@@ -116,8 +86,6 @@ const WelcomeCard = ({
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default WelcomeCard;
