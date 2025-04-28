@@ -2392,8 +2392,45 @@ export type Database = {
         }
         Relationships: []
       }
+      video_playlists_juridicas: {
+        Row: {
+          area: string
+          channel_title: string
+          created_at: string | null
+          id: string
+          playlist_id: string
+          playlist_title: string
+          thumbnail_url: string | null
+          updated_at: string | null
+          video_count: number
+        }
+        Insert: {
+          area: string
+          channel_title: string
+          created_at?: string | null
+          id?: string
+          playlist_id: string
+          playlist_title: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          video_count?: number
+        }
+        Update: {
+          area?: string
+          channel_title?: string
+          created_at?: string | null
+          id?: string
+          playlist_id?: string
+          playlist_title?: string
+          thumbnail_url?: string | null
+          updated_at?: string | null
+          video_count?: number
+        }
+        Relationships: []
+      }
       video_questions: {
         Row: {
+          ai_generated: boolean | null
           correct_answer: string
           created_at: string | null
           explanation: string | null
@@ -2404,6 +2441,7 @@ export type Database = {
           video_id: string
         }
         Insert: {
+          ai_generated?: boolean | null
           correct_answer: string
           created_at?: string | null
           explanation?: string | null
@@ -2414,6 +2452,7 @@ export type Database = {
           video_id: string
         }
         Update: {
+          ai_generated?: boolean | null
           correct_answer?: string
           created_at?: string | null
           explanation?: string | null
