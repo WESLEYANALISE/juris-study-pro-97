@@ -1,11 +1,11 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bookmark } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface BookmarkButtonProps {
   user: User | null;
@@ -14,7 +14,7 @@ interface BookmarkButtonProps {
   lawName: string;
   articleNumber: string;
   articleText: string;
-  articleId?: string; // Added optional article_id field
+  isLoading?: boolean;
 }
 
 export const BookmarkButton = ({
@@ -24,17 +24,22 @@ export const BookmarkButton = ({
   lawName,
   articleNumber,
   articleText,
-  articleId = articleNumber // Default to article number if id not provided
+  isLoading = false
 }: BookmarkButtonProps) => {
-  const handleBookmark = async () => {
+  const [isProcessing, setIsProcessing] = React.useState(false);
+
+  const toggleFavorite = async () => {
     if (!user) {
-      toast.error('Você precisa estar logado para adicionar aos favoritos');
+      toast.error('Você precisa estar logado para favoritar artigos');
       return;
     }
 
     try {
+      setIsProcessing(true);
+      console.log(`Alternando favorito: ${isFavorite ? 'remover' : 'adicionar'}, lei: ${lawName}, artigo: ${articleNumber}`);
+      
       if (isFavorite) {
-        // Delete from favorites
+        // Remove from favorites
         const { error } = await supabase
           .from('vademecum_favorites')
           .delete()
@@ -42,35 +47,66 @@ export const BookmarkButton = ({
           .eq('law_name', lawName)
           .eq('article_number', articleNumber);
 
-        if (error) throw error;
-        toast.success('Removido dos favoritos');
-        setIsFavorite(false);
+        if (error) {
+          console.error("Erro ao remover dos favoritos:", error);
+          throw error;
+        }
+
+        toast.success('Artigo removido dos favoritos');
       } else {
-        // Add to favorites - Include both article_id and required properties
+        // Add to favorites
         const { error } = await supabase
           .from('vademecum_favorites')
           .insert({
             user_id: user.id,
             law_name: lawName,
-            article_id: articleId,
             article_number: articleNumber,
             article_text: articleText,
+            article_id: `${lawName}-${articleNumber}`
           });
 
-        if (error) throw error;
-        toast.success('Adicionado aos favoritos');
-        setIsFavorite(true);
+        if (error) {
+          console.error("Erro ao adicionar aos favoritos:", error);
+          throw error;
+        }
+
+        toast.success('Artigo adicionado aos favoritos');
       }
-    } catch (error: any) {
-      toast.error('Erro ao adicionar/remover dos favoritos');
-      console.error('Error handling bookmark:', error);
+
+      setIsFavorite(!isFavorite);
+    } catch (err) {
+      console.error("Exceção ao alternar favorito:", err);
+      toast.error(`Erro ao ${isFavorite ? 'remover dos' : 'adicionar aos'} favoritos. Tente novamente.`);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
+  if (!user) {
+    return null;
+  }
+
+  const loading = isLoading || isProcessing;
+
   return (
-    <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-      <Button variant="outline" size="icon" onClick={handleBookmark}>
-        <Bookmark className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
+    <motion.div
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+    >
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={toggleFavorite}
+        disabled={loading}
+        title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+      >
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isFavorite ? (
+          <BookmarkCheck className="h-4 w-4 text-primary" />
+        ) : (
+          <Bookmark className="h-4 w-4" />
+        )}
       </Button>
     </motion.div>
   );
