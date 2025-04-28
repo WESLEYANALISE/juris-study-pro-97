@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -36,6 +35,7 @@ import AssistenteJuridico from "./pages/AssistenteJuridico";
 import Simulados from "./pages/Simulados";
 import SimuladoSessao from "./pages/SimuladoSessao";
 import SimuladoResultado from "./pages/SimuladoResultado";
+import IniciandoNoDireito from "./pages/IniciandoNoDireito";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +80,21 @@ const App = () => {
                     </RequireAuth>
                   }
                 />
+                
+                {/* New Iniciando no Direito route */}
+                <Route
+                  path="/iniciando-no-direito"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <IniciandoNoDireito />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
                 <Route
                   path="/biblioteca"
                   element={
