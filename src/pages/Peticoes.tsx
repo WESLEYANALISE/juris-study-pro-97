@@ -1,120 +1,116 @@
-
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabaseClient";
-import { PeticaoCard } from "@/components/peticoes/PeticaoCard";
-import { PeticaoFilters } from "@/components/peticoes/PeticaoFilters";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { PeticaoSearch } from "@/components/peticoes/PeticaoSearch";
-import { PeticaoViewer } from "@/components/peticoes/PeticaoViewer";
-import { Card } from "@/components/ui/card";
-import { PageTransition } from "@/components/PageTransition";
-import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { FileText } from "lucide-react";
 
-interface FiltersState {
-  area: string;
-  subArea: string;
-  tipo: string;
-  tags: string[];
-  search: string;
+interface Peticao {
+  id: string;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  arquivo_url: string;
+  created_at: string;
 }
 
-export default function Peticoes() {
-  const [filters, setFilters] = useState<FiltersState>({
-    area: "",
-    subArea: "",
-    tipo: "",
-    tags: [],
-    search: "",
-  });
+const Peticoes = () => {
+  const [peticoes, setPeticoes] = useState<Peticao[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const navigate = useNavigate();
 
-  const [viewingPeticao, setViewingPeticao] = useState<string | null>(null);
+  useEffect(() => {
+    loadPeticoes();
+  }, []);
 
-  const { data: peticoes, isLoading } = useQuery({
-    queryKey: ["peticoes", filters],
-    queryFn: async () => {
-      let query = supabase.from("peticoes").select("*");
+  const loadPeticoes = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("peticoes_modelos")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-      if (filters.area && filters.area !== "all") {
-        query = query.eq("area", filters.area);
-      }
-      if (filters.subArea && filters.subArea !== "all") {
-        query = query.eq("sub_area", filters.subArea);
-      }
-      if (filters.tipo && filters.tipo !== "all") {
-        query = query.eq("tipo", filters.tipo);
-      }
-      if (filters.tags.length > 0) {
-        query = query.contains("tags", filters.tags);
-      }
-      if (filters.search) {
-        query = query.or(
-          `descricao.ilike.%${filters.search}%,tipo.ilike.%${filters.search}%`
-        );
+      if (error) {
+        throw error;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    },
-  });
+      setPeticoes(data || []);
+    } catch (error) {
+      console.error("Error loading peticoes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredPeticoes = peticoes.filter((peticao) =>
+    peticao.titulo.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const handleDownload = (arquivo_url: string) => {
+    window.open(arquivo_url, "_blank");
+  };
 
   return (
-    <PageTransition>
-      <AnimatePresence mode="wait">
-        {viewingPeticao ? (
-          <PeticaoViewer 
-            url={viewingPeticao} 
-            onBack={() => setViewingPeticao(null)} 
-          />
+    <div className="container py-6">
+      <div className="flex flex-col space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight">
+          Petições e Modelos
+        </h1>
+        <p className="text-muted-foreground">
+          Encontre modelos de petições para agilizar seu trabalho jurídico.
+        </p>
+
+        <PeticaoSearch
+          value={searchQuery}
+          onChange={(value) => setSearchQuery(value)}
+        />
+
+        {loading ? (
+          <div className="flex justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : filteredPeticoes.length === 0 ? (
+          <div className="text-center py-8">
+            <h3 className="text-lg font-semibold">Nenhuma petição encontrada</h3>
+            <p className="text-muted-foreground">
+              Tente ajustar seus termos de busca
+            </p>
+          </div>
         ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="container mx-auto p-6 space-y-6"
-          >
-            <div className="flex flex-col md:flex-row gap-4 items-start">
-              <Card className="w-full md:w-64 p-4 sticky top-4 hover:shadow-hover transition-all">
-                <PeticaoFilters filters={filters} setFilters={setFilters} />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredPeticoes.map((peticao) => (
+              <Card key={peticao.id} className="h-full flex flex-col">
+                <CardHeader>
+                  <CardTitle>{peticao.titulo}</CardTitle>
+                  <CardDescription>{peticao.categoria}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  {peticao.descricao}
+                </CardContent>
+                <Button
+                  onClick={() => handleDownload(peticao.arquivo_url)}
+                  className="mt-auto"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Visualizar / Baixar
+                </Button>
               </Card>
-              
-              <div className="flex-1 space-y-6">
-                <PeticaoSearch 
-                  value={filters.search}
-                  onChange={(value) => setFilters(prev => ({ ...prev, search: value }))}
-                />
-                
-                {isLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Array.from({ length: 6 }).map((_, i) => (
-                      <motion.div 
-                        key={i}
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ delay: i * 0.1 }}
-                        className="h-64 bg-muted/20 animate-pulse rounded-lg"
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <motion.div 
-                    layout
-                    className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-                  >
-                    {peticoes?.map((peticao) => (
-                      <PeticaoCard 
-                        key={peticao.id} 
-                        peticao={peticao} 
-                        onView={setViewingPeticao}
-                      />
-                    ))}
-                  </motion.div>
-                )}
-              </div>
-            </div>
-          </motion.div>
+            ))}
+          </div>
         )}
-      </AnimatePresence>
-    </PageTransition>
+      </div>
+    </div>
   );
-}
+};
+
+export default Peticoes;

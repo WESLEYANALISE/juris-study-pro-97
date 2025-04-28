@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Bell, BookOpen, Clock, Check, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface Notification {
   id: string;
@@ -26,13 +25,11 @@ export function CursoNotifications() {
   const [isOpen, setIsOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Sample notifications - in production, fetch from database
   useEffect(() => {
     if (!user) return;
 
     const fetchNotifications = async () => {
       try {
-        // This would be a real API call in production
         const mockNotifications: Notification[] = [
           {
             id: "1",
@@ -81,10 +78,8 @@ export function CursoNotifications() {
     fetchNotifications();
   }, [user]);
 
-  // Mark notification as read
   const markAsRead = async (id: string) => {
     try {
-      // In production, update the database
       setNotifications(notifications.map(n => 
         n.id === id ? { ...n, read: true } : n
       ));
@@ -93,27 +88,22 @@ export function CursoNotifications() {
     }
   };
 
-  // Mark all as read
   const markAllAsRead = async () => {
     try {
-      // In production, update the database
       setNotifications(notifications.map(n => ({ ...n, read: true })));
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
     }
   };
 
-  // Delete notification
   const deleteNotification = async (id: string) => {
     try {
-      // In production, update the database
       setNotifications(notifications.filter(n => n.id !== id));
     } catch (error) {
       console.error("Error deleting notification:", error);
     }
   };
 
-  // Get icon for notification type
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case "reminder":
@@ -129,7 +119,6 @@ export function CursoNotifications() {
 
   return (
     <div className="relative">
-      {/* Notification Bell Button */}
       <Button
         variant="ghost"
         size="icon"
@@ -144,7 +133,6 @@ export function CursoNotifications() {
         )}
       </Button>
 
-      {/* Notification Panel */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -179,7 +167,6 @@ export function CursoNotifications() {
                 </div>
               ) : (
                 <div>
-                  {/* Display notifications */}
                   {(showAll ? notifications : notifications.slice(0, 5)).map((notification) => (
                     <div
                       key={notification.id}
@@ -246,7 +233,6 @@ export function CursoNotifications() {
                     </div>
                   ))}
                   
-                  {/* Show more button */}
                   {notifications.length > 5 && !showAll && (
                     <div className="p-2 text-center">
                       <Button 

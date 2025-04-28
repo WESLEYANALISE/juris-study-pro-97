@@ -1,7 +1,7 @@
-
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabaseClient";
+import { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { supabase } from "@/integrations/supabase/client";
 import { PageTransition } from "@/components/PageTransition";
 import { MapaMentalCard } from "@/components/mapas-mentais/MapaMentalCard";
 import { MapaMentalViewer } from "@/components/mapas-mentais/MapaMentalViewer";

@@ -1,5 +1,5 @@
-
-import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ExplanationRequest {
   lawName: string;
@@ -49,6 +49,7 @@ const generateExplanation = async (request: ExplanationRequest): Promise<Explana
     return { explanation };
   } catch (error) {
     console.error('Error generating explanation:', error);
+    toast.error('Não foi possível gerar a explicação. Tente novamente mais tarde.');
     throw new Error('Não foi possível gerar a explicação. Tente novamente mais tarde.');
   }
 };

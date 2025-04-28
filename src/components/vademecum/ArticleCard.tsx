@@ -12,7 +12,8 @@ import { BookmarkButton } from './article/BookmarkButton';
 import { FontSizeControls } from './article/FontSizeControls';
 import { ArticleExplanation } from './article/ArticleExplanation';
 import { PracticalExample } from './article/PracticalExample';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from '@/integrations/supabase/client';
+
 interface ArticleCardProps {
   lawName: string;
   articleNumber: string;
@@ -23,6 +24,7 @@ interface ArticleCardProps {
   fontSize: number;
   onFontSizeChange: (size: number) => void;
 }
+
 const ArticleCard = ({
   lawName,
   articleNumber,
@@ -40,11 +42,13 @@ const ArticleCard = ({
   const [isFavorite, setIsFavorite] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isPracticalExampleOpen, setIsPracticalExampleOpen] = useState(false);
+
   useEffect(() => {
     if (user) {
       checkIsFavorite();
     }
   }, [user]);
+
   const checkIsFavorite = async () => {
     if (!user) return;
     const {
@@ -52,10 +56,12 @@ const ArticleCard = ({
     } = await supabase.from('vademecum_favorites').select('id').eq('user_id', user.id).eq('law_name', lawName).eq('article_number', articleNumber).single();
     setIsFavorite(!!data);
   };
+
   const handleCopy = async (text: string) => {
     await navigator.clipboard.writeText(text);
     toast.success('Texto copiado para a área de transferência');
   };
+
   const handleNarration = async (text: string) => {
     if (isNarrating) {
       TextToSpeechService.stop();
@@ -66,6 +72,7 @@ const ArticleCard = ({
       setIsNarrating(false);
     }
   };
+
   return <motion.div initial={{
     opacity: 0,
     y: 20
@@ -152,4 +159,5 @@ const ArticleCard = ({
       </Card>
     </motion.div>;
 };
+
 export default React.memo(ArticleCard);

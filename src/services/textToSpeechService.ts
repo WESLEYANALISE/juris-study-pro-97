@@ -1,8 +1,8 @@
-
 // Text-to-speech service using browser's native Speech Synthesis API and Supabase edge function
 
-import { supabase } from "@/lib/supabaseClient";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface SpeechOptions {
   voice?: SpeechSynthesisVoice;

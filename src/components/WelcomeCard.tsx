@@ -6,14 +6,16 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Clock, Calendar } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
+
 interface WelcomeCardProps {
   userName?: string;
   progress?: number;
   nextTaskTitle?: string;
   nextTaskTime?: string;
 }
+
 const WelcomeCard = ({
   userName,
   progress = 0,
@@ -22,21 +24,22 @@ const WelcomeCard = ({
 }: WelcomeCardProps) => {
   const navigate = useNavigate();
   const [lastStudyContent, setLastStudyContent] = useState<string | null>(null);
+
   useEffect(() => {
-    // Aqui poderíamos buscar o último conteúdo acessado pelo usuário
-    // Por enquanto, vamos simplesmente direcionar para a página de videoaulas
     setLastStudyContent("/videoaulas");
   }, []);
+
   const handleContinueStudying = () => {
     navigate(lastStudyContent || "/videoaulas");
   };
+
   const handleViewSchedule = () => {
     navigate("/inicie");
   };
+
   return <Card className="shadow-md bg-gradient-to-r from-primary/10 to-background border-primary/20 mb-6 px-0 mx-[10px]">
       <CardContent className="p-6 py-[15px] px-[8px] mx-[16px]">
         <div className="flex flex-col md:flex-row items-center gap-6">
-          {/* Círculo de progresso */}
           <div className="relative w-32 h-32 min-w-32 flex items-center justify-center">
             <div className="absolute inset-0">
               <svg viewBox="0 0 100 100" className="w-full h-full rotate-[-90deg]">
@@ -50,7 +53,6 @@ const WelcomeCard = ({
             </div>
           </div>
 
-          {/* Informações */}
           <div className="flex-1 space-y-3">
             <div>
               <h3 className="text-2xl font-bold mb-1">
@@ -61,7 +63,6 @@ const WelcomeCard = ({
               </p>
             </div>
 
-            {/* Próxima tarefa */}
             {nextTaskTitle && <div className="bg-background rounded-lg p-3 border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Clock size={16} />
@@ -73,7 +74,6 @@ const WelcomeCard = ({
                 <p className="font-medium">{nextTaskTitle}</p>
               </div>}
 
-            {/* Botões */}
             <div className="flex flex-wrap gap-3 mt-4">
               <Button onClick={handleContinueStudying}>
                 Continuar estudando
@@ -88,4 +88,5 @@ const WelcomeCard = ({
       </CardContent>
     </Card>;
 };
+
 export default WelcomeCard;

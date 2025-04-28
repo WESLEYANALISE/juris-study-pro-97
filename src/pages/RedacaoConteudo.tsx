@@ -1,15 +1,11 @@
-
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { PageTransition } from "@/components/PageTransition";
-import { VideoPlayer } from "@/components/VideoPlayer";
-import { supabase } from "@/lib/supabaseClient";
+import { useNavigate, useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { ArrowLeft, Bookmark, Share2, BookOpen, Video } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import ReactMarkdown from 'react-markdown';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface Article {
@@ -82,7 +78,6 @@ export default function RedacaoConteudo() {
       
       setArticle(articleData);
       
-      // If article has associated playlists, load them
       if (articleData.playlist_ids && articleData.playlist_ids.length > 0) {
         const { data: playlistsData, error: playlistsError } = await supabase
           .from('video_playlists_juridicas')
@@ -95,7 +90,6 @@ export default function RedacaoConteudo() {
         
         setPlaylists(playlistsData || []);
         
-        // If there's a single video playlist, select it automatically
         const singleVideo = playlistsData?.find(playlist => playlist.is_single_video);
         if (singleVideo) {
           setSelectedPlaylist(singleVideo);
@@ -103,7 +97,6 @@ export default function RedacaoConteudo() {
             setSelectedVideoId(singleVideo.video_id);
           }
         } else if (playlistsData && playlistsData.length > 0) {
-          // Or select the first playlist
           setSelectedPlaylist(playlistsData[0]);
           loadVideosFromPlaylist(playlistsData[0]);
         }

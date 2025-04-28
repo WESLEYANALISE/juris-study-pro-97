@@ -1,65 +1,72 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { BookmarkCheck, Bookmark } from 'lucide-react';
+import { Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
-import { supabase } from '@/lib/supabaseClient';
 import { User } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BookmarkButtonProps {
   user: User | null;
   isFavorite: boolean;
-  setIsFavorite: (favorite: boolean) => void;
+  setIsFavorite: (isFavorite: boolean) => void;
   lawName: string;
   articleNumber: string;
   articleText: string;
 }
 
-export const BookmarkButton = ({ 
-  user, 
-  isFavorite, 
+export const BookmarkButton = ({
+  user,
+  isFavorite,
   setIsFavorite,
   lawName,
   articleNumber,
-  articleText 
+  articleText
 }: BookmarkButtonProps) => {
-  const toggleFavorite = async () => {
+  const handleBookmark = async () => {
     if (!user) {
-      toast.error('Você precisa estar logado para favoritar artigos');
+      toast.error('Você precisa estar logado para adicionar aos favoritos');
       return;
     }
-    
+
     try {
       if (isFavorite) {
-        await supabase
+        // Delete from favorites
+        const { error } = await supabase
           .from('vademecum_favorites')
           .delete()
           .eq('user_id', user.id)
           .eq('law_name', lawName)
           .eq('article_number', articleNumber);
+
+        if (error) throw error;
+        toast.success('Removido dos favoritos');
+        setIsFavorite(false);
       } else {
-        await supabase
+        // Add to favorites
+        const { error } = await supabase
           .from('vademecum_favorites')
           .insert({
             user_id: user.id,
             law_name: lawName,
-            article_id: articleNumber,
             article_number: articleNumber,
-            article_text: articleText
+            article_text: articleText,
           });
+
+        if (error) throw error;
+        toast.success('Adicionado aos favoritos');
+        setIsFavorite(true);
       }
-      setIsFavorite(!isFavorite);
-      toast.success(isFavorite ? 'Artigo removido dos favoritos' : 'Artigo adicionado aos favoritos');
-    } catch (error) {
-      toast.error('Erro ao atualizar favoritos');
+    } catch (error: any) {
+      toast.error('Erro ao adicionar/remover dos favoritos');
+      console.error('Error handling bookmark:', error);
     }
   };
 
   return (
     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.95 }}>
-      <Button variant="outline" size="icon" onClick={toggleFavorite}>
-        {isFavorite ? <BookmarkCheck className="text-primary h-4 w-4" /> : <Bookmark className="h-4 w-4" />}
+      <Button variant="outline" size="icon" onClick={handleBookmark}>
+        <Bookmark className="h-4 w-4" fill={isFavorite ? 'currentColor' : 'none'} />
       </Button>
     </motion.div>
   );

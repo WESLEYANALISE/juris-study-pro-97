@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SearchIcon } from "lucide-react";
 import { getChannelPlaylists, getChannelVideos, getChannelId } from "@/lib/youtube-service";
@@ -59,7 +59,6 @@ export function VideoAulasRedacao() {
       
       setStoredPlaylists(data || []);
       
-      // Extract unique areas
       if (data) {
         const uniqueAreas = Array.from(
           new Set(
@@ -67,7 +66,7 @@ export function VideoAulasRedacao() {
               return playlist.area.replace('Redação Jurídica - ', '').trim();
             })
           )
-        ).sort();
+        ).filter(Boolean).sort() as string[];
         
         setAreas(uniqueAreas);
       }
@@ -81,11 +80,9 @@ export function VideoAulasRedacao() {
 
   const handlePlaylistClick = async (playlist: StoredPlaylist) => {
     try {
-      // Check if it's a single video
       if (playlist.is_single_video && playlist.video_id) {
         setSelectedVideoId(playlist.video_id);
       } else {
-        // Check if there are any related articles first
         const { data: articles, error } = await supabase
           .from('redacao_artigos')
           .select('*')
@@ -97,12 +94,10 @@ export function VideoAulasRedacao() {
         }
         
         if (articles && articles.length > 0) {
-          // If there's an article, navigate to it
           navigate(`/redacao-conteudo/${articles[0].id}`);
           return;
         }
         
-        // Otherwise, get the first video from the playlist
         const { getPlaylistVideos } = await import('@/lib/youtube-service');
         const videos = await getPlaylistVideos(playlist.playlist_id);
         
@@ -131,7 +126,6 @@ export function VideoAulasRedacao() {
     setAreaFilter(area === areaFilter ? null : area);
   };
 
-  // Check if there are any related articles for video
   const navigateToArticles = async () => {
     navigate('/redacao-juridica');
   };

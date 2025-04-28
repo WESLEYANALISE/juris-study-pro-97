@@ -1,15 +1,15 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, SlidersHorizontal, Heart, HeartOff, BookOpen, GraduationCap, Play, Download, PencilLine, Star } from "lucide-react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { supabase } from "@/lib/supabaseClient";
-import { PageTransition } from "@/components/PageTransition";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/components/ui/use-toast";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Search, Filter, SlidersHorizontal, Heart, HeartOff, BookOpen, GraduationCap, Play, Download, PencilLine, Star } from "lucide-react";
+import { motion } from "framer-motion";
+import { PageTransition } from "@/components/PageTransition";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "@/components/ui/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,

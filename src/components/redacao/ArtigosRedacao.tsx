@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { VideoPlayer } from "@/components/VideoPlayer";
@@ -68,7 +67,7 @@ export function ArtigosApoio() {
       const uniqueCategories = Array.from(
         new Set(articlesData?.map(article => article.categoria) || [])
       );
-      setCategories(uniqueCategories);
+      setCategories(uniqueCategories as string[]);
       
       // Load playlists for Redação Jurídica
       const { data: playlistsData, error: playlistsError } = await supabase
