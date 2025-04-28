@@ -36,6 +36,8 @@ import Simulados from "./pages/Simulados";
 import SimuladoSessao from "./pages/SimuladoSessao";
 import SimuladoResultado from "./pages/SimuladoResultado";
 import IniciandoNoDireito from "./pages/IniciandoNoDireito";
+import Cursos from "./pages/Cursos";
+import CursoViewer from "./pages/CursoViewer";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,7 +83,6 @@ const App = () => {
                   }
                 />
                 
-                {/* New Iniciando no Direito route */}
                 <Route
                   path="/iniciando-no-direito"
                   element={
@@ -91,6 +92,27 @@ const App = () => {
                           <IniciandoNoDireito />
                         </PageTransition>
                       </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/cursos"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <Cursos />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/cursos/:id"
+                  element={
+                    <RequireAuth>
+                      <CursoViewer />
                     </RequireAuth>
                   }
                 />
@@ -307,7 +329,6 @@ const App = () => {
                   }
                 />
                 
-                {/* Simulados routes */}
                 <Route
                   path="/simulados"
                   element={
