@@ -4,6 +4,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { CourseMenu } from "@/components/cursos/CourseMenu";
 import { CourseViewer } from "@/components/cursos/CourseViewer";
 import { useCursoViewer } from "@/hooks/use-curso-viewer";
+import { useState } from "react";
 
 const CursoViewer = () => {
   const {
@@ -14,8 +15,19 @@ const CursoViewer = () => {
     setMenuOpen,
     handleStartCourse,
     handleBack,
-    handleNavigateBack
+    handleNavigateBack,
+    progress,
+    updateProgress,
+    hasNotes,
+    notes,
+    saveNotes,
+    isComplete,
+    toggleBookmark,
+    isBookmarked,
+    videoRef
   } = useCursoViewer();
+
+  const [showNotesPanel, setShowNotesPanel] = useState(false);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -39,6 +51,15 @@ const CursoViewer = () => {
         title={curso.materia}
         description={curso.sobre}
         downloadUrl={curso.download}
+        progress={progress}
+        isComplete={isComplete}
+        hasNotes={hasNotes}
+        onOpenNotes={() => {
+          handleStartCourse();
+          setShowNotesPanel(true);
+        }}
+        isBookmarked={isBookmarked}
+        onToggleBookmark={toggleBookmark}
       />
     );
   }
@@ -48,6 +69,14 @@ const CursoViewer = () => {
       title={curso.materia}
       videoUrl={curso.link}
       onBack={handleBack}
+      progress={progress}
+      updateProgress={updateProgress}
+      downloadUrl={curso.download}
+      savedNotes={notes}
+      onSaveNotes={saveNotes}
+      isBookmarked={isBookmarked}
+      onToggleBookmark={toggleBookmark}
+      videoRef={videoRef}
     />
   );
 };
