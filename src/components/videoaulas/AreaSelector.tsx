@@ -14,19 +14,14 @@ interface AreaSelectorProps {
   areas: string[];
   selectedArea: string;
   onAreaSelect: (area: string) => void;
-  className?: string; // Added className prop
+  className?: string;
 }
 
-export const AreaSelector = ({ 
-  areas, 
-  selectedArea, 
-  onAreaSelect, 
-  className 
-}: AreaSelectorProps) => {
+export const AreaSelector = ({ areas, selectedArea, onAreaSelect, className }: AreaSelectorProps) => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className={cn("w-full", className)}>
+        <Button variant="outline" className={cn(className)}>
           {selectedArea}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
