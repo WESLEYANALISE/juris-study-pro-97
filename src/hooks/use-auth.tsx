@@ -2,6 +2,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -38,6 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("Fetching profile for user:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -46,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
       if (error) {
         console.error("Error fetching profile:", error);
+        toast.error("Erro ao carregar o seu perfil");
         return null;
       }
       
@@ -54,6 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return data;
     } catch (error) {
       console.error("Exception fetching profile:", error);
+      toast.error("Ocorreu um erro ao buscar seu perfil");
       return null;
     }
   };
@@ -69,41 +73,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     console.log("AuthProvider: Setting up auth state listener");
+    setIsLoading(true);
     
     // First, set up the auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
+      (event, newSession) => {
+        console.log("Auth state changed:", event, newSession?.user?.email);
+        setSession(newSession);
+        setUser(newSession?.user ?? null);
         
         // Fetch user profile if logged in
-        if (session?.user) {
+        if (newSession?.user) {
           // Use setTimeout to avoid potential auth state deadlocks
           setTimeout(async () => {
-            const profileData = await fetchProfile(session.user.id);
-            setProfile(profileData as UserProfile | null);
+            try {
+              const profileData = await fetchProfile(newSession.user.id);
+              setProfile(profileData as UserProfile | null);
+            } finally {
+              setIsLoading(false);
+            }
           }, 0);
         } else {
           setProfile(null);
+          setIsLoading(false);
         }
       }
     );
 
     // Then check for existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log("Current session:", session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      // Fetch user profile if logged in
-      if (session?.user) {
-        const profileData = await fetchProfile(session.user.id);
-        setProfile(profileData as UserProfile | null);
+    const checkSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting session:", error);
+          setIsLoading(false);
+          return;
+        }
+        
+        console.log("Current session:", session?.user?.email);
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Fetch user profile if logged in
+        if (session?.user) {
+          try {
+            const profileData = await fetchProfile(session.user.id);
+            setProfile(profileData as UserProfile | null);
+          } catch (err) {
+            console.error("Error fetching profile during init:", err);
+          }
+        }
+      } catch (err) {
+        console.error("Unexpected error during session check:", err);
+      } finally {
+        setIsLoading(false);
       }
-      
-      setIsLoading(false);
-    });
+    };
+    
+    checkSession();
 
     return () => {
       subscription.unsubscribe();
@@ -113,20 +141,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (email: string, password: string) => {
     try {
       console.log("Attempting to sign in:", email);
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
+      
+      if (error) {
+        toast.error("Falha no login: " + error.message);
+      }
+      
       return { data, error };
     } catch (err) {
       console.error("Error during sign in:", err);
+      toast.error("Ocorreu um erro durante o login");
       return { data: null, error: err as Error };
+    } finally {
+      // Loading state is handled by onAuthStateChange
     }
   };
 
   const signUp = async (email: string, password: string, metadata?: object) => {
     try {
       console.log("Attempting to sign up:", email);
+      setIsLoading(true);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -134,21 +172,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: metadata,
         },
       });
+      
+      if (error) {
+        toast.error("Falha no cadastro: " + error.message);
+      } else {
+        toast.success("Cadastro realizado com sucesso!");
+      }
+      
       return { data, error };
     } catch (err) {
       console.error("Error during sign up:", err);
+      toast.error("Ocorreu um erro durante o cadastro");
       return { data: null, error: err as Error };
+    } finally {
+      // Loading state is handled by onAuthStateChange
     }
   };
 
   const signOut = async () => {
     try {
       console.log("Signing out user");
+      setIsLoading(true);
       const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        toast.error("Erro ao fazer logout: " + error.message);
+      } else {
+        toast.success("Logout realizado com sucesso");
+      }
+      
       return { error };
     } catch (err) {
       console.error("Error during sign out:", err);
+      toast.error("Ocorreu um erro durante o logout");
       return { error: err as Error };
+    } finally {
+      // Loading state is handled by onAuthStateChange
     }
   };
 

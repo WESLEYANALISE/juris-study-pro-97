@@ -27,7 +27,7 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
         setChecked(true);
 
         // Se não autenticado, redireciona para /auth
-        if (!newSession && location.pathname !== "/auth") {
+        if (!newSession && location.pathname !== "/auth" && requiresAuth(location.pathname)) {
           console.log("Not authenticated, redirecting to /auth");
           toast.error("Você precisa estar logado para acessar esta página");
           navigate("/auth", { replace: true });
@@ -45,13 +45,20 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     // Checa sessão existente ao carregar
     const checkCurrentSession = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error checking session:", error);
+          setChecked(true);
+          return;
+        }
+        
         console.log("Current session in RequireAuth:", currentSession?.user?.email);
         setSession(currentSession);
         setChecked(true);
 
-        // Redireciona se não autenticado
-        if (!currentSession && location.pathname !== "/auth") {
+        // Redireciona se não autenticado e está numa página protegida
+        if (!currentSession && location.pathname !== "/auth" && requiresAuth(location.pathname)) {
           console.log("No session found, redirecting to /auth");
           toast.error("Você precisa estar logado para acessar esta página");
           navigate("/auth", { replace: true });
@@ -64,6 +71,26 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
         console.error("Error checking session:", error);
         setChecked(true);
       }
+    };
+
+    // Helper function to determine which routes require authentication
+    const requiresAuth = (path: string) => {
+      // List of routes that require authentication
+      const protectedRoutes = [
+        "/questoes",
+        "/simulados",
+        "/flashcards",
+        "/assistente", 
+        "/perfil",
+        "/curso",
+        "/anotacoes"
+      ];
+      
+      // Check if the current path matches any protected route prefix
+      return protectedRoutes.some(route => 
+        path === route || 
+        path.startsWith(`${route}/`)
+      );
     };
 
     // Setup auth listener first
@@ -81,9 +108,6 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   // Evita flicker: só renderiza filhos depois que o estado for checado
   if (!checked) return null;
   
-  // Se está autenticado ou está na tela de login, mostra os filhos
-  if (session || location.pathname === "/auth") return <>{children}</>;
-
-  // No resto, não renderiza nada enquanto redireciona
-  return null;
+  // Render children after authentication check is complete
+  return <>{children}</>;
 }

@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -15,60 +15,84 @@ const VadeMecum = () => {
   const [activeTab, setActiveTab] = useState<"codigos" | "estatutos">("codigos");
   const { searchQuery, setSearchQuery } = useVadeMecumSearch();
   const { toast } = useToast();
+  const [retryCount, setRetryCount] = useState(0);
 
   // Get list of all Codes tables using custom RPC function
-  const { data: codesTableNames, isLoading: isLoadingCodes } = useQuery({
-    queryKey: ["codesTables"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase.rpc('list_tables', { prefix: 'Código_' });
+  const fetchCodesTables = useCallback(async () => {
+    try {
+      console.log("Fetching codes tables...");
+      const { data, error } = await supabase.rpc('list_tables', { prefix: 'Código_' });
 
-        if (error) {
-          console.error("Error fetching code tables:", error);
-          toast({
-            title: "Erro ao carregar códigos",
-            description: "Não foi possível carregar a lista de códigos. Por favor, tente novamente.",
-            variant: "destructive"
-          });
-          throw error;
-        }
-        
-        console.log("Codes tables fetched:", data);
-        // Extract the table_name values from the returned objects
-        return data ? data.map(item => item.table_name) : [];
-      } catch (err) {
-        console.error("Failed to fetch codes tables:", err);
-        return [];
+      if (error) {
+        console.error("Error fetching code tables:", error);
+        toast({
+          title: "Erro ao carregar códigos",
+          description: "Não foi possível carregar a lista de códigos. Tentando novamente...",
+          variant: "destructive"
+        });
+        throw error;
       }
-    },
+      
+      console.log("Codes tables fetched:", data);
+      // Extract the table_name values from the returned objects
+      return data ? data.map(item => item.table_name) : [];
+    } catch (err) {
+      console.error("Failed to fetch codes tables:", err);
+      return [];
+    }
+  }, [toast]);
+
+  const fetchStatutesTables = useCallback(async () => {
+    try {
+      console.log("Fetching statute tables...");
+      const { data, error } = await supabase.rpc('list_tables', { prefix: 'Estatuto_' });
+        
+      if (error) {
+        console.error("Error fetching statute tables:", error);
+        toast({
+          title: "Erro ao carregar estatutos",
+          description: "Não foi possível carregar a lista de estatutos. Tentando novamente...",
+          variant: "destructive"
+        });
+        throw error;
+      }
+      
+      console.log("Statute tables fetched:", data);
+      // Extract the table_name values from the returned objects
+      return data ? data.map(item => item.table_name) : [];
+    } catch (err) {
+      console.error("Failed to fetch statute tables:", err);
+      return [];
+    }
+  }, [toast]);
+
+  // Get list of all Codes tables using custom RPC function
+  const { data: codesTableNames, isLoading: isLoadingCodes, error: codesError } = useQuery({
+    queryKey: ["codesTables", retryCount],
+    queryFn: fetchCodesTables,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   // Get list of all Estatutos tables using custom RPC function
-  const { data: statutesTableNames, isLoading: isLoadingStatutes } = useQuery({
-    queryKey: ["statutesTables"],
-    queryFn: async () => {
-      try {
-        const { data, error } = await supabase.rpc('list_tables', { prefix: 'Estatuto_' });
-          
-        if (error) {
-          console.error("Error fetching statute tables:", error);
-          toast({
-            title: "Erro ao carregar estatutos",
-            description: "Não foi possível carregar a lista de estatutos. Por favor, tente novamente.",
-            variant: "destructive"
-          });
-          throw error;
-        }
-        
-        console.log("Statute tables fetched:", data);
-        // Extract the table_name values from the returned objects
-        return data ? data.map(item => item.table_name) : [];
-      } catch (err) {
-        console.error("Failed to fetch statute tables:", err);
-        return [];
-      }
-    },
+  const { data: statutesTableNames, isLoading: isLoadingStatutes, error: statutesError } = useQuery({
+    queryKey: ["statutesTables", retryCount],
+    queryFn: fetchStatutesTables,
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // If there's an error, provide retry functionality
+  React.useEffect(() => {
+    if (codesError || statutesError) {
+      const timer = setTimeout(() => {
+        console.log("Retrying data fetch...");
+        setRetryCount(prev => prev + 1);
+      }, 3000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [codesError, statutesError]);
 
   const isLoading = isLoadingCodes || isLoadingStatutes;
 
@@ -104,6 +128,16 @@ const VadeMecum = () => {
                 <Skeleton key={i} className="h-32 rounded-lg" />
               ))}
             </div>
+          ) : codesError ? (
+            <div className="text-center py-6">
+              <p className="text-lg text-red-600 mb-2">Erro ao carregar códigos</p>
+              <button 
+                className="text-blue-600 underline" 
+                onClick={() => setRetryCount(prev => prev + 1)}
+              >
+                Tentar novamente
+              </button>
+            </div>
           ) : (
             <VadeMecumCodeSection 
               tableNames={codesTableNames || []} 
@@ -118,6 +152,16 @@ const VadeMecum = () => {
               {[1, 2, 3, 4, 5, 6].map((i) => (
                 <Skeleton key={i} className="h-32 rounded-lg" />
               ))}
+            </div>
+          ) : statutesError ? (
+            <div className="text-center py-6">
+              <p className="text-lg text-red-600 mb-2">Erro ao carregar estatutos</p>
+              <button 
+                className="text-blue-600 underline" 
+                onClick={() => setRetryCount(prev => prev + 1)}
+              >
+                Tentar novamente
+              </button>
             </div>
           ) : (
             <VadeMecumStatuteSection 

@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, 
   PenTool, Newspaper, MessageSquare, Monitor, Search, Settings, BookText, 
@@ -14,6 +13,7 @@ import { toast } from "sonner";
 const VerTudo = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  const [isNavigating, setIsNavigating] = useState(false);
   
   // List of routes that exist in App.tsx
   const existingRoutes = [
@@ -27,6 +27,10 @@ const VerTudo = () => {
   
   // Function to handle navigation with route checking
   const handleNavigate = (path: string) => {
+    if (isNavigating) return;
+    
+    setIsNavigating(true);
+    
     // Check if the path exists in our defined routes
     const pathExists = existingRoutes.some(route => 
       path === route || 
@@ -42,6 +46,10 @@ const VerTudo = () => {
         duration: 3000,
       });
     }
+    
+    setTimeout(() => {
+      setIsNavigating(false);
+    }, 500);
   };
   
   const allFeatures = [
@@ -52,14 +60,14 @@ const VerTudo = () => {
         { icon: BookOpen, title: "Biblioteca Jurídica", description: "Acesse livros, códigos e materiais de estudo", path: "/biblioteca", color: "text-green-500" },
         { icon: Brain, title: "Flashcards", description: "Memorize conceitos com repetição espaçada", path: "/flashcards", color: "text-purple-500" },
         { icon: FileText, title: "Resumos", description: "Banco de resumos e geração de novos resumos", path: "/resumos", color: "text-yellow-500" },
-        { icon: BookText, title: "Vade Mecum", description: "Consulta rápida à legislação e códigos", path: "/vade-mecum", color: "text-rose-500" }
+        { icon: BookText, title: "Vade Mecum", description: "Consulta rápida à legislação e códigos", path: "/vademecum", color: "text-rose-500" }
       ]
     },
     {
       category: "Prática e Treinamento",
       items: [
         { icon: GraduationCap, title: "Simulados", description: "Pratique com questões das principais bancas", path: "/simulados", color: "text-amber-500" },
-        { icon: FilePlus, title: "Peticionário", description: "Modelos e templates de peças jurídicas", path: "/peticionario", color: "text-rose-500" },
+        { icon: FilePlus, title: "Peticionário", description: "Modelos e templates de peças jurídicas", path: "/peticoes", color: "text-rose-500" },
         { icon: Gavel, title: "Jurisprudência", description: "Busque decisões judiciais e precedentes", path: "/jurisprudencia", color: "text-indigo-500" },
         { icon: PenTool, title: "Anotações", description: "Salve e organize suas anotações de estudo", path: "/anotacoes", color: "text-emerald-500" },
         { icon: Clock, title: "Controle de Prazos", description: "Gestão de prazos processuais", path: "/prazos", color: "text-sky-500" }
@@ -131,6 +139,7 @@ const VerTudo = () => {
                     variant="outline"
                     className="flex flex-col h-auto items-start p-4 border gap-2 hover:bg-accent hover:text-accent-foreground"
                     onClick={() => handleNavigate(item.path)}
+                    disabled={isNavigating}
                   >
                     <div className="flex items-center w-full">
                       <item.icon className={`h-5 w-5 ${item.color} mr-2`} />
@@ -155,6 +164,7 @@ const VerTudo = () => {
                     variant="ghost"
                     className="flex items-center w-full justify-start px-3 py-2 hover:bg-accent"
                     onClick={() => handleNavigate(item.path)}
+                    disabled={isNavigating}
                   >
                     <item.icon className={`h-5 w-5 ${item.color} mr-3`} />
                     <div className="flex flex-col items-start">

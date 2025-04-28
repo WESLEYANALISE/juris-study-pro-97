@@ -10,8 +10,9 @@ import WelcomeCard from "@/components/WelcomeCard";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import MobileNavigation from "@/components/MobileNavigation";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -35,11 +36,12 @@ const Layout = ({
   const isMobile = useIsMobile();
   const {
     user,
-    profile
+    profile,
+    isLoading: authLoading
   } = useAuth();
-  const navigate = useNavigate();
   const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [userData, setUserData] = useState<UserDataType>({
     displayName: null,
     onboardingCompleted: true,
@@ -50,40 +52,70 @@ const Layout = ({
     }
   });
 
-  // Redirecionar para login se não estiver autenticado
-  useEffect(() => {
-    if (!user && location.pathname !== "/auth") {
-      navigate("/auth");
-    }
-  }, [user, navigate, location.pathname]);
-
   // Buscar dados do usuário
   useEffect(() => {
     const fetchUserData = async () => {
-      if (!user?.id) return;
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+      
       try {
+        console.log("Fetching user data for:", user.id);
         // Buscar perfil do usuário
         const {
           data: profileData,
           error: profileError
         } = await supabase.from('profiles').select('display_name, onboarding_completed').eq('id', user.id).maybeSingle();
         
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error("Error fetching profile:", profileError);
+          setIsLoading(false);
+          return;
+        }
+
+        console.log("Profile data fetched:", profileData);
 
         // Buscar próxima tarefa do cronograma
-        const today = new Date();
-        const {
-          data: nextTaskData
-        } = await supabase.from('cronograma').select('titulo, data_inicio').eq('user_id', user.id).eq('concluido', false).gte('data_inicio', today.toISOString()).order('data_inicio', {
-          ascending: true
-        }).limit(1).maybeSingle();
+        let nextTaskData = null;
+        try {
+          const today = new Date();
+          const { data: taskData, error: taskError } = await supabase
+            .from('cronograma')
+            .select('titulo, data_inicio')
+            .eq('user_id', user.id)
+            .eq('concluido', false)
+            .gte('data_inicio', today.toISOString())
+            .order('data_inicio', { ascending: true })
+            .limit(1)
+            .maybeSingle();
+          
+          if (taskError) {
+            console.error("Error fetching next task:", taskError);
+          } else {
+            nextTaskData = taskData;
+            console.log("Next task data:", nextTaskData);
+          }
+        } catch (err) {
+          console.error("Exception when fetching next task:", err);
+        }
 
         // Calcular progresso
-        const {
-          data: progressData
-        } = await supabase.rpc('calculate_user_progress', {
-          user_uuid: user.id
-        });
+        let progressData = 0;
+        try {
+          const { data: progress, error: progressError } = await supabase.rpc('calculate_user_progress', {
+            user_uuid: user.id
+          });
+          
+          if (progressError) {
+            console.error("Error calculating progress:", progressError);
+          } else {
+            progressData = progress || 0;
+            console.log("Progress data:", progressData);
+          }
+        } catch (err) {
+          console.error("Exception when calculating progress:", err);
+        }
         
         // Verificar se o onboarding já foi concluído
         const onboardingCompleted = profileData?.onboarding_completed || false;
@@ -91,7 +123,7 @@ const Layout = ({
         setUserData({
           displayName: profileData?.display_name || null,
           onboardingCompleted: onboardingCompleted,
-          progress: progressData || 0,
+          progress: progressData,
           nextTask: {
             title: nextTaskData?.titulo || null,
             time: nextTaskData?.data_inicio ? new Date(nextTaskData.data_inicio).toLocaleDateString() : null
@@ -105,11 +137,17 @@ const Layout = ({
         }
       } catch (error) {
         console.error("Erro ao buscar dados do usuário:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
+    if (authLoading) {
+      return; // Wait for auth check to complete
+    }
+    
     fetchUserData();
-  }, [user]);
+  }, [user, authLoading]);
   
   // Função para lidar com a conclusão do onboarding
   const handleOnboardingComplete = async () => {
@@ -133,6 +171,15 @@ const Layout = ({
       console.error("Erro ao atualizar status do onboarding:", error);
     }
   };
+
+  // Show a loading screen while auth and user data are being fetched
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
   
   return (
     <SidebarProvider defaultOpen={!isMobile}>
@@ -143,7 +190,12 @@ const Layout = ({
           <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
             <div className="container mx-auto p-4 md:p-6 px-0">
               {/* Mostrar WelcomeCard apenas para usuários logados */}
-              {user && location.pathname === '/' && <WelcomeCard userName={userData.displayName || user.email?.split('@')[0]} progress={userData.progress} nextTaskTitle={userData.nextTask.title} nextTaskTime={userData.nextTask.time} />}
+              {user && location.pathname === '/' && <WelcomeCard 
+                userName={userData.displayName || user.email?.split('@')[0]} 
+                progress={userData.progress} 
+                nextTaskTitle={userData.nextTask.title} 
+                nextTaskTime={userData.nextTask.time} 
+              />}
               {children}
             </div>
           </main>

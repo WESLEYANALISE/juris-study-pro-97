@@ -56,38 +56,40 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="juspedia-theme">
       <WelcomeModal onProfileSelect={handleProfileSelect} />
       <Router>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/" element={<Layout userProfile={userProfile}>{<Index />}</Layout>} />
-          <Route path="/inicie" element={<RequireAuth><Layout userProfile={userProfile}>{<IniciandoNoDireito />}</Layout></RequireAuth>} />
-          <Route path="/jurisflix" element={<Layout userProfile={userProfile}>{<JurisFlix />}</Layout>} />
-          <Route path="/dicionario" element={<Layout userProfile={userProfile}>{<Dicionario />}</Layout>} />
-          <Route path="/biblioteca" element={<Layout userProfile={userProfile}>{<Biblioteca />}</Layout>} />
-          <Route path="/biblioteca/recomendacoes" element={<Layout userProfile={userProfile}>{<BibliotecaRecomendacoes />}</Layout>} />
-          <Route path="/questoes" element={<RequireAuth><Layout userProfile={userProfile}>{<Questoes />}</Layout></RequireAuth>} />
-          <Route path="/vademecum" element={<Layout userProfile={userProfile}>{<VadeMecum />}</Layout>} />
-          <Route path="/vademecum/:lawId" element={<Layout userProfile={userProfile}>{<VadeMecumViewer />}</Layout>} />
-          <Route path="/vademecum/:lawId/:articleId" element={<Layout userProfile={userProfile}>{<VadeMecumViewer />}</Layout>} />
-          <Route path="/simulados" element={<RequireAuth><Layout userProfile={userProfile}>{<Simulados />}</Layout></RequireAuth>} />
-          <Route path="/simulados/:sessaoId" element={<RequireAuth><Layout userProfile={userProfile}>{<SimuladoSessao />}</Layout></RequireAuth>} />
-          <Route path="/simulados/resultado/:sessaoId" element={<RequireAuth><Layout userProfile={userProfile}>{<SimuladoResultado />}</Layout></RequireAuth>} />
-          <Route path="/flashcards" element={<RequireAuth><Layout userProfile={userProfile}>{<Flashcards />}</Layout></RequireAuth>} />
-          <Route path="/mapas-mentais" element={<Layout userProfile={userProfile}>{<MapasMentais />}</Layout>} />
-          <Route path="/noticias" element={<Layout userProfile={userProfile}>{<Noticias />}</Layout>} />
-          <Route path="/peticoes" element={<Layout userProfile={userProfile}>{<Peticoes />}</Layout>} />
-          <Route path="/assistente" element={<RequireAuth><Layout userProfile={userProfile}>{<AssistenteJuridico />}</Layout></RequireAuth>} />
-          <Route path="/perfil" element={<RequireAuth><Layout userProfile={userProfile}>{<Perfil />}</Layout></RequireAuth>} />
-          <Route path="/vermais/:categoria" element={<Layout userProfile={userProfile}>{<VerTudo />}</Layout>} />
-          <Route path="/cursos" element={<Layout userProfile={userProfile}>{<Cursos />}</Layout>} />
-          <Route path="/curso/:cursoId" element={<RequireAuth><Layout userProfile={userProfile}>{<CursoViewer />}</Layout></RequireAuth>} />
-          <Route path="/redacao-juridica" element={<Layout userProfile={userProfile}>{<RedacaoJuridica />}</Layout>} />
-          <Route path="/redacao-conteudo/:id?" element={<Layout userProfile={userProfile}>{<RedacaoConteudo />}</Layout>} />
-          <Route path="/videoaulas" element={<Layout userProfile={userProfile}>{<VideoAulas />}</Layout>} />
-          <Route path="/videoaulas/tradicionais" element={<Layout userProfile={userProfile}>{<VideoAulasTradicional />}</Layout>} />
-          <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
-          <Route path="/anotacoes" element={<RequireAuth><Layout userProfile={userProfile}>{<Anotacoes />}</Layout></RequireAuth>} />
-          <Route path="*" element={<Layout userProfile={userProfile}>{<NotFound />}</Layout>} />
-        </Routes>
+        <RequireAuth>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/" element={<Layout userProfile={userProfile}><Index /></Layout>} />
+            <Route path="/inicie" element={<Layout userProfile={userProfile}><IniciandoNoDireito /></Layout>} />
+            <Route path="/jurisflix" element={<Layout userProfile={userProfile}><JurisFlix /></Layout>} />
+            <Route path="/dicionario" element={<Layout userProfile={userProfile}><Dicionario /></Layout>} />
+            <Route path="/biblioteca" element={<Layout userProfile={userProfile}><Biblioteca /></Layout>} />
+            <Route path="/biblioteca/recomendacoes" element={<Layout userProfile={userProfile}><BibliotecaRecomendacoes /></Layout>} />
+            <Route path="/questoes" element={<Layout userProfile={userProfile}><Questoes /></Layout>} />
+            <Route path="/vademecum" element={<Layout userProfile={userProfile}><VadeMecum /></Layout>} />
+            <Route path="/vademecum/:lawId" element={<Layout userProfile={userProfile}><VadeMecumViewer /></Layout>} />
+            <Route path="/vademecum/:lawId/:articleId" element={<Layout userProfile={userProfile}><VadeMecumViewer /></Layout>} />
+            <Route path="/simulados" element={<Layout userProfile={userProfile}><Simulados /></Layout>} />
+            <Route path="/simulados/:sessaoId" element={<Layout userProfile={userProfile}><SimuladoSessao /></Layout>} />
+            <Route path="/simulados/resultado/:sessaoId" element={<Layout userProfile={userProfile}><SimuladoResultado /></Layout>} />
+            <Route path="/flashcards" element={<Layout userProfile={userProfile}><Flashcards /></Layout>} />
+            <Route path="/mapas-mentais" element={<Layout userProfile={userProfile}><MapasMentais /></Layout>} />
+            <Route path="/noticias" element={<Layout userProfile={userProfile}><Noticias /></Layout>} />
+            <Route path="/peticoes" element={<Layout userProfile={userProfile}><Peticoes /></Layout>} />
+            <Route path="/assistente" element={<Layout userProfile={userProfile}><AssistenteJuridico /></Layout>} />
+            <Route path="/perfil" element={<Layout userProfile={userProfile}><Perfil /></Layout>} />
+            <Route path="/vermais/:categoria" element={<Layout userProfile={userProfile}><VerTudo /></Layout>} />
+            <Route path="/cursos" element={<Layout userProfile={userProfile}><Cursos /></Layout>} />
+            <Route path="/curso/:cursoId" element={<Layout userProfile={userProfile}><CursoViewer /></Layout>} />
+            <Route path="/redacao-juridica" element={<Layout userProfile={userProfile}><RedacaoJuridica /></Layout>} />
+            <Route path="/redacao-conteudo/:id?" element={<Layout userProfile={userProfile}><RedacaoConteudo /></Layout>} />
+            <Route path="/videoaulas" element={<Layout userProfile={userProfile}><VideoAulas /></Layout>} />
+            <Route path="/videoaulas/tradicionais" element={<Layout userProfile={userProfile}><VideoAulasTradicional /></Layout>} />
+            <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
+            <Route path="/anotacoes" element={<Layout userProfile={userProfile}><Anotacoes /></Layout>} />
+            <Route path="*" element={<Layout userProfile={userProfile}><NotFound /></Layout>} />
+          </Routes>
+        </RequireAuth>
       </Router>
       <Toaster />
     </ThemeProvider>
