@@ -13,7 +13,7 @@ interface Article {
   titulo: string;
   conteudo: string;
   categoria: string;
-  tags: string[];
+  tags?: string[];
   playlist_ids?: string[];
   created_at: string;
   updated_at: string;
@@ -78,7 +78,7 @@ export default function RedacaoConteudo() {
       
       setArticle(articleData);
       
-      if (articleData.playlist_ids && articleData.playlist_ids.length > 0) {
+      if (article?.playlist_ids && article.playlist_ids.length > 0) {
         const { data: playlistsData, error: playlistsError } = await supabase
           .from('video_playlists_juridicas')
           .select('*')

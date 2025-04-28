@@ -201,3 +201,5 @@ export function VideoAulasInterativas() {
     </div>
   );
 }
+
+export default VideoAulasInterativas;

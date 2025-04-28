@@ -65,7 +65,7 @@ export function ArtigosApoio() {
       
       // Extract unique categories
       const uniqueCategories = Array.from(
-        new Set(articlesData?.map(article => article.categoria) || [])
+        new Set((articlesData || []).map(article => article.categoria))
       );
       setCategories(uniqueCategories as string[]);
       
@@ -80,7 +80,14 @@ export function ArtigosApoio() {
         throw playlistsError;
       }
       
-      setPlaylists(playlistsData || []);
+      // Cast the data to include the optional properties that might be missing
+      const typedPlaylistsData = (playlistsData || []).map(playlist => ({
+        ...playlist,
+        is_single_video: playlist.is_single_video || false,
+        video_id: playlist.video_id || null
+      }));
+      
+      setPlaylists(typedPlaylistsData);
       
     } catch (error) {
       console.error("Error loading articles:", error);

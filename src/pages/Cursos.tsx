@@ -2,15 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Search, Filter, SlidersHorizontal, Heart, HeartOff, BookOpen, GraduationCap, Play, Download, PencilLine, Star } from "lucide-react";
 import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -200,8 +201,8 @@ const Cursos = () => {
                           onChange={(e) => setAreaFilter(e.target.value)}
                         >
                           {areas.map((area) => (
-                            <option key={area} value={area}>
-                              {area}
+                            <option key={area as React.Key} value={area as string}>
+                              {area as React.ReactNode}
                             </option>
                           ))}
                         </select>
@@ -331,7 +332,7 @@ const Cursos = () => {
                       .filter((curso) => favoriteCursos.includes(curso.id))
                       .map((curso, index) => (
                         <motion.div
-                          key={curso.id}
+                          key={curso.id as React.Key}
                           initial={{ opacity: 0, y: 20 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.05 }}

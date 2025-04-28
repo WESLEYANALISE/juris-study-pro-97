@@ -1,174 +1,148 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
-import { PageTransition } from "@/components/PageTransition";
-import { MapaMentalCard } from "@/components/mapas-mentais/MapaMentalCard";
-import { MapaMentalViewer } from "@/components/mapas-mentais/MapaMentalViewer";
-import { MapaMentalFilter } from "@/components/mapas-mentais/MapaMentalFilter";
-import { MapaMentalAIForm } from "@/components/mapas-mentais/MapaMentalAIForm";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, Grid, List, Plus, Brain } from "lucide-react";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { useQuery } from "@tanstack/react-query";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface MapaMental {
-  id: number;
+  id: string;
+  titulo: string;
+  descricao: string;
   area: string;
-  mapa: string;
-  link: string;
+  tags: string[];
+  imagem_url: string;
+  arquivo_url: string;
   created_at: string;
 }
 
-export default function MapasMentais() {
-  const [viewingMapa, setViewingMapa] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedArea, setSelectedArea] = useState<string>("");
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  
-  const { data: mapas, isLoading } = useQuery({
-    queryKey: ["mapas_mentais", selectedArea],
+const MapasMentais = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [areaFilter, setAreaFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+
+  const { data: mapas = [], isLoading } = useQuery({
+    queryKey: ["mapas_mentais"],
     queryFn: async () => {
-      let query = supabase.from("mapas_mentais").select("*");
-      
-      if (selectedArea) {
-        query = query.eq("area", selectedArea);
+      const { data, error } = await supabase
+        .from("mapas_mentais")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching mapas mentais:", error);
+        return [];
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
       return data as MapaMental[];
     },
   });
 
-  const filteredMapas = mapas?.filter(mapa => 
-    mapa.mapa?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    mapa.area?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const uniqueAreas = Array.from(
+    new Set(mapas.map(mapa => mapa.area?.toString() || ""))
+  ).filter(Boolean) as string[];
 
-  const getAreas = () => {
-    const areas = mapas?.map(mapa => mapa.area).filter(Boolean);
-    return [...new Set(areas)];
-  };
+  const uniqueTags = Array.from(
+    new Set(mapas.flatMap(mapa => (mapa.tags || []).map(tag => tag?.toString() || "")))
+  ).filter(Boolean) as string[];
+
+  const filteredMapas = mapas.filter((mapa) => {
+    const matchesSearch =
+      searchQuery === "" ||
+      mapa.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mapa.descricao?.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesArea = areaFilter === "" || mapa.area === areaFilter;
+
+    const matchesTag = tagFilter === "" || mapa.tags?.includes(tagFilter);
+
+    return matchesSearch && matchesArea && matchesTag;
+  });
 
   return (
-    <PageTransition>
-      <AnimatePresence mode="wait">
-        {viewingMapa ? (
-          <MapaMentalViewer 
-            url={viewingMapa} 
-            onBack={() => setViewingMapa(null)} 
-          />
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="container mx-auto p-6 space-y-8"
-          >
-            <div className="flex flex-col space-y-2">
-              <motion.h1 
-                initial={{ y: -20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                className="text-3xl font-bold"
-              >
-                Mapas Mentais
-              </motion.h1>
-              <motion.p
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="text-muted-foreground"
-              >
-                Acesse mapas mentais de diversas áreas do direito para facilitar seus estudos
-              </motion.p>
-            </div>
+    <div className="container py-6">
+      <div className="flex flex-col space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight">Mapas Mentais</h1>
+        <p className="text-muted-foreground">
+          Explore mapas mentais para facilitar o aprendizado e a revisão de
+          conteúdo jurídico.
+        </p>
 
-            <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-              <div className="w-full md:w-auto relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Pesquisar mapas mentais..."
-                  className="pl-9 w-full md:w-80"
-                />
-              </div>
-              
-              <div className="flex items-center gap-2 w-full md:w-auto justify-between md:justify-end">
-                <MapaMentalFilter
-                  areas={getAreas() || []}
-                  selectedArea={selectedArea}
-                  onAreaSelect={setSelectedArea}
-                />
-                
-                <div className="flex border rounded-md overflow-hidden">
-                  <Button
-                    variant={viewMode === "grid" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("grid")}
-                  >
-                    <Grid className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant={viewMode === "list" ? "secondary" : "ghost"}
-                    size="icon"
-                    onClick={() => setViewMode("list")}
-                  >
-                    <List className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Criar Mapa
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-[425px]">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <Brain className="h-5 w-5" />
-                        Gerar Mapa Mental com IA
-                      </DialogTitle>
-                    </DialogHeader>
-                    <MapaMentalAIForm 
-                      areas={getAreas() || []}
-                    />
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-            
-            {isLoading ? (
-              <div className={`grid ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3" : "grid-cols-1"} gap-4`}>
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="h-60 bg-muted/20 animate-pulse rounded-lg" />
-                ))}
-              </div>
-            ) : (
-              <div className={`grid ${viewMode === "grid" ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4" : "grid-cols-1"} gap-4`}>
-                {filteredMapas?.map((mapa) => (
-                  <MapaMentalCard
-                    key={mapa.id}
-                    mapa={mapa}
-                    onView={() => setViewingMapa(mapa.link)}
-                    viewType={viewMode}
-                  />
-                ))}
-              </div>
-            )}
-          </motion.div>
+        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por título ou descrição..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="rounded-md border px-3 py-2 text-sm"
+            value={areaFilter}
+            onChange={(e) => setAreaFilter(e.target.value)}
+          >
+            <option value="">Todas as áreas</option>
+            {uniqueAreas.map((area) => (
+              <option key={area} value={area}>
+                {area}
+              </option>
+            ))}
+          </select>
+
+          <select
+            className="rounded-md border px-3 py-2 text-sm"
+            value={tagFilter}
+            onChange={(e) => setTagFilter(e.target.value)}
+          >
+            <option value="">Todas as tags</option>
+            {uniqueTags.map((tag) => (
+              <option key={tag} value={tag}>
+                {tag}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center">
+            <LoadingSpinner />
+          </div>
+        ) : filteredMapas.length === 0 ? (
+          <div className="text-center py-8">
+            <h3 className="text-lg font-semibold">Nenhum mapa mental encontrado</h3>
+            <p className="text-muted-foreground">
+              Tente ajustar seus termos de busca ou filtros
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filteredMapas.map((mapa) => (
+              <Card key={mapa.id} className="h-full flex flex-col">
+                <CardHeader>
+                  <CardTitle>{mapa.titulo}</CardTitle>
+                  <CardDescription>{mapa.area}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex-grow">
+                  {mapa.descricao}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         )}
-      </AnimatePresence>
-    </PageTransition>
+      </div>
+    </div>
   );
-}
+};
+
+export default MapasMentais;

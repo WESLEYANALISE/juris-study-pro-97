@@ -5,6 +5,25 @@ const youtube = google.youtube({
   auth: process.env.YOUTUBE_API_KEY,
 });
 
+export interface YouTubeVideo {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  channelTitle: string;
+  publishedAt: string;
+  duration?: string;
+}
+
+export interface YouTubePlaylist {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  videoCount: number;
+  channelTitle: string;
+}
+
 interface Playlist {
   id: string;
   title: string;
@@ -287,5 +306,40 @@ export const syncPlaylistToDatabase = async (playlistId: string, area: string, i
   }
 };
 
-// Import supabase from the correct location
+export const getJuridicPlaylists = async (): Promise<YouTubePlaylist[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('video_playlists_juridicas')
+      .select('*');
+    
+    if (error) throw error;
+    
+    return (data || []).map(item => ({
+      id: item.playlist_id,
+      title: item.playlist_title,
+      description: '',
+      thumbnail: item.thumbnail_url,
+      videoCount: item.video_count,
+      channelTitle: item.channel_title
+    }));
+  } catch (error) {
+    console.error('Error getting juridic playlists:', error);
+    return [];
+  }
+};
+
+export const getStoredPlaylists = async (): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('video_playlists_juridicas')
+      .select('*');
+    
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error getting stored playlists:', error);
+    return [];
+  }
+};
+
 import { supabase } from '@/integrations/supabase/client';

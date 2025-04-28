@@ -8,10 +8,12 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { PeticaoSearch } from "@/components/peticoes/PeticaoSearch";
 import { Button } from "@/components/ui/button";
 import { FileText } from "lucide-react";
+import { toast } from "sonner";
 
 interface Peticao {
   id: string;
@@ -36,7 +38,7 @@ const Peticoes = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("peticoes_modelos")
+        .from("peticoes")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -44,9 +46,19 @@ const Peticoes = () => {
         throw error;
       }
 
-      setPeticoes(data || []);
+      const mappedPeticoes = (data || []).map(item => ({
+        id: item.id || '',
+        titulo: item.tipo || '',
+        descricao: item.descricao || '',
+        categoria: item.area || '',
+        arquivo_url: item.link || '',
+        created_at: item.created_at || new Date().toISOString()
+      }));
+
+      setPeticoes(mappedPeticoes);
     } catch (error) {
       console.error("Error loading peticoes:", error);
+      toast("Erro ao carregar petições");
     } finally {
       setLoading(false);
     }
@@ -97,13 +109,15 @@ const Peticoes = () => {
                 <CardContent className="flex-grow">
                   {peticao.descricao}
                 </CardContent>
-                <Button
-                  onClick={() => handleDownload(peticao.arquivo_url)}
-                  className="mt-auto"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Visualizar / Baixar
-                </Button>
+                <CardFooter>
+                  <Button
+                    onClick={() => handleDownload(peticao.arquivo_url)}
+                    className="mt-auto w-full"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    Visualizar / Baixar
+                  </Button>
+                </CardFooter>
               </Card>
             ))}
           </div>

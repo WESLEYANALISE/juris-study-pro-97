@@ -57,16 +57,23 @@ export function VideoAulasRedacao() {
         throw error;
       }
       
-      setStoredPlaylists(data || []);
+      const typedPlaylists = (data || []).map(playlist => ({
+        ...playlist,
+        is_single_video: playlist.is_single_video || false,
+        video_id: playlist.video_id || undefined
+      }));
+      
+      setStoredPlaylists(typedPlaylists);
       
       if (data) {
         const uniqueAreas = Array.from(
           new Set(
             data.map(playlist => {
-              return playlist.area.replace('Redação Jurídica - ', '').trim();
+              const area = playlist.area || '';
+              return area.replace('Redação Jurídica - ', '').trim();
             })
           )
-        ).filter(Boolean).sort() as string[];
+        ).filter(Boolean) as string[];
         
         setAreas(uniqueAreas);
       }

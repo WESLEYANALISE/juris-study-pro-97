@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -32,7 +31,7 @@ import RedacaoJuridica from "@/pages/RedacaoJuridica";
 import RedacaoConteudo from "@/pages/RedacaoConteudo";
 import VideoAulas from "@/pages/VideoAulas";
 import VideoAulasTradicional from "@/pages/VideoAulasTradicional";
-import VideoAulasInterativas from "@/pages/VideoAulasInterativas";
+import VideoAulasInterativas from "./pages/VideoAulasInterativas";
 import Anotacoes from "@/pages/Anotacoes";
 import { type ProfileType } from "@/components/WelcomeModal";
 import { WelcomeModal } from "@/components/WelcomeModal";
@@ -84,7 +83,7 @@ function App() {
           <Route path="/redacao-conteudo/:id?" element={<Layout userProfile={userProfile}>{<RedacaoConteudo />}</Layout>} />
           <Route path="/videoaulas" element={<Layout userProfile={userProfile}>{<VideoAulas />}</Layout>} />
           <Route path="/videoaulas/tradicionais" element={<Layout userProfile={userProfile}>{<VideoAulasTradicional />}</Layout>} />
-          <Route path="/videoaulas-interativas" element={<Layout userProfile={userProfile}>{<VideoAulasInterativas />}</Layout>} />
+          <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
           <Route path="/anotacoes" element={<RequireAuth><Layout userProfile={userProfile}>{<Anotacoes />}</Layout></RequireAuth>} />
           <Route path="*" element={<Layout userProfile={userProfile}>{<NotFound />}</Layout>} />
         </Routes>

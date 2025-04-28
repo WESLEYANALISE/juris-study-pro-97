@@ -10,7 +10,7 @@ interface AIHelperDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSearch: (query: string) => void;
-  results: Livro[] | null;
+  results: Livro[] | null | "buscando";  // Changed type to allow for "buscando" string
   onSelectBook: (livro: Livro) => void;
 }
 
@@ -50,7 +50,7 @@ export function AIHelperDialog({
             <Button size="sm" onClick={handleSearch}>Buscar</Button>
           </div>
           <div>
-            {results === null ? null : results === (["buscando"] as any) ? (
+            {results === null ? null : results === "buscando" ? (
               <div className="text-center py-6 text-muted-foreground">Buscando sugestões…</div>
             ) : results.length === 0 ? (
               <div className="text-center py-6 text-destructive">Nenhum livro encontrado.</div>

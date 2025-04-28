@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark } from 'lucide-react';
@@ -13,6 +14,7 @@ interface BookmarkButtonProps {
   lawName: string;
   articleNumber: string;
   articleText: string;
+  articleId?: string; // Added optional article_id field
 }
 
 export const BookmarkButton = ({
@@ -21,7 +23,8 @@ export const BookmarkButton = ({
   setIsFavorite,
   lawName,
   articleNumber,
-  articleText
+  articleText,
+  articleId = articleNumber // Default to article number if id not provided
 }: BookmarkButtonProps) => {
   const handleBookmark = async () => {
     if (!user) {
@@ -49,6 +52,7 @@ export const BookmarkButton = ({
           .insert({
             user_id: user.id,
             law_name: lawName,
+            article_id: articleId, // Use the article_id field
             article_number: articleNumber,
             article_text: articleText,
           });
