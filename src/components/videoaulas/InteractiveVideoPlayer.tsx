@@ -99,7 +99,7 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
   // Handle video state changes
   const handleVideoStateChange = (event: YT.PlayerStateChangeEvent) => {
     // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
-    if (event.data === YT.PlayerState.ENDED) {
+    if (event.data === 0) { // Using 0 instead of YT.PlayerState.ENDED
       setVideoEnded(true);
     }
   };
@@ -173,8 +173,8 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
                 </Badge>
               </div>
               <Badge 
-                variant={stats.percentageCorrect >= 70 ? "success" : 
-                       stats.percentageCorrect >= 40 ? "warning" : "destructive"}
+                variant={stats.percentageCorrect >= 70 ? "default" : 
+                       stats.percentageCorrect >= 40 ? "secondary" : "destructive"}
               >
                 {stats.correctAnswers} corretas ({stats.percentageCorrect}%)
               </Badge>
@@ -208,8 +208,11 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
               <Progress 
                 value={stats.percentageCorrect} 
                 className="h-4"
-                color={stats.percentageCorrect >= 70 ? "bg-success" : 
-                      stats.percentageCorrect >= 40 ? "bg-warning" : "bg-destructive"} 
+                // Fix the color attribute (we'll use className instead)
+                className={`h-4 ${
+                  stats.percentageCorrect >= 70 ? "bg-green-500" : 
+                  stats.percentageCorrect >= 40 ? "bg-yellow-500" : "bg-red-500"
+                }`}
               />
               
               <p className="text-center pt-2">

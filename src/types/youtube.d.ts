@@ -31,6 +31,16 @@ interface YT {
       };
     }
   ) => YT.Player;
+  
+  // Add PlayerState enum
+  PlayerState: {
+    UNSTARTED: -1;
+    ENDED: 0;
+    PLAYING: 1;
+    PAUSED: 2;
+    BUFFERING: 3;
+    CUED: 5;
+  };
 }
 
 namespace YT {
@@ -66,6 +76,12 @@ namespace YT {
     getVolume(): number;
     seekTo(seconds: number, allowSeekAhead?: boolean): void;
     destroy(): void;
+  }
+  
+  // Define PlayerStateChangeEvent interface
+  interface PlayerStateChangeEvent {
+    data: number;
+    target: YT.Player;
   }
 }
 

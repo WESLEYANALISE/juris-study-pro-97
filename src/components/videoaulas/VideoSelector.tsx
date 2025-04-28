@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -106,7 +105,7 @@ export function VideoSelector({ onVideoSelect, isProcessing }: VideoSelectorProp
                 onClick={handleUrlSubmit} 
                 disabled={isProcessing || !inputUrl}
               >
-                {isProcessing ? <LoadingSpinner className="h-4 w-4 mr-2" /> : null}
+                {isProcessing ? <LoadingSpinner /> : null}
                 Carregar
               </Button>
             </div>
