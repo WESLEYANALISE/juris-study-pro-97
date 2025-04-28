@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -40,6 +41,7 @@ import Cursos from "./pages/Cursos";
 import CursoViewer from "./pages/CursoViewer";
 import VideoAulasInterativas from "./pages/VideoAulasInterativas";
 import VideoAulasTradicional from "./pages/VideoAulasTradicional";
+import RedacaoJuridica from "./pages/RedacaoJuridica";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -115,6 +117,19 @@ const App = () => {
                   element={
                     <RequireAuth>
                       <CursoViewer />
+                    </RequireAuth>
+                  }
+                />
+                
+                <Route
+                  path="/redacao-juridica"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <RedacaoJuridica />
+                        </PageTransition>
+                      </Layout>
                     </RequireAuth>
                   }
                 />

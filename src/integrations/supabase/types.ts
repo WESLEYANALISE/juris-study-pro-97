@@ -1500,6 +1500,223 @@ export type Database = {
         }
         Relationships: []
       }
+      redacao_artigos: {
+        Row: {
+          categoria: string
+          conteudo: string
+          created_at: string | null
+          id: string
+          tags: string[] | null
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          categoria: string
+          conteudo: string
+          created_at?: string | null
+          id?: string
+          tags?: string[] | null
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          categoria?: string
+          conteudo?: string
+          created_at?: string | null
+          id?: string
+          tags?: string[] | null
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      redacao_comentarios: {
+        Row: {
+          comentario: string
+          created_at: string | null
+          id: string
+          submissao_id: string | null
+          user_id: string
+        }
+        Insert: {
+          comentario: string
+          created_at?: string | null
+          id?: string
+          submissao_id?: string | null
+          user_id: string
+        }
+        Update: {
+          comentario?: string
+          created_at?: string | null
+          id?: string
+          submissao_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redacao_comentarios_submissao_id_fkey"
+            columns: ["submissao_id"]
+            isOneToOne: false
+            referencedRelation: "redacao_submissoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      redacao_conquistas: {
+        Row: {
+          badge_descricao: string
+          badge_nome: string
+          data_conquista: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_descricao: string
+          badge_nome: string
+          data_conquista?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_descricao?: string
+          badge_nome?: string
+          data_conquista?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      redacao_exercicios: {
+        Row: {
+          created_at: string | null
+          descricao: string
+          dificuldade: string | null
+          id: string
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string | null
+          descricao: string
+          dificuldade?: string | null
+          id?: string
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string
+          dificuldade?: string | null
+          id?: string
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      redacao_modelos: {
+        Row: {
+          conteudo: string
+          created_at: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          tipo: string
+          updated_at: string | null
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          tipo: string
+          updated_at?: string | null
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          tipo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      redacao_progresso: {
+        Row: {
+          exercicios_concluidos: number | null
+          id: string
+          nivel: string | null
+          pecas_criadas: number | null
+          pontos_totais: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          exercicios_concluidos?: number | null
+          id?: string
+          nivel?: string | null
+          pecas_criadas?: number | null
+          pontos_totais?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          exercicios_concluidos?: number | null
+          id?: string
+          nivel?: string | null
+          pecas_criadas?: number | null
+          pontos_totais?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      redacao_submissoes: {
+        Row: {
+          conteudo: string
+          created_at: string | null
+          exercicio_id: string | null
+          feedback: string | null
+          id: string
+          pontuacao: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          conteudo: string
+          created_at?: string | null
+          exercicio_id?: string | null
+          feedback?: string | null
+          id?: string
+          pontuacao?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          conteudo?: string
+          created_at?: string | null
+          exercicio_id?: string | null
+          feedback?: string | null
+          id?: string
+          pontuacao?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redacao_submissoes_exercicio_id_fkey"
+            columns: ["exercicio_id"]
+            isOneToOne: false
+            referencedRelation: "redacao_exercicios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumos: {
         Row: {
           area: string
@@ -2522,6 +2739,10 @@ export type Database = {
       }
     }
     Functions: {
+      generate_redacao_content: {
+        Args: { topic: string; type: string }
+        Returns: string
+      }
       get_simulado_leaderboard: {
         Args: { _categoria: string; _limit?: number }
         Returns: {

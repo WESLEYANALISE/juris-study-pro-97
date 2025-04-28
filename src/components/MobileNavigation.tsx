@@ -1,6 +1,6 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, BookOpen, BookOpenText, Compass, Film, User, ScrollText, Lightbulb } from "lucide-react";
+import { Home, BookOpen, BookOpenText, Compass, Film, User, ScrollText, Lightbulb, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -20,9 +20,9 @@ const MobileNavigation = () => {
       path: "/iniciando-no-direito"
     },
     {
-      name: "Cursos",
-      icon: BookOpenText,
-      path: "/cursos"
+      name: "Redação",
+      icon: FileText,
+      path: "/redacao-juridica"
     },
     {
       name: "Vade-Mecum",
