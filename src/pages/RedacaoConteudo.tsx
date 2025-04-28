@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { VideoPlayer } from "@/components/VideoPlayer";
-import { PageTransition } from "@/components/PageTransition";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Bookmark, Share2, BookOpen, Video } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -34,6 +33,11 @@ interface Video {
   publishedAt: string;
   duration: string;
 }
+
+// Simple PageTransition component
+const PageTransition = ({ children }: { children: React.ReactNode }) => {
+  return <div className="animate-fadeIn">{children}</div>;
+};
 
 export default function RedacaoConteudo() {
   const { id } = useParams<{ id: string }>();
@@ -71,7 +75,7 @@ export default function RedacaoConteudo() {
       }
       
       // Ensure article has the playlist_ids property, defaulting to empty array
-      const articleWithPlaylists = {
+      const articleWithPlaylists: Article = {
         ...articleData,
         playlist_ids: articleData.playlist_ids || []
       };
@@ -129,9 +133,20 @@ export default function RedacaoConteudo() {
     try {
       const videosData = await getPlaylistVideos(playlist.playlist_id);
       
-      setVideos(videosData);
-      if (videosData && videosData.length > 0) {
-        setSelectedVideoId(videosData[0].id);
+      // Convert to Video type for local state
+      const localVideos: Video[] = videosData.map(v => ({
+        id: v.id,
+        title: v.title,
+        description: v.description,
+        thumbnail: v.thumbnail,
+        channelTitle: v.channelTitle,
+        publishedAt: v.publishedAt,
+        duration: v.duration
+      }));
+      
+      setVideos(localVideos);
+      if (localVideos && localVideos.length > 0) {
+        setSelectedVideoId(localVideos[0].id);
       }
     } catch (error) {
       console.error("Error loading videos:", error);

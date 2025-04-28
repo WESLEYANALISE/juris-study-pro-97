@@ -93,7 +93,7 @@ const MOCK_VIDEOS: YouTubeVideo[] = [
   }
 ];
 
-// Mock function to get playlists
+// Mock function to get juridic playlists
 export async function getJuridicPlaylists(keyword: string): Promise<YouTubePlaylist[]> {
   console.log(`Searching for playlists with keyword: ${keyword}`);
   // Simulate API delay
@@ -167,6 +167,18 @@ export async function getStoredPlaylists(): Promise<StoredPlaylist[]> {
     console.error('Exception fetching playlists:', error);
     return [];
   }
+}
+
+// Helper function to convert StoredPlaylist to YouTubePlaylist
+export function storedPlaylistToYouTubePlaylist(storedPlaylist: StoredPlaylist): YouTubePlaylist {
+  return {
+    id: storedPlaylist.playlist_id,
+    title: storedPlaylist.playlist_title,
+    description: storedPlaylist.area,
+    thumbnail: storedPlaylist.thumbnail_url,
+    videoCount: storedPlaylist.video_count,
+    channelTitle: storedPlaylist.channel_title
+  };
 }
 
 // Import Supabase client

@@ -1,7 +1,8 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { VideoCard } from "./VideoCard";
-import { YouTubePlaylist, YouTubeVideo, getPlaylistVideos, getStoredPlaylists } from "@/lib/youtube-service";
+import { YouTubePlaylist, YouTubeVideo, getPlaylistVideos, getStoredPlaylists, storedPlaylistToYouTubePlaylist } from "@/lib/youtube-service";
 
 interface VideoSelectorProps {
   onSelectVideo: (videoId: string) => void;
@@ -31,7 +32,8 @@ export function VideoSelector({ onSelectVideo, searchTerm }: VideoSelectorProps)
     setLoading(true);
     try {
       const storedPlaylists = await getStoredPlaylists();
-      setPlaylists(storedPlaylists);
+      const convertedPlaylists = storedPlaylists.map(storedPlaylistToYouTubePlaylist);
+      setPlaylists(convertedPlaylists);
     } catch (error) {
       console.error("Error loading playlists:", error);
     } finally {

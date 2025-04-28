@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchIcon, FileText, Video, BookOpen } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
-import { StoredPlaylist } from "@/lib/youtube-service";
+import { StoredPlaylist, getPlaylistVideos } from "@/lib/youtube-service";
 
 interface Article {
   id: string;
@@ -23,10 +24,15 @@ interface Article {
   updated_at: string;
 }
 
+interface EnhancedStoredPlaylist extends StoredPlaylist {
+  is_single_video: boolean;
+  video_id?: string;
+}
+
 export function ArtigosApoio() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [playlists, setPlaylists] = useState<StoredPlaylist[]>([]);
+  const [playlists, setPlaylists] = useState<EnhancedStoredPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("articles");
@@ -52,8 +58,9 @@ export function ArtigosApoio() {
       
       const articlesWithPlaylists = (articlesData || []).map(article => ({
         ...article,
+        tags: article.tags || [],
         playlist_ids: article.playlist_ids || []
-      }));
+      })) as Article[];
       
       setArticles(articlesWithPlaylists);
       
@@ -74,9 +81,9 @@ export function ArtigosApoio() {
       
       const typedPlaylistsData = (playlistsData || []).map(playlist => ({
         ...playlist,
-        is_single_video: playlist.is_single_video || false,
+        is_single_video: Boolean(playlist.is_single_video),
         video_id: playlist.video_id || undefined
-      }));
+      })) as EnhancedStoredPlaylist[];
       
       setPlaylists(typedPlaylistsData);
       
@@ -105,9 +112,9 @@ export function ArtigosApoio() {
         
         const typedPlaylistsData = (data || []).map(playlist => ({
           ...playlist,
-          is_single_video: playlist.is_single_video || false,
+          is_single_video: Boolean(playlist.is_single_video),
           video_id: playlist.video_id || undefined
-        }));
+        })) as EnhancedStoredPlaylist[];
         
         setPlaylists(typedPlaylistsData);
         
@@ -122,12 +129,11 @@ export function ArtigosApoio() {
     }
   };
 
-  const handlePlaylistClick = async (playlist: StoredPlaylist) => {
+  const handlePlaylistClick = async (playlist: EnhancedStoredPlaylist) => {
     try {
       if (playlist.is_single_video && playlist.video_id) {
         setSelectedVideoId(playlist.video_id);
       } else {
-        const { getPlaylistVideos } = await import('@/lib/youtube-service');
         const videos = await getPlaylistVideos(playlist.playlist_id);
         
         if (videos && videos.length > 0) {

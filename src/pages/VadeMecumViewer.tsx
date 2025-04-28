@@ -53,9 +53,9 @@ const VadeMecumViewer = () => {
         return;
       }
       
-      // Query the appropriate table based on the law name
+      // Use type assertion to tell TypeScript that tableName is a valid table name
       const { data, error } = await supabase
-        .from(tableName)
+        .from(tableName as any)
         .select('*')
         .order('numero', { ascending: true });
 

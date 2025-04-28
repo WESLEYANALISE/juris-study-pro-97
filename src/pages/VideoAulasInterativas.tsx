@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +47,19 @@ export function VideoAulasInterativas() {
         throw error;
       }
 
-      setVideoAulas(data || []);
+      // Map to VideoAula interface
+      const mappedAulas: VideoAula[] = (data || []).map(item => ({
+        id: item.id,
+        title: item.title,
+        description: item.description,
+        video_id: item.url.split('v=')[1] || item.url,
+        area: item.area,
+        tags: [],
+        created_at: item.created_at,
+        updated_at: item.created_at
+      }));
+
+      setVideoAulas(mappedAulas);
     } catch (error) {
       console.error("Error loading video aulas:", error);
       toast.error("Erro ao carregar aulas interativas. Por favor, tente novamente.");

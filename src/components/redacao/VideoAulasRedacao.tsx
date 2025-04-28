@@ -7,19 +7,19 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SearchIcon } from "lucide-react";
-import { getPlaylistVideos, getChannelVideos, getChannelId, StoredPlaylist } from "@/lib/youtube-service";
+import { getPlaylistVideos, StoredPlaylist } from "@/lib/youtube-service";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useNavigate } from "react-router-dom";
 
-interface StoredPlaylistWithOptional extends StoredPlaylist {
-  is_single_video?: boolean;
+interface EnhancedStoredPlaylist extends StoredPlaylist {
+  is_single_video: boolean;
   video_id?: string;
 }
 
 export function VideoAulasRedacao() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [storedPlaylists, setStoredPlaylists] = useState<StoredPlaylistWithOptional[]>([]);
+  const [storedPlaylists, setStoredPlaylists] = useState<EnhancedStoredPlaylist[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [areaFilter, setAreaFilter] = useState<string | null>(null);
   const [areas, setAreas] = useState<string[]>([]);
@@ -44,9 +44,9 @@ export function VideoAulasRedacao() {
       
       const typedPlaylists = (data || []).map(playlist => ({
         ...playlist,
-        is_single_video: playlist.is_single_video || false,
+        is_single_video: Boolean(playlist.is_single_video),
         video_id: playlist.video_id || undefined
-      })) as StoredPlaylistWithOptional[];
+      })) as EnhancedStoredPlaylist[];
       
       setStoredPlaylists(typedPlaylists);
       
@@ -70,7 +70,7 @@ export function VideoAulasRedacao() {
     }
   };
 
-  const handlePlaylistClick = async (playlist: StoredPlaylistWithOptional) => {
+  const handlePlaylistClick = async (playlist: EnhancedStoredPlaylist) => {
     try {
       if (playlist.is_single_video && playlist.video_id) {
         setSelectedVideoId(playlist.video_id);
@@ -90,7 +90,6 @@ export function VideoAulasRedacao() {
           return;
         }
         
-        const { getPlaylistVideos } = await import('@/lib/youtube-service');
         const videos = await getPlaylistVideos(playlist.playlist_id);
         
         if (videos && videos.length > 0) {
@@ -118,7 +117,7 @@ export function VideoAulasRedacao() {
     setAreaFilter(area === areaFilter ? null : area);
   };
 
-  const navigateToArticles = async () => {
+  const navigateToArticles = () => {
     navigate('/redacao-juridica');
   };
 
