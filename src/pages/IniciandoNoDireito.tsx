@@ -29,57 +29,57 @@ const IniciandoNoDireito = () => {
       </motion.div>
 
       <Tabs defaultValue="trilha" className="w-full space-y-6">
-        <div className="overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="sticky top-0 z-10 bg-background pt-2 pb-4 -mx-4 px-4 border-b">
           <TabsList className="inline-flex min-w-full sm:min-w-0 w-auto justify-start sm:justify-center gap-1 h-auto flex-wrap">
-            <TabsTrigger value="trilha" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="trilha" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <BookOpen className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Trilha de Estudo</span>
             </TabsTrigger>
-            <TabsTrigger value="glossario" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="glossario" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <Sparkles className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Glossário</span>
             </TabsTrigger>
-            <TabsTrigger value="minicursos" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="minicursos" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <PlayCircle className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Mini-cursos</span>
             </TabsTrigger>
-            <TabsTrigger value="faq" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="faq" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <FileQuestion className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">FAQ</span>
             </TabsTrigger>
-            <TabsTrigger value="simulados" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="simulados" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <GraduationCap className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Simulados</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <div className="overflow-x-auto pb-2 -mx-4 px-4">
+        <div className="sticky top-[73px] z-10 bg-background pt-2 pb-4 -mx-4 px-4 border-b">
           <TabsList className="inline-flex min-w-full sm:min-w-0 w-auto justify-start sm:justify-center gap-1 h-auto flex-wrap">
-            <TabsTrigger value="materiais" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="materiais" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <FileText className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Materiais</span>
             </TabsTrigger>
-            <TabsTrigger value="cronograma" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="cronograma" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <Calendar className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Cronograma</span>
             </TabsTrigger>
-            <TabsTrigger value="comunidade" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="comunidade" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <Users className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Comunidade</span>
             </TabsTrigger>
-            <TabsTrigger value="evolucao" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="evolucao" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <LineChart className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Evolução</span>
             </TabsTrigger>
-            <TabsTrigger value="motivacional" className="flex flex-col items-center p-2 h-auto min-w-[100px]">
+            <TabsTrigger value="motivacional" className="flex flex-col items-center p-2 h-auto min-w-[80px] sm:min-w-[100px]">
               <Heart className="h-5 w-5 mb-1" />
               <span className="text-xs whitespace-nowrap">Motivacional</span>
             </TabsTrigger>
           </TabsList>
         </div>
 
-        <div className="pb-20 md:pb-6">
+        <div className="pb-20 md:pb-6 pt-4">
           <TabsContent value="trilha">
             <EstudoTrilha />
           </TabsContent>

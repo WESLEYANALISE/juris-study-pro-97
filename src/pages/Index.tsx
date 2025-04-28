@@ -139,7 +139,7 @@ const Index = () => {
   }];
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 pb-20 md:pb-6">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -183,7 +183,7 @@ const Index = () => {
         className="bg-card p-6 rounded-lg shadow-sm mt-10 mb-6"
       >
         <h2 className="text-2xl font-bold mb-4">Escolha seu perfil de estudos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
             <CardHeader className="p-4">
               <CardTitle className="text-lg">Concurseiro</CardTitle>

@@ -20,7 +20,7 @@ const Layout = ({ children, userProfile }: LayoutProps) => {
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
-          <main className="flex-1 overflow-auto pb-20 md:pb-6">
+          <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
             <div className="container mx-auto p-4 md:p-6">
               {children}
             </div>

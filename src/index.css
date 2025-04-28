@@ -147,6 +147,21 @@
   .mobile-tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
   }
+  
+  /* Content spacing helpers */
+  .content-safe-area {
+    @apply pb-20 md:pb-6;
+  }
+  
+  /* Mobile navigation overlay protection */
+  .nav-offset {
+    @apply -mb-20 pb-20 md:mb-0 md:pb-6;
+  }
+  
+  /* Sticky header offset */
+  .header-offset {
+    @apply pt-16;
+  }
 }
 
 /* Melhorias em scrollbars */
@@ -178,4 +193,33 @@
     min-height: 44px;
     min-width: 44px;
   }
+  
+  /* Responsive navbar */
+  .navbar-responsive {
+    @apply flex-wrap gap-y-2;
+  }
+}
+
+/* Scroll snap for TabsList */
+.snap-scroll {
+  @apply snap-x snap-mandatory;
+  scroll-behavior: smooth;
+}
+
+.snap-scroll > * {
+  @apply snap-start;
+}
+
+/* Z-index organization */
+.z-header {
+  @apply z-50;
+}
+.z-dropdown {
+  @apply z-40;
+}
+.z-sticky {
+  @apply z-30;
+}
+.z-content {
+  @apply z-0;
 }

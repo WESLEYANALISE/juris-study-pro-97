@@ -9,7 +9,7 @@ export default function VideoAulas() {
   const navigate = useNavigate();
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 pb-20 md:pb-6">
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -40,7 +40,7 @@ export default function VideoAulas() {
                 Aprenda no seu próprio ritmo com conteúdo de qualidade.
               </p>
               <Button 
-                className="w-full" 
+                className="w-full min-h-[44px]" 
                 onClick={() => navigate("/videoaulas/tradicionais")}
               >
                 <Play className="mr-2 h-4 w-4" />
@@ -68,7 +68,7 @@ export default function VideoAulas() {
                 para testar seu conhecimento em tempo real.
               </p>
               <Button 
-                className="w-full" 
+                className="w-full min-h-[44px]" 
                 onClick={() => navigate("/videoaulas-interativas")}
               >
                 <Play className="mr-2 h-4 w-4" />

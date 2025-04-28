@@ -40,19 +40,19 @@ export const VideoFilter = ({
       <div className="lg:hidden mb-4">
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" className="w-full flex items-center justify-between">
+            <Button variant="outline" className="w-full flex items-center justify-between min-h-[44px]">
               <div className="flex items-center">
-                <Filter className="h-4 w-4 mr-2" />
+                <Filter className="h-4 w-4 mr-2 flex-shrink-0" />
                 <span>Filtros</span>
               </div>
-              <div className="flex items-center text-xs text-muted-foreground">
-                <span>{selectedArea}</span>
-                {selectedTopic && <span> • {selectedTopic}</span>}
-                <ChevronDown className="h-4 w-4 ml-2" />
+              <div className="flex items-center text-xs text-muted-foreground ml-2 truncate">
+                <span className="truncate max-w-[120px]">{selectedArea}</span>
+                {selectedTopic && <span className="truncate max-w-[120px]"> • {selectedTopic}</span>}
+                <ChevronDown className="h-4 w-4 ml-2 flex-shrink-0" />
               </div>
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[85%] sm:max-w-md">
+          <SheetContent side="left" className="w-[85%] sm:max-w-md z-50">
             <SheetHeader>
               <SheetTitle>Filtros</SheetTitle>
               <SheetDescription>

@@ -83,7 +83,7 @@ export function Header({ userProfile }: HeaderProps) {
   };
 
   return (
-    <header className="border-b border-border bg-card">
+    <header className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
       <div className="container flex h-16 items-center px-4 md:px-6">
         {/* Mobile menu and profile */}
         <div className="flex items-center">
@@ -103,12 +103,12 @@ export function Header({ userProfile }: HeaderProps) {
           {isMobile ? (
             <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
               <SheetTrigger asChild>
-                <Button size="icon" variant="ghost">
+                <Button size="icon" variant="ghost" className="h-10 w-10 min-w-[40px] min-h-[40px]">
                   <Search className="h-5 w-5" />
                   <span className="sr-only">Pesquisar</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent side="top" className="p-0">
+              <SheetContent side="top" className="p-0 pt-safe-top">
                 <div className="p-4 pt-12">
                   <Input
                     type="search"
@@ -130,17 +130,17 @@ export function Header({ userProfile }: HeaderProps) {
             </div>
           )}
           
-          <Button size="icon" variant="ghost">
+          <Button size="icon" variant="ghost" className="h-10 w-10 min-w-[40px] min-h-[40px]">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notificações</span>
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="h-10 w-10 min-w-[40px] min-h-[40px]">
                 <User className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="w-56 z-50">
               <DropdownMenuLabel>Meu Perfil</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem

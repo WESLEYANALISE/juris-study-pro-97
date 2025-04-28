@@ -21,18 +21,21 @@ export const AreaSelector = ({ areas, selectedArea, onAreaSelect, className }: A
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className={cn("w-full sm:w-auto", className)}>
-          {selectedArea}
-          <ChevronDown className="ml-2 h-4 w-4" />
+        <Button variant="outline" className={cn("w-full sm:w-auto justify-between truncate", className)}>
+          <span className="truncate">{selectedArea}</span>
+          <ChevronDown className="ml-2 h-4 w-4 flex-shrink-0" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-[200px]">
-        <ScrollArea className="h-[300px]">
+      <DropdownMenuContent className="w-[200px] max-w-[90vw] z-50">
+        <ScrollArea className="h-[300px] max-h-[50vh]">
           {areas.map((area) => (
             <DropdownMenuItem
               key={area}
               onClick={() => onAreaSelect(area)}
-              className={selectedArea === area ? "bg-muted" : ""}
+              className={cn(
+                "cursor-pointer truncate", 
+                selectedArea === area ? "bg-muted" : ""
+              )}
             >
               {area}
             </DropdownMenuItem>
