@@ -1,17 +1,18 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { type ProfileType } from "@/components/WelcomeModal";
 import MobileNavigation from "@/components/MobileNavigation";
+
 interface LayoutProps {
   children: React.ReactNode;
   userProfile: ProfileType;
 }
-const Layout = ({
-  children,
-  userProfile
-}: LayoutProps) => {
-  return <SidebarProvider defaultOpen={true}>
+
+const Layout = ({ children, userProfile }: LayoutProps) => {
+  return (
+    <SidebarProvider defaultOpen={true}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
@@ -22,6 +23,8 @@ const Layout = ({
         </div>
         <MobileNavigation />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default Layout;

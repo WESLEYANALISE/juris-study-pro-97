@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import Layout from "@/components/Layout";
-import RequireAuth from "@/components/RequireAuth";
+import { RequireAuth } from "@/components/RequireAuth";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import JurisFlix from "@/pages/JurisFlix";
@@ -40,37 +40,35 @@ function App() {
       <Router>
         <Routes>
           <Route path="/auth" element={<Auth />} />
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/inicie" element={<RequireAuth><IniciandoNoDireito /></RequireAuth>} />
-            <Route path="/jurisflix" element={<JurisFlix />} />
-            <Route path="/dicionario" element={<Dicionario />} />
-            <Route path="/biblioteca" element={<Biblioteca />} />
-            <Route path="/biblioteca/recomendacoes" element={<BibliotecaRecomendacoes />} />
-            <Route path="/questoes" element={<RequireAuth><Questoes /></RequireAuth>} />
-            <Route path="/vademecum" element={<VadeMecum />} />
-            <Route path="/vademecum/:lawId" element={<VadeMecumViewer />} />
-            <Route path="/vademecum/:lawId/:articleId" element={<VadeMecumViewer />} />
-            <Route path="/simulados" element={<RequireAuth><Simulados /></RequireAuth>} />
-            <Route path="/simulados/:sessaoId" element={<RequireAuth><SimuladoSessao /></RequireAuth>} />
-            <Route path="/simulados/resultado/:sessaoId" element={<RequireAuth><SimuladoResultado /></RequireAuth>} />
-            <Route path="/flashcards" element={<RequireAuth><Flashcards /></RequireAuth>} />
-            <Route path="/mapas-mentais" element={<MapasMentais />} />
-            <Route path="/noticias" element={<Noticias />} />
-            <Route path="/peticoes" element={<Peticoes />} />
-            <Route path="/assistente" element={<RequireAuth><AssistenteJuridico /></RequireAuth>} />
-            <Route path="/perfil" element={<RequireAuth><Perfil /></RequireAuth>} />
-            <Route path="/vermais/:categoria" element={<VerTudo />} />
-            <Route path="/cursos" element={<Cursos />} />
-            <Route path="/curso/:cursoId" element={<RequireAuth><CursoViewer /></RequireAuth>} />
-            <Route path="/redacao-juridica" element={<RedacaoJuridica />} />
-            <Route path="/redacao-conteudo/:id?" element={<RedacaoConteudo />} />
-            <Route path="/videoaulas" element={<VideoAulas />} />
-            <Route path="/videoaulas/tradicionais" element={<VideoAulasTradicional />} />
-            <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
-            <Route path="/anotacoes" element={<RequireAuth><Anotacoes /></RequireAuth>} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
+          <Route path="/" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<Index />}</Layout>} />
+          <Route path="/inicie" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<IniciandoNoDireito />}</Layout></RequireAuth>} />
+          <Route path="/jurisflix" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<JurisFlix />}</Layout>} />
+          <Route path="/dicionario" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<Dicionario />}</Layout>} />
+          <Route path="/biblioteca" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<Biblioteca />}</Layout>} />
+          <Route path="/biblioteca/recomendacoes" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<BibliotecaRecomendacoes />}</Layout>} />
+          <Route path="/questoes" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<Questoes />}</Layout></RequireAuth>} />
+          <Route path="/vademecum" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VadeMecum />}</Layout>} />
+          <Route path="/vademecum/:lawId" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VadeMecumViewer />}</Layout>} />
+          <Route path="/vademecum/:lawId/:articleId" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VadeMecumViewer />}</Layout>} />
+          <Route path="/simulados" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<Simulados />}</Layout></RequireAuth>} />
+          <Route path="/simulados/:sessaoId" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<SimuladoSessao />}</Layout></RequireAuth>} />
+          <Route path="/simulados/resultado/:sessaoId" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<SimuladoResultado />}</Layout></RequireAuth>} />
+          <Route path="/flashcards" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<Flashcards />}</Layout></RequireAuth>} />
+          <Route path="/mapas-mentais" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<MapasMentais />}</Layout>} />
+          <Route path="/noticias" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<Noticias />}</Layout>} />
+          <Route path="/peticoes" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<Peticoes />}</Layout>} />
+          <Route path="/assistente" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<AssistenteJuridico />}</Layout></RequireAuth>} />
+          <Route path="/perfil" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<Perfil />}</Layout></RequireAuth>} />
+          <Route path="/vermais/:categoria" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VerTudo />}</Layout>} />
+          <Route path="/cursos" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<Cursos />}</Layout>} />
+          <Route path="/curso/:cursoId" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<CursoViewer />}</Layout></RequireAuth>} />
+          <Route path="/redacao-juridica" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<RedacaoJuridica />}</Layout>} />
+          <Route path="/redacao-conteudo/:id?" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<RedacaoConteudo />}</Layout>} />
+          <Route path="/videoaulas" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VideoAulas />}</Layout>} />
+          <Route path="/videoaulas/tradicionais" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VideoAulasTradicional />}</Layout>} />
+          <Route path="/videoaulas-interativas" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<VideoAulasInterativas />}</Layout>} />
+          <Route path="/anotacoes" element={<RequireAuth><Layout userProfile={{name: '', image: '', role: ''}}>{<Anotacoes />}</Layout></RequireAuth>} />
+          <Route path="*" element={<Layout userProfile={{name: '', image: '', role: ''}}>{<NotFound />}</Layout>} />
         </Routes>
       </Router>
       <Toaster />
