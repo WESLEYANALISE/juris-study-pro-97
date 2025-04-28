@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,6 +10,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { SearchIcon, FileText, Video, BookOpen } from "lucide-react";
 import ReactMarkdown from 'react-markdown';
+import { StoredPlaylist } from "@/lib/youtube-service";
 
 interface Article {
   id: string;
@@ -23,22 +23,10 @@ interface Article {
   updated_at: string;
 }
 
-interface Playlist {
-  id: string;
-  playlist_id: string;
-  playlist_title: string;
-  thumbnail_url: string;
-  channel_title: string;
-  video_count: number;
-  area: string;
-  is_single_video?: boolean;
-  video_id?: string;
-}
-
 export function ArtigosApoio() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlists, setPlaylists] = useState<StoredPlaylist[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("articles");
@@ -62,15 +50,18 @@ export function ArtigosApoio() {
         throw articlesError;
       }
       
-      setArticles(articlesData || []);
+      const articlesWithPlaylists = (articlesData || []).map(article => ({
+        ...article,
+        playlist_ids: article.playlist_ids || []
+      }));
       
-      // Extract unique categories
+      setArticles(articlesWithPlaylists);
+      
       const uniqueCategories = Array.from(
-        new Set((articlesData || []).map(article => article.categoria))
+        new Set((articlesWithPlaylists || []).map(article => article.categoria))
       );
       setCategories(uniqueCategories as string[]);
       
-      // Load playlists for Redação Jurídica
       const { data: playlistsData, error: playlistsError } = await supabase
         .from('video_playlists_juridicas')
         .select('*')
@@ -81,7 +72,6 @@ export function ArtigosApoio() {
         throw playlistsError;
       }
       
-      // Cast the data to include the optional properties that might be missing
       const typedPlaylistsData = (playlistsData || []).map(playlist => ({
         ...playlist,
         is_single_video: playlist.is_single_video || false,
@@ -102,7 +92,6 @@ export function ArtigosApoio() {
     setSelectedArticle(article);
     setActiveTab("article-view");
     
-    // If article has associated playlists, load them
     if (article.playlist_ids && article.playlist_ids.length > 0) {
       try {
         const { data, error } = await supabase
@@ -114,7 +103,6 @@ export function ArtigosApoio() {
           throw error;
         }
         
-        // Cast the data with appropriate types
         const typedPlaylistsData = (data || []).map(playlist => ({
           ...playlist,
           is_single_video: playlist.is_single_video || false,
@@ -123,7 +111,6 @@ export function ArtigosApoio() {
         
         setPlaylists(typedPlaylistsData);
         
-        // If there's a single video playlist, select it automatically
         const singleVideo = typedPlaylistsData.find(playlist => playlist.is_single_video);
         if (singleVideo && singleVideo.video_id) {
           setSelectedVideoId(singleVideo.video_id);
@@ -135,12 +122,11 @@ export function ArtigosApoio() {
     }
   };
 
-  const handlePlaylistClick = async (playlist: Playlist) => {
+  const handlePlaylistClick = async (playlist: StoredPlaylist) => {
     try {
       if (playlist.is_single_video && playlist.video_id) {
         setSelectedVideoId(playlist.video_id);
       } else {
-        // Fetch first video from playlist
         const { getPlaylistVideos } = await import('@/lib/youtube-service');
         const videos = await getPlaylistVideos(playlist.playlist_id);
         

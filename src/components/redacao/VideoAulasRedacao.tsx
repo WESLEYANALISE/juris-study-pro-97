@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,18 +7,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { SearchIcon } from "lucide-react";
-import { getChannelPlaylists, getChannelVideos, getChannelId } from "@/lib/youtube-service";
+import { getPlaylistVideos, getChannelVideos, getChannelId, StoredPlaylist } from "@/lib/youtube-service";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useNavigate } from "react-router-dom";
 
-interface StoredPlaylist {
-  id: string;
-  playlist_id: string;
-  playlist_title: string;
-  thumbnail_url: string;
-  channel_title: string;
-  video_count: number;
-  area: string;
+interface StoredPlaylistWithOptional extends StoredPlaylist {
   is_single_video?: boolean;
   video_id?: string;
 }
@@ -25,7 +19,7 @@ interface StoredPlaylist {
 export function VideoAulasRedacao() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [storedPlaylists, setStoredPlaylists] = useState<StoredPlaylist[]>([]);
+  const [storedPlaylists, setStoredPlaylists] = useState<StoredPlaylistWithOptional[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [areaFilter, setAreaFilter] = useState<string | null>(null);
   const [areas, setAreas] = useState<string[]>([]);
@@ -52,7 +46,7 @@ export function VideoAulasRedacao() {
         ...playlist,
         is_single_video: playlist.is_single_video || false,
         video_id: playlist.video_id || undefined
-      }));
+      })) as StoredPlaylistWithOptional[];
       
       setStoredPlaylists(typedPlaylists);
       
@@ -76,7 +70,7 @@ export function VideoAulasRedacao() {
     }
   };
 
-  const handlePlaylistClick = async (playlist: StoredPlaylist) => {
+  const handlePlaylistClick = async (playlist: StoredPlaylistWithOptional) => {
     try {
       if (playlist.is_single_video && playlist.video_id) {
         setSelectedVideoId(playlist.video_id);

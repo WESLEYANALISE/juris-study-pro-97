@@ -37,6 +37,22 @@ const VadeMecumViewer = () => {
         return;
       }
       
+      // Hard-code allowed table names to prevent SQL injection and type errors
+      const allowedTables = ["Código_Civil", "Código_Penal", "Código_de_Processo_Civil", "Código_de_Processo_Penal",
+        "Código_de_Defesa_do_Consumidor", "Código_Tributário_Nacional", "Código_Comercial",
+        "Código_Eleitoral", "Código_de_Trânsito_Brasileiro", "Código_Brasileiro_de_Telecomunicações",
+        "Estatuto_da_Criança_e_do_Adolescente", "Estatuto_do_Idoso", "Estatuto_da_Terra",
+        "Estatuto_da_Cidade", "Estatuto_da_Advocacia_e_da_OAB", "Estatuto_do_Desarmamento", 
+        "Estatuto_do_Torcedor", "Estatuto_da_Igualdade_Racial", "Estatuto_da_Pessoa_com_Deficiência",
+        "Estatuto_dos_Servidores_Públicos_Civis_da_União"];
+      
+      if (!allowedTables.includes(tableName)) {
+        console.error(`Table name ${tableName} is not allowed`);
+        setArticles([]);
+        setLoading(false);
+        return;
+      }
+      
       // Query the appropriate table based on the law name
       const { data, error } = await supabase
         .from(tableName)

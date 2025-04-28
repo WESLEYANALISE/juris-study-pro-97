@@ -1,456 +1,332 @@
-import React, { useState, useEffect } from "react";
+
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Search, Filter, SlidersHorizontal, Heart, HeartOff, BookOpen, GraduationCap, Play, Download, PencilLine, Star } from "lucide-react";
-import { motion } from "framer-motion";
 import { PageTransition } from "@/components/PageTransition";
-import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Book, Video, Flag, BarChart, Star } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { toast } from "sonner";
 
 interface Curso {
   id: number;
-  area: string;
   materia: string;
-  sequencia: number;
+  area: string;
+  sobre: string;
   link: string;
   capa: string;
-  sobre: string;
-  download: string | null;
-  dificuldade?: string;
-  tipo_acesso?: string;
+  download: string;
+  tipo_acesso: string;
+  dificuldade: string;
+  sequencia: number;
 }
 
-type LevelType = "Iniciante" | "Intermediário" | "Avançado" | "Todos";
-type PaymentType = "Gratuito" | "Pago" | "Todos";
+interface MeuCurso {
+  id: string;
+  curso_id: number;
+  progresso: number;
+  concluido: boolean;
+}
 
 const Cursos = () => {
+  const [activeTab, setActiveTab] = useState("todos");
+  const [isLoading, setIsLoading] = useState(true);
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [meusCursos, setMeusCursos] = useState<MeuCurso[]>([]);
+  const [areas, setAreas] = useState<string[]>([]);
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [areaFilter, setAreaFilter] = useState<string>("Todos");
-  const [levelFilter, setLevelFilter] = useState<LevelType>("Todos");
-  const [paymentFilter, setPaymentFilter] = useState<PaymentType>("Todos");
-  const [favoriteCursos, setFavoriteCursos] = useState<number[]>(() => {
-    const saved = localStorage.getItem("favoriteCursos");
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [selectedCurso, setSelectedCurso] = useState<Curso | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  const { data: cursos = [], isLoading } = useQuery({
-    queryKey: ["cursos_narrados"],
+  const { data: userProgress } = useQuery({
+    queryKey: ["curso_progress"],
     queryFn: async () => {
-      try {
-        console.log("Fetching courses...");
-        const { data, error } = await supabase
-          .from("cursos_narrados")
-          .select("*")
-          .order("sequencia", { ascending: true });
-
-        if (error) {
-          console.error("Error fetching courses:", error);
-          toast.error("Erro ao carregar cursos: " + error.message);
-          return [];
-        }
-        
-        console.log(`Fetched ${data?.length || 0} courses`);
-        return data as Curso[];
-      } catch (err) {
-        console.error("Exception while fetching courses:", err);
-        toast.error("Erro ao carregar cursos: Ocorreu um erro inesperado");
+      const { data, error } = await supabase.from('curso_progress').select('*');
+      
+      if (error) {
+        console.error("Error loading user progress:", error);
         return [];
       }
+      
+      return data;
     },
   });
 
-  const areas = ["Todos", ...Array.from(new Set(cursos.map((curso) => curso.area)))];
+  useEffect(() => {
+    loadCursos();
+  }, []);
 
-  const toggleFavorite = (id: number) => {
-    const newFavorites = favoriteCursos.includes(id)
-      ? favoriteCursos.filter((cursoId) => cursoId !== id)
-      : [...favoriteCursos, id];
+  const loadCursos = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch available courses
+      const { data, error } = await supabase
+        .from("cursos_narrados")
+        .select("*")
+        .order("sequencia", { ascending: true });
 
-    setFavoriteCursos(newFavorites);
-    localStorage.setItem("favoriteCursos", JSON.stringify(newFavorites));
+      if (error) {
+        throw error;
+      }
 
-    toast.success(favoriteCursos.includes(id)
-      ? "Curso removido dos favoritos"
-      : "Curso adicionado aos favoritos");
-  };
+      setCursos(data || []);
 
-  const getCursoLevel = (curso: Curso): LevelType => {
-    if (curso.dificuldade) return curso.dificuldade as LevelType;
-    
-    const desc = curso.sobre?.toLowerCase() || "";
-    if (desc.includes("iniciante") || desc.includes("básico")) return "Iniciante";
-    if (desc.includes("avançado")) return "Avançado";
-    return "Intermediário";
-  };
+      // Extract unique areas
+      const uniqueAreas = Array.from(
+        new Set((data || []).map((curso) => curso.area))
+      ).filter(Boolean) as string[];
 
-  const getCursoPaymentType = (curso: Curso): PaymentType => {
-    if (curso.tipo_acesso) return curso.tipo_acesso as PaymentType;
-    
-    const desc = curso.sobre?.toLowerCase() || "";
-    return desc.includes("gratuito") ? "Gratuito" : "Pago";
-  };
+      setAreas(uniqueAreas);
 
-  const filteredCursos = cursos.filter((curso) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      curso.materia?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      curso.area?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      curso.sobre?.toLowerCase().includes(searchQuery.toLowerCase());
+      // Fetch user's course progress
+      const user = await supabase.auth.getUser();
+      if (user && user.data && user.data.user) {
+        const { data: progressData, error: progressError } = await supabase
+          .from("curso_progress")
+          .select("*")
+          .eq("user_id", user.data.user.id);
 
-    const matchesArea = areaFilter === "Todos" || curso.area === areaFilter;
-
-    const matchesLevel = levelFilter === "Todos" || getCursoLevel(curso) === levelFilter;
-
-    const matchesPayment = paymentFilter === "Todos" || getCursoPaymentType(curso) === paymentFilter;
-
-    return matchesSearch && matchesArea && matchesLevel && matchesPayment;
-  });
-
-  const handleOpenCurso = (curso: Curso) => {
-    setSelectedCurso(curso);
-    setMenuOpen(true);
-  };
-
-  const handleStartCourse = () => {
-    if (selectedCurso) {
-      setMenuOpen(false);
-      navigate(`/cursos/${selectedCurso.id}`, { state: { curso: selectedCurso } });
+        if (progressError) {
+          toast.error("Erro ao carregar seu progresso dos cursos");
+          console.error(progressError);
+        } else {
+          setMeusCursos(progressData || []);
+        }
+      }
+    } catch (error: any) {
+      toast.error("Erro ao carregar cursos");
+      console.error(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  return (
-    <div className="container py-6 max-w-7xl">
-      <PageTransition>
-        <div className="flex flex-col space-y-6">
-          <div className="flex flex-col space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">Cursos Jurídicos</h1>
-            <p className="text-muted-foreground">
-              Explore nossa biblioteca de cursos narrados e aprofunde seus conhecimentos jurídicos
-            </p>
-          </div>
+  const handleCursoClick = async (curso: Curso) => {
+    if (curso.tipo_acesso === "Premium" || curso.tipo_acesso === "Pro") {
+      toast("Esta funcionalidade estará disponível em breve!");
+      return;
+    }
 
-          <div className="flex flex-col space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-grow">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  placeholder="Buscar por título, área ou palavras-chave..."
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+    navigate(`/curso/${curso.id}`);
+  };
+
+  const filteredCursos = cursos.filter(
+    (curso) =>
+      (!selectedArea || curso.area === selectedArea) &&
+      (!searchTerm ||
+        curso.materia.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        curso.area.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const meusCursosData = filteredCursos.filter((curso) =>
+    meusCursos.some((meuCurso) => meuCurso.curso_id === curso.id)
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  const renderCursoCard = (curso: Curso) => {
+    const meuCurso = meusCursos.find((mc) => mc.curso_id === curso.id);
+    const progresso = meuCurso ? meuCurso.progresso : 0;
+
+    return (
+      <Card
+        key={curso.id}
+        className="h-full flex flex-col cursor-pointer hover:shadow-md transition-all"
+        onClick={() => handleCursoClick(curso)}
+      >
+        <div className="aspect-video relative">
+          <img
+            src={curso.capa || "/placeholder.svg"}
+            alt={curso.materia}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-medium bg-primary rounded-full px-2 py-0.5 text-white">
+                {curso.tipo_acesso}
+              </span>
+              <span className="text-xs font-medium bg-secondary rounded-full px-2 py-0.5">
+                {curso.dificuldade}
+              </span>
+            </div>
+          </div>
+        </div>
+        <CardHeader className="pb-2 pt-4">
+          <CardTitle className="text-lg line-clamp-2">{curso.materia}</CardTitle>
+          <CardDescription className="line-clamp-1">{curso.area}</CardDescription>
+        </CardHeader>
+        <CardContent className="pb-0 flex-grow">
+          <p className="text-sm text-muted-foreground line-clamp-3">
+            {curso.sobre}
+          </p>
+        </CardContent>
+        <CardFooter className="pt-4">
+          {meuCurso && (
+            <div className="w-full">
+              <div className="flex justify-between text-xs mb-1">
+                <span>Progresso</span>
+                <span>{progresso}%</span>
+              </div>
+              <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-primary h-full"
+                  style={{ width: `${progresso}%` }}
+                ></div>
+              </div>
+            </div>
+          )}
+          {!meuCurso && (
+            <Button className="w-full" variant="outline">
+              Iniciar curso
+            </Button>
+          )}
+        </CardFooter>
+      </Card>
+    );
+  };
+
+  return (
+    <PageTransition>
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold">Cursos Jurídicos</h1>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveTab("favoritos")}
+            >
+              <Star className="w-4 h-4 mr-2" />
+              Favoritos
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setActiveTab("meucurso")}
+            >
+              <Flag className="w-4 h-4 mr-2" />
+              Meu Curso
+            </Button>
+          </div>
+        </div>
+
+        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="mb-6">
+            <TabsTrigger value="todos">
+              <Book className="w-4 h-4 mr-2" /> Todos os Cursos
+            </TabsTrigger>
+            <TabsTrigger value="meucurso">
+              <BarChart className="w-4 h-4 mr-2" /> Meus Cursos
+            </TabsTrigger>
+            <TabsTrigger value="videoaulas">
+              <Video className="w-4 h-4 mr-2" /> Video Aulas
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="md:col-span-2">
+                <input
+                  type="text"
+                  placeholder="Buscar por título ou área..."
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-
-              <div className="sm:hidden w-full">
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" className="w-full">
-                      <Filter className="mr-2 h-4 w-4" />
-                      Filtros
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent>
-                    <SheetHeader>
-                      <SheetTitle>Filtrar Cursos</SheetTitle>
-                      <SheetDescription>
-                        Refine sua busca por área, nível e tipo de acesso
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="py-4 space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Área do Direito</label>
-                        <select
-                          className="w-full p-2 rounded-md border"
-                          value={areaFilter}
-                          onChange={(e) => setAreaFilter(e.target.value)}
-                        >
-                          {areas.map((area) => (
-                            <option key={area as React.Key} value={area as string}>
-                              {area as React.ReactNode}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Nível</label>
-                        <select
-                          className="w-full p-2 rounded-md border"
-                          value={levelFilter}
-                          onChange={(e) => setLevelFilter(e.target.value as LevelType)}
-                        >
-                          <option value="Todos">Todos</option>
-                          <option value="Iniciante">Iniciante</option>
-                          <option value="Intermediário">Intermediário</option>
-                          <option value="Avançado">Avançado</option>
-                        </select>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Acesso</label>
-                        <select
-                          className="w-full p-2 rounded-md border"
-                          value={paymentFilter}
-                          onChange={(e) => setPaymentFilter(e.target.value as PaymentType)}
-                        >
-                          <option value="Todos">Todos</option>
-                          <option value="Gratuito">Gratuito</option>
-                          <option value="Pago">Pago</option>
-                        </select>
-                      </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
-              </div>
-
-              <div className="hidden sm:flex space-x-2">
+              <div>
                 <select
-                  className="px-3 py-2 rounded-md border text-sm"
-                  value={areaFilter}
-                  onChange={(e) => setAreaFilter(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={selectedArea || ""}
+                  onChange={(e) => setSelectedArea(e.target.value || null)}
                 >
+                  <option value="">Todas as Áreas</option>
                   {areas.map((area) => (
                     <option key={area} value={area}>
                       {area}
                     </option>
                   ))}
                 </select>
-
-                <select
-                  className="px-3 py-2 rounded-md border text-sm"
-                  value={levelFilter}
-                  onChange={(e) => setLevelFilter(e.target.value as LevelType)}
-                >
-                  <option value="Todos">Todos níveis</option>
-                  <option value="Iniciante">Iniciante</option>
-                  <option value="Intermediário">Intermediário</option>
-                  <option value="Avançado">Avançado</option>
-                </select>
-
-                <select
-                  className="px-3 py-2 rounded-md border text-sm"
-                  value={paymentFilter}
-                  onChange={(e) => setPaymentFilter(e.target.value as PaymentType)}
-                >
-                  <option value="Todos">Todos acessos</option>
-                  <option value="Gratuito">Gratuito</option>
-                  <option value="Pago">Pago</option>
-                </select>
               </div>
             </div>
-
-            <Tabs defaultValue="todos" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="todos">Todos os Cursos</TabsTrigger>
-                <TabsTrigger value="favoritos">Meus Cursos</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="todos" className="mt-6">
-                {isLoading ? (
-                  <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-                  </div>
-                ) : filteredCursos.length === 0 ? (
-                  <div className="text-center py-12">
-                    <BookOpen className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">Nenhum curso encontrado</h3>
-                    <p className="text-muted-foreground">
-                      Tente ajustar seus filtros ou termos de busca
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredCursos.map((curso, index) => (
-                      <motion.div
-                        key={curso.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.05 }}
-                      >
-                        <CursoCard
-                          curso={curso}
-                          isFavorite={favoriteCursos.includes(curso.id)}
-                          toggleFavorite={() => toggleFavorite(curso.id)}
-                          onClick={() => handleOpenCurso(curso)}
-                          level={getCursoLevel(curso)}
-                          paymentType={getCursoPaymentType(curso)}
-                        />
-                      </motion.div>
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="favoritos" className="mt-6">
-                {favoriteCursos.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Heart className="mx-auto h-12 w-12 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-semibold">Nenhum curso favorito</h3>
-                    <p className="text-muted-foreground">
-                      Adicione cursos aos favoritos para acessá-los rapidamente
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {cursos
-                      .filter((curso) => favoriteCursos.includes(curso.id))
-                      .map((curso, index) => (
-                        <motion.div
-                          key={curso.id as React.Key}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ delay: index * 0.05 }}
-                        >
-                          <CursoCard
-                            curso={curso}
-                            isFavorite={true}
-                            toggleFavorite={() => toggleFavorite(curso.id)}
-                            onClick={() => handleOpenCurso(curso)}
-                            level={getCursoLevel(curso)}
-                            paymentType={getCursoPaymentType(curso)}
-                          />
-                        </motion.div>
-                      ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-
-            <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle>{selectedCurso?.materia}</DialogTitle>
-                  <DialogDescription>
-                    {selectedCurso?.sobre}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <Button onClick={handleStartCourse} className="w-full">
-                    <Play className="mr-2 h-4 w-4" />
-                    Iniciar agora
-                  </Button>
-                  {selectedCurso?.download && (
-                    <a
-                      href={selectedCurso.download}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full"
-                    >
-                      <Button variant="outline" className="w-full">
-                        <Download className="mr-2 h-4 w-4" />
-                        Download de material de apoio
-                      </Button>
-                    </a>
-                  )}
-                  <Button variant="outline" onClick={() => toast({ title: "Em breve!", description: "Funcionalidade em desenvolvimento" })}>
-                    <PencilLine className="mr-2 h-4 w-4" />
-                    Anotações
-                  </Button>
-                  <Button variant="outline" onClick={() => toast({ title: "Em breve!", description: "Funcionalidade em desenvolvimento" })}>
-                    <Star className="mr-2 h-4 w-4" />
-                    Avaliar curso
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
-        </div>
-      </PageTransition>
-    </div>
-  );
-};
 
-interface CursoCardProps {
-  curso: Curso;
-  isFavorite: boolean;
-  toggleFavorite: () => void;
-  onClick: () => void;
-  level: LevelType;
-  paymentType: PaymentType;
-}
+          <TabsContent value="todos">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredCursos.length > 0 ? (
+                filteredCursos.map((curso) => renderCursoCard(curso))
+              ) : (
+                <div className="col-span-full text-center py-12">
+                  <h3 className="text-xl font-semibold">
+                    Nenhum curso encontrado
+                  </h3>
+                  <p className="text-muted-foreground mt-2">
+                    Tente ajustar seus filtros ou termos de busca
+                  </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
-const CursoCard = ({
-  curso,
-  isFavorite,
-  toggleFavorite,
-  onClick,
-  level,
-  paymentType,
-}: CursoCardProps) => {
-  return (
-    <Card className="overflow-hidden h-full flex flex-col transition-all hover:shadow-md">
-      <div
-        className="aspect-video bg-center bg-cover bg-muted cursor-pointer relative"
-        style={{ backgroundImage: `url(${curso.capa || '/placeholder.svg'})` }}
-        onClick={onClick}
-      >
-        <Button
-          variant="ghost"
-          size="icon"
-          className="absolute top-2 right-2 bg-black/30 hover:bg-black/50 text-white rounded-full"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFavorite();
-          }}
-        >
-          {isFavorite ? (
-            <Heart className="h-5 w-5 fill-current" />
-          ) : (
-            <Heart className="h-5 w-5" />
-          )}
-        </Button>
+          <TabsContent value="meucurso">
+            {meusCursosData.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {meusCursosData.map((curso) => renderCursoCard(curso))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <h3 className="text-xl font-semibold">
+                  Você ainda não iniciou nenhum curso
+                </h3>
+                <p className="text-muted-foreground mt-2">
+                  Explore os cursos disponíveis e comece a aprender!
+                </p>
+                <Button
+                  className="mt-4"
+                  onClick={() => setActiveTab("todos")}
+                >
+                  Ver todos os cursos
+                </Button>
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="videoaulas">
+            <div className="text-center py-12">
+              <h3 className="text-xl font-semibold">
+                Vídeo aulas serão adicionadas em breve!
+              </h3>
+              <p className="text-muted-foreground mt-2">
+                Para acessar as vídeo aulas atualmente disponíveis, visite
+                a página de vídeo aulas.
+              </p>
+              <Button
+                className="mt-4"
+                onClick={() => navigate("/videoaulas")}
+              >
+                Acessar Vídeo Aulas
+              </Button>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
-      <CardContent className="flex-grow flex flex-col p-4">
-        <div className="flex items-center space-x-2 mb-2">
-          <Badge variant={level === "Iniciante" ? "default" : level === "Avançado" ? "destructive" : "secondary"}>
-            {level}
-          </Badge>
-          <Badge variant={paymentType === "Gratuito" ? "outline" : "default"}>
-            {paymentType}
-          </Badge>
-        </div>
-        <h3 className="font-semibold line-clamp-2 mb-1" onClick={onClick}>
-          {curso.materia}
-        </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
-          {curso.sobre ? curso.sobre.substring(0, 100) + (curso.sobre.length > 100 ? '...' : '') : 'Sem descrição disponível.'}
-        </p>
-        <div className="flex items-center text-xs text-muted-foreground mt-auto">
-          <GraduationCap className="h-3.5 w-3.5 mr-1" />
-          <span>{curso.area}</span>
-        </div>
-      </CardContent>
-      <CardFooter className="p-4 pt-0">
-        <Button onClick={onClick} className="w-full">
-          Ver Curso
-        </Button>
-      </CardFooter>
-    </Card>
+    </PageTransition>
   );
 };
 

@@ -12,6 +12,7 @@ import { PageTransition } from "@/components/PageTransition";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Bookmark, Share2, BookOpen, Video } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { StoredPlaylist, getPlaylistVideos } from "@/lib/youtube-service";
 
 interface Article {
   id: string;
@@ -22,18 +23,6 @@ interface Article {
   playlist_ids?: string[];
   created_at: string;
   updated_at: string;
-}
-
-interface Playlist {
-  id: string;
-  playlist_id: string;
-  playlist_title: string;
-  thumbnail_url: string;
-  channel_title: string;
-  video_count: number;
-  area: string;
-  is_single_video?: boolean;
-  video_id?: string;
 }
 
 interface Video {
@@ -50,8 +39,8 @@ export default function RedacaoConteudo() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [article, setArticle] = useState<Article | null>(null);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<Playlist | null>(null);
+  const [playlists, setPlaylists] = useState<StoredPlaylist[]>([]);
+  const [selectedPlaylist, setSelectedPlaylist] = useState<StoredPlaylist | null>(null);
   const [videos, setVideos] = useState<Video[]>([]);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,14 +70,20 @@ export default function RedacaoConteudo() {
         return;
       }
       
-      setArticle(articleData);
+      // Ensure article has the playlist_ids property, defaulting to empty array
+      const articleWithPlaylists = {
+        ...articleData,
+        playlist_ids: articleData.playlist_ids || []
+      };
+      
+      setArticle(articleWithPlaylists);
       
       // Check if article has playlist_ids and if they exist
-      if (articleData.playlist_ids && articleData.playlist_ids.length > 0) {
+      if (articleWithPlaylists.playlist_ids && articleWithPlaylists.playlist_ids.length > 0) {
         const { data: playlistsData, error: playlistsError } = await supabase
           .from('video_playlists_juridicas')
           .select('*')
-          .in('playlist_id', articleData.playlist_ids);
+          .in('playlist_id', articleWithPlaylists.playlist_ids);
         
         if (playlistsError) {
           throw playlistsError;
@@ -99,7 +94,7 @@ export default function RedacaoConteudo() {
           ...playlist,
           is_single_video: playlist.is_single_video || false,
           video_id: playlist.video_id || undefined
-        }));
+        })) as StoredPlaylist[];
         
         setPlaylists(typedPlaylistsData);
         
@@ -124,7 +119,7 @@ export default function RedacaoConteudo() {
     }
   };
 
-  const loadVideosFromPlaylist = async (playlist: Playlist) => {
+  const loadVideosFromPlaylist = async (playlist: StoredPlaylist) => {
     if (playlist.is_single_video && playlist.video_id) {
       setSelectedVideoId(playlist.video_id);
       return;
@@ -132,7 +127,6 @@ export default function RedacaoConteudo() {
     
     setLoading(true);
     try {
-      const { getPlaylistVideos } = await import('@/lib/youtube-service');
       const videosData = await getPlaylistVideos(playlist.playlist_id);
       
       setVideos(videosData);
@@ -147,7 +141,7 @@ export default function RedacaoConteudo() {
     }
   };
 
-  const handlePlaylistClick = (playlist: Playlist) => {
+  const handlePlaylistClick = (playlist: StoredPlaylist) => {
     setSelectedPlaylist(playlist);
     loadVideosFromPlaylist(playlist);
   };

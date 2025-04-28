@@ -1,9 +1,11 @@
+
 import React, { useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useQuery } from "@tanstack/react-query";
+import { SearchIcon } from "lucide-react";
 
 interface MapaMental {
   id: number;
@@ -35,13 +37,20 @@ const MapasMentais = () => {
         return [];
       }
 
-      return (data || []) as unknown as MapaMental[];
+      return data.map(item => ({
+        ...item,
+        titulo: item.mapa || '',
+        descricao: item.area || '',
+        tags: [],
+        imagem_url: '',
+        arquivo_url: item.link || ''
+      })) as MapaMental[];
     },
   });
 
   const areas = Array.from(
     new Set(mapasMentais.map((item) => item.area))
-  ).filter(Boolean);
+  ).filter(Boolean) as string[];
 
   const filteredMapas = mapasMentais.filter(
     (mapa) =>
@@ -70,7 +79,7 @@ const MapasMentais = () => {
 
         <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
           <div className="relative flex-1">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
               placeholder="Buscar por título ou descrição..."
@@ -82,8 +91,8 @@ const MapasMentais = () => {
 
           <select
             className="rounded-md border px-3 py-2 text-sm"
-            value={selectedArea}
-            onChange={(e) => setSelectedArea(e.target.value)}
+            value={selectedArea || ""}
+            onChange={(e) => setSelectedArea(e.target.value || null)}
           >
             <option value="">Todas as áreas</option>
             {areas.map((area) => (

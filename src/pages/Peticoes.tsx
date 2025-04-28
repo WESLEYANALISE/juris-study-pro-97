@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -51,7 +52,7 @@ const Peticoes = () => {
         descricao: item.descricao || '',
         categoria: item.area || '',
         arquivo_url: item.link || '',
-        created_at: item.created_at || new Date().toISOString()
+        created_at: new Date().toISOString() // Default value since it may not exist
       }));
 
       setPeticoes(mappedPeticoes);

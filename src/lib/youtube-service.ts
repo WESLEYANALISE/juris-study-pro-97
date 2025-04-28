@@ -19,6 +19,21 @@ export interface YouTubePlaylist {
   channelTitle: string;
 }
 
+// Interface for playlists from the database
+export interface StoredPlaylist {
+  id: string;
+  playlist_id: string;
+  playlist_title: string;
+  thumbnail_url: string;
+  channel_title: string;
+  video_count: number;
+  area: string;
+  is_single_video?: boolean;
+  video_id?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 // Mock data for playlists
 const MOCK_PLAYLISTS: YouTubePlaylist[] = [
   {
@@ -109,7 +124,7 @@ export async function getChannelId(channelUsername: string): Promise<string | nu
   return 'UC123456789ABCDEFGH';
 }
 
-// Mock function to get videos from a channel
+// Mock function to get channel videos
 export async function getChannelVideos(channelId: string): Promise<YouTubeVideo[]> {
   console.log(`Getting videos from channel: ${channelId}`);
   // Simulate API delay
@@ -118,20 +133,36 @@ export async function getChannelVideos(channelId: string): Promise<YouTubeVideo[
   return MOCK_VIDEOS;
 }
 
+// Function to get channel playlists
+export async function getChannelPlaylists(channelId: string): Promise<YouTubePlaylist[]> {
+  console.log(`Getting playlists for channel: ${channelId}`);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return MOCK_PLAYLISTS;
+}
+
 // Function to get playlists from the database
-export async function getStoredPlaylists(): Promise<any[]> {
+export async function getStoredPlaylists(): Promise<StoredPlaylist[]> {
   try {
     const { data, error } = await supabase
       .from('video_playlists_juridicas')
       .select('*')
       .order('playlist_title');
-
+    
     if (error) {
       console.error('Error fetching playlists:', error);
       return [];
     }
-
-    return data || [];
+    
+    // Cast the data to include the optional properties that might be missing
+    const typedPlaylists = (data || []).map(playlist => ({
+      ...playlist,
+      is_single_video: playlist.is_single_video || false,
+      video_id: playlist.video_id || undefined
+    })) as StoredPlaylist[];
+    
+    return typedPlaylists;
   } catch (error) {
     console.error('Exception fetching playlists:', error);
     return [];
