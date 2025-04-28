@@ -1,9 +1,9 @@
-// Update the import for supabase
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
-import { ArticleCard } from "@/components/vademecum/ArticleCard";
+import ArticleCard from "@/components/vademecum/ArticleCard";
 
 interface LawArticle {
   id: string;
@@ -28,18 +28,38 @@ const VadeMecumViewer = () => {
   const loadArticles = async () => {
     setLoading(true);
     try {
+      // Reference a table that actually exists (e.g., checking specific codes tables)
+      const tableName = lawName?.replace(/-/g, '_');
+      
+      if (!tableName) {
+        setArticles([]);
+        setLoading(false);
+        return;
+      }
+      
+      // Query the appropriate table based on the law name
       const { data, error } = await supabase
-        .from('vademecum_articles')
+        .from(tableName)
         .select('*')
-        .eq('law_name', lawName)
-        .order('article_number', { ascending: true });
+        .order('numero', { ascending: true });
 
       if (error) {
         console.error("Error loading articles:", error);
         return;
       }
 
-      setArticles(data || []);
+      // Map the data to the LawArticle interface
+      const lawArticles = (data || []).map(item => ({
+        id: item.id.toString(),
+        law_name: lawName || '',
+        article_number: item.numero || '',
+        article_text: item.artigo || '',
+        technical_explanation: item.tecnica,
+        formal_explanation: item.formal,
+        practical_example: item.exemplo
+      }));
+
+      setArticles(lawArticles);
     } finally {
       setLoading(false);
     }

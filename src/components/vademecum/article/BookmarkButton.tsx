@@ -46,13 +46,13 @@ export const BookmarkButton = ({
         toast.success('Removido dos favoritos');
         setIsFavorite(false);
       } else {
-        // Add to favorites
+        // Add to favorites - Include both article_id and required properties
         const { error } = await supabase
           .from('vademecum_favorites')
           .insert({
             user_id: user.id,
             law_name: lawName,
-            article_id: articleId, // Use the article_id field
+            article_id: articleId,
             article_number: articleNumber,
             article_text: articleText,
           });

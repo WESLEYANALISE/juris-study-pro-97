@@ -1,12 +1,17 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { PageTransition } from "@/components/PageTransition";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft, Bookmark, Share2, BookOpen, Video } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 
 interface Article {
   id: string;
@@ -78,7 +83,8 @@ export default function RedacaoConteudo() {
       
       setArticle(articleData);
       
-      if (article?.playlist_ids && article.playlist_ids.length > 0) {
+      // Check if article has playlist_ids and if they exist
+      if (articleData.playlist_ids && articleData.playlist_ids.length > 0) {
         const { data: playlistsData, error: playlistsError } = await supabase
           .from('video_playlists_juridicas')
           .select('*')
@@ -88,17 +94,24 @@ export default function RedacaoConteudo() {
           throw playlistsError;
         }
         
-        setPlaylists(playlistsData || []);
+        // Cast the data to include the optional properties that might be missing
+        const typedPlaylistsData = (playlistsData || []).map(playlist => ({
+          ...playlist,
+          is_single_video: playlist.is_single_video || false,
+          video_id: playlist.video_id || undefined
+        }));
         
-        const singleVideo = playlistsData?.find(playlist => playlist.is_single_video);
+        setPlaylists(typedPlaylistsData);
+        
+        const singleVideo = typedPlaylistsData.find(playlist => playlist.is_single_video);
         if (singleVideo) {
           setSelectedPlaylist(singleVideo);
           if (singleVideo.is_single_video && singleVideo.video_id) {
             setSelectedVideoId(singleVideo.video_id);
           }
-        } else if (playlistsData && playlistsData.length > 0) {
-          setSelectedPlaylist(playlistsData[0]);
-          loadVideosFromPlaylist(playlistsData[0]);
+        } else if (typedPlaylistsData && typedPlaylistsData.length > 0) {
+          setSelectedPlaylist(typedPlaylistsData[0]);
+          loadVideosFromPlaylist(typedPlaylistsData[0]);
         }
       }
       

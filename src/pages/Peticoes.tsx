@@ -21,7 +21,7 @@ interface Peticao {
   descricao: string;
   categoria: string;
   arquivo_url: string;
-  created_at: string;
+  created_at?: string;
 }
 
 const Peticoes = () => {
@@ -39,8 +39,7 @@ const Peticoes = () => {
     try {
       const { data, error } = await supabase
         .from("peticoes")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .select("*");
 
       if (error) {
         throw error;

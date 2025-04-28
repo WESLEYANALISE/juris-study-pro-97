@@ -69,11 +69,7 @@ const Cursos = () => {
 
         if (error) {
           console.error("Error fetching courses:", error);
-          toast({
-            variant: "destructive",
-            title: "Erro ao carregar cursos",
-            description: error.message,
-          });
+          toast.error("Erro ao carregar cursos: " + error.message);
           return [];
         }
         
@@ -81,11 +77,7 @@ const Cursos = () => {
         return data as Curso[];
       } catch (err) {
         console.error("Exception while fetching courses:", err);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar cursos",
-          description: "Ocorreu um erro inesperado",
-        });
+        toast.error("Erro ao carregar cursos: Ocorreu um erro inesperado");
         return [];
       }
     },
@@ -101,12 +93,9 @@ const Cursos = () => {
     setFavoriteCursos(newFavorites);
     localStorage.setItem("favoriteCursos", JSON.stringify(newFavorites));
 
-    toast({
-      title: favoriteCursos.includes(id)
-        ? "Curso removido dos favoritos"
-        : "Curso adicionado aos favoritos",
-      duration: 2000,
-    });
+    toast.success(favoriteCursos.includes(id)
+      ? "Curso removido dos favoritos"
+      : "Curso adicionado aos favoritos");
   };
 
   const getCursoLevel = (curso: Curso): LevelType => {

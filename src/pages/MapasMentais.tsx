@@ -1,70 +1,63 @@
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 
 interface MapaMental {
-  id: string;
-  titulo: string;
-  descricao: string;
+  id: number;
   area: string;
-  tags: string[];
-  imagem_url: string;
-  arquivo_url: string;
-  created_at: string;
+  mapa: string;
+  link: string;
+  created_at?: string;
+  titulo?: string;
+  descricao?: string;
+  tags?: string[];
+  imagem_url?: string;
+  arquivo_url?: string;
 }
 
 const MapasMentais = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [areaFilter, setAreaFilter] = useState("");
-  const [tagFilter, setTagFilter] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
 
-  const { data: mapas = [], isLoading } = useQuery({
+  const { data: mapasMentais = [], isLoading } = useQuery({
     queryKey: ["mapas_mentais"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("mapas_mentais")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("area");
 
       if (error) {
         console.error("Error fetching mapas mentais:", error);
         return [];
       }
 
-      return data as MapaMental[];
+      return (data || []) as unknown as MapaMental[];
     },
   });
 
-  const uniqueAreas = Array.from(
-    new Set(mapas.map(mapa => mapa.area?.toString() || ""))
-  ).filter(Boolean) as string[];
+  const areas = Array.from(
+    new Set(mapasMentais.map((item) => item.area))
+  ).filter(Boolean);
 
-  const uniqueTags = Array.from(
-    new Set(mapas.flatMap(mapa => (mapa.tags || []).map(tag => tag?.toString() || "")))
-  ).filter(Boolean) as string[];
+  const filteredMapas = mapasMentais.filter(
+    (mapa) =>
+      (!selectedArea || mapa.area === selectedArea) &&
+      (!searchTerm ||
+        mapa.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (mapa.mapa && mapa.mapa.toLowerCase().includes(searchTerm.toLowerCase())))
+  );
 
-  const filteredMapas = mapas.filter((mapa) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      mapa.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mapa.descricao?.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesArea = areaFilter === "" || mapa.area === areaFilter;
-
-    const matchesTag = tagFilter === "" || mapa.tags?.includes(tagFilter);
-
-    return matchesSearch && matchesArea && matchesTag;
-  });
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-20">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="container py-6">
@@ -82,33 +75,20 @@ const MapasMentais = () => {
               type="search"
               placeholder="Buscar por título ou descrição..."
               className="pl-8"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
 
           <select
             className="rounded-md border px-3 py-2 text-sm"
-            value={areaFilter}
-            onChange={(e) => setAreaFilter(e.target.value)}
+            value={selectedArea}
+            onChange={(e) => setSelectedArea(e.target.value)}
           >
             <option value="">Todas as áreas</option>
-            {uniqueAreas.map((area) => (
+            {areas.map((area) => (
               <option key={area} value={area}>
                 {area}
-              </option>
-            ))}
-          </select>
-
-          <select
-            className="rounded-md border px-3 py-2 text-sm"
-            value={tagFilter}
-            onChange={(e) => setTagFilter(e.target.value)}
-          >
-            <option value="">Todas as tags</option>
-            {uniqueTags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
               </option>
             ))}
           </select>

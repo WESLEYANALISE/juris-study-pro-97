@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,7 +85,7 @@ export function ArtigosApoio() {
       const typedPlaylistsData = (playlistsData || []).map(playlist => ({
         ...playlist,
         is_single_video: playlist.is_single_video || false,
-        video_id: playlist.video_id || null
+        video_id: playlist.video_id || undefined
       }));
       
       setPlaylists(typedPlaylistsData);
@@ -113,10 +114,17 @@ export function ArtigosApoio() {
           throw error;
         }
         
-        setPlaylists(data || []);
+        // Cast the data with appropriate types
+        const typedPlaylistsData = (data || []).map(playlist => ({
+          ...playlist,
+          is_single_video: playlist.is_single_video || false,
+          video_id: playlist.video_id || undefined
+        }));
+        
+        setPlaylists(typedPlaylistsData);
         
         // If there's a single video playlist, select it automatically
-        const singleVideo = data?.find(playlist => playlist.is_single_video);
+        const singleVideo = typedPlaylistsData.find(playlist => playlist.is_single_video);
         if (singleVideo && singleVideo.video_id) {
           setSelectedVideoId(singleVideo.video_id);
         }

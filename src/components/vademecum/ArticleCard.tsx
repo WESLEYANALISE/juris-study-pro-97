@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,7 +26,7 @@ interface ArticleCardProps {
   onFontSizeChange: (size: number) => void;
 }
 
-const ArticleCard = ({
+export const ArticleCard = ({
   lawName,
   articleNumber,
   articleText,
@@ -160,4 +161,4 @@ const ArticleCard = ({
     </motion.div>;
 };
 
-export default React.memo(ArticleCard);
+export default ArticleCard;

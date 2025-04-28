@@ -10,15 +10,6 @@ import { getChannelPlaylists, getChannelVideos, getChannelId } from "@/lib/youtu
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { useNavigate } from "react-router-dom";
 
-interface YouTubePlaylist {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  videoCount: number;
-  channelTitle: string;
-}
-
 interface StoredPlaylist {
   id: string;
   playlist_id: string;

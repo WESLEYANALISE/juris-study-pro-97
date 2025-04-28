@@ -1,18 +1,13 @@
-import { google } from 'googleapis';
 
-const youtube = google.youtube({
-  version: 'v3',
-  auth: process.env.YOUTUBE_API_KEY,
-});
-
+// Types for YouTube data
 export interface YouTubeVideo {
   id: string;
   title: string;
   description: string;
   thumbnail: string;
-  channelTitle: string;
   publishedAt: string;
-  duration?: string;
+  channelTitle: string;
+  duration: string;
 }
 
 export interface YouTubePlaylist {
@@ -24,322 +19,124 @@ export interface YouTubePlaylist {
   channelTitle: string;
 }
 
-interface Playlist {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  videoCount: number;
-  channelTitle: string;
+// Mock data for playlists
+const MOCK_PLAYLISTS: YouTubePlaylist[] = [
+  {
+    id: 'PLgRnmS7DjCR5vUdKCF_-A2VdB9Dh_T9mi',
+    title: 'Direito Constitucional - Teoria Geral',
+    description: 'Aulas sobre fundamentos do Direito Constitucional',
+    thumbnail: 'https://i.ytimg.com/vi/XXX/default.jpg',
+    videoCount: 15,
+    channelTitle: 'Curso Jurídico'
+  },
+  {
+    id: 'PLgRnmS7DjCR5vUdKCF_-A2VdB9Dh_T9mj',
+    title: 'Direito Civil - Contratos',
+    description: 'Aulas sobre contratos no Direito Civil',
+    thumbnail: 'https://i.ytimg.com/vi/YYY/default.jpg',
+    videoCount: 12,
+    channelTitle: 'Curso Jurídico'
+  },
+  {
+    id: 'PLgRnmS7DjCR5vUdKCF_-A2VdB9Dh_T9mk',
+    title: 'Direito Penal - Parte Geral',
+    description: 'Aulas sobre parte geral do Direito Penal',
+    thumbnail: 'https://i.ytimg.com/vi/ZZZ/default.jpg',
+    videoCount: 18,
+    channelTitle: 'Curso Jurídico'
+  }
+];
+
+// Mock data for videos
+const MOCK_VIDEOS: YouTubeVideo[] = [
+  {
+    id: 'video1',
+    title: 'Introdução ao Direito Constitucional',
+    description: 'Nesta aula vamos aprender os conceitos básicos do Direito Constitucional.',
+    thumbnail: 'https://i.ytimg.com/vi/111/default.jpg',
+    publishedAt: '2023-01-15T14:00:00Z',
+    channelTitle: 'Curso Jurídico',
+    duration: '45:20'
+  },
+  {
+    id: 'video2',
+    title: 'Princípios Fundamentais da Constituição',
+    description: 'Análise dos princípios fundamentais da Constituição Federal.',
+    thumbnail: 'https://i.ytimg.com/vi/222/default.jpg',
+    publishedAt: '2023-01-22T14:00:00Z',
+    channelTitle: 'Curso Jurídico',
+    duration: '42:15'
+  },
+  {
+    id: 'video3',
+    title: 'Direitos e Garantias Fundamentais',
+    description: 'Estudo dos direitos e garantias fundamentais previstos na Constituição.',
+    thumbnail: 'https://i.ytimg.com/vi/333/default.jpg',
+    publishedAt: '2023-01-29T14:00:00Z',
+    channelTitle: 'Curso Jurídico',
+    duration: '50:10'
+  }
+];
+
+// Mock function to get playlists
+export async function getJuridicPlaylists(keyword: string): Promise<YouTubePlaylist[]> {
+  console.log(`Searching for playlists with keyword: ${keyword}`);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return MOCK_PLAYLISTS.filter(playlist => 
+    playlist.title.toLowerCase().includes(keyword.toLowerCase()) ||
+    playlist.description.toLowerCase().includes(keyword.toLowerCase())
+  );
 }
 
-interface Video {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  channelTitle: string;
-  publishedAt: string;
+// Mock function to get videos from a playlist
+export async function getPlaylistVideos(playlistId: string): Promise<YouTubeVideo[]> {
+  console.log(`Getting videos for playlist: ${playlistId}`);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return MOCK_VIDEOS;
 }
 
-interface Channel {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  videoCount: number;
-  subscriberCount: number;
+// Mock function to get channel ID from username
+export async function getChannelId(channelUsername: string): Promise<string | null> {
+  console.log(`Getting channel ID for username: ${channelUsername}`);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // Return a mock channel ID
+  return 'UC123456789ABCDEFGH';
 }
 
-export const getChannelId = async (channelName: string): Promise<string | null> => {
-  try {
-    const response = await youtube.search.list({
-      part: ['id'],
-      q: channelName,
-      type: ['channel'],
-      maxResults: 1,
-    });
+// Mock function to get videos from a channel
+export async function getChannelVideos(channelId: string): Promise<YouTubeVideo[]> {
+  console.log(`Getting videos from channel: ${channelId}`);
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return MOCK_VIDEOS;
+}
 
-    const channelId = response.data.items?.[0]?.id?.channelId;
-    return channelId || null;
-  } catch (error) {
-    console.error('Error getting channel ID:', error);
-    return null;
-  }
-};
-
-export const getChannelDetails = async (channelId: string): Promise<Channel | null> => {
-  try {
-    const response = await youtube.channels.list({
-      part: ['snippet', 'statistics'],
-      id: [channelId],
-    });
-
-    const channel = response.data.items?.[0];
-
-    if (!channel) {
-      return null;
-    }
-
-    return {
-      id: channel.id!,
-      title: channel.snippet!.title!,
-      description: channel.snippet!.description!,
-      thumbnail: channel.snippet!.thumbnails!.high!.url!,
-      videoCount: Number(channel.statistics!.videoCount!),
-      subscriberCount: Number(channel.statistics!.subscriberCount!),
-    };
-  } catch (error) {
-    console.error('Error getting channel details:', error);
-    return null;
-  }
-};
-
-export const getChannelPlaylists = async (channelId: string): Promise<Playlist[]> => {
-  try {
-    const response = await youtube.playlists.list({
-      part: ['snippet', 'contentDetails'],
-      channelId: channelId,
-      maxResults: 50,
-    });
-
-    if (!response.data.items) {
-      return [];
-    }
-
-    const playlists: Playlist[] = response.data.items.map((item: any) => ({
-      id: item.id!,
-      title: item.snippet!.title!,
-      description: item.snippet!.description!,
-      thumbnail: item.snippet!.thumbnails!.high!.url!,
-      videoCount: item.contentDetails!.itemCount!,
-      channelTitle: item.snippet!.channelTitle!,
-    }));
-
-    return playlists;
-  } catch (error) {
-    console.error('Error getting channel playlists:', error);
-    return [];
-  }
-};
-
-export const getPlaylistDetails = async (playlistId: string): Promise<Playlist | null> => {
-  try {
-    const response = await youtube.playlists.list({
-      part: ['snippet', 'contentDetails'],
-      id: [playlistId],
-    });
-
-    const playlist = response.data.items?.[0];
-
-    if (!playlist) {
-      return null;
-    }
-
-    return {
-      id: playlist.id!,
-      title: playlist.snippet!.title!,
-      description: playlist.snippet!.description!,
-      thumbnail: playlist.snippet!.thumbnails!.high!.url!,
-      videoCount: playlist.contentDetails!.itemCount!,
-      channelTitle: playlist.snippet!.channelTitle!,
-    };
-  } catch (error) {
-    console.error('Error getting playlist details:', error);
-    return null;
-  }
-};
-
-export const getPlaylistVideos = async (playlistId: string): Promise<Video[]> => {
-  try {
-    const response = await youtube.playlistItems.list({
-      part: ['snippet', 'contentDetails'],
-      playlistId: playlistId,
-      maxResults: 50,
-    });
-
-    if (!response.data.items) {
-      return [];
-    }
-
-    const videos: Video[] = response.data.items.map((item: any) => ({
-      id: item.contentDetails!.videoId!,
-      title: item.snippet!.title!,
-      description: item.snippet!.description!,
-      thumbnail: item.snippet!.thumbnails!.high!.url!,
-      channelTitle: item.snippet!.channelTitle!,
-      publishedAt: item.snippet!.publishedAt!,
-    }));
-
-    return videos;
-  } catch (error) {
-    console.error('Error getting playlist videos:', error);
-    return [];
-  }
-};
-
-export const getVideoDetails = async (videoId: string): Promise<{ title: string; description: string; thumbnail: string; channelTitle: string; } | null> => {
-  try {
-    const response = await youtube.videos.list({
-      part: ['snippet'],
-      id: [videoId],
-    });
-    
-    const video = response.data.items?.[0];
-    
-    if (!video) {
-      return null;
-    }
-    
-    return {
-      title: video.snippet!.title!,
-      description: video.snippet!.description!,
-      thumbnail: video.snippet!.thumbnails!.high!.url!,
-      channelTitle: video.snippet!.channelTitle!,
-    };
-  } catch (error) {
-    console.error('Error getting video details:', error);
-    return null;
-  }
-};
-
-export const getChannelVideos = async (channelId: string): Promise<Video[]> => {
-    try {
-        // First, fetch the uploads playlist ID for the channel
-        const channelResponse = await youtube.channels.list({
-            part: ['contentDetails'],
-            id: [channelId],
-        });
-
-        const uploadsPlaylistId = channelResponse.data.items?.[0]?.contentDetails?.relatedPlaylists?.uploads;
-
-        if (!uploadsPlaylistId) {
-            console.error('No uploads playlist found for channel:', channelId);
-            return [];
-        }
-
-        // Then, fetch the videos from the uploads playlist
-        const playlistItemsResponse = await youtube.playlistItems.list({
-            part: ['snippet'],
-            playlistId: uploadsPlaylistId,
-            maxResults: 50, // Adjust as needed
-        });
-
-        if (!playlistItemsResponse.data.items) {
-            console.warn('No videos found in uploads playlist for channel:', channelId);
-            return [];
-        }
-
-        const videos: Video[] = playlistItemsResponse.data.items.map((item: any) => ({
-            id: item.snippet.resourceId.videoId,
-            title: item.snippet.title,
-            description: item.snippet.description,
-            thumbnail: item.snippet.thumbnails.high.url,
-            channelTitle: item.snippet.channelTitle,
-            publishedAt: item.snippet.publishedAt,
-        }));
-
-        return videos;
-
-    } catch (error) {
-        console.error('Error getting channel videos:', error);
-        return [];
-    }
-};
-
-export const syncPlaylistToDatabase = async (playlistId: string, area: string, isVideoSingle = false, videoId = '') => {
-  try {
-    if (isVideoSingle && videoId) {
-      // Handle single video case
-      const videoDetails = await getVideoDetails(videoId);
-      
-      if (!videoDetails) {
-        throw new Error('No video details found');
-      }
-      
-      const { data, error } = await supabase
-        .from('video_playlists_juridicas')
-        .insert({
-          playlist_id: videoId, // Using video ID as playlist ID for singles
-          playlist_title: videoDetails.title,
-          thumbnail_url: videoDetails.thumbnail,
-          channel_title: videoDetails.channelTitle,
-          video_count: 1,
-          area: area,
-          is_single_video: true,
-          video_id: videoId
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      return { success: true, data };
-    } else {
-      // Handle playlist case
-      const playlist = await getPlaylistDetails(playlistId);
-      
-      if (!playlist) {
-        throw new Error('No playlist found');
-      }
-      
-      const { data, error } = await supabase
-        .from('video_playlists_juridicas')
-        .insert({
-          playlist_id: playlistId,
-          playlist_title: playlist.title,
-          thumbnail_url: playlist.thumbnail,
-          channel_title: playlist.channelTitle,
-          video_count: playlist.videoCount,
-          area: area
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      
-      return { success: true, data };
-    }
-  } catch (error: any) {
-    console.error('Error syncing playlist to database:', error);
-    return { success: false, error: error.message };
-  }
-};
-
-export const getJuridicPlaylists = async (): Promise<YouTubePlaylist[]> => {
+// Function to get playlists from the database
+export async function getStoredPlaylists(): Promise<any[]> {
   try {
     const { data, error } = await supabase
       .from('video_playlists_juridicas')
-      .select('*');
-    
-    if (error) throw error;
-    
-    return (data || []).map(item => ({
-      id: item.playlist_id,
-      title: item.playlist_title,
-      description: '',
-      thumbnail: item.thumbnail_url,
-      videoCount: item.video_count,
-      channelTitle: item.channel_title
-    }));
-  } catch (error) {
-    console.error('Error getting juridic playlists:', error);
-    return [];
-  }
-};
+      .select('*')
+      .order('playlist_title');
 
-export const getStoredPlaylists = async (): Promise<any[]> => {
-  try {
-    const { data, error } = await supabase
-      .from('video_playlists_juridicas')
-      .select('*');
-    
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching playlists:', error);
+      return [];
+    }
+
     return data || [];
   } catch (error) {
-    console.error('Error getting stored playlists:', error);
+    console.error('Exception fetching playlists:', error);
     return [];
   }
-};
+}
 
+// Import Supabase client
 import { supabase } from '@/integrations/supabase/client';
