@@ -137,7 +137,6 @@ export const ArticleCard = ({
               setIsNarrating={setIsNarrating} 
             />
             <BookmarkButton 
-              user={user} 
               isFavorite={isFavorite} 
               setIsFavorite={setIsFavorite}
               lawName={lawName} 

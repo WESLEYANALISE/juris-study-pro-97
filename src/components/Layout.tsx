@@ -49,6 +49,9 @@ const Layout = ({
     }
   });
 
+  // Default profile for all users - fixed as "tudo" (complete access)
+  const userProfile = "tudo";
+
   // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
@@ -167,9 +170,9 @@ const Layout = ({
   return (
     <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
-        <Header />
+        <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
-          <AppSidebar />
+          <AppSidebar userProfile={userProfile} />
           <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
             <div className="container mx-auto p-4 md:p-6 px-0">
               {/* Mostrar WelcomeCard apenas para usuários logados */}
