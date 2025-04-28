@@ -1,5 +1,5 @@
 
-import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText } from "lucide-react";
+import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, Film, PenTool, User } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +16,8 @@ import {
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useLocation } from "react-router-dom";
 import { type ProfileType } from "@/components/WelcomeModal";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 interface AppSidebarProps {
   userProfile: ProfileType;
@@ -24,32 +26,56 @@ interface AppSidebarProps {
 export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
   
-  // Menu items for main navigation
-  const menuItems = [
-    { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Iniciando no Direito", url: "/iniciando-no-direito", icon: Lightbulb, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Cursos", url: "/cursos", icon: BookOpenText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "tudo"] },
-    { title: "Mapas Mentais", url: "/mapas-mentais", icon: Brain, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Resumos", url: "/resumos", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
-    { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
-    { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
-    { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
-    { title: "Assistente Jurídico", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-    { title: "Cronograma", url: "/cronograma", icon: Calendar, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Gamificação", url: "/gamificacao", icon: Trophy, profiles: ["concurseiro", "universitario", "tudo"] },
-    { title: "Remote Desktop", url: "/remote", icon: MonitorPlay, profiles: ["tudo"] },
+  // Menu items for main navigation, organized by categories
+  const menuCategories = [
+    {
+      label: "Principal",
+      items: [
+        { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Iniciando no Direito", url: "/inicie", icon: Lightbulb, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Cursos", url: "/cursos", icon: BookOpenText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+      ]
+    },
+    {
+      label: "Conteúdo",
+      items: [
+        { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "tudo"] },
+        { title: "Mapas Mentais", url: "/mapas-mentais", icon: Brain, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "JurisFlix", url: "/jurisflix", icon: Film, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+      ]
+    },
+    {
+      label: "Ferramentas de Estudo",
+      items: [
+        { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
+        { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
+        { title: "Redação Jurídica", url: "/redacao-juridica", icon: FileText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
+        { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
+        { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
+        { title: "Assistente Jurídico", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Anotações", url: "/anotacoes", icon: PenTool, profiles: ["concurseiro", "universitario", "tudo"] },
+      ]
+    },
+    {
+      label: "Outros",
+      items: [
+        { title: "Cronograma", url: "/cronograma", icon: Calendar, profiles: ["concurseiro", "universitario", "tudo"] },
+        { title: "Gamificação", url: "/gamificacao", icon: Trophy, profiles: ["concurseiro", "universitario", "tudo"] },
+        { title: "Remote Desktop", url: "/remote", icon: MonitorPlay, profiles: ["tudo"] },
+        { title: "Perfil", url: "/perfil", icon: User, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+      ]
+    },
   ];
   
   // Filter menu items based on user profile
-  const mainMenuItems = menuItems.filter(item => 
-    item.profiles.includes(userProfile)
-  );
+  const filteredMenuCategories = menuCategories.map(category => ({
+    ...category,
+    items: category.items.filter(item => item.profiles.includes(userProfile))
+  })).filter(category => category.items.length > 0);
 
   // Define profile configurations for header display
   const profileConfig = {
@@ -90,7 +116,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       <SidebarContent>
         <SidebarGroup>
           <div className="mb-4 px-3 py-2">
-            <div className="bg-primary/10 text-primary rounded-md p-3">
+            <div className="bg-primary/10 text-primary rounded-md p-3 transition-all hover:bg-primary/15">
               <div className="flex items-center mb-2">
                 <ProfileIcon className="h-5 w-5 mr-2" />
                 <h3 className="font-medium">{title}</h3>
@@ -100,35 +126,50 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
           </div>
         </SidebarGroup>
         
-        <SidebarGroup>
-          <SidebarGroupLabel>Navegação</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainMenuItems.map((item) => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <a 
-                        href={item.url} 
-                        className={`flex items-center gap-3 px-3 py-2 rounded-md ${
-                          isActive ? "bg-primary/20 text-primary font-medium" : "hover:bg-sidebar-accent/50"
-                        }`}
-                      >
-                        <item.icon className={`h-5 w-5 ${isActive ? "text-primary" : ""}`} />
-                        <span>{item.title}</span>
-                      </a>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {filteredMenuCategories.map((category, index) => (
+          <SidebarGroup key={index}>
+            <SidebarGroupLabel>{category.label}</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {category.items.map((item) => {
+                  const isActive = location.pathname === item.url || 
+                                  (item.url !== "/" && location.pathname.startsWith(item.url));
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <a 
+                          href={item.url} 
+                          className={cn(
+                            "flex items-center gap-3 px-3 py-2 rounded-md min-h-[44px] transition-colors",
+                            isActive 
+                              ? "bg-primary/20 text-primary font-medium" 
+                              : "hover:bg-accent/50 hover:text-accent-foreground"
+                          )}
+                          aria-current={isActive ? "page" : undefined}
+                        >
+                          <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
+                          <span>{item.title}</span>
+                          {item.url === "/assistente" && (
+                            <Badge variant="secondary" className="ml-auto text-[10px] py-0">
+                              IA
+                            </Badge>
+                          )}
+                        </a>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
       
       <SidebarFooter>
-        <ThemeToggle />
+        <div className="flex items-center justify-between px-4">
+          <span className="text-xs text-muted-foreground">v1.2.0</span>
+          <ThemeToggle />
+        </div>
       </SidebarFooter>
     </Sidebar>
   );

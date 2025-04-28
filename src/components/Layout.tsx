@@ -1,19 +1,25 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { type ProfileType } from "@/components/WelcomeModal";
 import MobileNavigation from "@/components/MobileNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Toaster } from "@/components/ui/sonner";
+
 interface LayoutProps {
   children: React.ReactNode;
   userProfile: ProfileType;
 }
+
 const Layout = ({
   children,
   userProfile
 }: LayoutProps) => {
   const isMobile = useIsMobile();
-  return <SidebarProvider defaultOpen={!isMobile}>
+  
+  return (
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
@@ -25,7 +31,10 @@ const Layout = ({
           </main>
         </div>
         <MobileNavigation />
+        <Toaster />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default Layout;

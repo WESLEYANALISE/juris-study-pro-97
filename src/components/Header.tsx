@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabaseClient";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import {
@@ -21,6 +21,8 @@ import {
   SheetContent,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { toast } from "sonner";
 
 interface HeaderProps {
   userProfile: ProfileType;
@@ -28,9 +30,17 @@ interface HeaderProps {
 
 export function Header({ userProfile }: HeaderProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isMobile = useIsMobile();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [currentPath, setCurrentPath] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Generate path segments for breadcrumb
+    const pathSegments = location.pathname.split('/').filter(Boolean);
+    setCurrentPath(pathSegments);
+  }, [location]);
   
   useEffect(() => {
     // Verificar status de autenticação ao montar o componente
@@ -69,11 +79,13 @@ export function Header({ userProfile }: HeaderProps) {
 
   const changeProfile = (profile: ProfileType) => {
     localStorage.setItem("juris-study-profile", profile);
+    toast.success(`Perfil alterado para ${profileLabels[profile]}`);
     window.location.reload();
   };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    toast.success("Logout realizado com sucesso");
     // After logout, redirect to login page
     navigate("/auth", { replace: true });
   };
@@ -81,19 +93,67 @@ export function Header({ userProfile }: HeaderProps) {
   const handleLogin = () => {
     navigate("/auth");
   };
+  
+  // Get current page title for desktop breadcrumb
+  const getCurrentPageTitle = () => {
+    if (currentPath.length === 0) return "Início";
+    
+    // Format the last segment of the path into a title
+    const lastSegment = currentPath[currentPath.length - 1];
+    return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ');
+  };
 
   return (
-    <header className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm">
+    <header className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm safe-top">
       <div className="container flex h-16 items-center px-4 md:px-6">
         {/* Mobile menu and profile */}
         <div className="flex items-center">
           <MobileMenu userProfile={userProfile} />
           <div className="text-sm text-muted-foreground hidden md:flex md:items-center">
-            <span className="mr-2">Seu perfil:</span>
-            <span className="bg-primary/10 text-primary px-2 py-1 rounded-md font-medium inline-flex items-center">
+            <Breadcrumb className="hidden md:flex">
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink asChild>
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto"
+                      onClick={() => navigate("/")}
+                    >
+                      Início
+                    </Button>
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                
+                {currentPath.length > 0 && currentPath.map((segment, index) => (
+                  <React.Fragment key={segment}>
+                    <BreadcrumbSeparator />
+                    <BreadcrumbItem>
+                      {index === currentPath.length - 1 ? (
+                        <span className="font-medium text-foreground">
+                          {segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')}
+                        </span>
+                      ) : (
+                        <BreadcrumbLink asChild>
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto"
+                            onClick={() => navigate(`/${currentPath.slice(0, index + 1).join('/')}`)}
+                          >
+                            {segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')}
+                          </Button>
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
+            
+            {/* Desktop profile indicator */}
+            <div className="ml-6 bg-primary/10 text-primary px-2 py-1 rounded-md font-medium inline-flex items-center">
               {profileIcons[userProfile]}
               {profileLabels[userProfile]}
-            </span>
+            </div>
           </div>
         </div>
 
@@ -116,6 +176,24 @@ export function Header({ userProfile }: HeaderProps) {
                     className="w-full bg-background"
                     autoFocus
                   />
+                  <div className="mt-4">
+                    <h3 className="font-medium mb-2">Pesquisas recentes</h3>
+                    <div className="grid gap-1">
+                      {["Direito Civil", "Código Penal", "Contratos", "Habeas Corpus"].map((term) => (
+                        <Button 
+                          key={term} 
+                          variant="ghost" 
+                          className="justify-start h-auto py-2"
+                          onClick={() => {
+                            toast.info(`Pesquisando por "${term}"...`);
+                            setIsSearchOpen(false);
+                          }}
+                        >
+                          {term}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </SheetContent>
             </Sheet>
@@ -130,8 +208,14 @@ export function Header({ userProfile }: HeaderProps) {
             </div>
           )}
           
-          <Button size="icon" variant="ghost" className="h-10 w-10 min-w-[40px] min-h-[40px]">
+          <Button 
+            size="icon" 
+            variant="ghost" 
+            className="h-10 w-10 min-w-[40px] min-h-[40px] relative"
+            onClick={() => toast.info("Notificações em breve...")}
+          >
             <Bell className="h-5 w-5" />
+            <span className="absolute top-1 right-1 w-2 h-2 bg-primary rounded-full"></span>
             <span className="sr-only">Notificações</span>
           </Button>
           <DropdownMenu>
