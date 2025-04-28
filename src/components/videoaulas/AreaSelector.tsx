@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface AreaSelectorProps {
   areas: string[];
@@ -20,7 +21,7 @@ export const AreaSelector = ({ areas, selectedArea, onAreaSelect, className }: A
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className={className}>
+        <Button variant="outline" className={cn(className)}>
           {selectedArea}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>
