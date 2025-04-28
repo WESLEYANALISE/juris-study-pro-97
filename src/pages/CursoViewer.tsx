@@ -11,6 +11,7 @@ const CursoViewer = () => {
     loading,
     menuOpen,
     showCourse,
+    setMenuOpen,
     handleStartCourse,
     handleBack,
     handleNavigateBack

@@ -73,8 +73,13 @@ export function useCursoViewer() {
     navigate("/cursos");
   };
 
+  const setMenuOpen = (open: boolean) => {
+    setState(prev => ({ ...prev, menuOpen: open }));
+  };
+
   return {
     ...state,
+    setMenuOpen,
     handleStartCourse,
     handleBack,
     handleNavigateBack,
