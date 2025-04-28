@@ -44,8 +44,8 @@ export function VideoAulasRedacao() {
       
       const typedPlaylists = (data || []).map(playlist => ({
         ...playlist,
-        is_single_video: Boolean(playlist.is_single_video),
-        video_id: playlist.video_id || undefined
+        is_single_video: Boolean((playlist as any).is_single_video),
+        video_id: (playlist as any).video_id || undefined
       })) as EnhancedStoredPlaylist[];
       
       setStoredPlaylists(typedPlaylists);

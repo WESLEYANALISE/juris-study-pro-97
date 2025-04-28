@@ -59,7 +59,7 @@ export function ArtigosApoio() {
       const articlesWithPlaylists = (articlesData || []).map(article => ({
         ...article,
         tags: article.tags || [],
-        playlist_ids: article.playlist_ids || []
+        playlist_ids: (article as any).playlist_ids || []
       })) as Article[];
       
       setArticles(articlesWithPlaylists);
@@ -81,8 +81,8 @@ export function ArtigosApoio() {
       
       const typedPlaylistsData = (playlistsData || []).map(playlist => ({
         ...playlist,
-        is_single_video: Boolean(playlist.is_single_video),
-        video_id: playlist.video_id || undefined
+        is_single_video: Boolean((playlist as any).is_single_video),
+        video_id: (playlist as any).video_id || undefined
       })) as EnhancedStoredPlaylist[];
       
       setPlaylists(typedPlaylistsData);
@@ -112,8 +112,8 @@ export function ArtigosApoio() {
         
         const typedPlaylistsData = (data || []).map(playlist => ({
           ...playlist,
-          is_single_video: Boolean(playlist.is_single_video),
-          video_id: playlist.video_id || undefined
+          is_single_video: Boolean((playlist as any).is_single_video),
+          video_id: (playlist as any).video_id || undefined
         })) as EnhancedStoredPlaylist[];
         
         setPlaylists(typedPlaylistsData);

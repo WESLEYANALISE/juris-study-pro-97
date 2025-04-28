@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -77,7 +76,7 @@ export default function RedacaoConteudo() {
       // Ensure article has the playlist_ids property, defaulting to empty array
       const articleWithPlaylists: Article = {
         ...articleData,
-        playlist_ids: articleData.playlist_ids || []
+        playlist_ids: (articleData as any).playlist_ids || []
       };
       
       setArticle(articleWithPlaylists);
@@ -94,7 +93,7 @@ export default function RedacaoConteudo() {
         }
         
         // Cast the data to include the optional properties that might be missing
-        const typedPlaylistsData = (playlistsData || []).map(playlist => ({
+        const typedPlaylistsData = (playlistsData || []).map((playlist: any) => ({
           ...playlist,
           is_single_video: playlist.is_single_video || false,
           video_id: playlist.video_id || undefined

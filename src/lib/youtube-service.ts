@@ -155,7 +155,7 @@ export async function getStoredPlaylists(): Promise<StoredPlaylist[]> {
       return [];
     }
     
-    // Cast the data to include the optional properties that might be missing
+    // Ensure the returned data includes the optional properties
     const typedPlaylists = (data || []).map(playlist => ({
       ...playlist,
       is_single_video: playlist.is_single_video || false,

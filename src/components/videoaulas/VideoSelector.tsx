@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { VideoCard } from "./VideoCard";
-import { YouTubePlaylist, YouTubeVideo, getPlaylistVideos, getStoredPlaylists, storedPlaylistToYouTubePlaylist } from "@/lib/youtube-service";
+import { YouTubePlaylist, YouTubeVideo, getPlaylistVideos, getStoredPlaylists, storedPlaylistToYouTubePlaylist, StoredPlaylist } from "@/lib/youtube-service";
 
 interface VideoSelectorProps {
   onSelectVideo: (videoId: string) => void;

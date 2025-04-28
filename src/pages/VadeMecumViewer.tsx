@@ -53,7 +53,8 @@ const VadeMecumViewer = () => {
         return;
       }
       
-      // Use type assertion to tell TypeScript that tableName is a valid table name
+      // Use a type assertion to tell TypeScript this is a valid table name
+      // And use any for the data to avoid type errors
       const { data, error } = await supabase
         .from(tableName as any)
         .select('*')
@@ -65,8 +66,8 @@ const VadeMecumViewer = () => {
       }
 
       // Map the data to the LawArticle interface
-      const lawArticles = (data || []).map(item => ({
-        id: item.id.toString(),
+      const lawArticles = (data || []).map((item: any) => ({
+        id: item.id ? item.id.toString() : '',
         law_name: lawName || '',
         article_number: item.numero || '',
         article_text: item.artigo || '',
