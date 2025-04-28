@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -12,12 +11,10 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate, useLocation } from "react-router-dom";
-
 interface LayoutProps {
   children: React.ReactNode;
   userProfile: ProfileType;
 }
-
 interface UserDataType {
   displayName: string | null;
   onboardingCompleted: boolean;
@@ -27,13 +24,14 @@ interface UserDataType {
     time: string | null;
   };
 }
-
 const Layout = ({
   children,
   userProfile
 }: LayoutProps) => {
   const isMobile = useIsMobile();
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -43,10 +41,10 @@ const Layout = ({
     progress: 0,
     nextTask: {
       title: null,
-      time: null,
-    },
+      time: null
+    }
   });
-  
+
   // Redirecionar para login se não estiver autenticado
   useEffect(() => {
     if (!user && location.pathname !== "/auth") {
@@ -58,41 +56,36 @@ const Layout = ({
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.id) return;
-
       try {
         // Buscar perfil do usuário
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('display_name, onboarding_completed')
-          .eq('id', user.id)
-          .single();
-          
+        const {
+          data: profileData,
+          error: profileError
+        } = await supabase.from('profiles').select('display_name, onboarding_completed').eq('id', user.id).single();
         if (profileError) throw profileError;
 
         // Buscar próxima tarefa do cronograma
         const today = new Date();
-        const { data: nextTaskData } = await supabase
-          .from('cronograma')
-          .select('titulo, data_inicio')
-          .eq('user_id', user.id)
-          .eq('concluido', false)
-          .gte('data_inicio', today.toISOString())
-          .order('data_inicio', { ascending: true })
-          .limit(1)
-          .single();
+        const {
+          data: nextTaskData
+        } = await supabase.from('cronograma').select('titulo, data_inicio').eq('user_id', user.id).eq('concluido', false).gte('data_inicio', today.toISOString()).order('data_inicio', {
+          ascending: true
+        }).limit(1).single();
 
         // Calcular progresso
-        const { data: progressData } = await supabase
-          .rpc('calculate_user_progress', { user_uuid: user.id });
-        
+        const {
+          data: progressData
+        } = await supabase.rpc('calculate_user_progress', {
+          user_uuid: user.id
+        });
         setUserData({
           displayName: profileData?.display_name || null,
           onboardingCompleted: profileData?.onboarding_completed || false,
           progress: progressData || 0,
           nextTask: {
             title: nextTaskData?.titulo || null,
-            time: nextTaskData?.data_inicio ? new Date(nextTaskData.data_inicio).toLocaleDateString() : null,
-          },
+            time: nextTaskData?.data_inicio ? new Date(nextTaskData.data_inicio).toLocaleDateString() : null
+          }
         });
 
         // Mostrar onboarding se não estiver completo
@@ -103,27 +96,17 @@ const Layout = ({
         console.error("Erro ao buscar dados do usuário:", error);
       }
     };
-
     fetchUserData();
   }, [user]);
-
-  return (
-    <SidebarProvider defaultOpen={!isMobile}>
+  return <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
           <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
-            <div className="container mx-auto p-4 md:p-6">
+            <div className="container mx-auto p-4 md:p-6 px-0">
               {/* Mostrar WelcomeCard apenas para usuários logados */}
-              {user && location.pathname === '/' && (
-                <WelcomeCard 
-                  userName={userData.displayName || user.email?.split('@')[0]}
-                  progress={userData.progress}
-                  nextTaskTitle={userData.nextTask.title}
-                  nextTaskTime={userData.nextTask.time}
-                />
-              )}
+              {user && location.pathname === '/' && <WelcomeCard userName={userData.displayName || user.email?.split('@')[0]} progress={userData.progress} nextTaskTitle={userData.nextTask.title} nextTaskTime={userData.nextTask.time} />}
               {children}
             </div>
           </main>
@@ -132,13 +115,8 @@ const Layout = ({
         <Toaster />
         
         {/* Modal de onboarding para novos usuários */}
-        <OnboardingModal 
-          open={showOnboarding} 
-          onOpenChange={setShowOnboarding} 
-        />
+        <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 export default Layout;
