@@ -8,11 +8,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ExternalLink, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { ExternalLink, Mail, ArrowRight, AlertCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/use-auth";
 
 const LOGO_URL = "/lovable-uploads/58dfe876-fea8-4a29-9b9e-a8cbd69b2c5f.png";
 const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
@@ -32,23 +33,26 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Auth = () => {
+  const { signIn, signUp } = useAuth();
   const [loading, setLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
   const [authError, setAuthError] = useState<string | null>(null);
   const [recoveryMode, setRecoveryMode] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const checkSession = async () => {
       const { data } = await supabase.auth.getSession();
       if (data.session) {
-        navigate("/", { replace: true });
+        const from = location.state?.from || "/";
+        navigate(from, { replace: true });
       }
     };
     
     checkSession();
-  }, [navigate]);
+  }, [navigate, location.state]);
 
   useEffect(() => {
     // Reset error when tab changes
@@ -121,10 +125,7 @@ const Auth = () => {
     setAuthError(null);
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password
-      });
+      const { data, error } = await signIn(values.email, values.password);
       
       if (error) {
         // Check if error is about invalid credentials
@@ -134,8 +135,10 @@ const Auth = () => {
         throw error;
       }
       
-      toast.success("Login realizado com sucesso");
-      navigate("/", { replace: true });
+      if (data?.session) {
+        const from = location.state?.from || "/";
+        navigate(from, { replace: true });
+      }
     } catch (error: any) {
       console.error("Erro ao fazer login:", error);
       setAuthError(error.message);
@@ -152,15 +155,8 @@ const Auth = () => {
     try {
       console.log("Tentando cadastrar novo usuário:", values.email);
       
-      const { data, error } = await supabase.auth.signUp({
-        email: values.email,
-        password: values.password,
-        options: {
-          data: {
-            display_name: values.name
-          },
-          emailRedirectTo: window.location.origin + "/"
-        }
+      const { data, error } = await signUp(values.email, values.password, {
+        display_name: values.name
       });
       
       if (error) {
@@ -179,20 +175,9 @@ const Auth = () => {
         return;
       }
       
-      console.log("Cadastro realizado com sucesso:", data);
       toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
       
-      if (data?.session) {
-        // Atualizar o perfil do usuário com o nome
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .update({ display_name: values.name })
-          .eq('id', data.user?.id);
-        
-        if (profileError) {
-          console.error("Erro ao atualizar perfil:", profileError);
-        }
-
+      if (data.session) {
         navigate("/", { replace: true });
       }
     } catch (error: any) {
@@ -377,7 +362,14 @@ const Auth = () => {
                         className="w-full mt-4"
                         disabled={loading}
                       >
-                        {loading ? "Entrando..." : "Entrar"}
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Entrando...
+                          </>
+                        ) : (
+                          "Entrar"
+                        )}
                       </Button>
                     </form>
                   </Form>
@@ -451,7 +443,14 @@ const Auth = () => {
                         className="w-full mt-4"
                         disabled={loading}
                       >
-                        {loading ? "Cadastrando..." : "Cadastrar"}
+                        {loading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Cadastrando...
+                          </>
+                        ) : (
+                          "Cadastrar"
+                        )}
                       </Button>
                     </form>
                   </Form>
@@ -472,7 +471,16 @@ const Auth = () => {
                 variant="outline"
               >
                 <ExternalLink className="h-5 w-5 text-blue-600" />
-                <span>{loading ? "Entrando..." : "Continuar com Google"}</span>
+                <span>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin inline" />
+                      Entrando...
+                    </>
+                  ) : (
+                    "Continuar com Google"
+                  )}
+                </span>
               </Button>
 
               <Button

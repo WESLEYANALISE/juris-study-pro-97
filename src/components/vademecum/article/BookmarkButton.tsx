@@ -6,9 +6,9 @@ import { motion } from 'framer-motion';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 
 interface BookmarkButtonProps {
-  user: User | null;
   isFavorite: boolean;
   setIsFavorite: (isFavorite: boolean) => void;
   lawName: string;
@@ -18,7 +18,6 @@ interface BookmarkButtonProps {
 }
 
 export const BookmarkButton = ({
-  user,
   isFavorite,
   setIsFavorite,
   lawName,
@@ -26,6 +25,7 @@ export const BookmarkButton = ({
   articleText,
   isLoading = false
 }: BookmarkButtonProps) => {
+  const { user } = useAuth();
   const [isProcessing, setIsProcessing] = React.useState(false);
 
   const toggleFavorite = async () => {

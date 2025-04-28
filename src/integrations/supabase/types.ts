@@ -2785,6 +2785,10 @@ export type Database = {
         Args: { user_uuid: string }
         Returns: number
       }
+      delete_user_account: {
+        Args: { user_id: string }
+        Returns: undefined
+      }
       generate_redacao_content: {
         Args: { topic: string; type: string }
         Returns: string

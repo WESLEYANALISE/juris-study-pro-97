@@ -7,8 +7,8 @@ import { toast } from "sonner";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 /**
- * Componente para proteger rotas que requerem autenticação.
- * Redireciona para /auth se não estiver autenticado.
+ * Component to protect routes that require authentication.
+ * Redirects to /auth if not authenticated.
  */
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const [checked, setChecked] = useState(false);

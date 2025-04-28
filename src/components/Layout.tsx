@@ -2,7 +2,6 @@
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
-import { type ProfileType } from "@/components/WelcomeModal";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Toaster } from "@/components/ui/sonner";
 import OnboardingModal from "@/components/OnboardingModal";
@@ -16,7 +15,6 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 interface LayoutProps {
   children: React.ReactNode;
-  userProfile: ProfileType;
 }
 
 interface UserDataType {
@@ -30,8 +28,7 @@ interface UserDataType {
 }
 
 const Layout = ({
-  children,
-  userProfile
+  children
 }: LayoutProps) => {
   const isMobile = useIsMobile();
   const {
@@ -52,7 +49,7 @@ const Layout = ({
     }
   });
 
-  // Buscar dados do usuário
+  // Fetch user data
   useEffect(() => {
     const fetchUserData = async () => {
       if (!user?.id) {
@@ -62,21 +59,11 @@ const Layout = ({
       
       try {
         console.log("Fetching user data for:", user.id);
-        // Buscar perfil do usuário
-        const {
-          data: profileData,
-          error: profileError
-        } = await supabase.from('profiles').select('display_name, onboarding_completed').eq('id', user.id).maybeSingle();
         
-        if (profileError) {
-          console.error("Error fetching profile:", profileError);
-          setIsLoading(false);
-          return;
-        }
-
-        console.log("Profile data fetched:", profileData);
-
-        // Buscar próxima tarefa do cronograma
+        // Check if onboarding is completed
+        const onboardingCompleted = profile?.onboarding_completed || false;
+        
+        // Fetch next task from schedule
         let nextTaskData = null;
         try {
           const today = new Date();
@@ -100,7 +87,7 @@ const Layout = ({
           console.error("Exception when fetching next task:", err);
         }
 
-        // Calcular progresso
+        // Calculate progress
         let progressData = 0;
         try {
           const { data: progress, error: progressError } = await supabase.rpc('calculate_user_progress', {
@@ -117,11 +104,8 @@ const Layout = ({
           console.error("Exception when calculating progress:", err);
         }
         
-        // Verificar se o onboarding já foi concluído
-        const onboardingCompleted = profileData?.onboarding_completed || false;
-        
         setUserData({
-          displayName: profileData?.display_name || null,
+          displayName: profile?.display_name || null,
           onboardingCompleted: onboardingCompleted,
           progress: progressData,
           nextTask: {
@@ -130,8 +114,7 @@ const Layout = ({
           }
         });
 
-        // Mostrar onboarding se não estiver completo e usuário estiver autenticado
-        // Apenas uma vez quando os dados são carregados inicialmente
+        // Show onboarding if not completed yet
         if (!onboardingCompleted) {
           setShowOnboarding(true);
         }
@@ -147,14 +130,14 @@ const Layout = ({
     }
     
     fetchUserData();
-  }, [user, authLoading]);
+  }, [user, profile, authLoading]);
   
-  // Função para lidar com a conclusão do onboarding
+  // Function to handle onboarding completion
   const handleOnboardingComplete = async () => {
     if (!user?.id) return;
     
     try {
-      // Atualizar o perfil do usuário no banco de dados
+      // Update user profile in the database
       const { error } = await supabase
         .from('profiles')
         .update({ onboarding_completed: true })
@@ -162,7 +145,7 @@ const Layout = ({
       
       if (error) throw error;
       
-      // Atualizar o estado local
+      // Update local state
       setShowOnboarding(false);
       setUserData(prev => ({...prev, onboardingCompleted: true}));
       
@@ -184,9 +167,9 @@ const Layout = ({
   return (
     <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
-        <Header userProfile={userProfile} />
+        <Header />
         <div className="flex flex-1 w-full">
-          <AppSidebar userProfile={userProfile} />
+          <AppSidebar />
           <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
             <div className="container mx-auto p-4 md:p-6 px-0">
               {/* Mostrar WelcomeCard apenas para usuários logados */}
