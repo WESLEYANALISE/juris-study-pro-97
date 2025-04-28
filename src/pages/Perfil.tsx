@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -41,7 +41,6 @@ const Perfil = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Load user data
   useEffect(() => {
     if (user && profile) {
       setEmail(user.email || "");
@@ -64,7 +63,6 @@ const Perfil = () => {
       setIsLoading(true);
       
       try {
-        // Upload file to Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(filePath, file);
@@ -73,14 +71,12 @@ const Perfil = () => {
           throw uploadError;
         }
         
-        // Get public URL for the file
         const { data: urlData } = supabase.storage
           .from('avatars')
           .getPublicUrl(filePath);
           
         const publicUrl = urlData.publicUrl;
         
-        // Update user profile with new avatar URL
         const { error: updateError } = await supabase
           .from('profiles')
           .update({ avatar_url: publicUrl })
@@ -90,7 +86,6 @@ const Perfil = () => {
           throw updateError;
         }
         
-        // Update local state and refresh profile data
         setAvatarUrl(publicUrl);
         await refreshProfile();
         
@@ -157,7 +152,6 @@ const Perfil = () => {
     setIsDeleting(true);
     
     try {
-      // Call our delete_user_account function
       const { error: functionError } = await supabase.rpc('delete_user_account', {
         user_id: user.id
       });
@@ -168,7 +162,6 @@ const Perfil = () => {
 
       toast.success("Sua conta foi excluída com sucesso");
       
-      // Sign out and redirect to auth page
       await signOut();
       navigate('/auth');
     } catch (error: any) {
@@ -186,7 +179,6 @@ const Perfil = () => {
     .toUpperCase()
     .substring(0, 2) || '??';
 
-  // If not authenticated, show a loading state
   if (!user) {
     return (
       <div className="flex items-center justify-center h-screen">
