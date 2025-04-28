@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { VideoCard } from "@/components/videoaulas/VideoCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AreaSelector } from "@/components/videoaulas/AreaSelector";
 import { supabase } from "@/integrations/supabase/client";
@@ -112,14 +111,33 @@ export const VideoAulasRedacao = () => {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {playlists.length > 0 ? (
                   playlists.map((playlist) => (
-                    <VideoCard
-                      key={playlist.id}
-                      title={playlist.title}
-                      thumbnail={playlist.thumbnail}
-                      channelTitle={playlist.channelTitle}
-                      videoCount={playlist.videoCount}
-                      playlistId={playlist.id}
-                    />
+                    <Card key={playlist.id} className="overflow-hidden hover:shadow-md transition-all">
+                      <div className="aspect-video w-full overflow-hidden">
+                        <img 
+                          src={playlist.thumbnail} 
+                          alt={playlist.title} 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                      <CardHeader>
+                        <CardTitle className="text-lg line-clamp-2">{playlist.title}</CardTitle>
+                        <div className="flex items-center text-sm text-muted-foreground">
+                          <span>{playlist.channelTitle}</span>
+                          <span className="mx-1">•</span>
+                          <span>{playlist.videoCount} vídeos</span>
+                        </div>
+                      </CardHeader>
+                      <CardFooter>
+                        <a 
+                          href={`https://www.youtube.com/playlist?list=${playlist.id}`}
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline text-sm"
+                        >
+                          Ver no YouTube
+                        </a>
+                      </CardFooter>
+                    </Card>
                   ))
                 ) : (
                   <div className="col-span-full text-center py-10">
