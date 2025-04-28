@@ -39,6 +39,7 @@ import IniciandoNoDireito from "./pages/IniciandoNoDireito";
 import Cursos from "./pages/Cursos";
 import CursoViewer from "./pages/CursoViewer";
 import VideoAulasInterativas from "./pages/VideoAulasInterativas";
+import VideoAulasTradicional from "./pages/VideoAulasTradicional";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -163,6 +164,18 @@ const App = () => {
                       <Layout userProfile={userProfile}>
                         <PageTransition>
                           <VideoAulas />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                <Route
+                  path="/videoaulas/tradicionais"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <VideoAulasTradicional />
                         </PageTransition>
                       </Layout>
                     </RequireAuth>
