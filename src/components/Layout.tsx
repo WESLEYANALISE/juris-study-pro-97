@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -9,12 +10,14 @@ import OnboardingModal from "@/components/OnboardingModal";
 import WelcomeCard from "@/components/WelcomeCard";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/lib/supabaseClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from "react-router-dom";
+
 interface LayoutProps {
   children: React.ReactNode;
   userProfile: ProfileType;
 }
+
 interface UserDataType {
   displayName: string | null;
   onboardingCompleted: boolean;
@@ -24,6 +27,7 @@ interface UserDataType {
     time: string | null;
   };
 }
+
 const Layout = ({
   children,
   userProfile
@@ -61,7 +65,8 @@ const Layout = ({
         const {
           data: profileData,
           error: profileError
-        } = await supabase.from('profiles').select('display_name, onboarding_completed').eq('id', user.id).single();
+        } = await supabase.from('profiles').select('display_name, onboarding_completed').eq('id', user.id).maybeSingle();
+        
         if (profileError) throw profileError;
 
         // Buscar próxima tarefa do cronograma
@@ -70,7 +75,7 @@ const Layout = ({
           data: nextTaskData
         } = await supabase.from('cronograma').select('titulo, data_inicio').eq('user_id', user.id).eq('concluido', false).gte('data_inicio', today.toISOString()).order('data_inicio', {
           ascending: true
-        }).limit(1).single();
+        }).limit(1).maybeSingle();
 
         // Calcular progresso
         const {
@@ -78,6 +83,7 @@ const Layout = ({
         } = await supabase.rpc('calculate_user_progress', {
           user_uuid: user.id
         });
+        
         setUserData({
           displayName: profileData?.display_name || null,
           onboardingCompleted: profileData?.onboarding_completed || false,
@@ -96,8 +102,10 @@ const Layout = ({
         console.error("Erro ao buscar dados do usuário:", error);
       }
     };
+    
     fetchUserData();
   }, [user]);
+  
   return <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
@@ -119,4 +127,5 @@ const Layout = ({
       </div>
     </SidebarProvider>;
 };
+
 export default Layout;

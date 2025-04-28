@@ -8,10 +8,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ExternalLink, Mail } from "lucide-react";
-import { supabase } from "@/lib/supabaseClient";
+import { ExternalLink, Mail, ArrowRight, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const LOGO_URL = "/lovable-uploads/58dfe876-fea8-4a29-9b9e-a8cbd69b2c5f.png";
 const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
@@ -34,6 +35,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [recoveryMode, setRecoveryMode] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,6 +49,11 @@ const Auth = () => {
     
     checkSession();
   }, [navigate]);
+
+  useEffect(() => {
+    // Reset error when tab changes
+    setAuthError(null);
+  }, [activeTab]);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -75,6 +83,7 @@ const Auth = () => {
       if (error) throw error;
     } catch (error: any) {
       toast.error("Erro ao entrar com Google: " + (error.message || "Tente novamente mais tarde"));
+      setAuthError(error.message);
     } finally {
       setLoading(false);
     }
@@ -100,33 +109,72 @@ const Auth = () => {
       toast.success("Link enviado! Verifique seu email para fazer login");
     } catch (error: any) {
       toast.error("Erro ao enviar link: " + (error.message || "Tente novamente mais tarde"));
+      setAuthError(error.message);
     } finally {
       setLoading(false);
     }
   };
 
+  const checkExistingUser = async (email: string) => {
+    try {
+      // First try to sign in with an invalid password to check if user exists
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password: 'check_user_exists_only'
+      });
+
+      // If error contains 'Invalid login credentials', user exists
+      if (error && error.message.includes('Invalid login credentials')) {
+        return true;
+      }
+      return false;
+    } catch (error) {
+      return false;
+    }
+  };
+
   const onLoginSubmit = async (values: LoginFormValues) => {
+    setAuthError(null);
     setLoading(true);
     try {
-      const { error, data } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email: values.email,
         password: values.password
       });
       
-      if (error) throw error;
+      if (error) {
+        // Check if error is about invalid credentials
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Email ou senha incorretos. Tente novamente.');
+        }
+        throw error;
+      }
       
       toast.success("Login realizado com sucesso");
       navigate("/", { replace: true });
     } catch (error: any) {
-      toast.error("Erro na autenticação: " + (error.message || "Tente novamente mais tarde"));
+      setAuthError(error.message);
+      toast.error(error.message || "Erro na autenticação. Tente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
   };
 
   const onSignupSubmit = async (values: SignupFormValues) => {
+    setAuthError(null);
     setLoading(true);
+    
     try {
+      // Check if user already exists
+      const userExists = await checkExistingUser(values.email);
+      
+      if (userExists) {
+        setAuthError(`O email ${values.email} já está cadastrado. Tente fazer login ou recuperar sua senha.`);
+        setRecoveryMode(true);
+        setLoading(false);
+        return;
+      }
+      
       const { error, data } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
@@ -152,7 +200,42 @@ const Auth = () => {
         navigate("/", { replace: true });
       }
     } catch (error: any) {
-      toast.error("Erro no cadastro: " + (error.message || "Tente novamente mais tarde"));
+      // If error contains "User already registered", show specific message
+      if (error.message.includes("User already registered")) {
+        setAuthError("Este email já está cadastrado. Tente fazer login ou recuperar sua senha.");
+        setRecoveryMode(true);
+      } else {
+        setAuthError(error.message);
+        toast.error("Erro no cadastro: " + (error.message || "Tente novamente mais tarde"));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    const email = activeTab === "login" 
+      ? loginForm.getValues("email") 
+      : signupForm.getValues("email");
+
+    if (!email || !z.string().email().safeParse(email).success) {
+      const form = activeTab === "login" ? loginForm : signupForm;
+      form.setError("email", { message: "Email inválido" });
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin + "/auth"
+      });
+
+      if (error) throw error;
+      
+      toast.success("Instruções para redefinir sua senha foram enviadas para seu email");
+      setRecoveryMode(false);
+    } catch (error: any) {
+      toast.error("Erro ao enviar email de recuperação: " + (error.message || "Tente novamente mais tarde"));
     } finally {
       setLoading(false);
     }
@@ -189,6 +272,41 @@ const Auth = () => {
             </div>
           ) : (
             <>
+              {authError && (
+                <Alert variant="destructive" className="mb-4">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    {authError}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {recoveryMode && (
+                <div className="bg-muted p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold mb-2">Esqueceu sua senha?</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Podemos enviar um link para redefinir sua senha.
+                  </p>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="secondary" 
+                      className="text-xs" 
+                      onClick={() => setRecoveryMode(false)}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button 
+                      className="text-xs flex items-center gap-1"
+                      onClick={handleResetPassword}
+                      disabled={loading}
+                    >
+                      Redefinir senha
+                      <ArrowRight className="h-3 w-3 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               <Tabs
                 defaultValue="login"
                 value={activeTab}
@@ -230,7 +348,16 @@ const Auth = () => {
                         name="password"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Senha</FormLabel>
+                            <div className="flex justify-between items-center">
+                              <FormLabel>Senha</FormLabel>
+                              <button 
+                                type="button" 
+                                className="text-xs text-muted-foreground hover:text-primary"
+                                onClick={() => setRecoveryMode(true)}
+                              >
+                                Esqueceu a senha?
+                              </button>
+                            </div>
                             <FormControl>
                               <Input
                                 type="password"
