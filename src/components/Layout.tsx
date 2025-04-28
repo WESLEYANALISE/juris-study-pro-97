@@ -11,6 +11,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useLocation } from "react-router-dom";
+import MobileNavigation from "@/components/MobileNavigation";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -111,12 +112,30 @@ const Layout = ({
   }, [user]);
   
   // Função para lidar com a conclusão do onboarding
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    setUserData(prev => ({...prev, onboardingCompleted: true}));
+  const handleOnboardingComplete = async () => {
+    if (!user?.id) return;
+    
+    try {
+      // Atualizar o perfil do usuário no banco de dados
+      const { error } = await supabase
+        .from('profiles')
+        .update({ onboarding_completed: true })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      
+      // Atualizar o estado local
+      setShowOnboarding(false);
+      setUserData(prev => ({...prev, onboardingCompleted: true}));
+      
+      console.log("Onboarding marcado como concluído com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar status do onboarding:", error);
+    }
   };
   
-  return <SidebarProvider defaultOpen={!isMobile}>
+  return (
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
@@ -129,6 +148,7 @@ const Layout = ({
             </div>
           </main>
         </div>
+        <MobileNavigation />
         <Toaster />
         
         {/* Modal de onboarding para novos usuários */}
@@ -138,7 +158,8 @@ const Layout = ({
           onComplete={handleOnboardingComplete}
         />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
 
 export default Layout;
