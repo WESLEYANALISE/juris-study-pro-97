@@ -17,46 +17,64 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     console.log("RequireAuth: Setting up auth check");
+    let authListener: { subscription: { unsubscribe: () => void } } | null = null;
     
     // Configure o listener de auth ANTES de buscar sessão atual.
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed in RequireAuth:", _event, session?.user?.email);
-      setSession(session);
-      setChecked(true);
+    const setupAuthListener = () => {
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
+        console.log("Auth state changed in RequireAuth:", _event, newSession?.user?.email);
+        setSession(newSession);
+        setChecked(true);
 
-      // Se não autenticado, redireciona para /auth
-      if (!session && location.pathname !== "/auth") {
-        console.log("Not authenticated, redirecting to /auth");
-        toast.error("Você precisa estar logado para acessar esta página");
-        navigate("/auth", { replace: true });
-      }
-      // Se autenticado E está na página de login, manda para a home
-      if (session && location.pathname === "/auth") {
-        console.log("Already authenticated, redirecting to home");
-        navigate("/", { replace: true });
-      }
-    });
+        // Se não autenticado, redireciona para /auth
+        if (!newSession && location.pathname !== "/auth") {
+          console.log("Not authenticated, redirecting to /auth");
+          toast.error("Você precisa estar logado para acessar esta página");
+          navigate("/auth", { replace: true });
+        }
+        // Se autenticado E está na página de login, manda para a home
+        if (newSession && location.pathname === "/auth") {
+          console.log("Already authenticated, redirecting to home");
+          navigate("/", { replace: true });
+        }
+      });
+      
+      return listener;
+    };
 
     // Checa sessão existente ao carregar
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Current session in RequireAuth:", session?.user?.email);
-      setSession(session);
-      setChecked(true);
+    const checkCurrentSession = async () => {
+      try {
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        console.log("Current session in RequireAuth:", currentSession?.user?.email);
+        setSession(currentSession);
+        setChecked(true);
 
-      // Redireciona se não autenticado
-      if (!session && location.pathname !== "/auth") {
-        console.log("No session found, redirecting to /auth");
-        toast.error("Você precisa estar logado para acessar esta página");
-        navigate("/auth", { replace: true });
+        // Redireciona se não autenticado
+        if (!currentSession && location.pathname !== "/auth") {
+          console.log("No session found, redirecting to /auth");
+          toast.error("Você precisa estar logado para acessar esta página");
+          navigate("/auth", { replace: true });
+        }
+        if (currentSession && location.pathname === "/auth") {
+          console.log("Session found on auth page, redirecting to home");
+          navigate("/", { replace: true });
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        setChecked(true);
       }
-      if (session && location.pathname === "/auth") {
-        console.log("Session found on auth page, redirecting to home");
-        navigate("/", { replace: true });
-      }
-    });
+    };
+
+    // Setup auth listener first
+    authListener = setupAuthListener();
+    // Then check current session
+    checkCurrentSession();
 
     return () => {
-      authListener.subscription.unsubscribe();
+      if (authListener && authListener.subscription) {
+        authListener.subscription.unsubscribe();
+      }
     };
   }, [navigate, location.pathname]);
 

@@ -9,10 +9,40 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 const VerTudo = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+  
+  // List of routes that exist in App.tsx
+  const existingRoutes = [
+    "/", "/auth", "/inicie", "/jurisflix", "/dicionario", "/biblioteca", 
+    "/biblioteca/recomendacoes", "/questoes", "/vademecum", "/simulados", 
+    "/flashcards", "/mapas-mentais", "/noticias", "/peticoes", "/assistente", 
+    "/perfil", "/vermais", "/cursos", "/curso", "/redacao-juridica", 
+    "/redacao-conteudo", "/videoaulas", "/videoaulas/tradicionais", 
+    "/videoaulas-interativas", "/anotacoes"
+  ];
+  
+  // Function to handle navigation with route checking
+  const handleNavigate = (path: string) => {
+    // Check if the path exists in our defined routes
+    const pathExists = existingRoutes.some(route => 
+      path === route || 
+      (route.endsWith('/') ? path.startsWith(route) : path === route || path.startsWith(route + '/'))
+    );
+    
+    if (pathExists) {
+      navigate(path);
+    } else {
+      // For non-existent routes, show a toast message
+      toast.info("Esta funcionalidade está em desenvolvimento", {
+        description: "Estamos trabalhando para disponibilizá-la em breve.",
+        duration: 3000,
+      });
+    }
+  };
   
   const allFeatures = [
     {
@@ -100,7 +130,7 @@ const VerTudo = () => {
                     key={itemIndex}
                     variant="outline"
                     className="flex flex-col h-auto items-start p-4 border gap-2 hover:bg-accent hover:text-accent-foreground"
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigate(item.path)}
                   >
                     <div className="flex items-center w-full">
                       <item.icon className={`h-5 w-5 ${item.color} mr-2`} />
@@ -124,7 +154,7 @@ const VerTudo = () => {
                     key={itemIndex}
                     variant="ghost"
                     className="flex items-center w-full justify-start px-3 py-2 hover:bg-accent"
-                    onClick={() => navigate(item.path)}
+                    onClick={() => handleNavigate(item.path)}
                   >
                     <item.icon className={`h-5 w-5 ${item.color} mr-3`} />
                     <div className="flex flex-col items-start">
