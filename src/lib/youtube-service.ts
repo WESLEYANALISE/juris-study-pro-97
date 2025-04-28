@@ -1,8 +1,8 @@
 
 // YouTube Data API v3 service
 
-// API Key fornecida (em produção, isso deveria estar em variáveis de ambiente)
-const API_KEY = "AIzaSyBCPCIV9jUxa4sD6TrlR74q3KTKqDZjoT8";
+// API Key - using the new key provided
+const API_KEY = "AIzaSyDlM4OBBfKmZDMSitzbSX8OCBOgqkGCQVc";
 const BASE_URL = "https://www.googleapis.com/youtube/v3";
 
 export interface YouTubeVideo {
@@ -30,10 +30,11 @@ export async function searchPlaylists(
   maxResults: number = 10
 ): Promise<YouTubePlaylist[]> {
   try {
+    // Added regionCode and relevanceLanguage for better Brazilian Portuguese results
     const response = await fetch(
       `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(
         query + " direito"
-      )}&type=playlist&maxResults=${maxResults}&key=${API_KEY}`
+      )}&type=playlist&maxResults=${maxResults}&regionCode=BR&relevanceLanguage=pt&key=${API_KEY}`
     );
 
     if (!response.ok) {
@@ -44,6 +45,10 @@ export async function searchPlaylists(
     
     // Extrair IDs das playlists para buscar detalhes
     const playlistIds = data.items.map((item: any) => item.id.playlistId).join(",");
+    
+    if (!playlistIds) {
+      return [];
+    }
     
     // Buscar detalhes das playlists
     const detailsResponse = await fetch(
@@ -56,11 +61,17 @@ export async function searchPlaylists(
     
     const detailsData = await detailsResponse.json();
     
+    if (!detailsData.items || detailsData.items.length === 0) {
+      return [];
+    }
+    
     return detailsData.items.map((item: any) => ({
       id: item.id,
       title: item.snippet.title,
       description: item.snippet.description,
-      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+      thumbnail: item.snippet.thumbnails.high?.url || 
+                item.snippet.thumbnails.medium?.url || 
+                item.snippet.thumbnails.default?.url,
       videoCount: item.contentDetails.itemCount,
       channelTitle: item.snippet.channelTitle,
     }));
@@ -81,7 +92,7 @@ export async function getJuridicPlaylists(
 // Função para buscar vídeos de uma playlist
 export async function getPlaylistVideos(
   playlistId: string,
-  maxResults: number = 10
+  maxResults: number = 20  // Increased max results
 ): Promise<YouTubeVideo[]> {
   try {
     const response = await fetch(
@@ -94,8 +105,19 @@ export async function getPlaylistVideos(
 
     const data = await response.json();
     
+    if (!data.items || data.items.length === 0) {
+      return [];
+    }
+    
     // Extrair IDs dos vídeos para buscar duração
-    const videoIds = data.items.map((item: any) => item.snippet.resourceId.videoId).join(",");
+    const videoIds = data.items
+      .map((item: any) => item.snippet.resourceId.videoId)
+      .filter(Boolean) // Filter out any null/undefined values
+      .join(",");
+    
+    if (!videoIds) {
+      return [];
+    }
     
     // Buscar detalhes dos vídeos (incluindo duração)
     const videosResponse = await fetch(
@@ -122,8 +144,8 @@ export async function getPlaylistVideos(
     };
 
     // Mesclar dados dos vídeos com suas durações
-    return data.items.map((item: any, index: number) => {
-      const videoDetails = videosData.items.find(
+    return data.items.map((item: any) => {
+      const videoDetails = videosData.items && videosData.items.find(
         (v: any) => v.id === item.snippet.resourceId.videoId
       );
       
@@ -131,7 +153,9 @@ export async function getPlaylistVideos(
         id: item.snippet.resourceId.videoId,
         title: item.snippet.title,
         description: item.snippet.description,
-        thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+        thumbnail: item.snippet.thumbnails.high?.url || 
+                  item.snippet.thumbnails.medium?.url || 
+                  item.snippet.thumbnails.default?.url,
         publishedAt: item.snippet.publishedAt,
         channelTitle: item.snippet.channelTitle,
         duration: videoDetails ? processDuration(videoDetails.contentDetails.duration) : "00:00",
@@ -139,6 +163,41 @@ export async function getPlaylistVideos(
     });
   } catch (error) {
     console.error("Erro ao buscar vídeos da playlist:", error);
+    return [];
+  }
+}
+
+// Função para buscar playlists do banco de dados supabase
+export async function getStoredPlaylists(area?: string) {
+  try {
+    const { supabase } = await import("@/lib/supabaseClient");
+    
+    let query = supabase
+      .from("video_playlists_juridicas")
+      .select("*")
+      .order("video_count", { ascending: false });
+      
+    if (area) {
+      query = query.eq("area", area);
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data.map(item => ({
+      id: item.playlist_id,
+      title: item.playlist_title,
+      description: "",
+      thumbnail: item.thumbnail_url,
+      videoCount: item.video_count,
+      channelTitle: item.channel_title,
+      area: item.area
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar playlists armazenadas:", error);
     return [];
   }
 }
