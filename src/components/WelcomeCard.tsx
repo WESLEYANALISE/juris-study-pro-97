@@ -1,4 +1,3 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -38,14 +37,13 @@ const WelcomeCard = ({
     navigate("/inicie");
   };
 
-  return (
-    <Card className="shadow-lg card-gold mb-6 px-0 mx-[10px] overflow-hidden">
+  return <Card className="shadow-md bg-gradient-to-r from-primary/10 to-background border-primary/20 mb-6 px-0 mx-[10px]">
       <CardContent className="p-6 py-[15px] px-[8px] mx-[16px]">
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="relative w-32 h-32 min-w-32 flex items-center justify-center">
             <div className="absolute inset-0">
               <svg viewBox="0 0 100 100" className="w-full h-full rotate-[-90deg]">
-                <circle cx="50" cy="50" r="45" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-muted/30" />
+                <circle cx="50" cy="50" r="45" fill="transparent" stroke="currentColor" strokeWidth="8" className="text-muted/20" />
                 <circle cx="50" cy="50" r="45" fill="transparent" stroke="currentColor" strokeWidth="8" strokeDasharray={`${2 * Math.PI * 45}`} strokeDashoffset={`${2 * Math.PI * 45 * (1 - progress / 100)}`} className="text-primary" />
               </svg>
             </div>
@@ -65,33 +63,22 @@ const WelcomeCard = ({
               </p>
             </div>
 
-            {nextTaskTitle && (
-              <div className="bg-background/40 rounded-lg p-3 border border-border/40 backdrop-blur-sm">
+            {nextTaskTitle && <div className="bg-background rounded-lg p-3 border">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                   <Clock size={16} />
                   <span>Próxima tarefa</span>
-                  {nextTaskTime && (
-                    <Badge variant="outline" className="ml-auto border-primary/30 text-primary">
+                  {nextTaskTime && <Badge variant="secondary" className="ml-auto">
                       {nextTaskTime}
-                    </Badge>
-                  )}
+                    </Badge>}
                 </div>
                 <p className="font-medium">{nextTaskTitle}</p>
-              </div>
-            )}
+              </div>}
 
             <div className="flex flex-wrap gap-3 mt-4">
-              <Button 
-                onClick={handleContinueStudying}
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
-              >
+              <Button onClick={handleContinueStudying}>
                 Continuar estudando
               </Button>
-              <Button 
-                variant="outline" 
-                onClick={handleViewSchedule}
-                className="border-primary/50 text-primary hover:bg-primary/10"
-              >
+              <Button variant="outline" onClick={handleViewSchedule}>
                 <Calendar className="mr-2 h-4 w-4" />
                 Ver cronograma
               </Button>
@@ -99,8 +86,7 @@ const WelcomeCard = ({
           </div>
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
 
 export default WelcomeCard;

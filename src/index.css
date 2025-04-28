@@ -5,84 +5,84 @@
 
 @layer base {
   :root {
-    /* Tema escuro - cores base */
-    --background: 220 15% 8%;
-    --foreground: 45 90% 75%;
-    
-    /* Cores de cartões e elementos */
-    --card: 220 15% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 220 15% 12%;
-    --popover-foreground: 0 0% 98%;
-    
-    /* Cores primárias - Dourado */
-    --primary: 45 90% 55%;
-    --primary-foreground: 220 15% 8%;
-    
-    /* Cores secundárias - Cinza escuro */
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 0 0% 98%;
-    
-    /* Estados e feedback */
-    --success: 142 72% 45%;
-    --success-foreground: 210 40% 98%;
-    --warning: 45 93% 55%;
-    --warning-foreground: 220 15% 8%;
-    --destructive: 0 84% 50%;
-    --destructive-foreground: 210 40% 98%;
-    
-    /* Elementos de interface */
-    --muted: 220 15% 20%;
-    --muted-foreground: 220 15% 65%;
-    --accent: 45 90% 55%;
-    --accent-foreground: 220 15% 8%;
-    
-    /* Bordas e inputs */
-    --border: 220 15% 20%;
-    --input: 220 15% 20%;
-    --ring: 45 90% 55%;
-
-    /* Raio padrão para elementos */
-    --radius: 0.5rem;
-  }
-
-  .light {
     /* Tema claro - cores base */
     --background: 220 33% 98%;
-    --foreground: 220 15% 8%;
+    --foreground: 224 71% 4%;
     
     /* Cores de cartões e elementos */
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 8%;
+    --card-foreground: 224 71% 4%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 8%;
+    --popover-foreground: 224 71% 4%;
     
-    /* Cores primárias - Dourado mais escuro */
-    --primary: 45 90% 45%;
+    /* Cores primárias - Azul Marinho */
+    --primary: 222 47% 31%;
+    --primary-foreground: 210 40% 98%;
+    
+    /* Cores secundárias - Dourado */
+    --secondary: 43 96% 56%;
+    --secondary-foreground: 220 33% 98%;
+    
+    /* Estados e feedback */
+    --success: 142 72% 29%;
+    --success-foreground: 210 40% 98%;
+    --warning: 45 93% 47%;
+    --warning-foreground: 224 71% 4%;
+    --destructive: 0 84% 43%;
+    --destructive-foreground: 210 40% 98%;
+    
+    /* Elementos de interface */
+    --muted: 220 33% 96%;
+    --muted-foreground: 224 71% 45%;
+    --accent: 222 47% 40%;
+    --accent-foreground: 220 33% 98%;
+    
+    /* Bordas e inputs */
+    --border: 220 33% 90%;
+    --input: 220 33% 90%;
+    --ring: 222 47% 31%;
+
+    /* Raio padrão para elementos */
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    /* Tema escuro - cores base */
+    --background: 222 47% 7%;
+    --foreground: 220 33% 98%;
+    
+    /* Cores de cartões e elementos */
+    --card: 222 47% 10%;
+    --card-foreground: 220 33% 98%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 220 33% 98%;
+    
+    /* Cores primárias - Azul Marinho mais claro */
+    --primary: 222 47% 40%;
     --primary-foreground: 220 33% 98%;
     
-    /* Cores secundárias - Cinza claro */
-    --secondary: 45 20% 92%;
-    --secondary-foreground: 220 15% 8%;
+    /* Cores secundárias - Dourado mais escuro */
+    --secondary: 43 96% 46%;
+    --secondary-foreground: 220 33% 98%;
     
     /* Estados e feedback */
     --success: 142 72% 35%;
     --success-foreground: 210 40% 98%;
     --warning: 45 93% 47%;
-    --warning-foreground: 220 15% 8%;
+    --warning-foreground: 224 71% 4%;
     --destructive: 0 84% 43%;
     --destructive-foreground: 210 40% 98%;
     
     /* Elementos de interface */
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 15% 45%;
-    --accent: 45 90% 45%;
+    --muted: 222 47% 15%;
+    --muted-foreground: 220 33% 70%;
+    --accent: 222 47% 40%;
     --accent-foreground: 220 33% 98%;
     
     /* Bordas e inputs */
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 45 90% 45%;
+    --border: 222 47% 20%;
+    --input: 222 47% 20%;
+    --ring: 222 47% 40%;
   }
 }
 
@@ -105,23 +105,6 @@
   /* Utility classes for cards */
   .card-hover {
     @apply transition-all duration-200 hover:shadow-hover hover:-translate-y-1;
-  }
-
-  /* Card efeitos */
-  .card-gradient {
-    @apply bg-gradient-to-br from-card via-card/80 to-secondary border-border/50;
-  }
-
-  .card-gold {
-    @apply bg-gradient-to-br from-primary/20 via-primary/10 to-secondary border-primary/30;
-  }
-
-  .card-premium {
-    @apply bg-gradient-to-br from-[#242834] via-[#1c1e29] to-[#191c27] border-primary/30;
-  }
-
-  .card-highlight {
-    @apply relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-primary/20 before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity;
   }
 
   /* Classes para inputs e controles */
