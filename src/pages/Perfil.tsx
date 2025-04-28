@@ -7,8 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -22,8 +20,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { 
-  User, Settings, Bell, Mail, Lock, HelpCircle, LogOut, 
-  Upload, Shield, Eye, Smartphone, Moon, Sun, Trash, Loader2
+  User, Settings, HelpCircle, LogOut, 
+  Upload, Shield, Trash, Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,12 +38,6 @@ const Perfil = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [darkMode, setDarkMode] = useState(true);
-  const [notifications, setNotifications] = useState({
-    email: true,
-    push: false,
-    news: true,
-    updates: false
-  });
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,14 +134,6 @@ const Perfil = () => {
     }
   };
 
-  const handleSavePassword = () => {
-    toast.success("Senha atualizada com sucesso!");
-  };
-
-  const handleSaveNotifications = () => {
-    toast.success("Preferências de notificação atualizadas!");
-  };
-
   const handleContactSupport = () => {
     window.location.href = `mailto:Wn7corporation@gmail.com?subject=Suporte JurisStudy Pro&body=Olá, preciso de ajuda com...`;
   };
@@ -181,17 +165,11 @@ const Perfil = () => {
       if (functionError) {
         throw functionError;
       }
-      
-      // Delete user from auth
-      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
-      
-      if (authError) {
-        throw authError;
-      }
+
+      toast.success("Sua conta foi excluída com sucesso");
       
       // Sign out and redirect to auth page
       await signOut();
-      toast.success("Sua conta foi excluída com sucesso");
       navigate('/auth');
     } catch (error: any) {
       console.error("Erro ao excluir conta:", error);
@@ -275,10 +253,6 @@ const Perfil = () => {
                 <Shield size={16} className="mr-2" />
                 Privacidade
               </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                <Bell size={16} className="mr-2" />
-                Notificações
-              </Button>
               <Button variant="ghost" className="w-full justify-start" onClick={handleContactSupport}>
                 <HelpCircle size={16} className="mr-2" />
                 Suporte
@@ -299,8 +273,6 @@ const Perfil = () => {
           <Tabs defaultValue="account">
             <TabsList className="mb-6">
               <TabsTrigger value="account">Conta</TabsTrigger>
-              <TabsTrigger value="password">Senha</TabsTrigger>
-              <TabsTrigger value="notifications">Notificações</TabsTrigger>
               <TabsTrigger value="appearance">Aparência</TabsTrigger>
               <TabsTrigger value="danger">Zona de Perigo</TabsTrigger>
             </TabsList>
@@ -330,23 +302,6 @@ const Perfil = () => {
                         className="bg-muted"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="oab">Número da OAB (opcional)</Label>
-                      <Input id="oab" placeholder="Ex: 123456/SP" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Telefone (opcional)</Label>
-                      <Input id="phone" placeholder="(00) 00000-0000" />
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Biografia</Label>
-                    <Textarea 
-                      id="bio" 
-                      placeholder="Conte um pouco sobre você..." 
-                      rows={4}
-                    />
                   </div>
                 </CardContent>
                 <CardFooter>
@@ -363,138 +318,6 @@ const Perfil = () => {
                       'Salvar Alterações'
                     )}
                   </Button>
-                </CardFooter>
-              </Card>
-              
-              <Card>
-                <CardHeader>
-                  <CardTitle>Dados Acadêmicos</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Instituição de Ensino</Label>
-                      <Input placeholder="Nome da Universidade/Faculdade" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Curso</Label>
-                      <Input placeholder="Ex: Direito" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Ano de Formação/Previsão</Label>
-                      <Input type="number" placeholder="Ex: 2026" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Período/Semestre</Label>
-                      <Input placeholder="Ex: 5º período" />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button>Salvar Dados Acadêmicos</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="password">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Alterar Senha</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="current-password">Senha Atual</Label>
-                    <Input id="current-password" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-password">Nova Senha</Label>
-                    <Input id="new-password" type="password" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="confirm-password">Confirmar Nova Senha</Label>
-                    <Input id="confirm-password" type="password" />
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={handleSavePassword}>Alterar Senha</Button>
-                </CardFooter>
-              </Card>
-            </TabsContent>
-            
-            <TabsContent value="notifications">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Preferências de Notificações</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Notificações por Email</h3>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Atualizações de conteúdo</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receba emails quando novos materiais forem adicionados
-                        </p>
-                      </div>
-                      <Switch 
-                        checked={notifications.email} 
-                        onCheckedChange={(checked) => 
-                          setNotifications(prev => ({...prev, email: checked}))
-                        } 
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Novidades e ofertas</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receba informações sobre promoções e novidades
-                        </p>
-                      </div>
-                      <Switch 
-                        checked={notifications.news} 
-                        onCheckedChange={(checked) => 
-                          setNotifications(prev => ({...prev, news: checked}))
-                        } 
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <h3 className="font-medium">Notificações no Aplicativo</h3>
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Notificações push</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receba notificações em seu dispositivo
-                        </p>
-                      </div>
-                      <Switch 
-                        checked={notifications.push} 
-                        onCheckedChange={(checked) => 
-                          setNotifications(prev => ({...prev, push: checked}))
-                        }
-                      />
-                    </div>
-                    <Separator />
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Atualizações do sistema</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Receba notificações sobre novas funcionalidades
-                        </p>
-                      </div>
-                      <Switch 
-                        checked={notifications.updates} 
-                        onCheckedChange={(checked) => 
-                          setNotifications(prev => ({...prev, updates: checked}))
-                        }
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter>
-                  <Button onClick={handleSaveNotifications}>Salvar Preferências</Button>
                 </CardFooter>
               </Card>
             </TabsContent>
@@ -514,62 +337,10 @@ const Perfil = () => {
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <Sun size={18} className="text-muted-foreground" />
                         <Switch 
                           checked={darkMode} 
                           onCheckedChange={setDarkMode}
                         />
-                        <Moon size={18} className="text-muted-foreground" />
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Tamanho da Fonte</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Ajuste o tamanho dos textos na aplicação
-                        </p>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button variant="outline" size="sm">A-</Button>
-                        <Button variant="outline" size="sm">A</Button>
-                        <Button variant="outline" size="sm">A+</Button>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Modo de Leitura</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Facilita a leitura, reduzindo distrações
-                        </p>
-                      </div>
-                      <div className="flex">
-                        <Button variant="outline" size="sm">
-                          <Eye size={16} className="mr-2" />
-                          Ativar
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <Separator />
-                    
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <Label>Modo Móvel</Label>
-                        <p className="text-sm text-muted-foreground">
-                          Otimizar interface para dispositivos móveis
-                        </p>
-                      </div>
-                      <div className="flex">
-                        <Button variant="outline" size="sm">
-                          <Smartphone size={16} className="mr-2" />
-                          Ativar
-                        </Button>
                       </div>
                     </div>
                   </div>
