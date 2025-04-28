@@ -15,6 +15,12 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface HeaderProps {
   userProfile: ProfileType;
@@ -23,6 +29,8 @@ interface HeaderProps {
 export function Header({ userProfile }: HeaderProps) {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const isMobile = useIsMobile();
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   useEffect(() => {
     // Verificar status de autenticação ao montar o componente
@@ -77,26 +85,51 @@ export function Header({ userProfile }: HeaderProps) {
   return (
     <header className="border-b border-border bg-card">
       <div className="container flex h-16 items-center px-4 md:px-6">
+        {/* Mobile menu and profile */}
         <div className="flex items-center">
           <MobileMenu userProfile={userProfile} />
-          <div className="text-sm text-muted-foreground hidden md:block">
-            Seu perfil:
-            <span className="ml-2 bg-primary/10 text-primary px-2 py-1 rounded-md font-medium inline-flex items-center">
+          <div className="text-sm text-muted-foreground hidden md:flex md:items-center">
+            <span className="mr-2">Seu perfil:</span>
+            <span className="bg-primary/10 text-primary px-2 py-1 rounded-md font-medium inline-flex items-center">
               {profileIcons[userProfile]}
               {profileLabels[userProfile]}
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 ml-auto">
-          <div className="relative w-full max-w-sm md:w-80">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Pesquisar..."
-              className="pl-8 w-full bg-background"
-            />
-          </div>
+        {/* Search and user actions */}
+        <div className="flex items-center gap-2 md:gap-4 ml-auto">
+          {/* Mobile search button */}
+          {isMobile ? (
+            <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
+              <SheetTrigger asChild>
+                <Button size="icon" variant="ghost">
+                  <Search className="h-5 w-5" />
+                  <span className="sr-only">Pesquisar</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="top" className="p-0">
+                <div className="p-4 pt-12">
+                  <Input
+                    type="search"
+                    placeholder="Pesquisar..."
+                    className="w-full bg-background"
+                    autoFocus
+                  />
+                </div>
+              </SheetContent>
+            </Sheet>
+          ) : (
+            <div className="relative w-full max-w-sm md:w-80">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Pesquisar..."
+                className="pl-8 w-full bg-background"
+              />
+            </div>
+          )}
+          
           <Button size="icon" variant="ghost">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notificações</span>
@@ -159,4 +192,4 @@ export function Header({ userProfile }: HeaderProps) {
       </div>
     </header>
   );
-}
+};

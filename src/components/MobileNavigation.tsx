@@ -1,6 +1,6 @@
 
 import { useNavigate, useLocation } from "react-router-dom";
-import { Home, BookOpen, BookOpenText, Compass, Film, User, ScrollText, Lightbulb, FileText } from "lucide-react";
+import { Home, BookOpen, BookOpenText, User, FileText, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -17,7 +17,7 @@ const MobileNavigation = () => {
     {
       name: "Iniciando",
       icon: Lightbulb,
-      path: "/iniciando-no-direito"
+      path: "/inicie"
     },
     {
       name: "Redação",
@@ -48,14 +48,14 @@ const MobileNavigation = () => {
           key={item.name}
           onClick={() => navigate(item.path)}
           className={cn(
-            "flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200",
+            "flex flex-col items-center justify-center p-2 rounded-md transition-all duration-200 w-1/5",
             location.pathname === item.path 
               ? "text-primary" 
               : "text-muted-foreground hover:text-primary"
           )}
         >
           <item.icon className="h-5 w-5 mb-1" />
-          <span className="text-xs">{item.name}</span>
+          <span className="text-xs font-medium truncate w-full text-center">{item.name}</span>
         </button>
       ))}
     </motion.div>

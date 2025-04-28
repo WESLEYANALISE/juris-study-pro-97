@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -11,15 +12,21 @@ import {
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { type ProfileType } from "@/components/WelcomeModal";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
-// Get menu items from AppSidebar
+interface MobileMenuProps {
+  userProfile: ProfileType;
+}
+
+// Menu items for sidebar
 const menuItems = [
   { title: "Início", url: "/", icon: "Home" },
+  { title: "Iniciando no Direito", url: "/inicie", icon: "Lightbulb" },
   { title: "Vídeo-aulas", url: "/videoaulas", icon: "Video" },
   { title: "Biblioteca", url: "/biblioteca", icon: "Library" },
   { title: "Vade-Mecum", url: "/vademecum", icon: "BookOpen" },
   { title: "Dicionário", url: "/dicionario", icon: "BookOpen" },
-  { title: "Resumos", url: "/resumos", icon: "Brain" },
+  { title: "Mapas Mentais", url: "/mapas-mentais", icon: "Brain" },
   { title: "Simulados", url: "/simulados", icon: "GraduationCap" },
   { title: "Flashcards", url: "/flashcards", icon: "Brain" },
   { title: "Peticionário", url: "/peticoes", icon: "FilePlus" },
@@ -27,13 +34,9 @@ const menuItems = [
   { title: "Jurisprudência", url: "/jurisprudencia", icon: "Gavel" },
   { title: "Notícias", url: "/noticias", icon: "Newspaper" },
   { title: "Assistente", url: "/assistente", icon: "MessageSquare" },
-  { title: "Cronograma", url: "/cronograma", icon: "Calendar" },
-  { title: "Gamificação", url: "/gamificacao", icon: "Trophy" }
+  { title: "Redação Jurídica", url: "/redacao-juridica", icon: "FileText" },
+  { title: "Perfil", url: "/perfil", icon: "User" }
 ];
-
-interface MobileMenuProps {
-  userProfile: ProfileType;
-}
 
 const MobileMenu = ({ userProfile }: MobileMenuProps) => {
   const location = useLocation();
@@ -56,31 +59,33 @@ const MobileMenu = ({ userProfile }: MobileMenuProps) => {
           <span className="sr-only">Menu</span>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[300px] sm:w-[350px] overflow-y-auto">
-        <SheetHeader className="border-b pb-4 mb-4">
+      <SheetContent side="left" className="p-0 w-[280px] sm:w-[350px]">
+        <SheetHeader className="p-4 border-b">
           <SheetTitle className="flex items-center gap-2">
             <span className="font-bold text-xl">JurisStudy</span>
           </SheetTitle>
         </SheetHeader>
         
-        <div className="space-y-1">
-          {filteredMenuItems.map((item) => {
-            const isActive = location.pathname === item.url;
-            return (
-              <Button
-                key={item.title}
-                variant={isActive ? "secondary" : "ghost"}
-                className="w-full justify-start text-left"
-                onClick={() => {
-                  navigate(item.url);
-                  setIsOpen(false);
-                }}
-              >
-                <span>{item.title}</span>
-              </Button>
-            );
-          })}
-        </div>
+        <ScrollArea className="h-[calc(100vh-4rem)]">
+          <div className="p-4 space-y-1">
+            {filteredMenuItems.map((item) => {
+              const isActive = location.pathname === item.url;
+              return (
+                <Button
+                  key={item.title}
+                  variant={isActive ? "secondary" : "ghost"}
+                  className="w-full justify-start text-left h-auto py-3"
+                  onClick={() => {
+                    navigate(item.url);
+                    setIsOpen(false);
+                  }}
+                >
+                  <span className="truncate">{item.title}</span>
+                </Button>
+              );
+            })}
+          </div>
+        </ScrollArea>
       </SheetContent>
     </Sheet>
   );

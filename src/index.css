@@ -91,6 +91,10 @@
     @apply border-border selection:bg-primary/10 selection:text-primary;
   }
 
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
@@ -98,7 +102,7 @@
 }
 
 @layer utilities {
-  /* Utility classes para cards */
+  /* Utility classes for cards */
   .card-hover {
     @apply transition-all duration-200 hover:shadow-hover hover:-translate-y-1;
   }
@@ -126,6 +130,23 @@
   .enter-animation {
     @apply animate-fade-in motion-reduce:animate-none;
   }
+
+  /* Mobile-specific utilities */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0);
+  }
+  
+  .touch-action-none {
+    touch-action: none;
+  }
+  
+  .mobile-tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
 }
 
 /* Melhorias em scrollbars */
@@ -139,4 +160,22 @@
 
 ::-webkit-scrollbar-thumb {
   @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+}
+
+/* Mobile specific overrides */
+@media (max-width: 640px) {
+  html, body {
+    @apply overscroll-none;
+  }
+  
+  /* Prevent text zoom on iOS */
+  input, textarea, select, button {
+    @apply text-base;
+  }
+  
+  /* Improve tap targets */
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
