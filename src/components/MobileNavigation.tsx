@@ -20,9 +20,8 @@ export default function MobileNavigation() {
   const { state } = useSidebar();
   
   // Renderizar a navegação móvel em todas as páginas, exceto quando o sidebar estiver expandido
-  // A checagem original estava impedindo que a navegação fosse mostrada em certas páginas
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/80 backdrop-blur-lg p-2 md:hidden safe-bottom">
       <ul className="flex justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
