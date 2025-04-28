@@ -1402,6 +1402,45 @@ export type Database = {
         }
         Relationships: []
       }
+      plano_estudos: {
+        Row: {
+          area_interesse: string[]
+          concluido: boolean
+          created_at: string | null
+          horas_estudo_semana: number
+          id: string
+          nivel_atual: string
+          objetivo: string
+          progress: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          area_interesse?: string[]
+          concluido?: boolean
+          created_at?: string | null
+          horas_estudo_semana?: number
+          id?: string
+          nivel_atual: string
+          objetivo: string
+          progress?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          area_interesse?: string[]
+          concluido?: boolean
+          created_at?: string | null
+          horas_estudo_semana?: number
+          id?: string
+          nivel_atual?: string
+          objetivo?: string
+          progress?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1409,6 +1448,7 @@ export type Database = {
           display_name: string | null
           email: string
           id: string
+          onboarding_completed: boolean | null
         }
         Insert: {
           avatar_url?: string | null
@@ -1416,6 +1456,7 @@ export type Database = {
           display_name?: string | null
           email: string
           id: string
+          onboarding_completed?: boolean | null
         }
         Update: {
           avatar_url?: string | null
@@ -1423,6 +1464,7 @@ export type Database = {
           display_name?: string | null
           email?: string
           id?: string
+          onboarding_completed?: boolean | null
         }
         Relationships: []
       }
@@ -2739,6 +2781,10 @@ export type Database = {
       }
     }
     Functions: {
+      calculate_user_progress: {
+        Args: { user_uuid: string }
+        Returns: number
+      }
       generate_redacao_content: {
         Args: { topic: string; type: string }
         Returns: string

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,18 +10,25 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { ExternalLink, Mail } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-const LOGO_URL = "/lovable-uploads/58dfe876-fea8-4a29-9b9e-a8cbd69b2c5f.png"; // Updated to your logo image url
+const LOGO_URL = "/lovable-uploads/58dfe876-fea8-4a29-9b9e-a8cbd69b2c5f.png";
 const SUBTITLE = "Acesse ou crie uma conta para aproveitar a experiência jurídica completa.";
 
-const authSchema = z.object({
+const loginSchema = z.object({
   email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres")
 });
 
-type AuthFormValues = z.infer<typeof authSchema>;
+const signupSchema = z.object({
+  name: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido").min(1, "Email é obrigatório"),
+  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres")
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type SignupFormValues = z.infer<typeof signupSchema>;
 
 const Auth = () => {
   const [loading, setLoading] = useState(false);
@@ -39,9 +47,18 @@ const Auth = () => {
     checkSession();
   }, [navigate]);
 
-  const form = useForm<AuthFormValues>({
-    resolver: zodResolver(authSchema),
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
+      email: "",
+      password: ""
+    }
+  });
+
+  const signupForm = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      name: "",
       email: "",
       password: ""
     }
@@ -57,20 +74,16 @@ const Auth = () => {
       
       if (error) throw error;
     } catch (error: any) {
-      toast({
-        title: "Erro ao entrar com Google",
-        description: error.message || "Tente novamente mais tarde",
-        variant: "destructive"
-      });
+      toast.error("Erro ao entrar com Google: " + (error.message || "Tente novamente mais tarde"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleMagicLink = async () => {
-    const email = form.getValues("email");
+    const email = loginForm.getValues("email");
     if (!email || !z.string().email().safeParse(email).success) {
-      form.setError("email", { message: "Email inválido" });
+      loginForm.setError("email", { message: "Email inválido" });
       return;
     }
 
@@ -84,67 +97,69 @@ const Auth = () => {
       if (error) throw error;
       
       setMagicLinkSent(true);
-      toast({
-        title: "Link enviado",
-        description: "Verifique seu email para fazer login"
-      });
+      toast.success("Link enviado! Verifique seu email para fazer login");
     } catch (error: any) {
-      toast({
-        title: "Erro ao enviar link",
-        description: error.message || "Tente novamente mais tarde",
-        variant: "destructive"
-      });
+      toast.error("Erro ao enviar link: " + (error.message || "Tente novamente mais tarde"));
     } finally {
       setLoading(false);
     }
   };
 
-  const onSubmit = async (values: AuthFormValues) => {
+  const onLoginSubmit = async (values: LoginFormValues) => {
     setLoading(true);
     try {
-      if (activeTab === "login") {
-        const { error, data } = await supabase.auth.signInWithPassword({
-          email: values.email,
-          password: values.password
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo de volta!"
-        });
-        
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Login realizado com sucesso");
+      navigate("/", { replace: true });
+    } catch (error: any) {
+      toast.error("Erro na autenticação: " + (error.message || "Tente novamente mais tarde"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onSignupSubmit = async (values: SignupFormValues) => {
+    setLoading(true);
+    try {
+      const { error, data } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            display_name: values.name
+          },
+          emailRedirectTo: window.location.origin + "/"
+        }
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
+      
+      if (data?.session) {
+        // Atualizar o perfil do usuário com o nome
+        await supabase
+          .from('profiles')
+          .update({ display_name: values.name })
+          .eq('id', data.user?.id);
+
         navigate("/", { replace: true });
-      } else {
-        const { error } = await supabase.auth.signUp({
-          email: values.email,
-          password: values.password,
-          options: {
-            emailRedirectTo: window.location.origin + "/"
-          }
-        });
-        
-        if (error) throw error;
-        
-        toast({
-          title: "Cadastro realizado com sucesso",
-          description: "Verifique seu email para confirmar o cadastro"
-        });
       }
     } catch (error: any) {
-      toast({
-        title: "Erro na autenticação",
-        description: error.message || "Tente novamente mais tarde",
-        variant: "destructive"
-      });
+      toast.error("Erro no cadastro: " + (error.message || "Tente novamente mais tarde"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-slate-50 via-gray-100 to-primary/10 dark:from-muted dark:to-bg">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-tr from-slate-50 via-gray-100 to-primary/10 dark:from-muted dark:to-bg p-4">
       <Card className="w-full max-w-md border shadow-xl rounded-xl bg-background animate-fade-in">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
           <img
@@ -162,7 +177,7 @@ const Auth = () => {
             <div className="text-center py-10">
               <p className="font-semibold text-primary">Confira sua caixa de entrada!</p>
               <p className="text-sm mt-2 text-muted-foreground">
-                Enviamos um link mágico para <span className="font-medium">{form.getValues("email")}</span>
+                Enviamos um link mágico para <span className="font-medium">{loginForm.getValues("email")}</span>
               </p>
               <Button
                 variant="secondary"
@@ -177,9 +192,7 @@ const Auth = () => {
               <Tabs
                 defaultValue="login"
                 value={activeTab}
-                onValueChange={(value) =>
-                  setActiveTab(value as "login" | "signup")
-                }
+                onValueChange={(value) => setActiveTab(value as "login" | "signup")}
                 className="w-full"
               >
                 <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -188,13 +201,13 @@ const Auth = () => {
                 </TabsList>
 
                 <TabsContent value="login" className="mt-0">
-                  <Form {...form}>
+                  <Form {...loginForm}>
                     <form
-                      onSubmit={form.handleSubmit(onSubmit)}
+                      onSubmit={loginForm.handleSubmit(onLoginSubmit)}
                       className="space-y-4"
                     >
                       <FormField
-                        control={form.control}
+                        control={loginForm.control}
                         name="email"
                         render={({ field }) => (
                           <FormItem>
@@ -213,7 +226,7 @@ const Auth = () => {
                       />
 
                       <FormField
-                        control={form.control}
+                        control={loginForm.control}
                         name="password"
                         render={({ field }) => (
                           <FormItem>
@@ -244,13 +257,31 @@ const Auth = () => {
                 </TabsContent>
 
                 <TabsContent value="signup" className="mt-0">
-                  <Form {...form}>
+                  <Form {...signupForm}>
                     <form
-                      onSubmit={form.handleSubmit(onSubmit)}
+                      onSubmit={signupForm.handleSubmit(onSignupSubmit)}
                       className="space-y-4"
                     >
                       <FormField
-                        control={form.control}
+                        control={signupForm.control}
+                        name="name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Nome completo</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Seu nome"
+                                disabled={loading}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={signupForm.control}
                         name="email"
                         render={({ field }) => (
                           <FormItem>
@@ -269,7 +300,7 @@ const Auth = () => {
                       />
 
                       <FormField
-                        control={form.control}
+                        control={signupForm.control}
                         name="password"
                         render={({ field }) => (
                           <FormItem>
@@ -315,6 +346,17 @@ const Auth = () => {
               >
                 <ExternalLink className="h-5 w-5 text-blue-600" />
                 <span>{loading ? "Entrando..." : "Continuar com Google"}</span>
+              </Button>
+
+              <Button
+                type="button"
+                className="w-full flex items-center justify-center gap-2 rounded-md"
+                onClick={handleMagicLink}
+                disabled={loading}
+                variant="ghost"
+              >
+                <Mail className="h-5 w-5" />
+                <span>Entrar com link mágico</span>
               </Button>
             </>
           )}
