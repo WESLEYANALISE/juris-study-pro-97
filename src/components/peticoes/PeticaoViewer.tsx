@@ -445,7 +445,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
                 pageNumber={pageNumber}
                 scale={isMobile ? touchScale : scale}
                 rotate={rotation}
-                renderTextLayer={true}
+                renderTextLayer={false}
                 renderAnnotationLayer={true}
                 className="shadow-lg mx-auto"
                 width={isMobile ? window.innerWidth : undefined}

@@ -1071,7 +1071,7 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
                       pageNumber={pageNum}
                       scale={scale}
                       rotate={rotation}
-                      renderTextLayer={true}
+                      renderTextLayer={false} // Disable text layer to fix the error
                       renderAnnotationLayer={true}
                       className="transition-transform duration-300"
                       width={isDualPageView ? containerSize.width / 2 - 24 : undefined}
