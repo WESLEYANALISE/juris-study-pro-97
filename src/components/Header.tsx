@@ -1,4 +1,4 @@
-
+import React from "react";
 import { Bell, GraduationCap, Scale, Search, User, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,13 +37,11 @@ export function Header({ userProfile }: HeaderProps) {
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   
   useEffect(() => {
-    // Generate path segments for breadcrumb
     const pathSegments = location.pathname.split('/').filter(Boolean);
     setCurrentPath(pathSegments);
   }, [location]);
   
   useEffect(() => {
-    // Verificar status de autenticação ao montar o componente
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
       setIsLoggedIn(!!data.session);
@@ -51,7 +49,6 @@ export function Header({ userProfile }: HeaderProps) {
     
     checkAuth();
     
-    // Escutar mudanças de autenticação
     const { data: authListener } = supabase.auth.onAuthStateChange(
       (event, session) => {
         setIsLoggedIn(!!session);
@@ -86,7 +83,6 @@ export function Header({ userProfile }: HeaderProps) {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logout realizado com sucesso");
-    // After logout, redirect to login page
     navigate("/auth", { replace: true });
   };
   
@@ -94,11 +90,9 @@ export function Header({ userProfile }: HeaderProps) {
     navigate("/auth");
   };
   
-  // Get current page title for desktop breadcrumb
   const getCurrentPageTitle = () => {
     if (currentPath.length === 0) return "Início";
     
-    // Format the last segment of the path into a title
     const lastSegment = currentPath[currentPath.length - 1];
     return lastSegment.charAt(0).toUpperCase() + lastSegment.slice(1).replace(/-/g, ' ');
   };
@@ -106,7 +100,6 @@ export function Header({ userProfile }: HeaderProps) {
   return (
     <header className="sticky top-0 left-0 right-0 z-50 border-b border-border bg-card/95 backdrop-blur-sm safe-top">
       <div className="container flex h-16 items-center px-4 md:px-6">
-        {/* Mobile menu and profile */}
         <div className="flex items-center">
           <MobileMenu userProfile={userProfile} />
           <div className="text-sm text-muted-foreground hidden md:flex md:items-center">
@@ -149,7 +142,6 @@ export function Header({ userProfile }: HeaderProps) {
               </BreadcrumbList>
             </Breadcrumb>
             
-            {/* Desktop profile indicator */}
             <div className="ml-6 bg-primary/10 text-primary px-2 py-1 rounded-md font-medium inline-flex items-center">
               {profileIcons[userProfile]}
               {profileLabels[userProfile]}
@@ -157,9 +149,7 @@ export function Header({ userProfile }: HeaderProps) {
           </div>
         </div>
 
-        {/* Search and user actions */}
         <div className="flex items-center gap-2 md:gap-4 ml-auto">
-          {/* Mobile search button */}
           {isMobile ? (
             <Sheet open={isSearchOpen} onOpenChange={setIsSearchOpen}>
               <SheetTrigger asChild>
