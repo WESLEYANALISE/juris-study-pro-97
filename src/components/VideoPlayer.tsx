@@ -8,12 +8,14 @@ import { type YouTubeVideo } from "@/lib/youtube-service";
 
 interface VideoPlayerProps {
   videoId: string;
+  onTimeUpdate?: (time: number) => void;
 }
 
-export function VideoPlayer({ videoId }: VideoPlayerProps) {
+export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const playerRef = useRef<HTMLIFrameElement>(null);
+  const [player, setPlayer] = useState<any>(null);
 
   // Calcular a altura do player com base na largura (proporção 16:9)
   const calculatePlayerHeight = () => {
@@ -22,6 +24,67 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
   };
 
   const [playerHeight, setPlayerHeight] = useState(calculatePlayerHeight());
+
+  // Initialize YouTube player
+  useEffect(() => {
+    // Load YouTube iframe API if not already loaded
+    if (!window.YT) {
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      const firstScriptTag = document.getElementsByTagName('script')[0];
+      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
+    }
+
+    // Initialize player when API is ready
+    const initPlayer = () => {
+      if (playerRef.current && videoId) {
+        const ytPlayer = new window.YT.Player(playerRef.current, {
+          videoId: videoId,
+          events: {
+            onReady: () => {
+              console.log('Player ready');
+              setPlayer(ytPlayer);
+            },
+            onStateChange: (event: any) => {
+              // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
+              if (event.data === 1) { // Playing
+                // Start tracking time
+                startTimeTracking(ytPlayer);
+              }
+            },
+          },
+        });
+      }
+    };
+
+    // Wait for the YouTube API to load before initializing the player
+    if (window.YT && window.YT.Player) {
+      initPlayer();
+    } else {
+      window.onYouTubeIframeAPIReady = initPlayer;
+    }
+
+    return () => {
+      // Clean up
+      if (player) {
+        player.destroy();
+      }
+    };
+  }, [videoId]);
+
+  // Track video time and notify parent component
+  const startTimeTracking = (ytPlayer: any) => {
+    const interval = setInterval(() => {
+      if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
+        const currentTime = ytPlayer.getCurrentTime();
+        if (onTimeUpdate) {
+          onTimeUpdate(currentTime);
+        }
+      }
+    }, 1000); // Update every second
+
+    return () => clearInterval(interval);
+  };
 
   // Atualizar a altura do player quando a janela for redimensionada
   useEffect(() => {
@@ -36,16 +99,7 @@ export function VideoPlayer({ videoId }: VideoPlayerProps) {
   return (
     <div className="w-full">
       <div className="video-container w-full">
-        <iframe
-          ref={playerRef}
-          width="100%"
-          height={playerHeight}
-          src={`https://www.youtube.com/embed/${videoId}`}
-          title="YouTube video player"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-          className="border-0"
-        ></iframe>
+        <div ref={playerRef} style={{ width: '100%', height: playerHeight }} />
       </div>
       {showNotes && (
         <Card className="mt-4">
