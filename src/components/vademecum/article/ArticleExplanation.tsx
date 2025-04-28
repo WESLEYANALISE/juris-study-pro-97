@@ -22,8 +22,8 @@ export const ArticleExplanation = ({
     toast.success('Texto copiado para a área de transferência');
   };
 
-  const formatText = (text: string) => {
-    if (!text) return '';
+  const formatText = (text: string | undefined) => {
+    if (!text) return null;
     return text.split('\n').map((para, i) => (
       <p key={i} className="mb-3 last:mb-0">
         {para.trim()}

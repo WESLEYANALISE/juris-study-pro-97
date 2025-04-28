@@ -108,6 +108,14 @@ export const ArticleCard = ({
     }
   };
 
+  // Helper function to safely format text
+  const formatArticleText = (text: string | undefined) => {
+    if (!text) return []; // Return empty array if text is undefined or null
+    return text.split('\n').map((para, i) => (
+      <p key={i} className="mb-3 last:mb-0">{para.trim()}</p>
+    ));
+  };
+
   return <motion.div 
     initial={{ opacity: 0, y: 20 }} 
     animate={{ opacity: 1, y: 0 }} 
@@ -125,9 +133,7 @@ export const ArticleCard = ({
               style={{ fontSize: `${fontSize}px` }} 
               className="mt-2 whitespace-pre-line text-left px-1 py-3 ml-0"
             >
-              {articleText.split('\n').map((para, i) => (
-                <p key={i} className="mb-3 last:mb-0">{para.trim()}</p>
-              ))}
+              {formatArticleText(articleText)}
             </div>
           </motion.div>
           <div className="flex flex-col gap-2">
