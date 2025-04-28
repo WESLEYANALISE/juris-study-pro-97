@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 /**
  * Componente para proteger rotas que requerem autenticação.
@@ -15,33 +16,41 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   useEffect(() => {
+    console.log("RequireAuth: Setting up auth check");
+    
     // Configure o listener de auth ANTES de buscar sessão atual.
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log("Auth state changed:", _event, session?.user?.email);
+      console.log("Auth state changed in RequireAuth:", _event, session?.user?.email);
       setSession(session);
       setChecked(true);
 
       // Se não autenticado, redireciona para /auth
       if (!session && location.pathname !== "/auth") {
+        console.log("Not authenticated, redirecting to /auth");
+        toast.error("Você precisa estar logado para acessar esta página");
         navigate("/auth", { replace: true });
       }
       // Se autenticado E está na página de login, manda para a home
       if (session && location.pathname === "/auth") {
+        console.log("Already authenticated, redirecting to home");
         navigate("/", { replace: true });
       }
     });
 
     // Checa sessão existente ao carregar
     supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Current session:", session?.user?.email);
+      console.log("Current session in RequireAuth:", session?.user?.email);
       setSession(session);
       setChecked(true);
 
       // Redireciona se não autenticado
       if (!session && location.pathname !== "/auth") {
+        console.log("No session found, redirecting to /auth");
+        toast.error("Você precisa estar logado para acessar esta página");
         navigate("/auth", { replace: true });
       }
       if (session && location.pathname === "/auth") {
+        console.log("Session found on auth page, redirecting to home");
         navigate("/", { replace: true });
       }
     });

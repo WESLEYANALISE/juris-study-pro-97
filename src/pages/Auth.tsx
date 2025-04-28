@@ -82,6 +82,7 @@ const Auth = () => {
       
       if (error) throw error;
     } catch (error: any) {
+      console.error("Erro ao entrar com Google:", error);
       toast.error("Erro ao entrar com Google: " + (error.message || "Tente novamente mais tarde"));
       setAuthError(error.message);
     } finally {
@@ -108,28 +109,11 @@ const Auth = () => {
       setMagicLinkSent(true);
       toast.success("Link enviado! Verifique seu email para fazer login");
     } catch (error: any) {
+      console.error("Erro ao enviar link mágico:", error);
       toast.error("Erro ao enviar link: " + (error.message || "Tente novamente mais tarde"));
       setAuthError(error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const checkExistingUser = async (email: string) => {
-    try {
-      // First try to sign in with an invalid password to check if user exists
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password: 'check_user_exists_only'
-      });
-
-      // If error contains 'Invalid login credentials', user exists
-      if (error && error.message.includes('Invalid login credentials')) {
-        return true;
-      }
-      return false;
-    } catch (error) {
-      return false;
     }
   };
 
@@ -153,6 +137,7 @@ const Auth = () => {
       toast.success("Login realizado com sucesso");
       navigate("/", { replace: true });
     } catch (error: any) {
+      console.error("Erro ao fazer login:", error);
       setAuthError(error.message);
       toast.error(error.message || "Erro na autenticação. Tente novamente mais tarde.");
     } finally {
@@ -165,17 +150,9 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      // Check if user already exists
-      const userExists = await checkExistingUser(values.email);
+      console.log("Tentando cadastrar novo usuário:", values.email);
       
-      if (userExists) {
-        setAuthError(`O email ${values.email} já está cadastrado. Tente fazer login ou recuperar sua senha.`);
-        setRecoveryMode(true);
-        setLoading(false);
-        return;
-      }
-      
-      const { error, data } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
@@ -186,23 +163,44 @@ const Auth = () => {
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Erro retornado pelo Supabase:", error);
+        // Verificação específica para usuário já registrado
+        if (error.message.includes("User already registered")) {
+          throw new Error(`O email ${values.email} já está cadastrado. Tente fazer login ou recuperar sua senha.`);
+        }
+        throw error;
+      }
       
+      if (data.user?.identities?.length === 0) {
+        // Se identities é um array vazio, o usuário já existe
+        setAuthError(`O email ${values.email} já está cadastrado. Tente fazer login ou recuperar sua senha.`);
+        setRecoveryMode(true);
+        return;
+      }
+      
+      console.log("Cadastro realizado com sucesso:", data);
       toast.success("Cadastro realizado com sucesso! Verifique seu email para confirmar a conta.");
       
       if (data?.session) {
         // Atualizar o perfil do usuário com o nome
-        await supabase
+        const { error: profileError } = await supabase
           .from('profiles')
           .update({ display_name: values.name })
           .eq('id', data.user?.id);
+        
+        if (profileError) {
+          console.error("Erro ao atualizar perfil:", profileError);
+        }
 
         navigate("/", { replace: true });
       }
     } catch (error: any) {
-      // If error contains "User already registered", show specific message
-      if (error.message.includes("User already registered")) {
-        setAuthError("Este email já está cadastrado. Tente fazer login ou recuperar sua senha.");
+      console.error("Erro no processo de cadastro:", error);
+      
+      // Handle specific cases
+      if (error.message.includes("already registered") || error.message.includes("já está cadastrado")) {
+        setAuthError(error.message);
         setRecoveryMode(true);
       } else {
         setAuthError(error.message);
@@ -226,6 +224,7 @@ const Auth = () => {
 
     setLoading(true);
     try {
+      console.log("Enviando email de recuperação para:", email);
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: window.location.origin + "/auth"
       });
@@ -235,6 +234,7 @@ const Auth = () => {
       toast.success("Instruções para redefinir sua senha foram enviadas para seu email");
       setRecoveryMode(false);
     } catch (error: any) {
+      console.error("Erro ao enviar email de recuperação:", error);
       toast.error("Erro ao enviar email de recuperação: " + (error.message || "Tente novamente mais tarde"));
     } finally {
       setLoading(false);
