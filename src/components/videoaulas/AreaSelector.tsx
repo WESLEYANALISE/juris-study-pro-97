@@ -21,7 +21,7 @@ export const AreaSelector = ({ areas, selectedArea, onAreaSelect, className }: A
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" className={cn(className)}>
+        <Button variant="outline" className={cn("w-full sm:w-auto", className)}>
           {selectedArea}
           <ChevronDown className="ml-2 h-4 w-4" />
         </Button>

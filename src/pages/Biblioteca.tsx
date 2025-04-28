@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -94,13 +93,15 @@ export default function Biblioteca() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-6">
-      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "acervo" | "recomendacoes")} className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="acervo">Acervo</TabsTrigger>
-          <TabsTrigger value="recomendacoes">Recomendações</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "acervo" | "recomendacoes")} className="w-full space-y-6">
+        <div className="overflow-x-auto pb-2 -mx-4 px-4">
+          <TabsList className="inline-flex w-auto justify-start sm:justify-center gap-1">
+            <TabsTrigger value="acervo" className="flex-1">Acervo</TabsTrigger>
+            <TabsTrigger value="recomendacoes" className="flex-1">Recomendações</TabsTrigger>
+          </TabsList>
+        </div>
         
-        <TabsContent value="acervo">
+        <TabsContent value="acervo" className="pb-20 md:pb-6">
           <SearchBar
             searchTerm={searchTerm}
             onSearchChange={setSearchTerm}
@@ -110,22 +111,24 @@ export default function Biblioteca() {
             livrosSuggestions={livros}
           />
           
-          <Tabs defaultValue="todas" className="mb-6">
-            <TabsList className="mb-2 flex flex-wrap">
-              <TabsTrigger value="todas" onClick={() => setSelectedArea(null)}>
-                Todas as áreas
-              </TabsTrigger>
-              {areas.map(area => (
-                <TabsTrigger 
-                  key={area} 
-                  value={area}
-                  onClick={() => setSelectedArea(area)}
-                >
-                  {area}
+          <div className="overflow-x-auto pb-2 -mx-4 px-4 mb-6">
+            <Tabs defaultValue="todas">
+              <TabsList className="inline-flex min-w-full sm:min-w-0 w-auto justify-start sm:justify-center gap-1 flex-nowrap">
+                <TabsTrigger value="todas" onClick={() => setSelectedArea(null)}>
+                  Todas as áreas
                 </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+                {areas.map(area => (
+                  <TabsTrigger 
+                    key={area} 
+                    value={area}
+                    onClick={() => setSelectedArea(area)}
+                  >
+                    {area}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+          </div>
           
           {isLoading ? (
             <div className="text-center py-20">Carregando…</div>
@@ -209,7 +212,7 @@ export default function Biblioteca() {
           />
         </TabsContent>
         
-        <TabsContent value="recomendacoes">
+        <TabsContent value="recomendacoes" className="pb-20 md:pb-6">
           <BibliotecaRecomendacoes />
         </TabsContent>
       </Tabs>
