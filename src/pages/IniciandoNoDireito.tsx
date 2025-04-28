@@ -1,7 +1,17 @@
+
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, GraduationCap, PlayCircle, Sparkles, FileQuestion, FileText, Calendar, Users, Trophy, LineChart, Heart } from 'lucide-react';
+import { EstudoTrilha } from '@/components/iniciando/EstudoTrilha';
+import { GlossarioJuridico } from '@/components/iniciando/GlossarioJuridico';
+import { MiniCursos } from '@/components/iniciando/MiniCursos';
+import { FAQ } from '@/components/iniciando/FAQ';
+import { SimuladosIniciantes } from '@/components/iniciando/Simulados';
+import { MateriaisEssenciais } from '@/components/iniciando/MateriaisEssenciais';
+import { CronogramaEstudos } from '@/components/iniciando/CronogramaEstudos';
+import { PerfilEvolucao } from '@/components/iniciando/PerfilEvolucao';
+import { MotivacionalSucesso } from '@/components/iniciando/MotivacionalSucesso';
 
 const IniciandoNoDireito = () => {
   return (
