@@ -14,8 +14,8 @@ interface VideoPlayerProps {
 export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
-  const playerRef = useRef<HTMLIFrameElement>(null);
-  const [player, setPlayer] = useState<any>(null);
+  const playerRef = useRef<HTMLDivElement>(null);
+  const [player, setPlayer] = useState<YT.Player | null>(null);
 
   // Calcular a altura do player com base na largura (proporção 16:9)
   const calculatePlayerHeight = () => {
@@ -45,7 +45,7 @@ export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
               console.log('Player ready');
               setPlayer(ytPlayer);
             },
-            onStateChange: (event: any) => {
+            onStateChange: (event) => {
               // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
               if (event.data === 1) { // Playing
                 // Start tracking time
@@ -73,7 +73,7 @@ export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
   }, [videoId]);
 
   // Track video time and notify parent component
-  const startTimeTracking = (ytPlayer: any) => {
+  const startTimeTracking = (ytPlayer: YT.Player) => {
     const interval = setInterval(() => {
       if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
         const currentTime = ytPlayer.getCurrentTime();
