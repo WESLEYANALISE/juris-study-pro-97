@@ -1,154 +1,241 @@
-
 import { useState, useEffect } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AreaSelector } from "@/components/videoaulas/AreaSelector";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Card, CardContent } from "@/components/ui/card";
+import { supabase } from "@/lib/supabaseClient";
+import { toast } from "sonner";
+import { SearchIcon } from "lucide-react";
+import { getChannelPlaylists, getChannelVideos, getChannelId } from "@/lib/youtube-service";
+import { VideoPlayer } from "@/components/VideoPlayer";
+import { useNavigate } from "react-router-dom";
 
-// Canal específico IDs
-const CHANNELS = {
-  "Redação Jurídica": "UC3RRgAmE5tLWN3QBgM8BUfQ", // ID do canal Redação Jurídica
-  "Tipografia Jurídica": "UCcRZD6NsGUQJQAM9LmEYjpw" // ID do canal Tipografia Jurídica
-};
+interface YouTubePlaylist {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail: string;
+  videoCount: number;
+  channelTitle: string;
+}
 
-const AREAS = [
-  "Fundamentos",
-  "Petição Inicial", 
-  "Contestação", 
-  "Recursos", 
-  "Peças Criminais",
-  "Peças Cíveis",
-  "Dicas Gerais",
-  "Formatação"
-];
+interface StoredPlaylist {
+  id: string;
+  playlist_id: string;
+  playlist_title: string;
+  thumbnail_url: string;
+  channel_title: string;
+  video_count: number;
+  area: string;
+  is_single_video?: boolean;
+  video_id?: string;
+}
 
-export const VideoAulasRedacao = () => {
-  const [selectedArea, setSelectedArea] = useState("Fundamentos");
-  const [playlists, setPlaylists] = useState<any[]>([]);
+export function VideoAulasRedacao() {
   const [loading, setLoading] = useState(true);
-  const [selectedChannel, setSelectedChannel] = useState("Redação Jurídica");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [storedPlaylists, setStoredPlaylists] = useState<StoredPlaylist[]>([]);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [areaFilter, setAreaFilter] = useState<string | null>(null);
+  const [areas, setAreas] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPlaylists = async () => {
-      setLoading(true);
-      try {
-        // Tenta buscar do banco de dados primeiro
-        const { data: storedPlaylists } = await supabase
-          .from('video_playlists_juridicas')
-          .select('*')
-          .eq('area', 'Redação Jurídica - ' + selectedArea);
+    loadStoredPlaylists();
+  }, []);
 
-        if (storedPlaylists && storedPlaylists.length > 0) {
-          setPlaylists(storedPlaylists.map(item => ({
-            id: item.playlist_id,
-            title: item.playlist_title,
-            thumbnail: item.thumbnail_url,
-            videoCount: item.video_count,
-            channelTitle: item.channel_title
-          })));
-        } else {
-          // Se não encontrou no banco, busca da API do YouTube
-          const { getJuridicPlaylists } = await import("@/lib/youtube-service");
-          const fetchedPlaylists = await getJuridicPlaylists(selectedArea);
-          setPlaylists(fetchedPlaylists);
-        }
-      } catch (error) {
-        console.error("Erro ao buscar playlists:", error);
-      } finally {
-        setLoading(false);
+  const loadStoredPlaylists = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('video_playlists_juridicas')
+        .select('*')
+        .ilike('area', 'Redação Jurídica%')
+        .order('channel_title', { ascending: true });
+      
+      if (error) {
+        throw error;
       }
-    };
+      
+      setStoredPlaylists(data || []);
+      
+      // Extract unique areas
+      if (data) {
+        const uniqueAreas = Array.from(
+          new Set(
+            data.map(playlist => {
+              return playlist.area.replace('Redação Jurídica - ', '').trim();
+            })
+          )
+        ).sort();
+        
+        setAreas(uniqueAreas);
+      }
+    } catch (error) {
+      console.error("Error loading stored playlists:", error);
+      toast.error("Erro ao carregar playlists armazenadas. Por favor, tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchPlaylists();
-  }, [selectedArea, selectedChannel]);
+  const handlePlaylistClick = async (playlist: StoredPlaylist) => {
+    try {
+      // Check if it's a single video
+      if (playlist.is_single_video && playlist.video_id) {
+        setSelectedVideoId(playlist.video_id);
+      } else {
+        // Check if there are any related articles first
+        const { data: articles, error } = await supabase
+          .from('redacao_artigos')
+          .select('*')
+          .filter('playlist_ids', 'cs', `{"${playlist.playlist_id}"}`)
+          .limit(1);
+        
+        if (error) {
+          throw error;
+        }
+        
+        if (articles && articles.length > 0) {
+          // If there's an article, navigate to it
+          navigate(`/redacao-conteudo/${articles[0].id}`);
+          return;
+        }
+        
+        // Otherwise, get the first video from the playlist
+        const { getPlaylistVideos } = await import('@/lib/youtube-service');
+        const videos = await getPlaylistVideos(playlist.playlist_id);
+        
+        if (videos && videos.length > 0) {
+          setSelectedVideoId(videos[0].id);
+        }
+      }
+    } catch (error) {
+      console.error("Error handling playlist click:", error);
+      toast.error("Erro ao carregar vídeos. Por favor, tente novamente.");
+    }
+  };
+
+  const filteredPlaylists = storedPlaylists.filter(playlist => {
+    const matchesSearch = !searchTerm || 
+      playlist.playlist_title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      playlist.channel_title.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesArea = !areaFilter || 
+      playlist.area.includes(`Redação Jurídica - ${areaFilter}`);
+    
+    return matchesSearch && matchesArea;
+  });
+
+  const handleAreaFilter = (area: string | null) => {
+    setAreaFilter(area === areaFilter ? null : area);
+  };
+
+  // Check if there are any related articles for video
+  const navigateToArticles = async () => {
+    navigate('/redacao-juridica');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-8">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">Videoaulas de Redação Jurídica</h2>
-          <p className="text-muted-foreground">
-            Assista aulas sobre técnicas de redação jurídica com professores especializados
-          </p>
-        </div>
-        
-        <div className="flex items-center space-x-2">
-          <AreaSelector
-            areas={AREAS}
-            selectedArea={selectedArea}
-            onAreaSelect={setSelectedArea}
-            className="w-[180px]"
+      <div className="flex flex-col space-y-4">
+        <div className="relative">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            className="pl-10"
+            placeholder="Buscar por título ou canal..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        <div className="flex flex-wrap gap-2">
+          {areas.map(area => (
+            <Button
+              key={area}
+              variant={areaFilter === area ? "default" : "outline"}
+              size="sm"
+              onClick={() => handleAreaFilter(area)}
+            >
+              {area}
+            </Button>
+          ))}
+        </div>
       </div>
-
-      <Tabs defaultValue="Redação Jurídica" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="Redação Jurídica" onClick={() => setSelectedChannel("Redação Jurídica")}>
-            Canal Redação Jurídica
-          </TabsTrigger>
-          <TabsTrigger value="Tipografia Jurídica" onClick={() => setSelectedChannel("Tipografia Jurídica")}>
-            Canal Tipografia Jurídica
-          </TabsTrigger>
-        </TabsList>
-
-        {Object.keys(CHANNELS).map(channel => (
-          <TabsContent key={channel} value={channel} className="space-y-4">
-            {loading ? (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <Card key={i} className="overflow-hidden">
-                    <Skeleton className="h-[180px] w-full" />
-                    <CardHeader>
-                      <Skeleton className="h-5 w-4/5" />
-                      <Skeleton className="h-4 w-3/5" />
-                    </CardHeader>
-                  </Card>
-                ))}
+      
+      {selectedVideoId ? (
+        <Card>
+          <CardContent className="p-4 space-y-4">
+            <div className="aspect-video w-full">
+              <VideoPlayer videoId={selectedVideoId} />
+            </div>
+            <Button variant="outline" onClick={() => setSelectedVideoId(null)}>
+              Voltar para lista
+            </Button>
+          </CardContent>
+        </Card>
+      ) : filteredPlaylists.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredPlaylists.map(playlist => (
+            <Card 
+              key={playlist.id}
+              className="overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => handlePlaylistClick(playlist)}
+            >
+              <div className="aspect-video w-full">
+                <img 
+                  src={playlist.thumbnail_url || "/placeholder.svg"}
+                  alt={playlist.playlist_title}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                />
               </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {playlists.length > 0 ? (
-                  playlists.map((playlist) => (
-                    <Card key={playlist.id} className="overflow-hidden hover:shadow-md transition-all">
-                      <div className="aspect-video w-full overflow-hidden">
-                        <img 
-                          src={playlist.thumbnail} 
-                          alt={playlist.title} 
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-                      <CardHeader>
-                        <CardTitle className="text-lg line-clamp-2">{playlist.title}</CardTitle>
-                        <div className="flex items-center text-sm text-muted-foreground">
-                          <span>{playlist.channelTitle}</span>
-                          <span className="mx-1">•</span>
-                          <span>{playlist.videoCount} vídeos</span>
-                        </div>
-                      </CardHeader>
-                      <CardFooter>
-                        <a 
-                          href={`https://www.youtube.com/playlist?list=${playlist.id}`}
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline text-sm"
-                        >
-                          Ver no YouTube
-                        </a>
-                      </CardFooter>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="col-span-full text-center py-10">
-                    <p>Nenhuma playlist encontrada para esta área. Tente outra categoria ou verifique sua conexão.</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </TabsContent>
-        ))}
-      </Tabs>
+              <CardContent className="p-4">
+                <h3 className="font-semibold line-clamp-2 text-base mb-1">{playlist.playlist_title}</h3>
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    {playlist.channel_title}
+                  </p>
+                  {!playlist.is_single_video && (
+                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+                      {playlist.video_count} vídeos
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {playlist.area.replace('Redação Jurídica - ', '')}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground mb-4">
+            {searchTerm || areaFilter 
+              ? "Nenhum resultado encontrado para sua busca." 
+              : "Nenhuma playlist disponível no momento."}
+          </p>
+          {(searchTerm || areaFilter) && (
+            <Button variant="outline" onClick={() => { setSearchTerm(""); setAreaFilter(null); }}>
+              Limpar filtros
+            </Button>
+          )}
+        </div>
+      )}
+      
+      <div className="text-center mt-6">
+        <Button onClick={() => navigate("/redacao-conteudo")}>
+          Ver Todos os Artigos de Redação Jurídica
+        </Button>
+      </div>
     </div>
   );
-};
+}

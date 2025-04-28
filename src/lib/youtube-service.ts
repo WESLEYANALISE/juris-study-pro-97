@@ -89,6 +89,42 @@ export async function getJuridicPlaylists(
   return searchPlaylists(`${disciplina} direito aulas`, maxResults);
 }
 
+// Função para buscar playlists por ID de canal
+export async function getChannelPlaylists(
+  channelId: string,
+  maxResults: number = 20
+): Promise<YouTubePlaylist[]> {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=${maxResults}&key=${API_KEY}`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar playlists do canal: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.items || data.items.length === 0) {
+      return [];
+    }
+    
+    return data.items.map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      thumbnail: item.snippet.thumbnails.high?.url || 
+                item.snippet.thumbnails.medium?.url || 
+                item.snippet.thumbnails.default?.url,
+      videoCount: item.contentDetails.itemCount,
+      channelTitle: item.snippet.channelTitle,
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar playlists do canal:", error);
+    return [];
+  }
+}
+
 // Função para buscar vídeos de uma playlist
 export async function getPlaylistVideos(
   playlistId: string,
@@ -163,6 +199,96 @@ export async function getPlaylistVideos(
     });
   } catch (error) {
     console.error("Erro ao buscar vídeos da playlist:", error);
+    return [];
+  }
+}
+
+// Função para buscar canal por username ou personalizado URL
+export async function getChannelId(channelIdentifier: string): Promise<string | null> {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/search?part=snippet&q=${encodeURIComponent(channelIdentifier)}&type=channel&maxResults=1&key=${API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error("Erro ao buscar ID do canal");
+    }
+    
+    const data = await response.json();
+    
+    if (data.items && data.items.length > 0) {
+      return data.items[0].id.channelId;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Erro ao buscar ID do canal:", error);
+    return null;
+  }
+}
+
+// Função para buscar vídeos recentes de um canal
+export async function getChannelVideos(
+  channelId: string, 
+  maxResults: number = 10
+): Promise<YouTubeVideo[]> {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/search?part=snippet&channelId=${channelId}&maxResults=${maxResults}&order=date&type=video&key=${API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error("Erro ao buscar vídeos do canal");
+    }
+    
+    const data = await response.json();
+    
+    if (!data.items || data.items.length === 0) {
+      return [];
+    }
+    
+    // Extract video IDs to fetch duration and other details
+    const videoIds = data.items.map((item: any) => item.id.videoId).join(",");
+    
+    if (!videoIds) {
+      return [];
+    }
+    
+    const videosResponse = await fetch(
+      `${BASE_URL}/videos?part=contentDetails,statistics,snippet&id=${videoIds}&key=${API_KEY}`
+    );
+    
+    if (!videosResponse.ok) {
+      throw new Error("Erro ao buscar detalhes dos vídeos");
+    }
+    
+    const videosData = await videosResponse.json();
+    
+    // Process ISO 8601 duration to readable format
+    const processDuration = (duration: string) => {
+      const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+      if (!match) return "00:00";
+      
+      const hours = match[1] ? match[1] + ":" : "";
+      const minutes = match[2] ? (hours && match[2].padStart(2, "0") || match[2]) + ":" : "00:";
+      const seconds = match[3] ? match[3].padStart(2, "0") : "00";
+      
+      return hours + minutes + seconds;
+    };
+    
+    return videosData.items.map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description,
+      thumbnail: item.snippet.thumbnails.high?.url || 
+                item.snippet.thumbnails.medium?.url || 
+                item.snippet.thumbnails.default?.url,
+      publishedAt: item.snippet.publishedAt,
+      channelTitle: item.snippet.channelTitle,
+      duration: processDuration(item.contentDetails.duration),
+    }));
+  } catch (error) {
+    console.error("Erro ao buscar vídeos do canal:", error);
     return [];
   }
 }
