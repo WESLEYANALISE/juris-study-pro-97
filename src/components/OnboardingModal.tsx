@@ -61,9 +61,10 @@ type FormValues = z.infer<typeof formSchema>;
 interface OnboardingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onComplete?: () => void;
 }
 
-const OnboardingModal = ({ open, onOpenChange }: OnboardingModalProps) => {
+const OnboardingModal = ({ open, onOpenChange, onComplete }: OnboardingModalProps) => {
   const { user } = useAuth();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -102,6 +103,12 @@ const OnboardingModal = ({ open, onOpenChange }: OnboardingModalProps) => {
       });
 
       toast.success("Plano de estudos criado com sucesso!");
+      
+      // Chamar o callback de conclusão se fornecido
+      if (onComplete) {
+        onComplete();
+      }
+      
       onOpenChange(false);
     } catch (error) {
       console.error("Erro ao salvar dados:", error);

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -33,8 +34,8 @@ import VideoAulas from "@/pages/VideoAulas";
 import VideoAulasTradicional from "@/pages/VideoAulasTradicional";
 import VideoAulasInterativas from "./pages/VideoAulasInterativas";
 import Anotacoes from "@/pages/Anotacoes";
-import { type ProfileType } from "@/components/WelcomeModal";
 import { WelcomeModal } from "@/components/WelcomeModal";
+import { type ProfileType } from "@/components/WelcomeModal";
 
 function App() {
   const [userProfile, setUserProfile] = useState<ProfileType>("tudo");

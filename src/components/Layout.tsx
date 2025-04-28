@@ -3,7 +3,6 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
 import { type ProfileType } from "@/components/WelcomeModal";
-import MobileNavigation from "@/components/MobileNavigation";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Toaster } from "@/components/ui/sonner";
 import OnboardingModal from "@/components/OnboardingModal";
@@ -34,7 +33,8 @@ const Layout = ({
 }: LayoutProps) => {
   const isMobile = useIsMobile();
   const {
-    user
+    user,
+    profile
   } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -84,9 +84,12 @@ const Layout = ({
           user_uuid: user.id
         });
         
+        // Verificar se o onboarding já foi concluído
+        const onboardingCompleted = profileData?.onboarding_completed || false;
+        
         setUserData({
           displayName: profileData?.display_name || null,
-          onboardingCompleted: profileData?.onboarding_completed || false,
+          onboardingCompleted: onboardingCompleted,
           progress: progressData || 0,
           nextTask: {
             title: nextTaskData?.titulo || null,
@@ -94,8 +97,9 @@ const Layout = ({
           }
         });
 
-        // Mostrar onboarding se não estiver completo
-        if (!profileData?.onboarding_completed) {
+        // Mostrar onboarding se não estiver completo e usuário estiver autenticado
+        // Apenas uma vez quando os dados são carregados inicialmente
+        if (!onboardingCompleted) {
           setShowOnboarding(true);
         }
       } catch (error) {
@@ -105,6 +109,12 @@ const Layout = ({
     
     fetchUserData();
   }, [user]);
+  
+  // Função para lidar com a conclusão do onboarding
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    setUserData(prev => ({...prev, onboardingCompleted: true}));
+  };
   
   return <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
@@ -119,11 +129,14 @@ const Layout = ({
             </div>
           </main>
         </div>
-        <MobileNavigation />
         <Toaster />
         
         {/* Modal de onboarding para novos usuários */}
-        <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} />
+        <OnboardingModal 
+          open={showOnboarding} 
+          onOpenChange={setShowOnboarding}
+          onComplete={handleOnboardingComplete}
+        />
       </div>
     </SidebarProvider>;
 };
