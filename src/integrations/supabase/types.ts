@@ -1654,7 +1654,7 @@ export type Database = {
           alternativa_a: string
           alternativa_b: string
           alternativa_c: string
-          alternativa_correta: string
+          alternativa_correta: string | null
           alternativa_d: string
           ano: number
           area: string | null
@@ -1663,7 +1663,7 @@ export type Database = {
           explicacao: string | null
           id: string
           imagem_url: string | null
-          numero_questao: number
+          numero_questao: string
           questao: string
           updated_at: string | null
         }
@@ -1671,7 +1671,7 @@ export type Database = {
           alternativa_a: string
           alternativa_b: string
           alternativa_c: string
-          alternativa_correta: string
+          alternativa_correta?: string | null
           alternativa_d: string
           ano: number
           area?: string | null
@@ -1680,7 +1680,7 @@ export type Database = {
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
-          numero_questao: number
+          numero_questao: string
           questao: string
           updated_at?: string | null
         }
@@ -1688,7 +1688,7 @@ export type Database = {
           alternativa_a?: string
           alternativa_b?: string
           alternativa_c?: string
-          alternativa_correta?: string
+          alternativa_correta?: string | null
           alternativa_d?: string
           ano?: number
           area?: string | null
@@ -1697,7 +1697,7 @@ export type Database = {
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
-          numero_questao?: number
+          numero_questao?: string
           questao?: string
           updated_at?: string | null
         }

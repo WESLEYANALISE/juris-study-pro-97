@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -34,6 +35,7 @@ import VadeMecumViewer from "./pages/VadeMecumViewer";
 import AssistenteJuridico from "./pages/AssistenteJuridico";
 import Simulados from "./pages/Simulados";
 import SimuladoSessao from "./pages/SimuladoSessao";
+import SimuladoResultado from "./pages/SimuladoResultado";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -289,6 +291,8 @@ const App = () => {
                     </RequireAuth>
                   }
                 />
+                
+                {/* Simulados routes */}
                 <Route
                   path="/simulados"
                   element={
@@ -313,6 +317,19 @@ const App = () => {
                     </RequireAuth>
                   }
                 />
+                <Route
+                  path="/simulados/resultado/:id"
+                  element={
+                    <RequireAuth>
+                      <Layout userProfile={userProfile}>
+                        <PageTransition>
+                          <SimuladoResultado />
+                        </PageTransition>
+                      </Layout>
+                    </RequireAuth>
+                  }
+                />
+                
                 <Route path="*" element={<RequireAuth><NotFound /></RequireAuth>} />
               </Routes>
             </AnimatePresence>
