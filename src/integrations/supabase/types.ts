@@ -2139,6 +2139,41 @@ export type Database = {
           },
         ]
       }
+      user_question_responses: {
+        Row: {
+          answer: string
+          created_at: string | null
+          id: string
+          is_correct: boolean
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string | null
+          id?: string
+          is_correct: boolean
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string | null
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_question_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "video_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_questoes: {
         Row: {
           acertou: boolean
@@ -2228,6 +2263,33 @@ export type Database = {
           id?: string
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_video_progress: {
+        Row: {
+          completed: boolean | null
+          id: string
+          last_watched_at: string | null
+          user_id: string
+          video_id: string
+          watched_seconds: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          id?: string
+          last_watched_at?: string | null
+          user_id: string
+          video_id: string
+          watched_seconds?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          id?: string
+          last_watched_at?: string | null
+          user_id?: string
+          video_id?: string
+          watched_seconds?: number | null
         }
         Relationships: []
       }
@@ -2327,6 +2389,60 @@ export type Database = {
           title?: string
           url?: string
           views?: number | null
+        }
+        Relationships: []
+      }
+      video_questions: {
+        Row: {
+          correct_answer: string
+          created_at: string | null
+          explanation: string | null
+          id: string
+          options: Json | null
+          question: string
+          timestamp: number
+          video_id: string
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          question: string
+          timestamp: number
+          video_id: string
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          question?: string
+          timestamp?: number
+          video_id?: string
+        }
+        Relationships: []
+      }
+      video_transcripts: {
+        Row: {
+          created_at: string | null
+          id: string
+          transcript: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          transcript: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          transcript?: string
+          video_id?: string
         }
         Relationships: []
       }
