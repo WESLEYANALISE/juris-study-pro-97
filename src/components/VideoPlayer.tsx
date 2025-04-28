@@ -4,18 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Clock, BookmarkPlus, MessageSquare } from "lucide-react";
-import { type YouTubeVideo } from "@/lib/youtube-service";
 
 interface VideoPlayerProps {
   videoId: string;
   onTimeUpdate?: (time: number) => void;
+  onStateChange?: (event: YT.PlayerStateChangeEvent) => void;
+  setPlayerRef?: (player: YT.Player) => void;
 }
 
-export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
+export function VideoPlayer({ videoId, onTimeUpdate, onStateChange, setPlayerRef }: VideoPlayerProps) {
   const [notes, setNotes] = useState("");
   const [showNotes, setShowNotes] = useState(false);
   const playerRef = useRef<HTMLDivElement>(null);
   const [player, setPlayer] = useState<YT.Player | null>(null);
+  const timeTrackingRef = useRef<number | null>(null);
 
   // Calcular a altura do player com base na largura (proporção 16:9)
   const calculatePlayerHeight = () => {
@@ -44,12 +46,25 @@ export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
             onReady: () => {
               console.log('Player ready');
               setPlayer(ytPlayer);
+              if (setPlayerRef) {
+                setPlayerRef(ytPlayer);
+              }
             },
             onStateChange: (event) => {
               // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
               if (event.data === 1) { // Playing
                 // Start tracking time
                 startTimeTracking(ytPlayer);
+              } else if (event.data === 2 || event.data === 0) { // Paused or Ended
+                // Stop tracking time
+                if (timeTrackingRef.current) {
+                  clearInterval(timeTrackingRef.current);
+                  timeTrackingRef.current = null;
+                }
+              }
+              
+              if (onStateChange) {
+                onStateChange(event);
               }
             },
           },
@@ -69,21 +84,43 @@ export function VideoPlayer({ videoId, onTimeUpdate }: VideoPlayerProps) {
       if (player) {
         player.destroy();
       }
+      
+      if (timeTrackingRef.current) {
+        clearInterval(timeTrackingRef.current);
+        timeTrackingRef.current = null;
+      }
     };
-  }, [videoId]);
+  }, [videoId, setPlayerRef]);
 
   // Track video time and notify parent component
   const startTimeTracking = (ytPlayer: YT.Player) => {
-    const interval = setInterval(() => {
+    if (timeTrackingRef.current) {
+      clearInterval(timeTrackingRef.current);
+    }
+    
+    timeTrackingRef.current = window.setInterval(() => {
       if (ytPlayer && typeof ytPlayer.getCurrentTime === 'function') {
-        const currentTime = ytPlayer.getCurrentTime();
-        if (onTimeUpdate) {
-          onTimeUpdate(currentTime);
+        try {
+          const currentTime = ytPlayer.getCurrentTime();
+          if (onTimeUpdate) {
+            onTimeUpdate(currentTime);
+          }
+        } catch (error) {
+          console.error("Error getting current time:", error);
+          if (timeTrackingRef.current) {
+            clearInterval(timeTrackingRef.current);
+            timeTrackingRef.current = null;
+          }
         }
       }
     }, 1000); // Update every second
 
-    return () => clearInterval(interval);
+    return () => {
+      if (timeTrackingRef.current) {
+        clearInterval(timeTrackingRef.current);
+        timeTrackingRef.current = null;
+      }
+    };
   };
 
   // Atualizar a altura do player quando a janela for redimensionada
