@@ -1,40 +1,55 @@
 
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useState, useCallback } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
 
-interface BookmarkButtonProps {
-  isFavorite: boolean;
-  setIsFavorite: (isFavorite: boolean) => void;
+interface UseArticleFavoriteProps {
   lawName: string;
   articleNumber: string;
-  articleText: string;
-  isLoading?: boolean;
 }
 
-export const BookmarkButton = ({
-  isFavorite,
-  setIsFavorite,
-  lawName,
-  articleNumber,
-  articleText,
-  isLoading = false
-}: BookmarkButtonProps) => {
+export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavoriteProps) => {
   const { user } = useAuth();
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const toggleFavorite = async () => {
+  const checkIsFavorite = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      setIsLoading(true);
+      
+      const { data, error } = await supabase
+        .from('vademecum_favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('law_name', lawName)
+        .eq('article_number', articleNumber)
+        .maybeSingle();
+      
+      if (error) {
+        console.error("Erro ao verificar favorito:", error);
+        toast.error("Erro ao verificar status de favorito");
+        return;
+      }
+      
+      setIsFavorite(!!data);
+    } catch (err) {
+      console.error("Exceção ao verificar favorito:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, lawName, articleNumber]);
+
+  const toggleFavorite = async (articleText: string) => {
     if (!user) {
       toast.error('Você precisa estar logado para favoritar artigos');
       return;
     }
 
     try {
-      setIsProcessing(true);
+      setIsLoading(true);
       console.log(`Alternando favorito: ${isFavorite ? 'remover' : 'adicionar'}, lei: ${lawName}, artigo: ${articleNumber}`);
       
       if (isFavorite) {
@@ -77,36 +92,15 @@ export const BookmarkButton = ({
       console.error("Exceção ao alternar favorito:", err);
       toast.error(`Erro ao ${isFavorite ? 'remover dos' : 'adicionar aos'} favoritos. Tente novamente.`);
     } finally {
-      setIsProcessing(false);
+      setIsLoading(false);
     }
   };
 
-  if (!user) {
-    return null;
-  }
-
-  const loading = isLoading || isProcessing;
-
-  return (
-    <motion.div
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.9 }}
-    >
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={toggleFavorite}
-        disabled={loading}
-        title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-      >
-        {loading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : isFavorite ? (
-          <BookmarkCheck className="h-4 w-4 text-primary" />
-        ) : (
-          <Bookmark className="h-4 w-4" />
-        )}
-      </Button>
-    </motion.div>
-  );
+  return {
+    isFavorite,
+    isLoading,
+    checkIsFavorite,
+    toggleFavorite,
+    setIsFavorite
+  };
 };
