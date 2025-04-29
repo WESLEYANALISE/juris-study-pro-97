@@ -19,12 +19,10 @@ try {
 } catch (error) {
   console.error("Error initializing PDF.js worker:", error);
 }
-
 interface PDFViewerProps {
   livro: LivroPro;
   onClose: () => void;
 }
-
 export function PDFViewer({
   livro,
   onClose
@@ -909,11 +907,11 @@ export function PDFViewer({
               verticalAlign: 'middle'
             }}>
                     <Page pageNumber={pageNum} scale={scale} rotate={rotation} renderTextLayer={false} // Disable text layer to fix the error
-              renderAnnotationLayer={false} className="transition-transform duration-300" width={isDualPageView ? containerSize.width / 2 - 24 : undefined} canvasBackground="white" error={<div className="flex items-center justify-center p-4 h-[200px]">
+              renderAnnotationLayer={true} className="transition-transform duration-300" width={isDualPageView ? containerSize.width / 2 - 24 : undefined} canvasBackground="white" error={<div className="flex items-center justify-center p-4 h-[200px]">
                           <p className="text-sm text-muted-foreground">Erro ao renderizar página {pageNum}</p>
                         </div>} />
                     
-                    {/* Custom annotations */}
+                    {/* Overlay annotations on current page */}
                     {currentPageAnnotations.filter(note => note.pagina === pageNum).map(note => <div key={note.id} className="absolute p-1 rounded" style={{
                 backgroundColor: `${note.cor}40`,
                 border: `2px solid ${note.cor}`,
