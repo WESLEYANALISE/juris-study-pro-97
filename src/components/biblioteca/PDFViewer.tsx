@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Document, Page, pdfjs } from "react-pdf";
@@ -17,14 +17,21 @@ import type { LivroPro, Anotacao, Marcador, Progresso } from "@/types/livrospro"
 
 // Set up the worker for PDF.js with error handling
 try {
-  pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+  // Only set the workerSrc if it hasn't been set already
+  if (!pdfjs.GlobalWorkerOptions.workerSrc || pdfjs.GlobalWorkerOptions.workerSrc === '') {
+    const workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+    console.log("Setting PDF.js worker source to:", workerSrc);
+    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+  }
 } catch (error) {
   console.error("Error initializing PDF.js worker:", error);
 }
+
 interface PDFViewerProps {
   livro: LivroPro;
   onClose: () => void;
 }
+
 export function PDFViewer({
   livro,
   onClose
@@ -63,10 +70,50 @@ export function PDFViewer({
   const [pdfLoadRetries, setPdfLoadRetries] = useState(0);
   const [useAlternativeViewer, setUseAlternativeViewer] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [isDocumentLoading, setIsDocumentLoading] = useState(true);
+  const [isWorkerInitialized, setIsWorkerInitialized] = useState(false);
+  
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   const mainContentRef = useRef<HTMLDivElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
+
+  // Check if the worker is initialized
+  useEffect(() => {
+    const checkWorkerInitialization = async () => {
+      try {
+        // Test if we can create a small PDF document
+        const testDoc = await pdfjs.getDocument({
+          data: new Uint8Array([
+            '%PDF-1.7',
+            '1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj',
+            '2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj',
+            '3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 3 3]>>endobj',
+            'xref',
+            '0 4',
+            '0000000000 65535 f',
+            '0000000010 00000 n',
+            '0000000053 00000 n',
+            '0000000102 00000 n',
+            'trailer<</Size 4/Root 1 0 R>>',
+            'startxref',
+            '149',
+            '%%EOF'
+          ])
+        }).promise;
+        
+        await testDoc.getPage(1);
+        setIsWorkerInitialized(true);
+        console.log("PDF.js worker initialized successfully");
+      } catch (error) {
+        console.error("Error testing PDF.js worker:", error);
+        setPdfLoadError(new Error("PDF.js worker not initialized correctly"));
+        setIsWorkerInitialized(false);
+      }
+    };
+    
+    checkWorkerInitialization();
+  }, []);
 
   // Use touch gestures for zooming
   const touchGestures = useTouchGestures({
@@ -442,6 +489,7 @@ export function PDFViewer({
       return () => clearTimeout(timeout);
     }
   }, [pageNumber, user]);
+  
   const toggleFullScreen = async () => {
     if (!document.fullscreenElement) {
       if (pdfContainerRef.current?.requestFullscreen) {
@@ -453,18 +501,20 @@ export function PDFViewer({
       }
     }
   };
+  
   const scrollToTop = () => {
     mainContentRef.current?.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
   };
-  const onDocumentLoadSuccess = ({
-    numPages
-  }: {
-    numPages: number;
-  }) => {
+  
+  const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
+    console.log("PDF document loaded successfully with", numPages, "pages");
     setNumPages(numPages);
+    setIsDocumentLoading(false);
+    setPdfLoadError(null);
+    
     if (livro.total_paginas === null) {
       // Update the book with total pages if not set
       supabase.from("livrospro").update({
@@ -475,11 +525,14 @@ export function PDFViewer({
         });
       });
     }
-  };
-  const onDocumentLoadError = (error: Error) => {
+  }, [livro.id, livro.total_paginas, queryClient]);
+  
+  const onDocumentLoadError = useCallback((error: Error) => {
     console.error("PDF load error:", error);
     setPdfLoadError(error);
-  };
+    setIsDocumentLoading(false);
+  }, []);
+  
   const changePage = (delta: number) => {
     if (!numPages) return;
     let newPage = pageNumber + delta;
@@ -492,12 +545,25 @@ export function PDFViewer({
       setPageNumber(newPage);
     }
   };
+  
   const goToPage = (page: number) => {
     if (!numPages) return;
     if (page >= 1 && page <= numPages) {
       setPageNumber(page);
     }
   };
+
+  // Create a memoized options object for the PDF document
+  const pdfOptions = useMemo(() => ({
+    cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+    isEvalSupported: false,
+    cMapPacked: true,
+    standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+    disableAutoFetch: false,
+    disableStream: false,
+    disableRange: false,
+    withCredentials: false,
+  }), []);
 
   // Get Google Docs viewer URL as fallback
   const getGoogleViewerUrl = () => {
@@ -648,6 +714,7 @@ export function PDFViewer({
         console.log(`Retrying PDF load, attempt ${pdfLoadRetries + 1}`);
         setPdfLoadRetries(prev => prev + 1);
         setPdfLoadError(null);
+        setIsDocumentLoading(true);
       }, 2000); // Wait 2 seconds before retrying
 
       return () => clearTimeout(retryTimeout);
@@ -661,6 +728,32 @@ export function PDFViewer({
       });
     }
   }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer]);
+
+  // Check if PDF URL is valid and accessible
+  useEffect(() => {
+    if (!livro.pdf) {
+      setPdfLoadError(new Error("No PDF URL provided"));
+      setIsDocumentLoading(false);
+      setUseAlternativeViewer(true);
+      return;
+    }
+
+    const checkPdfUrl = async () => {
+      try {
+        const response = await fetch(livro.pdf, { method: 'HEAD' });
+        if (!response.ok) {
+          throw new Error(`PDF URL returned ${response.status}: ${response.statusText}`);
+        }
+      } catch (error) {
+        console.error("Error checking PDF URL:", error);
+        setPdfLoadError(error instanceof Error ? error : new Error(String(error)));
+        setUseAlternativeViewer(true);
+      }
+    };
+
+    checkPdfUrl();
+  }, [livro.pdf]);
+
   const renderAlternativeViewer = () => {
     return <div className="w-full h-full flex flex-col">
         <div className="bg-card/90 backdrop-blur-sm p-4 text-center mb-4 rounded-lg border">
@@ -673,14 +766,15 @@ export function PDFViewer({
           </p>
         </div>
         
-        <iframe src={getGoogleViewerUrl()} className="flex-1 w-full rounded-lg border shadow-lg bg-white" title="Visualizador de PDF alternativo" />
+        <iframe src={getGoogleViewerUrl()} className="flex-1 w-full rounded-lg border shadow-lg bg-white" title="Visualizador de PDF alternativo" onLoad={() => setIsDocumentLoading(false)} />
         
         <div className="flex justify-between mt-4">
           <Button variant="outline" onClick={() => {
-          setPdfLoadRetries(0);
-          setPdfLoadError(null);
-          setUseAlternativeViewer(false);
-        }} className="gap-2">
+            setPdfLoadRetries(0);
+            setPdfLoadError(null);
+            setIsDocumentLoading(true);
+            setUseAlternativeViewer(false);
+          }} className="gap-2">
             <RotateCw className="h-4 w-4" />
             Tentar visualizador normal
           </Button>
@@ -692,6 +786,7 @@ export function PDFViewer({
         </div>
       </div>;
   };
+
   return <div ref={pdfContainerRef} className="fixed inset-0 bg-background z-50 flex flex-col">
       <style>{textLayerStyles}</style>
       
@@ -741,6 +836,7 @@ export function PDFViewer({
                     setUseAlternativeViewer(false);
                     setPdfLoadRetries(0);
                     setPdfLoadError(null);
+                    setIsDocumentLoading(true);
                   }} className="justify-start">
                         <RotateCw className="mr-2 h-4 w-4" />
                         Usar visualizador normal
@@ -811,7 +907,7 @@ export function PDFViewer({
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Rotaç��o</h3>
+              <h3 className="text-sm font-medium">Rotação</h3>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setRotation(r => (r - 90) % 360)}>
                   <RotateCcw size={16} />
@@ -850,66 +946,97 @@ export function PDFViewer({
           width: isDualPageView ? 'auto' : '100%',
           maxWidth: isDualPageView ? 'none' : '100%'
         }}>
-              <Document file={livro.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} loading={<div className="flex items-center justify-center h-full min-h-[300px]">
-                    <div className="text-center">
-                      <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                      <p className="text-muted-foreground">Carregando documento...</p>
-                    </div>
-                  </div>} error={<div className="flex items-center justify-center h-full min-h-[300px]">
-                    <div className="text-center p-8 max-w-md mx-auto">
-                      <div className="bg-destructive/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
-                        <AlertTriangle className="h-6 w-6 text-destructive" />
-                      </div>
-                      <p className="font-semibold mb-2">Erro ao carregar documento</p>
-                      <p className="text-sm text-muted-foreground mb-6">
-                        Ocorreu um problema ao carregar o documento PDF. 
-                        {pdfLoadRetries > 0 && ` Tentativa ${pdfLoadRetries} de 3.`}
-                      </p>
-                      <div className="flex flex-col gap-2">
-                        <Button variant="outline" onClick={() => {
-                  setPdfLoadError(null);
-                  setPdfLoadRetries(prev => prev + 1);
-                }} disabled={pdfLoadRetries >= 3} className="w-full">
-                          <RotateCw className="mr-2 h-4 w-4" />
-                          Tentar novamente
-                        </Button>
-                        <Button variant="default" onClick={() => setUseAlternativeViewer(true)} className="w-full">
-                          Usar visualizador alternativo
-                        </Button>
-                        <Button variant="link" onClick={() => window.open(livro.pdf, '_blank')} className="w-full">
-                          <Download className="mr-2 h-4 w-4" />
-                          Baixar PDF
-                        </Button>
-                      </div>
-                    </div>
-                  </div>} className="transition-transform duration-300" options={{
-            cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-            isEvalSupported: false,
-            worker: pdfLoadRetries > 0 ? null : undefined
-          }}>
-                {pageSequence.map(pageNum => <div key={pageNum} className="page-container mb-2 bg-white" style={{
-              display: 'inline-block',
-              verticalAlign: 'middle'
-            }}>
-                    <Page pageNumber={pageNum} scale={scale} rotate={rotation} renderTextLayer={false} renderAnnotationLayer={false} className="transition-transform duration-300" width={isDualPageView ? containerSize.width / 2 - 24 : undefined} canvasBackground="white" error={<div className="flex items-center justify-center p-4 h-[200px]">
+              {isDocumentLoading && (
+                <div className="flex items-center justify-center h-full min-h-[300px] absolute inset-0 z-10 bg-background/70 backdrop-blur-sm">
+                  <div className="text-center">
+                    <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Carregando documento...</p>
+                  </div>
+                </div>
+              )}
+              
+              <Document 
+                file={livro.pdf}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={null} // We're handling loading state manually
+                error={null} // We're handling error state manually
+                className="transition-transform duration-300"
+                options={pdfOptions}
+              >
+                {!isDocumentLoading && !pdfLoadError && pageSequence.map(pageNum => (
+                  <div key={pageNum} className="page-container mb-2 bg-white" style={{
+                    display: 'inline-block',
+                    verticalAlign: 'middle'
+                  }}>
+                    <Page 
+                      key={`page_${pageNum}_${scale}_${rotation}`}
+                      pageNumber={pageNum} 
+                      scale={scale} 
+                      rotate={rotation} 
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      className="transition-transform duration-300" 
+                      width={isDualPageView ? containerSize.width / 2 - 24 : undefined} 
+                      height={undefined}
+                      canvasBackground="white"
+                      error={
+                        <div className="flex items-center justify-center p-4 h-[200px]">
                           <p className="text-sm text-muted-foreground">Erro ao renderizar página {pageNum}</p>
-                        </div>} />
+                        </div>
+                      }
+                    />
                     
                     {/* Overlay annotations on current page */}
-                    {currentPageAnnotations.filter(note => note.pagina === pageNum).map(note => <div key={note.id} className="absolute p-1 rounded" style={{
-                backgroundColor: `${note.cor}40`,
-                border: `2px solid ${note.cor}`,
-                maxWidth: '90%',
-                // If we have position data, use it, otherwise just show at top
-                top: note.posicao?.y || "10px",
-                left: note.posicao?.x || "10px"
-              }}>
+                    {currentPageAnnotations.filter(note => note.pagina === pageNum).map(note => (
+                      <div key={note.id} className="absolute p-1 rounded" style={{
+                        backgroundColor: `${note.cor}40`,
+                        border: `2px solid ${note.cor}`,
+                        maxWidth: '90%',
+                        // If we have position data, use it, otherwise just show at top
+                        top: note.posicao?.y || "10px",
+                        left: note.posicao?.x || "10px"
+                      }}>
                         <div className="text-xs p-1 bg-background/80 backdrop-blur-sm rounded">
                           {note.texto}
                         </div>
-                      </div>)}
-                  </div>)}
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </Document>
+              
+              {pdfLoadError && !useAlternativeViewer && (
+                <div className="flex items-center justify-center h-full min-h-[300px] p-8">
+                  <div className="text-center max-w-md mx-auto bg-card p-6 rounded-lg border">
+                    <div className="bg-destructive/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
+                      <AlertTriangle className="h-6 w-6 text-destructive" />
+                    </div>
+                    <p className="font-semibold mb-2">Erro ao carregar documento</p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      Ocorreu um problema ao carregar o documento PDF. 
+                      {pdfLoadRetries > 0 && ` Tentativa ${pdfLoadRetries} de 3.`}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      <Button variant="outline" onClick={() => {
+                        setPdfLoadError(null);
+                        setIsDocumentLoading(true);
+                        setPdfLoadRetries(prev => prev + 1);
+                      }} disabled={pdfLoadRetries >= 3} className="w-full">
+                        <RotateCw className="mr-2 h-4 w-4" />
+                        Tentar novamente
+                      </Button>
+                      <Button variant="default" onClick={() => setUseAlternativeViewer(true)} className="w-full">
+                        Usar visualizador alternativo
+                      </Button>
+                      <Button variant="link" onClick={() => window.open(livro.pdf, '_blank')} className="w-full">
+                        <Download className="mr-2 h-4 w-4" />
+                        Baixar PDF
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>}
           
           {/* Highlighted text context menu */}
@@ -1093,7 +1220,7 @@ export function PDFViewer({
       </div>
       
       {/* Bottom pagination controls */}
-      <div className="bg-card/90 backdrop-blur-sm border-t p-4 flex items-center justify-center gap-4 py-[73px] px-[16px]">
+      <div className="bg-card/90 backdrop-blur-sm border-t p-4 flex items-center justify-center gap-4 py-4 px-4">
         <Button variant="outline" size="lg" onClick={() => changePage(-1)} disabled={pageNumber <= 1} className="h-12 px-6">
           <ArrowLeft size={20} className="mr-2" /> 
           Anterior

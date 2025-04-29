@@ -99,6 +99,15 @@ export function BibliotecaRecomendacoes() {
 
   // Manipulador para selecionar um livro
   const handleSelectBook = (livro: LivroPro) => {
+    if (!livro.pdf) {
+      toast({
+        title: "PDF não disponível",
+        description: "Este livro não possui um arquivo PDF associado.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setSelectedBook(livro);
     trackBookView(livro.id);
   };

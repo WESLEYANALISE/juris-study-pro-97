@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Download, FileText, Volume2, ArrowRight, X, MessageSquare } from "lucide-react";
+import { BookOpen, Download, FileText, Volume2, ArrowRight, X, MessageSquare, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -30,6 +30,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   const [audio, setAudio] = useState<HTMLAudioElement | null>(null);
   const [showAnotacoes, setShowAnotacoes] = useState(false);
   const [anotacao, setAnotacao] = useState("");
+  const [isChecking, setIsChecking] = useState(false);
 
   const handleDownload = () => {
     if (livro.download) {
@@ -43,9 +44,40 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
     }
   };
 
-  const handleRead = () => {
+  const handleRead = async () => {
     if (livro.link) {
-      onRead();
+      // Check if the PDF link is valid before opening
+      if (!isChecking && livro.link.toLowerCase().endsWith('.pdf')) {
+        setIsChecking(true);
+        try {
+          const response = await fetch(livro.link, { 
+            method: 'HEAD', 
+            cache: 'no-store',
+            headers: { 'Cache-Control': 'no-cache' } 
+          });
+          
+          if (response.ok) {
+            onRead();
+          } else {
+            toast({
+              title: "Erro ao acessar PDF",
+              description: "Não foi possível acessar o arquivo PDF. Por favor, tente novamente mais tarde.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error checking PDF:", error);
+          toast({
+            title: "Erro ao verificar PDF",
+            description: "Não foi possível verificar o arquivo PDF. Por favor, tente novamente mais tarde.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsChecking(false);
+        }
+      } else {
+        onRead(); // Not a PDF or not checking, just open it
+      }
     } else {
       toast({
         title: "Link indisponível",
@@ -169,8 +201,23 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
       
       <div className="p-4 border-t flex flex-wrap gap-3 justify-between">
         <div className="flex gap-2">
-          <Button onClick={handleRead} disabled={!livro.link}>
-            <BookOpen className="mr-2 h-4 w-4" /> Ler Agora
+          <Button 
+            onClick={handleRead} 
+            disabled={!livro.link || isChecking}
+          >
+            {isChecking ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Verificando...
+              </span>
+            ) : (
+              <>
+                <BookOpen className="mr-2 h-4 w-4" /> Ler Agora
+              </>
+            )}
           </Button>
           
           <Button onClick={handleDownload} disabled={!livro.download} variant="outline">
