@@ -7,6 +7,39 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   animated?: boolean
 }
 
+// Helper function to extract motion props from regular props
+function extractMotionProps(props: any) {
+  const {
+    // Extract standard motion props you might use
+    initial,
+    animate,
+    exit,
+    transition,
+    whileHover,
+    whileTap,
+    whileDrag,
+    whileInView,
+    variants,
+    // Get all other props
+    ...otherProps
+  } = props;
+
+  return {
+    motionProps: {
+      initial,
+      animate,
+      exit,
+      transition,
+      whileHover,
+      whileTap,
+      whileDrag,
+      whileInView,
+      variants
+    },
+    otherProps
+  };
+}
+
 const Card = React.forwardRef<HTMLDivElement, CardProps>(({ className, animated = false, ...props }, ref) => {
   const cardClass = cn(
     "rounded-lg border bg-card text-card-foreground shadow-card transition-all duration-200 hover:shadow-hover data-[state=active]:shadow-hover",
@@ -14,6 +47,9 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ className, animated 
   );
   
   if (animated) {
+    // Extract motion props to prevent type errors
+    const { motionProps, otherProps } = extractMotionProps(props);
+    
     return (
       <motion.div
         ref={ref}
@@ -26,7 +62,8 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(({ className, animated 
         }}
         whileHover={{ y: -5 }}
         className={cardClass}
-        {...props}
+        {...motionProps}
+        {...otherProps}
       />
     )
   }
@@ -100,9 +137,12 @@ const CardFooter = React.forwardRef<
 ))
 CardFooter.displayName = "CardFooter"
 
-// Exportando o novo componente AnimatedCard como wrapper
+// Fix the AnimatedCard component using the same approach
 const AnimatedCard = React.forwardRef<HTMLDivElement, CardProps & React.HTMLAttributes<HTMLDivElement>>(
   ({ className, children, ...props }, ref) => {
+    // Extract motion props to prevent type errors
+    const { motionProps, otherProps } = extractMotionProps(props);
+    
     return (
       <motion.div
         ref={ref}
@@ -120,7 +160,8 @@ const AnimatedCard = React.forwardRef<HTMLDivElement, CardProps & React.HTMLAttr
           "rounded-lg border bg-card text-card-foreground shadow-card transition-all duration-200 hover:shadow-hover",
           className
         )}
-        {...props}
+        {...motionProps}
+        {...otherProps}
       >
         {children}
       </motion.div>
