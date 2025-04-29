@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor } from "lucide-react";
@@ -6,6 +7,9 @@ import FeaturedCategories from "@/components/home/FeaturedCategories";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { JuridicalBackground } from "@/components/ui/juridical-background";
+import { JuridicalCard } from "@/components/ui/juridical-card";
+
 const Index = () => {
   const navigate = useNavigate();
 
@@ -116,72 +120,87 @@ const Index = () => {
       color: "text-orange-500"
     }]
   }];
-  return <div className="container mx-auto py-6 pb-20 md:pb-6 px-[5px]">
-      <motion.div initial={{
-      opacity: 0,
-      y: -20
-    }} animate={{
-      opacity: 1,
-      y: 0
-    }} transition={{
-      duration: 0.5
-    }} className="flex flex-col items-center text-center mb-8">
-        <div className="mb-6">
-          <Scale className="h-16 w-16 text-primary mx-auto mb-3" />
-          <h1 className="text-4xl font-bold mb-2">JurisStudy Pro</h1>
-          <p className="text-xl text-muted-foreground">
-            Plataforma completa para estudos jurídicos
-          </p>
+
+  return (
+    <JuridicalBackground variant="scales" opacity={0.03}>
+      <div className="container mx-auto py-6 pb-20 md:pb-6 px-[5px]">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
+          transition={{ duration: 0.5 }}
+          className="flex flex-col items-center text-center mb-8"
+        >
+          <div className="mb-6">
+            <div className="relative mx-auto mb-3">
+              <Scale className="h-16 w-16 text-primary mx-auto" />
+              <motion.div 
+                className="absolute -inset-4 rounded-full opacity-20 bg-primary blur-md"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 0.2 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              />
+            </div>
+            <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+              JurisStudy Pro
+            </h1>
+            <p className="text-xl text-muted-foreground">
+              Plataforma completa para estudos jurídicos
+            </p>
+          </div>
+        </motion.div>
+
+        {/* Featured Categories at the top */}
+        {featuredCategories.map((category, index) => (
+          <FeaturedCategories key={index} title={category.title} items={category.items} />
+        ))}
+
+        {/* Category Carousels */}
+        <div className="space-y-10">
+          {categories.map((category, categoryIndex) => (
+            <CategoryCarousel key={categoryIndex} title={category.title} items={category.items} />
+          ))}
         </div>
-      </motion.div>
 
-      {/* Featured Categories at the top */}
-      {featuredCategories.map((category, index) => <FeaturedCategories key={index} title={category.title} items={category.items} />)}
-
-      {/* Category Carousels */}
-      <div className="space-y-10">
-        {categories.map((category, categoryIndex) => <CategoryCarousel key={categoryIndex} title={category.title} items={category.items} />)}
+        {/* Profile selection */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="glass-purple p-6 rounded-lg shadow-sm mt-10 mb-6"
+        >
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Gavel className="h-5 w-5 text-primary" />
+            <span>Escolha seu perfil de estudos</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <JuridicalCard
+              title="Concurseiro"
+              description="Foco em conteúdos para concursos públicos"
+              icon="landmark"
+              variant="primary"
+              className="cursor-pointer"
+            />
+            
+            <JuridicalCard
+              title="Universitário"
+              description="Material para graduação em Direito"
+              icon="book"
+              variant="default"
+              className="cursor-pointer"
+            />
+            
+            <JuridicalCard
+              title="Advogado"
+              description="Recursos para a prática profissional"
+              icon="scales"
+              variant="secondary"
+              className="cursor-pointer"
+            />
+          </div>
+        </motion.div>
       </div>
-
-      {/* Profile selection */}
-      <motion.div initial={{
-      opacity: 0
-    }} animate={{
-      opacity: 1
-    }} transition={{
-      duration: 0.5,
-      delay: 0.3
-    }} className="bg-card p-6 rounded-lg shadow-sm mt-10 mb-6">
-        <h2 className="text-2xl font-bold mb-4">Escolha seu perfil de estudos</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">Concurseiro</CardTitle>
-              <CardDescription className="text-sm">
-                Foco em conteúdos para concursos públicos
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          
-          <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">Universitário</CardTitle>
-              <CardDescription className="text-sm">
-                Material para graduação em Direito
-              </CardDescription>
-            </CardHeader>
-          </Card>
-          
-          <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
-            <CardHeader className="p-4">
-              <CardTitle className="text-lg">Advogado</CardTitle>
-              <CardDescription className="text-sm">
-                Recursos para a prática profissional
-              </CardDescription>
-            </CardHeader>
-          </Card>
-        </div>
-      </motion.div>
-    </div>;
+    </JuridicalBackground>
+  );
 };
+
 export default Index;

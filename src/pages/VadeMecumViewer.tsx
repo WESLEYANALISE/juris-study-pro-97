@@ -13,6 +13,7 @@ import { VadeMecumArticleList } from "@/components/vademecum/VadeMecumArticleLis
 import { VadeMecumHeader } from "@/components/vademecum/VadeMecumHeader";
 import { VadeMecumError } from "@/components/vademecum/VadeMecumError";
 import { useVadeMecumArticles } from "@/hooks/useVadeMecumArticles";
+import { JuridicalBackground } from "@/components/ui/juridical-background";
 
 const VadeMecumViewer = () => {
   const { searchQuery, setSearchQuery } = useVadeMecumSearch();
@@ -62,6 +63,17 @@ const VadeMecumViewer = () => {
     }
   });
 
+  // Select the appropriate background based on law type
+  const getBgVariant = () => {
+    if (!tableName) return "books";
+    
+    const lawNameLower = tableName.toLowerCase();
+    if (lawNameLower.includes('código')) return "constitution";
+    if (lawNameLower.includes('estatuto')) return "courthouse";
+    if (lawNameLower.includes('lei')) return "scales";
+    return "books";
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[200px] py-12">
@@ -78,49 +90,51 @@ const VadeMecumViewer = () => {
   }
   
   return (
-    <div className="container mx-auto p-4">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <VadeMecumHeader 
-            title={decodedLawName}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            onReload={() => loadArticles()}
-          />
-
-          {filteredArticles.length === 0 && !loading ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
-            </div>
-          ) : (
-            <VadeMecumArticleList 
-              isLoading={loading} 
-              visibleArticles={visibleArticles} 
-              filteredArticles={filteredArticles} 
-              visibleBatch={visibleBatch} 
-              tableName={tableName}
-              fontSize={fontSize}
-              loadMoreRef={loadMoreRef}
+    <JuridicalBackground variant={getBgVariant()} opacity={0.03}>
+      <div className="container mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <VadeMecumHeader 
+              title={decodedLawName}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              onReload={() => loadArticles()}
             />
-          )}
+
+            {filteredArticles.length === 0 && !loading ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
+              </div>
+            ) : (
+              <VadeMecumArticleList 
+                isLoading={loading} 
+                visibleArticles={visibleArticles} 
+                filteredArticles={filteredArticles} 
+                visibleBatch={visibleBatch} 
+                tableName={tableName}
+                fontSize={fontSize}
+                loadMoreRef={loadMoreRef}
+              />
+            )}
+          </div>
+          
+          {/* Sidebar with Favorites and History */}
+          <VadeMecumSidebar 
+            favorites={favorites} 
+            recentHistory={recentHistory} 
+          />
         </div>
-        
-        {/* Sidebar with Favorites and History */}
-        <VadeMecumSidebar 
-          favorites={favorites} 
-          recentHistory={recentHistory} 
+
+        {/* Bottom floating controls for font size and back to top */}
+        <FloatingControls
+          fontSize={fontSize}
+          increaseFontSize={increaseFontSize}
+          decreaseFontSize={decreaseFontSize}
+          showBackToTop={showBackToTop}
+          scrollToTop={scrollToTop}
         />
       </div>
-
-      {/* Bottom floating controls for font size and back to top */}
-      <FloatingControls
-        fontSize={fontSize}
-        increaseFontSize={increaseFontSize}
-        decreaseFontSize={decreaseFontSize}
-        showBackToTop={showBackToTop}
-        scrollToTop={scrollToTop}
-      />
-    </div>
+    </JuridicalBackground>
   );
 };
 

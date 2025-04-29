@@ -1,15 +1,17 @@
 
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { JuridicalBackground } from "@/components/ui/juridical-background";
 
-// Import our new components
+// Import our components
 import { FeaturedContent } from "@/components/jurisflix/FeaturedContent";
 import { ContentFilters } from "@/components/jurisflix/ContentFilters";
 import { ContentGrid } from "@/components/jurisflix/ContentGrid";
 import { ContentModal } from "@/components/jurisflix/ContentModal";
+import { Gavel } from "lucide-react";
 
 interface JurisFlixItem {
   id: number;
@@ -59,7 +61,6 @@ const JurisFlix = () => {
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedItem, setSelectedItem] = useState<JurisFlixItem | null>(null);
   const [useMockData, setUseMockData] = useState(false);
-  const queryClient = useQueryClient();
 
   // Query with improved configuration for debugging and caching
   const { data: items = [], isLoading, error } = useQuery({
@@ -110,51 +111,67 @@ const JurisFlix = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 md:p-4 space-y-6 pb-20">
-      <motion.header 
-        className="space-y-4"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <h1 className="text-4xl font-bold text-center">JurisFlix</h1>
-        <p className="text-center text-muted-foreground">
-          Descubra filmes, séries e documentários jurídicos
-        </p>
-      </motion.header>
-      
-      <FeaturedContent onSelectItem={handleSelectItem} />
-      
-      <ContentFilters 
-        search={search}
-        setSearch={setSearch}
-        selectedType={selectedType}
-        setSelectedType={setSelectedType}
-      />
-
-      <ContentGrid 
-        items={items}
-        search={search}
-        selectedType={selectedType}
-        onSelectItem={handleSelectItem}
-        isLoading={isLoading}
-      />
-
-      <ContentModal 
-        item={selectedItem}
-        isOpen={!!selectedItem}
-        onOpenChange={(open) => !open && setSelectedItem(null)}
-      />
-
-      {/* Rodapé de informação quando dados mock estão sendo usados */}
-      {useMockData && (
-        <div className="mt-6 p-4 bg-amber-500/10 border border-amber-200 rounded-lg text-center">
-          <p className="text-amber-800 dark:text-amber-300">
-            Exibindo dados de demonstração. Alguns recursos podem estar limitados.
+    <JuridicalBackground variant="courthouse" opacity={0.02}>
+      <div className="container mx-auto px-4 md:p-4 space-y-6 pb-20">
+        <motion.header 
+          className="space-y-4"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="relative">
+            <h1 className="text-4xl font-bold text-center bg-gradient-to-r from-red-400 to-primary bg-clip-text text-transparent">
+              JurisFlix
+            </h1>
+            <motion.span 
+              className="absolute -inset-2 rounded-full opacity-10 bg-red-500 blur-xl"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 0.1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              style={{ zIndex: -1 }}
+            />
+            <div className="flex justify-center">
+              <Gavel className="h-8 w-8 text-primary mx-auto mt-2" />
+            </div>
+          </div>
+          <p className="text-center text-muted-foreground">
+            Descubra filmes, séries e documentários jurídicos
           </p>
-        </div>
-      )}
-    </div>
+        </motion.header>
+        
+        <FeaturedContent onSelectItem={handleSelectItem} />
+        
+        <ContentFilters 
+          search={search}
+          setSearch={setSearch}
+          selectedType={selectedType}
+          setSelectedType={setSelectedType}
+        />
+
+        <ContentGrid 
+          items={items}
+          search={search}
+          selectedType={selectedType}
+          onSelectItem={handleSelectItem}
+          isLoading={isLoading}
+        />
+
+        <ContentModal 
+          item={selectedItem}
+          isOpen={!!selectedItem}
+          onOpenChange={(open) => !open && setSelectedItem(null)}
+        />
+
+        {/* Rodapé de informação quando dados mock estão sendo usados */}
+        {useMockData && (
+          <div className="mt-6 p-4 bg-amber-500/10 border border-amber-200 rounded-lg text-center">
+            <p className="text-amber-800 dark:text-amber-300">
+              Exibindo dados de demonstração. Alguns recursos podem estar limitados.
+            </p>
+          </div>
+        )}
+      </div>
+    </JuridicalBackground>
   );
 };
 

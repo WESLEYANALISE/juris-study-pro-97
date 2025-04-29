@@ -1,183 +1,215 @@
 
-import React, { useState, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { SearchIcon, BookOpenIcon, ScrollTextIcon } from "lucide-react";
 import VadeMecumCodeSection from "@/components/vademecum/VadeMecumCodeSection";
 import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSection";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useVadeMecumSearch } from "@/hooks/useVadeMecumSearch";
-import { useToast } from "@/hooks/use-toast";
-import { useVadeMecumFavorites } from "@/hooks/useVadeMecumFavorites";
-import { VadeMecumSidebar } from "@/components/vademecum/VadeMecumSidebar";
-import { useAuth } from "@/hooks/use-auth";
+import { JuridicalBackground } from "@/components/ui/juridical-background";
+import { Card } from "@/components/ui/card";
 
 const VadeMecum = () => {
-  const [activeTab, setActiveTab] = useState<"codigos" | "estatutos">("codigos");
-  const { searchQuery, setSearchQuery } = useVadeMecumSearch();
-  const { toast } = useToast();
-  const [retryCount, setRetryCount] = useState(0);
-  const { favorites } = useVadeMecumFavorites();
-  const { user } = useAuth();
-  const [recentHistory, setRecentHistory] = useState<any[]>([]);
+  const navigate = useNavigate();
+  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("codigos");
+  const [searchInputFocused, setSearchInputFocused] = useState(false);
 
-  // Load recent history if user is logged in
-  React.useEffect(() => {
-    const loadHistory = async () => {
-      if (!user) return;
-      
+  // Query to fetch available tables (laws)
+  const { data: tables, isLoading, error } = useQuery({
+    queryKey: ["vademecum-tables"],
+    queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from('vademecum_history')
-          .select('*')
-          .eq('user_id', user.id)
-          .order('viewed_at', { ascending: false })
-          .limit(10);
+          .rpc('list_all_tables');
         
-        if (error) throw error;
+        if (error) {
+          throw error;
+        }
         
-        setRecentHistory(data || []);
+        return data || [];
       } catch (err) {
-        console.error("Erro ao carregar histórico:", err);
+        console.error("Error fetching table names:", err);
+        toast.error("Erro ao buscar lista de leis. Tente novamente.");
+        return [];
       }
-    };
-    
-    loadHistory();
-  }, [user]);
-
-  // Get list of all Codes tables using custom RPC function
-  const fetchCodesTables = useCallback(async () => {
-    try {
-      console.log("Fetching codes tables...");
-      const { data, error } = await supabase.rpc('list_tables', {
-        prefix: 'Código_'
-      });
-      if (error) {
-        console.error("Error fetching code tables:", error);
-        toast({
-          title: "Erro ao carregar códigos",
-          description: "Não foi possível carregar a lista de códigos. Tentando novamente...",
-          variant: "destructive"
-        });
-        throw error;
-      }
-      console.log("Codes tables fetched:", data);
-      // Extract the table_name values from the returned objects
-      return data ? data.map(item => item.table_name) : [];
-    } catch (err) {
-      console.error("Failed to fetch codes tables:", err);
-      return [];
-    }
-  }, [toast]);
-  const fetchStatutesTables = useCallback(async () => {
-    try {
-      console.log("Fetching statute tables...");
-      const { data, error } = await supabase.rpc('list_tables', {
-        prefix: 'Estatuto_'
-      });
-      if (error) {
-        console.error("Error fetching statute tables:", error);
-        toast({
-          title: "Erro ao carregar estatutos",
-          description: "Não foi possível carregar a lista de estatutos. Tentando novamente...",
-          variant: "destructive"
-        });
-        throw error;
-      }
-      console.log("Statute tables fetched:", data);
-      // Extract the table_name values from the returned objects
-      return data ? data.map(item => item.table_name) : [];
-    } catch (err) {
-      console.error("Failed to fetch statute tables:", err);
-      return [];
-    }
-  }, [toast]);
-
-  // Get list of all Codes tables using custom RPC function
-  const {
-    data: codesTableNames,
-    isLoading: isLoadingCodes,
-    error: codesError
-  } = useQuery({
-    queryKey: ["codesTables", retryCount],
-    queryFn: fetchCodesTables,
-    retry: 3,
-    retryDelay: 1000
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour
   });
 
-  // Get list of all Estatutos tables using custom RPC function
-  const {
-    data: statutesTableNames,
-    isLoading: isLoadingStatutes,
-    error: statutesError
-  } = useQuery({
-    queryKey: ["statutesTables", retryCount],
-    queryFn: fetchStatutesTables,
-    retry: 3,
-    retryDelay: 1000
-  });
+  // Filter tables to separate codes and statutes
+  const codes = tables?.filter((table: string) => table.startsWith('Código_')) || [];
+  const statutes = tables?.filter((table: string) => table.startsWith('Estatuto_')) || [];
+  const laws = tables?.filter((table: string) => 
+    !table.startsWith('Código_') && 
+    !table.startsWith('Estatuto_') && 
+    !table.includes('_favoritos') && 
+    !table.includes('_visualizacoes')
+  ) || [];
 
-  // If there's an error, provide retry functionality
-  React.useEffect(() => {
-    if (codesError || statutesError) {
-      const timer = setTimeout(() => {
-        console.log("Retrying data fetch...");
-        setRetryCount(prev => prev + 1);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [codesError, statutesError]);
-  const isLoading = isLoadingCodes || isLoadingStatutes;
-  return <div className="container mx-auto p-6 px-[13px]">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-3">
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Vade Mecum</h1>
+  return (
+    <JuridicalBackground variant="books" opacity={0.04}>
+      <div className="container mx-auto p-4 md:p-6 space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+        >
+          <div className="text-center mb-6">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="inline-block"
+            >
+              <div className="relative mb-2">
+                <BookOpenIcon className="h-12 w-12 text-primary mx-auto" />
+                <motion.div 
+                  className="absolute -inset-3 rounded-full opacity-20 bg-primary blur-md"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 0.2 }}
+                  transition={{ duration: 0.5, delay: 0.3 }}
+                />
+              </div>
+            </motion.div>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent">
+              Vade Mecum Digital
+            </h1>
             <p className="text-muted-foreground">
-              Consulte códigos e estatutos jurídicos com explicações técnicas e formais
+              Acesse códigos, estatutos e leis atualizados
             </p>
           </div>
+          
+          <Card className={`p-5 md:p-6 max-w-lg mx-auto ${searchInputFocused ? "shadow-glow" : ""}`}>
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <Input
+                placeholder="Pesquisar leis e códigos..."
+                className="pl-9 py-6"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchInputFocused(true)}
+                onBlur={() => setSearchInputFocused(false)}
+              />
+            </div>
+          </Card>
+        </motion.div>
 
-          <div className="relative mb-6">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input placeholder="Buscar em todos os códigos e estatutos..." className="pl-10" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+        {error ? (
+          <div className="text-center p-10">
+            <p className="text-destructive">Erro ao carregar leis. Tente novamente mais tarde.</p>
+            <Button onClick={() => window.location.reload()} variant="outline" className="mt-4">
+              Tentar Novamente
+            </Button>
           </div>
-
-          <Tabs value={activeTab} onValueChange={value => setActiveTab(value as "codigos" | "estatutos")}>
-            <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="codigos">Códigos</TabsTrigger>
-              <TabsTrigger value="estatutos">Estatutos</TabsTrigger>
+        ) : (
+          <Tabs defaultValue="codigos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-8">
+              <TabsTrigger value="codigos" className="gap-2">
+                <ScrollTextIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Códigos</span>
+              </TabsTrigger>
+              <TabsTrigger value="estatutos" className="gap-2">
+                <BookOpenIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Estatutos</span>
+              </TabsTrigger>
+              <TabsTrigger value="leis" className="gap-2">
+                <SearchIcon className="h-4 w-4" />
+                <span className="hidden sm:inline">Outras Leis</span>
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="codigos" className="space-y-4">
-              {isLoadingCodes ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
-                </div> : codesError ? <div className="text-center py-6">
-                  <p className="text-lg text-red-600 mb-2">Erro ao carregar códigos</p>
-                  <button className="text-blue-600 underline" onClick={() => setRetryCount(prev => prev + 1)}>
-                    Tentar novamente
-                  </button>
-                </div> : <VadeMecumCodeSection tableNames={codesTableNames || []} searchQuery={searchQuery} />}
+            <TabsContent value="codigos" className="py-4">
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      transition={{ duration: 0.3, delay: i * 0.05 }}
+                      className="h-32 bg-muted/20 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <VadeMecumCodeSection tableNames={codes} searchQuery={search} />
+              )}
             </TabsContent>
 
-            <TabsContent value="estatutos" className="space-y-4">
-              {isLoadingStatutes ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
-                </div> : statutesError ? <div className="text-center py-6">
-                  <p className="text-lg text-red-600 mb-2">Erro ao carregar estatutos</p>
-                  <button className="text-blue-600 underline" onClick={() => setRetryCount(prev => prev + 1)}>
-                    Tentar novamente
-                  </button>
-                </div> : <VadeMecumStatuteSection tableNames={statutesTableNames || []} searchQuery={searchQuery} />}
+            <TabsContent value="estatutos" className="py-4">
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      transition={{ duration: 0.3, delay: i * 0.05 }}
+                      className="h-32 bg-muted/20 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : (
+                <VadeMecumStatuteSection tableNames={statutes} searchQuery={search} />
+              )}
+            </TabsContent>
+
+            <TabsContent value="leis" className="py-4">
+              {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {[1, 2, 3, 4].map((i) => (
+                    <motion.div 
+                      key={i}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 0.5 }}
+                      transition={{ duration: 0.3, delay: i * 0.05 }}
+                      className="h-32 bg-muted/20 rounded-lg animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : laws.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {laws
+                    .filter((law: string) => law.toLowerCase().includes(search.toLowerCase()))
+                    .map((law: string) => (
+                      <motion.div 
+                        key={law}
+                        whileHover={{ y: -5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Card 
+                          className="cursor-pointer hover:shadow-md transition-all h-full"
+                          onClick={() => navigate(`/vademecum/${law}`)}
+                        >
+                          <div className="p-6">
+                            <h3 className="font-semibold">{law.replace(/_/g, ' ')}</h3>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Lei ordinária do ordenamento jurídico brasileiro
+                            </p>
+                          </div>
+                        </Card>
+                      </motion.div>
+                    ))}
+                </div>
+              ) : (
+                <div className="text-center py-10">
+                  <p className="text-muted-foreground">
+                    Nenhuma outra lei encontrada no momento.
+                  </p>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
-        </div>
-
-        {/* Add the sidebar with favorites and recent history */}
-        <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
+        )}
       </div>
-    </div>;
+    </JuridicalBackground>
+  );
 };
+
 export default VadeMecum;

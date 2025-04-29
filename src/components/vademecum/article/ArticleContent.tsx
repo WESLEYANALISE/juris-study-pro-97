@@ -18,11 +18,18 @@ export const ArticleContent = ({
   return (
     <div className={`flex flex-col ${isHeading ? "w-full" : ""}`}>
       {articleNumber?.trim() ? (
-        <h3 className="text-lg font-semibold bg-primary/5 px-3 py-1 rounded-lg inline-block">Art. {articleNumber}</h3>
+        <h3 className="text-lg font-semibold bg-primary/10 px-3 py-1 rounded-lg inline-block shadow-sm">
+          Art. {articleNumber}
+        </h3>
       ) : null}
       <div 
         style={{ fontSize: `${fontSize}px` }} 
-        className={`mt-2 whitespace-pre-line px-1 py-3 ml-0 ${isHeading ? "text-center w-full font-semibold" : "border-l-2 border-primary/20 pl-3"}`}
+        className={`
+          mt-2 whitespace-pre-line px-1 py-3 ml-0 
+          ${isHeading 
+            ? "text-center w-full font-semibold" 
+            : "border-l-2 border-primary/30 pl-3 bg-gradient-to-r from-transparent to-background/20"}
+        `}
       >
         <ReactMarkdown className="prose dark:prose-invert max-w-none">{articleText || ''}</ReactMarkdown>
       </div>

@@ -65,10 +65,11 @@ export const ArticleCard = ({
     return null; // Don't render invalid articles
   }
 
-  // Ensure isFavorite is always a boolean
-  const favoriteStatus = typeof isFavorite === 'string' 
-    ? isFavorite.toLowerCase() === 'true'
-    : Boolean(isFavorite);
+  // Ensure isFavorite is always a boolean - fix typescript error by checking the specific type
+  const favoriteStatus = 
+    typeof isFavorite === 'boolean' ? isFavorite :
+    typeof isFavorite === 'string' ? isFavorite === 'true' : 
+    Boolean(isFavorite);
 
   return (
     <motion.div 
@@ -78,7 +79,7 @@ export const ArticleCard = ({
       className="will-change-transform"
       whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
     >
-      <Card className="p-4 md:p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300">
+      <Card className="p-4 md:p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300 bg-card/80 backdrop-blur-sm border-primary/10">
         <div className="flex justify-between items-start">
           <ArticleContent 
             articleNumber={articleNumber}
@@ -92,7 +93,7 @@ export const ArticleCard = ({
               articleText={articleText}
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
-              isFavorite={favoriteStatus}
+              isFavorite={favoriteStatus} 
               setIsFavorite={setIsFavorite}
               lawName={lawName}
               articleNumber={articleNumber}
