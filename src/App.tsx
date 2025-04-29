@@ -34,6 +34,8 @@ import VideoAulas from "@/pages/VideoAulas";
 import VideoAulasTradicional from "@/pages/VideoAulasTradicional";
 import VideoAulasInterativas from "./pages/VideoAulasInterativas";
 import Anotacoes from "@/pages/Anotacoes";
+import JogosJuridicos from "@/pages/JogosJuridicos";
+import JogoDetalhes from "@/pages/JogoDetalhes";
 
 function App() {
   return (
@@ -71,6 +73,8 @@ function App() {
               <Route path="/videoaulas/tradicionais" element={<Layout><VideoAulasTradicional /></Layout>} />
               <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
               <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
+              <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
+              <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>
           </RequireAuth>

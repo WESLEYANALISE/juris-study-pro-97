@@ -1093,6 +1093,316 @@ export type Database = {
         }
         Relationships: []
       }
+      jogos_categorias: {
+        Row: {
+          ativo: boolean | null
+          background_variant: string | null
+          created_at: string
+          descricao: string | null
+          icone: string | null
+          id: string
+          nivel_dificuldade: string | null
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          background_variant?: string | null
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nivel_dificuldade?: string | null
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          background_variant?: string | null
+          created_at?: string
+          descricao?: string | null
+          icone?: string | null
+          id?: string
+          nivel_dificuldade?: string | null
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      jogos_leaderboards: {
+        Row: {
+          data_registro: string
+          id: string
+          jogo_id: string
+          pontuacao: number
+          user_id: string
+        }
+        Insert: {
+          data_registro?: string
+          id?: string
+          jogo_id: string
+          pontuacao: number
+          user_id: string
+        }
+        Update: {
+          data_registro?: string
+          id?: string
+          jogo_id?: string
+          pontuacao?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_leaderboards_jogo_id_fkey"
+            columns: ["jogo_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jogos_quiz_perguntas: {
+        Row: {
+          area: string
+          categoria: string
+          created_at: string
+          explicacao: string | null
+          id: string
+          nivel_dificuldade: string | null
+          opcao_a: string
+          opcao_b: string
+          opcao_c: string
+          opcao_d: string
+          pergunta: string
+          resposta_correta: string
+        }
+        Insert: {
+          area: string
+          categoria: string
+          created_at?: string
+          explicacao?: string | null
+          id?: string
+          nivel_dificuldade?: string | null
+          opcao_a: string
+          opcao_b: string
+          opcao_c: string
+          opcao_d: string
+          pergunta: string
+          resposta_correta: string
+        }
+        Update: {
+          area?: string
+          categoria?: string
+          created_at?: string
+          explicacao?: string | null
+          id?: string
+          nivel_dificuldade?: string | null
+          opcao_a?: string
+          opcao_b?: string
+          opcao_c?: string
+          opcao_d?: string
+          pergunta?: string
+          resposta_correta?: string
+        }
+        Relationships: []
+      }
+      jogos_quiz_respostas: {
+        Row: {
+          acertou: boolean
+          created_at: string
+          id: string
+          pergunta_id: string
+          resposta_selecionada: string
+          tempo_resposta: number | null
+          user_id: string
+        }
+        Insert: {
+          acertou: boolean
+          created_at?: string
+          id?: string
+          pergunta_id: string
+          resposta_selecionada: string
+          tempo_resposta?: number | null
+          user_id: string
+        }
+        Update: {
+          acertou?: boolean
+          created_at?: string
+          id?: string
+          pergunta_id?: string
+          resposta_selecionada?: string
+          tempo_resposta?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_quiz_respostas_pergunta_id_fkey"
+            columns: ["pergunta_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_quiz_perguntas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jogos_simulacoes_casos: {
+        Row: {
+          area_direito: string
+          created_at: string
+          descricao: string
+          fatos: string
+          id: string
+          nivel_dificuldade: string | null
+          provas: string | null
+          titulo: string
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string
+          descricao: string
+          fatos: string
+          id?: string
+          nivel_dificuldade?: string | null
+          provas?: string | null
+          titulo: string
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string
+          descricao?: string
+          fatos?: string
+          id?: string
+          nivel_dificuldade?: string | null
+          provas?: string | null
+          titulo?: string
+        }
+        Relationships: []
+      }
+      jogos_simulacoes_submissoes: {
+        Row: {
+          argumentacao: string
+          caso_id: string
+          created_at: string
+          feedback: string | null
+          id: string
+          papel: string
+          pontuacao: number | null
+          user_id: string
+        }
+        Insert: {
+          argumentacao: string
+          caso_id: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          papel: string
+          pontuacao?: number | null
+          user_id: string
+        }
+        Update: {
+          argumentacao?: string
+          caso_id?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          papel?: string
+          pontuacao?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_simulacoes_submissoes_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_simulacoes_casos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jogos_user_badges: {
+        Row: {
+          badge_descricao: string | null
+          badge_icone: string | null
+          badge_nome: string
+          conquistado_em: string
+          id: string
+          jogo_id: string
+          user_id: string
+        }
+        Insert: {
+          badge_descricao?: string | null
+          badge_icone?: string | null
+          badge_nome: string
+          conquistado_em?: string
+          id?: string
+          jogo_id: string
+          user_id: string
+        }
+        Update: {
+          badge_descricao?: string | null
+          badge_icone?: string | null
+          badge_nome?: string
+          conquistado_em?: string
+          id?: string
+          jogo_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_user_badges_jogo_id_fkey"
+            columns: ["jogo_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jogos_user_stats: {
+        Row: {
+          created_at: string
+          id: string
+          jogo_id: string
+          melhor_resultado: number | null
+          partidas_jogadas: number | null
+          partidas_vencidas: number | null
+          pontuacao: number | null
+          ultimo_acesso: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          jogo_id: string
+          melhor_resultado?: number | null
+          partidas_jogadas?: number | null
+          partidas_vencidas?: number | null
+          pontuacao?: number | null
+          ultimo_acesso?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          jogo_id?: string
+          melhor_resultado?: number | null
+          partidas_jogadas?: number | null
+          partidas_vencidas?: number | null
+          pontuacao?: number | null
+          ultimo_acesso?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_user_stats_jogo_id_fkey"
+            columns: ["jogo_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       Jurisflix: {
         Row: {
           ano: string | null

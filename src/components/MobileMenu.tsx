@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -24,7 +23,8 @@ import {
   Newspaper, 
   MessageSquare, 
   PenTool, 
-  User
+  User,
+  GamepadIcon
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -107,7 +107,12 @@ const menuItems = [
         title: "Flashcards",
         url: "/flashcards",
         icon: Brain
-      }, 
+      },
+      {
+        title: "Jogos Jurídicos",
+        url: "/jogos",
+        icon: GamepadIcon
+      },
       {
         title: "Redação Jurídica",
         url: "/redacao-juridica",

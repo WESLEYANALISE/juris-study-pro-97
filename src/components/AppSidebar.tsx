@@ -1,5 +1,5 @@
 
-import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, Film, PenTool, User } from "lucide-react";
+import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, Film, PenTool, User, GamepadIcon } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -52,6 +52,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       items: [
         { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
         { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
+        { title: "Jogos Jurídicos", url: "/jogos", icon: GamepadIcon, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Redação Jurídica", url: "/redacao-juridica", icon: FileText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
         { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
@@ -149,9 +150,9 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
                         >
                           <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
                           <span>{item.title}</span>
-                          {item.url === "/assistente" && (
+                          {(item.url === "/assistente" || item.url === "/jogos") && (
                             <Badge variant="secondary" className="ml-auto text-[10px] py-0">
-                              IA
+                              {item.url === "/assistente" ? "IA" : "NOVO"}
                             </Badge>
                           )}
                         </a>
