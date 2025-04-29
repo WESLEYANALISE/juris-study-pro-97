@@ -12,7 +12,6 @@ interface VadeMecumArticleListProps {
   visibleBatch: number;
   tableName: string;
   fontSize: number;
-  setFontSize: (size: number) => void;
   loadMoreRef: (node?: Element | null) => void;
 }
 
@@ -23,7 +22,6 @@ export function VadeMecumArticleList({
   visibleBatch,
   tableName,
   fontSize,
-  setFontSize,
   loadMoreRef
 }: VadeMecumArticleListProps) {
   const isMobile = useIsMobile();
@@ -85,7 +83,6 @@ export function VadeMecumArticleList({
                 formalExplanation={formalExplanation}
                 practicalExample={practicalExample}
                 fontSize={fontSize}
-                onFontSizeChange={setFontSize}
               />
             );
           })
@@ -100,3 +97,5 @@ export function VadeMecumArticleList({
     </div>
   );
 }
+
+export default VadeMecumArticleList;

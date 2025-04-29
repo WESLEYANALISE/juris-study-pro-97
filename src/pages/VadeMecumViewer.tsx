@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -6,8 +7,11 @@ import { VadeMecumArticleList } from "@/components/vademecum/VadeMecumArticleLis
 import { useInView } from "react-intersection-observer";
 import { Button } from "@/components/ui/button";
 import { ReloadIcon } from "@radix-ui/react-icons";
-import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { FloatingControls } from "@/components/vademecum/FloatingControls";
+import useVadeMecumDisplay from "@/hooks/useVadeMecumDisplay";
+import { useVadeMecumSearch } from "@/hooks/useVadeMecumSearch";
+
 interface LawArticle {
   id: string;
   law_name: string;
@@ -20,6 +24,7 @@ interface LawArticle {
 
 // Lista de tabelas permitidas para prevenir SQL injection e type errors
 const ALLOWED_TABLES = ["Código_Civil", "Código_Penal", "Código_de_Processo_Civil", "Código_de_Processo_Penal", "Código_de_Defesa_do_Consumidor", "Código_Tributário_Nacional", "Código_Comercial", "Código_Eleitoral", "Código_de_Trânsito_Brasileiro", "Código_Brasileiro_de_Telecomunicações", "Estatuto_da_Criança_e_do_Adolescente", "Estatuto_do_Idoso", "Estatuto_da_Terra", "Estatuto_da_Cidade", "Estatuto_da_Advocacia_e_da_OAB", "Estatuto_do_Desarmamento", "Estatuto_do_Torcedor", "Estatuto_da_Igualdade_Racial", "Estatuto_da_Pessoa_com_Deficiência", "Estatuto_dos_Servidores_Públicos_Civis_da_União"];
+
 const VadeMecumViewer = () => {
   const {
     lawId
@@ -29,9 +34,8 @@ const VadeMecumViewer = () => {
   const [articles, setArticles] = useState<LawArticle[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<LawArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [fontSize, setFontSize] = useState(16);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState<string>("");
+  const { searchQuery, setSearchQuery } = useVadeMecumSearch();
   const [visibleBatch, setVisibleBatch] = useState(10); // Reduced initial batch for faster loading
   const [dataStats, setDataStats] = useState({
     total: 0,
@@ -42,6 +46,13 @@ const VadeMecumViewer = () => {
     withPracticalExample: 0
   });
   const isMobile = useIsMobile();
+  const { 
+    fontSize, 
+    showBackToTop,
+    scrollToTop,
+    increaseFontSize,
+    decreaseFontSize
+  } = useVadeMecumDisplay();
 
   // Use react-intersection-observer para detecção de "infinite scroll"
   const {
@@ -107,18 +118,17 @@ const VadeMecumViewer = () => {
       withFormalExplanation: mappedData.filter(a => !!a.formal_explanation.trim()).length,
       withPracticalExample: mappedData.filter(a => !!a.practical_example.trim()).length
     };
+    
     console.log("Dados processados:", {
       tableName: getTableName(lawId),
       totalRecords: mappedData.length,
       stats
     });
+    
     setDataStats(stats);
 
-    // Filtra artigos com dados essenciais
-    return mappedData.filter(article => {
-      // Exigir pelo menos um texto de artigo ou número de artigo
-      return article.article_text.trim() || article.article_number.trim();
-    });
+    // Retornar TODOS os artigos, incluindo aqueles sem número
+    return mappedData;
   };
 
   // Carregar artigos com retry automático
@@ -131,7 +141,6 @@ const VadeMecumViewer = () => {
       if (!tableName) {
         setError("Lei não encontrada ou não disponível");
         setArticles([]);
-        toast.error("Lei não encontrada ou não disponível");
         return;
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
@@ -143,6 +152,7 @@ const VadeMecumViewer = () => {
       } = await supabase.from(tableName as any).select('*').order('numero', {
         ascending: true
       });
+      
       if (error) {
         console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, error);
 
@@ -152,9 +162,9 @@ const VadeMecumViewer = () => {
           return;
         }
         setError(`Erro ao carregar artigos: ${error.message}`);
-        toast.error("Erro ao carregar artigos, por favor tente novamente");
         return;
       }
+      
       console.log(`Dados recebidos da tabela ${tableName}:`, data);
 
       // Processar e validar os dados recebidos
@@ -162,16 +172,9 @@ const VadeMecumViewer = () => {
       setArticles(processedArticles);
       setFilteredArticles(processedArticles);
 
-      // Registrar vizualização bem-sucedida
-      if (processedArticles.length > 0) {
-        toast.success(`${processedArticles.length} artigos carregados`);
-      } else {
-        toast.info("Nenhum artigo encontrado para esta lei");
-      }
     } catch (err) {
       console.error("Erro inesperado em loadArticles:", err);
       setError("Ocorreu um erro inesperado ao carregar os artigos");
-      toast.error("Ocorreu um erro inesperado, por favor tente novamente");
     } finally {
       setLoading(false);
     }
@@ -206,6 +209,7 @@ const VadeMecumViewer = () => {
       setVisibleBatch(prev => prev + batchSize);
     }
   }, [inView, filteredArticles.length, visibleBatch, isMobile]);
+
   if (loading) {
     return <div className="flex justify-center items-center min-h-[200px] py-12">
         <div className="text-center">
@@ -214,6 +218,7 @@ const VadeMecumViewer = () => {
         </div>
       </div>;
   }
+  
   if (error) {
     return <div className="container mx-auto p-4">
         <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded">
@@ -232,28 +237,56 @@ const VadeMecumViewer = () => {
         </div>
       </div>;
   }
+  
   const decodedLawName = lawId ? decodeURIComponent(lawId).replace(/_/g, ' ') : '';
-  return <div className="container mx-auto p-4">
+  
+  return (
+    <div className="container mx-auto p-4">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">{decodedLawName}</h1>
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          
           <div className="relative">
-            <input type="search" placeholder="Buscar artigos..." className="px-4 py-2 border rounded-md w-full bg-background border-input" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+            <input 
+              type="search" 
+              placeholder="Buscar artigos..." 
+              className="px-4 py-2 border rounded-md w-full bg-background border-input" 
+              value={searchQuery} 
+              onChange={e => setSearchQuery(e.target.value)} 
+            />
           </div>
         </div>
-        
-        {/* Estatísticas de dados para debugging - Remova em produção */}
-        {process.env.NODE_ENV !== 'production'}
       </div>
 
-      {filteredArticles.length === 0 && !loading ? <div className="text-center py-8">
+      {filteredArticles.length === 0 && !loading ? (
+        <div className="text-center py-8">
           <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
           <Button onClick={() => loadArticles()} className="mt-4 gap-2" variant="outline">
             <ReloadIcon className="h-4 w-4" />
             Recarregar
           </Button>
-        </div> : <VadeMecumArticleList isLoading={loading} visibleArticles={visibleArticles} filteredArticles={filteredArticles} visibleBatch={visibleBatch} tableName={lawId ? decodeURIComponent(lawId) : ''} fontSize={fontSize} setFontSize={setFontSize} loadMoreRef={loadMoreRef} />}
-    </div>;
+        </div>
+      ) : (
+        <VadeMecumArticleList 
+          isLoading={loading} 
+          visibleArticles={visibleArticles} 
+          filteredArticles={filteredArticles} 
+          visibleBatch={visibleBatch} 
+          tableName={lawId ? decodeURIComponent(lawId) : ''}
+          fontSize={fontSize}
+          loadMoreRef={loadMoreRef}
+        />
+      )}
+
+      {/* Floating controls for font size and back to top */}
+      <FloatingControls
+        fontSize={fontSize}
+        increaseFontSize={increaseFontSize}
+        decreaseFontSize={decreaseFontSize}
+        showBackToTop={showBackToTop}
+        scrollToTop={scrollToTop}
+      />
+    </div>
+  );
 };
+
 export default VadeMecumViewer;

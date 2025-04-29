@@ -2,19 +2,18 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Info, FileText, Copy } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { TextToSpeechService } from '@/services/textToSpeechService';
 import { useAuth } from '@/hooks/use-auth';
 import { NarrationControls } from './article/NarrationControls';
 import { BookmarkButton } from './article/BookmarkButton';
-import { FontSizeControls } from './article/FontSizeControls';
-import { ArticleExplanation } from './article/ArticleExplanation';
-import { PracticalExample } from './article/PracticalExample';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { ExplanationDialog } from './article/ExplanationDialog';
+import { PracticalExampleDialog } from './article/PracticalExampleDialog';
+import ReactMarkdown from 'react-markdown';
 
 interface ArticleCardProps {
   lawName: string;
@@ -24,7 +23,6 @@ interface ArticleCardProps {
   formalExplanation?: string;
   practicalExample?: string;
   fontSize: number;
-  onFontSizeChange: (size: number) => void;
 }
 
 export const ArticleCard = ({
@@ -35,7 +33,6 @@ export const ArticleCard = ({
   formalExplanation,
   practicalExample,
   fontSize,
-  onFontSizeChange
 }: ArticleCardProps) => {
   const { user } = useAuth();
   const isMobile = useIsMobile();
@@ -123,15 +120,6 @@ export const ArticleCard = ({
     }
   };
 
-  // Helper function to safely format text
-  const formatArticleText = (text: string | undefined) => {
-    if (!text || typeof text !== 'string') return []; 
-    
-    return text.split('\n').map((para, i) => (
-      <p key={i} className="mb-3 last:mb-0">{para.trim()}</p>
-    ));
-  };
-
   // Check if we have a valid article to display
   if (!articleNumber?.trim() && !articleText?.trim()) {
     return null; // Don't render invalid articles
@@ -155,9 +143,9 @@ export const ArticleCard = ({
             ) : null}
             <div 
               style={{ fontSize: `${fontSize}px` }} 
-              className={`mt-2 whitespace-pre-line text-left px-1 py-3 ml-0 ${isHeading ? "text-center w-full font-semibold" : ""}`}
+              className={`mt-2 whitespace-pre-line px-1 py-3 ml-0 ${isHeading ? "text-center w-full font-semibold" : ""}`}
             >
-              {formatArticleText(articleText)}
+              <ReactMarkdown className="prose dark:prose-invert max-w-none">{articleText || ''}</ReactMarkdown>
             </div>
           </div>
           {!isHeading && (
@@ -202,11 +190,6 @@ export const ArticleCard = ({
               </Button>
             )}
 
-            <FontSizeControls 
-              fontSize={fontSize} 
-              onFontSizeChange={onFontSizeChange} 
-            />
-
             <Button 
               variant="purple" 
               size="icon" 
@@ -219,35 +202,23 @@ export const ArticleCard = ({
         )}
 
         {/* Explanation Dialog */}
-        <Dialog open={isExplanationDialogOpen} onOpenChange={setIsExplanationDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle>Explicação do Artigo {articleNumber}</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <ArticleExplanation 
-                technicalExplanation={technicalExplanation} 
-                formalExplanation={formalExplanation} 
-                onNarration={handleNarration} 
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <ExplanationDialog 
+          isOpen={isExplanationDialogOpen} 
+          onClose={() => setIsExplanationDialogOpen(false)}
+          articleNumber={articleNumber}
+          technicalExplanation={technicalExplanation}
+          formalExplanation={formalExplanation}
+          onNarration={handleNarration}
+        />
 
         {/* Practical Example Dialog */}
-        <Dialog open={isPracticalExampleDialogOpen} onOpenChange={setIsPracticalExampleDialogOpen}>
-          <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-auto">
-            <DialogHeader>
-              <DialogTitle>Exemplo Prático - Artigo {articleNumber}</DialogTitle>
-            </DialogHeader>
-            <div className="py-4">
-              <PracticalExample 
-                example={practicalExample} 
-                onNarration={handleNarration} 
-              />
-            </div>
-          </DialogContent>
-        </Dialog>
+        <PracticalExampleDialog
+          isOpen={isPracticalExampleDialogOpen}
+          onClose={() => setIsPracticalExampleDialogOpen(false)}
+          articleNumber={articleNumber}
+          example={practicalExample}
+          onNarration={handleNarration}
+        />
       </Card>
     </motion.div>
   );
