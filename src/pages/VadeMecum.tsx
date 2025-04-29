@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -9,25 +10,48 @@ import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSect
 import { Skeleton } from "@/components/ui/skeleton";
 import { useVadeMecumSearch } from "@/hooks/useVadeMecumSearch";
 import { useToast } from "@/hooks/use-toast";
+import { useVadeMecumFavorites } from "@/hooks/useVadeMecumFavorites";
+import { VadeMecumSidebar } from "@/components/vademecum/VadeMecumSidebar";
+import { useAuth } from "@/hooks/use-auth";
+
 const VadeMecum = () => {
   const [activeTab, setActiveTab] = useState<"codigos" | "estatutos">("codigos");
-  const {
-    searchQuery,
-    setSearchQuery
-  } = useVadeMecumSearch();
-  const {
-    toast
-  } = useToast();
+  const { searchQuery, setSearchQuery } = useVadeMecumSearch();
+  const { toast } = useToast();
   const [retryCount, setRetryCount] = useState(0);
+  const { favorites } = useVadeMecumFavorites();
+  const { user } = useAuth();
+  const [recentHistory, setRecentHistory] = useState<any[]>([]);
+
+  // Load recent history if user is logged in
+  React.useEffect(() => {
+    const loadHistory = async () => {
+      if (!user) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('vademecum_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('viewed_at', { ascending: false })
+          .limit(10);
+        
+        if (error) throw error;
+        
+        setRecentHistory(data || []);
+      } catch (err) {
+        console.error("Erro ao carregar histórico:", err);
+      }
+    };
+    
+    loadHistory();
+  }, [user]);
 
   // Get list of all Codes tables using custom RPC function
   const fetchCodesTables = useCallback(async () => {
     try {
       console.log("Fetching codes tables...");
-      const {
-        data,
-        error
-      } = await supabase.rpc('list_tables', {
+      const { data, error } = await supabase.rpc('list_tables', {
         prefix: 'Código_'
       });
       if (error) {
@@ -50,10 +74,7 @@ const VadeMecum = () => {
   const fetchStatutesTables = useCallback(async () => {
     try {
       console.log("Fetching statute tables...");
-      const {
-        data,
-        error
-      } = await supabase.rpc('list_tables', {
+      const { data, error } = await supabase.rpc('list_tables', {
         prefix: 'Estatuto_'
       });
       if (error) {
@@ -110,46 +131,53 @@ const VadeMecum = () => {
   }, [codesError, statutesError]);
   const isLoading = isLoadingCodes || isLoadingStatutes;
   return <div className="container mx-auto p-6 px-[13px]">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">Vade Mecum</h1>
-        <p className="text-muted-foreground">
-          Consulte códigos e estatutos jurídicos com explicações técnicas e formais
-        </p>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Vade Mecum</h1>
+            <p className="text-muted-foreground">
+              Consulte códigos e estatutos jurídicos com explicações técnicas e formais
+            </p>
+          </div>
+
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input placeholder="Buscar em todos os códigos e estatutos..." className="pl-10" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
+          </div>
+
+          <Tabs value={activeTab} onValueChange={value => setActiveTab(value as "codigos" | "estatutos")}>
+            <TabsList className="grid w-full grid-cols-2 mb-6">
+              <TabsTrigger value="codigos">Códigos</TabsTrigger>
+              <TabsTrigger value="estatutos">Estatutos</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="codigos" className="space-y-4">
+              {isLoadingCodes ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
+                </div> : codesError ? <div className="text-center py-6">
+                  <p className="text-lg text-red-600 mb-2">Erro ao carregar códigos</p>
+                  <button className="text-blue-600 underline" onClick={() => setRetryCount(prev => prev + 1)}>
+                    Tentar novamente
+                  </button>
+                </div> : <VadeMecumCodeSection tableNames={codesTableNames || []} searchQuery={searchQuery} />}
+            </TabsContent>
+
+            <TabsContent value="estatutos" className="space-y-4">
+              {isLoadingStatutes ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
+                </div> : statutesError ? <div className="text-center py-6">
+                  <p className="text-lg text-red-600 mb-2">Erro ao carregar estatutos</p>
+                  <button className="text-blue-600 underline" onClick={() => setRetryCount(prev => prev + 1)}>
+                    Tentar novamente
+                  </button>
+                </div> : <VadeMecumStatuteSection tableNames={statutesTableNames || []} searchQuery={searchQuery} />}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Add the sidebar with favorites and recent history */}
+        <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
       </div>
-
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input placeholder="Buscar em todos os códigos e estatutos..." className="pl-10" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-      </div>
-
-      <Tabs value={activeTab} onValueChange={value => setActiveTab(value as "codigos" | "estatutos")}>
-        <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="codigos">Códigos</TabsTrigger>
-          <TabsTrigger value="estatutos">Estatutos</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="codigos" className="space-y-4">
-          {isLoadingCodes ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
-            </div> : codesError ? <div className="text-center py-6">
-              <p className="text-lg text-red-600 mb-2">Erro ao carregar códigos</p>
-              <button className="text-blue-600 underline" onClick={() => setRetryCount(prev => prev + 1)}>
-                Tentar novamente
-              </button>
-            </div> : <VadeMecumCodeSection tableNames={codesTableNames || []} searchQuery={searchQuery} />}
-        </TabsContent>
-
-        <TabsContent value="estatutos" className="space-y-4">
-          {isLoadingStatutes ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-32 rounded-lg" />)}
-            </div> : statutesError ? <div className="text-center py-6">
-              <p className="text-lg text-red-600 mb-2">Erro ao carregar estatutos</p>
-              <button className="text-blue-600 underline" onClick={() => setRetryCount(prev => prev + 1)}>
-                Tentar novamente
-              </button>
-            </div> : <VadeMecumStatuteSection tableNames={statutesTableNames || []} searchQuery={searchQuery} />}
-        </TabsContent>
-      </Tabs>
     </div>;
 };
 export default VadeMecum;

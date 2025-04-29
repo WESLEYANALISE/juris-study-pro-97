@@ -11,6 +11,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { FloatingControls } from "@/components/vademecum/FloatingControls";
 import useVadeMecumDisplay from "@/hooks/useVadeMecumDisplay";
 import { useVadeMecumSearch } from "@/hooks/useVadeMecumSearch";
+import { VadeMecumSidebar } from "@/components/vademecum/VadeMecumSidebar"; 
+import { useVadeMecumFavorites } from "@/hooks/useVadeMecumFavorites";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LawArticle {
   id: string;
@@ -26,17 +29,16 @@ interface LawArticle {
 const ALLOWED_TABLES = ["Código_Civil", "Código_Penal", "Código_de_Processo_Civil", "Código_de_Processo_Penal", "Código_de_Defesa_do_Consumidor", "Código_Tributário_Nacional", "Código_Comercial", "Código_Eleitoral", "Código_de_Trânsito_Brasileiro", "Código_Brasileiro_de_Telecomunicações", "Estatuto_da_Criança_e_do_Adolescente", "Estatuto_do_Idoso", "Estatuto_da_Terra", "Estatuto_da_Cidade", "Estatuto_da_Advocacia_e_da_OAB", "Estatuto_do_Desarmamento", "Estatuto_do_Torcedor", "Estatuto_da_Igualdade_Racial", "Estatuto_da_Pessoa_com_Deficiência", "Estatuto_dos_Servidores_Públicos_Civis_da_União"];
 
 const VadeMecumViewer = () => {
-  const {
-    lawId
-  } = useParams<{
-    lawId: string;
-  }>();
+  const { lawId } = useParams<{ lawId: string; }>();
   const [articles, setArticles] = useState<LawArticle[]>([]);
   const [filteredArticles, setFilteredArticles] = useState<LawArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { searchQuery, setSearchQuery } = useVadeMecumSearch();
-  const [visibleBatch, setVisibleBatch] = useState(10); // Reduced initial batch for faster loading
+  const [visibleBatch, setVisibleBatch] = useState(10);
+  const [recentHistory, setRecentHistory] = useState<any[]>([]);
+  const { favorites, isFavorite } = useVadeMecumFavorites();
+  const { user } = useAuth();
   const [dataStats, setDataStats] = useState({
     total: 0,
     withArticleNumber: 0,
@@ -55,16 +57,33 @@ const VadeMecumViewer = () => {
   } = useVadeMecumDisplay();
 
   // Use react-intersection-observer para detecção de "infinite scroll"
-  const {
-    ref: loadMoreRef,
-    inView
-  } = useInView({
+  const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
     triggerOnce: false
   });
 
   // Calcular artigos visíveis baseado no batch atual
   const visibleArticles = filteredArticles.slice(0, visibleBatch);
+
+  // Carregar histórico de visualização
+  const loadHistory = useCallback(async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('vademecum_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('viewed_at', { ascending: false })
+        .limit(10);
+      
+      if (error) throw error;
+      
+      setRecentHistory(data || []);
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err);
+    }
+  }, [user]);
 
   // Função para decodificar o nome da tabela de forma segura
   const getTableName = useCallback((encodedName: string | undefined): string | null => {
@@ -146,10 +165,7 @@ const VadeMecumViewer = () => {
       console.log(`Carregando dados da tabela: ${tableName}`);
 
       // Consultar a tabela específica
-      const {
-        data,
-        error
-      } = await supabase.from(tableName as any).select('*').order('numero', {
+      const { data, error } = await supabase.from(tableName as any).select('*').order('numero', {
         ascending: true
       });
       
@@ -184,6 +200,13 @@ const VadeMecumViewer = () => {
   useEffect(() => {
     loadArticles();
   }, [loadArticles]);
+
+  // Efeito para carregar histórico quando o usuário estiver autenticado
+  useEffect(() => {
+    if (user) {
+      loadHistory();
+    }
+  }, [user, loadHistory]);
 
   // Efeito para filtrar artigos com base na pesquisa
   useEffect(() => {
@@ -242,42 +265,52 @@ const VadeMecumViewer = () => {
   
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">{decodedLawName}</h1>
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-          <div className="relative">
-            <input 
-              type="search" 
-              placeholder="Buscar artigos..." 
-              className="px-4 py-2 border rounded-md w-full bg-background border-input" 
-              value={searchQuery} 
-              onChange={e => setSearchQuery(e.target.value)} 
-            />
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-2">{decodedLawName}</h1>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div className="relative">
+                <input 
+                  type="search" 
+                  placeholder="Buscar artigos..." 
+                  className="px-4 py-2 border rounded-md w-full bg-background border-input" 
+                  value={searchQuery} 
+                  onChange={e => setSearchQuery(e.target.value)} 
+                />
+              </div>
+            </div>
           </div>
+
+          {filteredArticles.length === 0 && !loading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
+              <Button onClick={() => loadArticles()} className="mt-4 gap-2" variant="outline">
+                <ReloadIcon className="h-4 w-4" />
+                Recarregar
+              </Button>
+            </div>
+          ) : (
+            <VadeMecumArticleList 
+              isLoading={loading} 
+              visibleArticles={visibleArticles} 
+              filteredArticles={filteredArticles} 
+              visibleBatch={visibleBatch} 
+              tableName={lawId ? decodeURIComponent(lawId) : ''}
+              fontSize={fontSize}
+              loadMoreRef={loadMoreRef}
+            />
+          )}
         </div>
+        
+        {/* Sidebar with Favorites and History */}
+        <VadeMecumSidebar 
+          favorites={favorites} 
+          recentHistory={recentHistory} 
+        />
       </div>
 
-      {filteredArticles.length === 0 && !loading ? (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
-          <Button onClick={() => loadArticles()} className="mt-4 gap-2" variant="outline">
-            <ReloadIcon className="h-4 w-4" />
-            Recarregar
-          </Button>
-        </div>
-      ) : (
-        <VadeMecumArticleList 
-          isLoading={loading} 
-          visibleArticles={visibleArticles} 
-          filteredArticles={filteredArticles} 
-          visibleBatch={visibleBatch} 
-          tableName={lawId ? decodeURIComponent(lawId) : ''}
-          fontSize={fontSize}
-          loadMoreRef={loadMoreRef}
-        />
-      )}
-
-      {/* Floating controls for font size and back to top */}
+      {/* Bottom floating controls for font size and back to top */}
       <FloatingControls
         fontSize={fontSize}
         increaseFontSize={increaseFontSize}

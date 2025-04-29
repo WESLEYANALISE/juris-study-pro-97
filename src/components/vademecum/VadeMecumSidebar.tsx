@@ -39,52 +39,64 @@ export function VadeMecumSidebar({ favorites, recentHistory }: VadeMecumSidebarP
           <TabsContent value="favorites">
             <div className="space-y-2 max-h-[400px] overflow-auto p-1">
               <AnimatePresence>
-                {favorites.map((favorite, index) => (
-                  <motion.div
-                    key={favorite.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: index * 0.05, duration: 0.2 }}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-left hover:bg-accent"
-                      onClick={() => navigate(`/vademecum/${favorite.law_name}`)}
+                {favorites.length === 0 ? (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    Nenhum artigo favorito.
+                  </div>
+                ) : (
+                  favorites.map((favorite, index) => (
+                    <motion.div
+                      key={favorite.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ delay: index * 0.05, duration: 0.2 }}
                     >
-                      <div className="truncate">
-                        <div className="font-medium">{favorite.law_name.replace(/_/g, ' ')}</div>
-                        <div className="text-sm text-muted-foreground">Art. {favorite.article_number}</div>
-                      </div>
-                    </Button>
-                  </motion.div>
-                ))}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-left hover:bg-accent"
+                        onClick={() => navigate(`/vademecum/${favorite.law_name}`)}
+                      >
+                        <div className="truncate">
+                          <div className="font-medium">{favorite.law_name.replace(/_/g, ' ')}</div>
+                          <div className="text-sm text-muted-foreground">Art. {favorite.article_number}</div>
+                        </div>
+                      </Button>
+                    </motion.div>
+                  ))
+                )}
               </AnimatePresence>
             </div>
           </TabsContent>
           <TabsContent value="history">
             <div className="space-y-2 max-h-[400px] overflow-auto p-1">
               <AnimatePresence>
-                {recentHistory.map((item, index) => (
-                  <motion.div
-                    key={item.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ delay: index * 0.05, duration: 0.2 }}
-                  >
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start text-left hover:bg-accent"
-                      onClick={() => navigate(`/vademecum/${item.law_name}`)}
+                {recentHistory.length === 0 ? (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    Nenhum artigo visualizado recentemente.
+                  </div>
+                ) : (
+                  recentHistory.map((item, index) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ delay: index * 0.05, duration: 0.2 }}
                     >
-                      <div className="truncate">
-                        <div className="font-medium">{item.law_name.replace(/_/g, ' ')}</div>
-                        <div className="text-sm text-muted-foreground">Art. {item.article_number}</div>
-                      </div>
-                    </Button>
-                  </motion.div>
-                ))}
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-left hover:bg-accent"
+                        onClick={() => navigate(`/vademecum/${item.law_name}`)}
+                      >
+                        <div className="truncate">
+                          <div className="font-medium">{item.law_name.replace(/_/g, ' ')}</div>
+                          <div className="text-sm text-muted-foreground">Art. {item.article_number}</div>
+                        </div>
+                      </Button>
+                    </motion.div>
+                  ))
+                )}
               </AnimatePresence>
             </div>
           </TabsContent>

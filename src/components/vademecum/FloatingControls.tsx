@@ -21,69 +21,58 @@ export const FloatingControls = ({
 }: FloatingControlsProps) => {
   return (
     <>
-      {/* Font size controls (left side) */}
-      <div className="fixed left-4 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-50">
-        <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border flex flex-col p-1"
-        >
+      {/* Font size controls (bottom side) */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="fixed left-1/2 -translate-x-1/2 bottom-6 z-50"
+      >
+        <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-purple-100 dark:border-purple-900/40 flex items-center p-1.5 gap-2">
           <Button 
             variant="ghost" 
-            size="icon" 
-            onClick={increaseFontSize}
-            className="h-8 w-8"
-            title="Aumentar zoom"
-          >
-            <ZoomIn size={16} />
-          </Button>
-          
-          <div className="text-center py-1 text-xs font-medium">
-            {fontSize}%
-          </div>
-          
-          <Button 
-            variant="ghost" 
-            size="icon" 
+            size="sm" 
             onClick={decreaseFontSize}
-            className="h-8 w-8" 
+            className="h-8 w-8 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40"
             title="Diminuir zoom"
           >
             <ZoomOut size={16} />
           </Button>
-        </motion.div>
-      </div>
+          
+          <div className="text-center py-1 text-xs font-medium min-w-[24px]">
+            {fontSize}
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={increaseFontSize}
+            className="h-8 w-8 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40" 
+            title="Aumentar zoom"
+          >
+            <ZoomIn size={16} />
+          </Button>
+        </div>
+      </motion.div>
       
       {/* Back to top button (right side) */}
       <AnimatePresence>
         {showBackToTop && 
           <motion.div 
             className="fixed right-4 bottom-20 z-50" 
-            initial={{
-              opacity: 0,
-              scale: 0.8
-            }} 
-            animate={{
-              opacity: 1,
-              scale: 1
-            }} 
-            exit={{
-              opacity: 0,
-              scale: 0.8
-            }} 
-            transition={{
-              duration: 0.2
-            }}
+            initial={{ opacity: 0, scale: 0.8 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.8 }} 
+            transition={{ duration: 0.2 }}
           >
             <Button 
               variant="purple" 
               size="icon" 
-              className="rounded-full h-12 w-12 shadow-lg" 
+              className="rounded-full h-10 w-10 shadow-lg" 
               onClick={scrollToTop} 
               title="Voltar ao topo"
             >
-              <ArrowUp size={20} />
+              <ArrowUp size={18} />
             </Button>
           </motion.div>
         }
