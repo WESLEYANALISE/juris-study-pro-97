@@ -7,6 +7,7 @@ export interface LivroPro {
   capa_url: string | null;
   descricao: string | null;
   total_paginas: number | null;
+  html_content?: string | null; // Add optional field for HTML content
   created_at: string;
   updated_at: string;
 }

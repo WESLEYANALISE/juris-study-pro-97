@@ -16,12 +16,14 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PDFViewer } from "./PDFViewer";
+import { HTMLViewer } from "./HTMLViewer";
 import type { LivroPro } from "@/types/livrospro";
 
 export function BibliotecaRecomendacoes() {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<LivroPro | null>(null);
+  const [viewMode, setViewMode] = useState<"pdf" | "html">("pdf");
 
   const { data: livros, isLoading } = useQuery({
     queryKey: ["livrospro"],
@@ -61,8 +63,35 @@ export function BibliotecaRecomendacoes() {
     return filtered;
   }, [searchTerm, activeCategory, livros]);
 
+  // Handle book selection and view mode
+  const handleBookSelect = (book: LivroPro) => {
+    setSelectedBook(book);
+    // Default to HTML view if device is mobile
+    if (window.innerWidth < 768) {
+      setViewMode("html");
+    }
+  };
+
   if (selectedBook) {
-    return <PDFViewer livro={selectedBook} onClose={() => setSelectedBook(null)} />;
+    if (viewMode === "html") {
+      return <HTMLViewer livro={selectedBook} onClose={() => setSelectedBook(null)} />;
+    } else {
+      return (
+        <div className="relative">
+          <PDFViewer livro={selectedBook} onClose={() => setSelectedBook(null)} />
+          <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[60] bg-card/80 backdrop-blur-sm rounded-full border shadow-lg p-1">
+            <Button 
+              variant="purple" 
+              size="sm" 
+              onClick={() => setViewMode("html")}
+              className="px-4"
+            >
+              Alternar para visualização HTML
+            </Button>
+          </div>
+        </div>
+      );
+    }
   }
 
   return (
@@ -109,7 +138,7 @@ export function BibliotecaRecomendacoes() {
             <Card 
               key={livro.id} 
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => setSelectedBook(livro)}
+              onClick={() => handleBookSelect(livro)}
             >
               <div className="aspect-[3/4] relative overflow-hidden">
                 {livro.capa_url ? (
@@ -138,9 +167,14 @@ export function BibliotecaRecomendacoes() {
                   <p className="text-sm text-muted-foreground line-clamp-3">
                     {livro.descricao || "Sem descrição disponível."}
                   </p>
-                  <Button variant="secondary" className="w-full" size="sm">
-                    Ler agora
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button variant="secondary" className="w-full" size="sm">
+                      PDF
+                    </Button>
+                    <Button variant="purple" className="w-full" size="sm">
+                      HTML
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
