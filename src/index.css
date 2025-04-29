@@ -1,29 +1,28 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    /* Tema escuro - cores base */
-    --background: 222 47% 7%;
+    /* Dark theme with purple accents - base colors */
+    --background: 240 20% 5%;
     --foreground: 220 33% 98%;
     
-    /* Cores de cartões e elementos */
-    --card: 222 47% 10%;
+    /* Card and elements with subtle gradients */
+    --card: 240 20% 9%;
     --card-foreground: 220 33% 98%;
-    --popover: 222 47% 10%;
+    --popover: 240 20% 9%;
     --popover-foreground: 220 33% 98%;
     
-    /* Cores primárias - Azul Marinho mais claro */
-    --primary: 222 47% 40%;
+    /* Primary colors - Purple tones */
+    --primary: 260 60% 60%;
     --primary-foreground: 220 33% 98%;
     
-    /* Cores secundárias - Dourado mais escuro */
-    --secondary: 43 96% 46%;
-    --secondary-foreground: 220 33% 98%;
+    /* Secondary colors - Gold accents */
+    --secondary: 45 96% 50%;
+    --secondary-foreground: 240 20% 9%;
     
-    /* Estados e feedback */
+    /* States and feedback */
     --success: 142 72% 35%;
     --success-foreground: 210 40% 98%;
     --warning: 45 93% 47%;
@@ -31,25 +30,25 @@
     --destructive: 0 84% 43%;
     --destructive-foreground: 210 40% 98%;
     
-    /* Elementos de interface */
-    --muted: 222 47% 15%;
-    --muted-foreground: 220 33% 70%;
-    --accent: 222 47% 40%;
+    /* UI elements */
+    --muted: 240 20% 14%;
+    --muted-foreground: 220 33% 75%;
+    --accent: 260 30% 45%;
     --accent-foreground: 220 33% 98%;
     
-    /* Bordas e inputs */
-    --border: 222 47% 20%;
-    --input: 222 47% 20%;
-    --ring: 222 47% 40%;
+    /* Borders and inputs */
+    --border: 240 20% 18%;
+    --input: 240 20% 18%;
+    --ring: 260 60% 60%;
 
-    /* Raio padrão para elementos */
+    /* Radius for elements */
     --radius: 0.75rem;
   }
 }
 
 @layer base {
   * {
-    @apply border-border selection:bg-primary/10 selection:text-primary;
+    @apply border-border selection:bg-primary/20 selection:text-primary;
   }
 
   html {
@@ -131,7 +130,46 @@
   }
 }
 
-/* Melhorias em scrollbars */
+/* Glassmorphism Effects */
+.glass-card {
+  @apply bg-black/30 backdrop-blur-md border border-white/10;
+}
+
+.glass-purple {
+  @apply bg-primary/10 backdrop-blur-md border border-primary/20;
+}
+
+/* Gradient Backgrounds */
+.gradient-purple {
+  @apply bg-gradient-to-br from-[#8B5CF6] to-[#D946EF];
+}
+
+.gradient-card {
+  @apply bg-gradient-to-br from-muted to-background border-primary/20;
+}
+
+.gradient-sidebar {
+  @apply bg-gradient-to-b from-background via-muted/70 to-background;
+}
+
+.gradient-button {
+  @apply bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all;
+}
+
+.gradient-header {
+  @apply bg-gradient-to-r from-background via-muted to-background border-b border-border/50;
+}
+
+.gradient-welcome {
+  @apply bg-gradient-to-r from-primary/15 to-accent/5 border border-primary/20;
+}
+
+/* Hover Effects */
+.hover-lift {
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10;
+}
+
+/* Improved scrollbars */
 ::-webkit-scrollbar {
   @apply w-2;
 }
@@ -141,7 +179,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
+  @apply bg-primary/40 rounded-full hover:bg-primary/60;
 }
 
 /* Mobile specific overrides */
@@ -165,6 +203,19 @@
   .navbar-responsive {
     @apply flex-wrap gap-y-2;
   }
+}
+
+/* Melhorias em scrollbars */
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-muted;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/30 rounded-full hover:bg-muted-foreground/50;
 }
 
 /* Scroll snap for TabsList */

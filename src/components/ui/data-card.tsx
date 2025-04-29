@@ -34,11 +34,11 @@ export function DataCard({
   ...props
 }: DataCardProps) {
   const variantStyles = {
-    default: "",
-    primary: "border-primary/20",
-    success: "border-green-500/20",
-    warning: "border-yellow-500/20",
-    destructive: "border-destructive/20",
+    default: "gradient-card",
+    primary: "gradient-card border-primary/20",
+    success: "gradient-card border-green-500/20",
+    warning: "gradient-card border-yellow-500/20",
+    destructive: "gradient-card border-destructive/20",
   };
 
   const variantIconStyles = {
@@ -59,7 +59,7 @@ export function DataCard({
 
   return (
     <motion.div {...motionProps}>
-      <Card className={cn("overflow-hidden", variantStyles[variant], className)} {...props}>
+      <Card className={cn("overflow-hidden hover-lift", variantStyles[variant], className)} {...props}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             {icon && <span className={cn(variantIconStyles[variant])}>{icon}</span>}
@@ -70,7 +70,7 @@ export function DataCard({
           {children}
         </CardContent>
         {footer && (
-          <CardFooter className="border-t bg-muted/50 px-6 py-3">
+          <CardFooter className="border-t bg-muted/20 px-6 py-3">
             {footer}
           </CardFooter>
         )}

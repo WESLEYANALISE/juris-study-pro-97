@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -60,6 +61,20 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Custom purple variants
+        purple: {
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          700: "#6d28d9",
+          800: "#5b21b6",
+          900: "#4c1d95",
+          950: "#2e1065",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -118,7 +133,14 @@ export default {
         'elegant': '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
         'hover': '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)',
         'card': '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1)',
-      }
+        'glow': '0 0 15px rgba(139, 92, 246, 0.3)',
+        'purple': '0 4px 14px 0 rgba(139, 92, 246, 0.25)',
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'gradient-purple': 'linear-gradient(to right, #8B5CF6, #D946EF)',
+        'gradient-dark': 'linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--background)))',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],
