@@ -66,7 +66,7 @@ export const ArticleCard = ({
   }
 
   // Ensure isFavorite is always a boolean
-  const favoriteStatus = typeof isFavorite === 'boolean' ? isFavorite : false;
+  const favoriteStatus: boolean = typeof isFavorite === 'boolean' ? isFavorite : false;
 
   return (
     <motion.div 

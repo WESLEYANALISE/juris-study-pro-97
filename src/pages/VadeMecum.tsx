@@ -14,6 +14,11 @@ import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSect
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { Card } from "@/components/ui/card";
 
+// Define the interface for the data returned by list_tables
+interface TableNameResponse {
+  table_name: string;
+}
+
 const VadeMecum = () => {
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
@@ -21,7 +26,7 @@ const VadeMecum = () => {
   const [searchInputFocused, setSearchInputFocused] = useState(false);
 
   // Query to fetch available tables (laws)
-  const { data: tables, isLoading, error } = useQuery({
+  const { data: tablesData, isLoading, error } = useQuery({
     queryKey: ["vademecum-tables"],
     queryFn: async () => {
       try {
@@ -42,15 +47,20 @@ const VadeMecum = () => {
     staleTime: 1000 * 60 * 60, // 1 hour
   });
 
+  // Extract table names from the response
+  const tables: string[] = Array.isArray(tablesData) 
+    ? tablesData.map((item: TableNameResponse) => item.table_name) 
+    : [];
+
   // Filter tables to separate codes and statutes
-  const codes = Array.isArray(tables) ? tables.filter((table: string) => table.startsWith('Código_')) : [];
-  const statutes = Array.isArray(tables) ? tables.filter((table: string) => table.startsWith('Estatuto_')) : [];
-  const laws = Array.isArray(tables) ? tables.filter((table: string) => 
+  const codes = tables.filter(table => table.startsWith('Código_'));
+  const statutes = tables.filter(table => table.startsWith('Estatuto_'));
+  const laws = tables.filter(table => 
     !table.startsWith('Código_') && 
     !table.startsWith('Estatuto_') && 
     !table.includes('_favoritos') && 
     !table.includes('_visualizacoes')
-  ) : [];
+  );
 
   return (
     <JuridicalBackground variant="books" opacity={0.04}>
@@ -176,8 +186,8 @@ const VadeMecum = () => {
               ) : laws.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {laws
-                    .filter((law: string) => law.toLowerCase().includes(search.toLowerCase()))
-                    .map((law: string) => (
+                    .filter(law => law.toLowerCase().includes(search.toLowerCase()))
+                    .map(law => (
                       <motion.div 
                         key={law}
                         whileHover={{ y: -5 }}
