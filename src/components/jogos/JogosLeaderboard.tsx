@@ -82,7 +82,7 @@ export const JogosLeaderboard = ({ gameId }: JogosLeaderboardProps) => {
   return (
     <JuridicalCard
       title="Ranking dos Jogadores"
-      icon="trophy"
+      icon="gavel"
       variant="default"
     >
       {isLoading ? (

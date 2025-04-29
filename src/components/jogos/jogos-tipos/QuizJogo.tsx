@@ -279,15 +279,15 @@ export const QuizJogo = ({ gameId }: QuizJogoProps) => {
         // Award perfect score badge
         await supabase
           .from('jogos_user_badges')
-          .insert({
+          .upsert({
             user_id: user.id,
             jogo_id: gameId,
             badge_nome: 'Quiz Master',
             badge_descricao: 'Conseguiu uma pontuação acima de 30 no Quiz Jurídico',
             badge_icone: 'trophy'
-          })
-          .onConflict(['user_id', 'jogo_id', 'badge_nome'])
-          .ignore();
+          }, {
+            onConflict: 'user_id,jogo_id,badge_nome'
+          });
       }
     } catch (error) {
       console.error('Erro ao finalizar jogo:', error);

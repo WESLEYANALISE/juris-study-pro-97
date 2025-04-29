@@ -254,15 +254,15 @@ export const SimulacaoJulgamento = ({ gameId }: SimulacaoJulgamentoProps) => {
       if (pontuacao >= 85) {
         await supabase
           .from('jogos_user_badges')
-          .insert({
+          .upsert({
             user_id: user.id,
             jogo_id: gameId,
             badge_nome: 'Advogado Maestro',
             badge_descricao: 'Conseguiu uma pontuação acima de 85 em uma Simulação de Julgamento',
             badge_icone: 'gavel'
-          })
-          .onConflict(['user_id', 'jogo_id', 'badge_nome'])
-          .ignore();
+          }, {
+            onConflict: 'user_id,jogo_id,badge_nome'
+          });
       }
     } catch (error) {
       console.error('Erro ao atualizar estatísticas:', error);

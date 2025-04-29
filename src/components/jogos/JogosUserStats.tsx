@@ -100,7 +100,7 @@ export const JogosUserStats = ({ userId }: UserStatsProps) => {
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <LoadingSpinner size="md" />
+            <LoadingSpinner />
           </div>
         ) : (
           <div className="space-y-4">

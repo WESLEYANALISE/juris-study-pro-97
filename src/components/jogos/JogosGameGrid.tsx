@@ -44,7 +44,7 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[400px]">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
       </div>
     );
   }

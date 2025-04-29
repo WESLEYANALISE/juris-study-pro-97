@@ -65,9 +65,6 @@ export const ArticleCard = ({
     return null; // Don't render invalid articles
   }
 
-  // Ensure isFavorite is always a boolean - cast for strict type safety
-  const favoriteStatus: boolean = Boolean(isFavorite);
-
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} 
@@ -90,7 +87,7 @@ export const ArticleCard = ({
               articleText={articleText}
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
-              isFavorite={favoriteStatus} 
+              isFavorite={isFavorite || false} 
               setIsFavorite={(value) => toggleFavorite(articleText)}
               lawName={lawName}
               articleNumber={articleNumber}

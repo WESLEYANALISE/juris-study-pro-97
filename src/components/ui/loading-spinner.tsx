@@ -3,13 +3,21 @@ import { cn } from "@/lib/utils";
 
 interface LoadingSpinnerProps {
   className?: string;
+  size?: "sm" | "md" | "lg";
 }
 
-export const LoadingSpinner = ({ className }: LoadingSpinnerProps) => {
+export const LoadingSpinner = ({ className, size = "md" }: LoadingSpinnerProps) => {
+  const sizeClasses = {
+    sm: "h-3 w-3",
+    md: "h-4 w-4", 
+    lg: "h-8 w-8"
+  };
+  
   return (
     <div
       className={cn(
-        "inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent",
+        "inline-block animate-spin rounded-full border-2 border-current border-t-transparent",
+        sizeClasses[size],
         className
       )}
       role="status"

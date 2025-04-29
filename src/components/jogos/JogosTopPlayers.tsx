@@ -83,7 +83,7 @@ export const JogosTopPlayers = () => {
       <CardContent>
         {isLoading ? (
           <div className="flex justify-center py-4">
-            <LoadingSpinner size="md" />
+            <LoadingSpinner />
           </div>
         ) : topPlayers.length > 0 ? (
           <div className="space-y-4">

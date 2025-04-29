@@ -83,7 +83,7 @@ const JogoDetalhes = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[60vh]">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner />
       </div>
     );
   }
