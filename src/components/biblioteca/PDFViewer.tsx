@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, ArrowLeft, ArrowRight, ZoomIn, ZoomOut, Bookmark, BookmarkPlus, Pen, X, Settings, Menu, Plus, Minus, RotateCw, RotateCcw, Maximize2, Columns, LayoutGrid, AlertTriangle, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { useTouchGestures } from "@/hooks/use-touch-gestures";
+import { FloatingControls } from "@/components/vademecum/FloatingControls";
 import type { LivroPro, Anotacao, Marcador, Progresso } from "@/types/livrospro";
 
 // Set up the worker for PDF.js with error handling
@@ -19,20 +21,18 @@ try {
 } catch (error) {
   console.error("Error initializing PDF.js worker:", error);
 }
+
 interface PDFViewerProps {
   livro: LivroPro;
   onClose: () => void;
 }
+
 export function PDFViewer({
   livro,
   onClose
 }: PDFViewerProps) {
-  const {
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1);
@@ -60,54 +60,48 @@ export function PDFViewer({
   const [pdfLoadError, setPdfLoadError] = useState<Error | null>(null);
   const [pdfLoadRetries, setPdfLoadRetries] = useState(0);
   const [useAlternativeViewer, setUseAlternativeViewer] = useState(false);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  
   const pdfContainerRef = useRef<HTMLDivElement>(null);
+  const mainContentRef = useRef<HTMLDivElement>(null);
   const textLayerRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
+  // Use touch gestures for zooming
+  const touchGestures = useTouchGestures({
+    onZoomChange: (newScale) => setScale(newScale),
+    minScale: 0.5,
+    maxScale: 3,
+  });
+
   // Get reading progress
-  const {
-    data: progresso
-  } = useQuery({
+  const { data: progresso } = useQuery({
     queryKey: ["progresso", livro.id, user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const {
-        data
-      } = await supabase.from("livrospro_progresso").select("*").eq("livro_id", livro.id).eq("user_id", user.id).single();
+      const { data } = await supabase.from("livrospro_progresso").select("*").eq("livro_id", livro.id).eq("user_id", user.id).single();
       return data as Progresso | null;
     },
     enabled: !!user
   });
 
   // Get annotations
-  const {
-    data: anotacoes = []
-  } = useQuery({
+  const { data: anotacoes = [] } = useQuery({
     queryKey: ["anotacoes", livro.id, user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const {
-        data
-      } = await supabase.from("livrospro_anotacoes").select("*").eq("livro_id", livro.id).eq("user_id", user.id).order("pagina", {
-        ascending: true
-      });
+      const { data } = await supabase.from("livrospro_anotacoes").select("*").eq("livro_id", livro.id).eq("user_id", user.id).order("pagina", { ascending: true });
       return (data || []) as Anotacao[];
     },
     enabled: !!user
   });
 
   // Get bookmarks
-  const {
-    data: marcadores = []
-  } = useQuery({
+  const { data: marcadores = [] } = useQuery({
     queryKey: ["marcadores", livro.id, user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const {
-        data
-      } = await supabase.from("livrospro_marcadores").select("*").eq("livro_id", livro.id).eq("user_id", user.id).order("pagina", {
-        ascending: true
-      });
+      const { data } = await supabase.from("livrospro_marcadores").select("*").eq("livro_id", livro.id).eq("user_id", user.id).order("pagina", { ascending: true });
       return (data || []) as Marcador[];
     },
     enabled: !!user
@@ -323,15 +317,16 @@ export function PDFViewer({
       if (containerSize.width > 0 && containerSize.height > 0) {
         if (viewMode === "fit-width") {
           // Scale to fit width, accounting for container padding
-          const containerWidth = isDualPageView ? (containerSize.width - 48) / 2 // Adjusted width for dual page mode
-          : containerSize.width - 48; // Single page with padding
+          const containerWidth = isDualPageView 
+            ? (containerSize.width - 24) / 2 // Adjusted width for dual page mode
+            : containerSize.width - 24; // Single page with less padding
 
           setScale(containerWidth / 595); // Assuming standard PDF width of 595pt
         } else if (viewMode === "fit-page") {
           // Scale to fit both width and height
-          const containerWidth = isDualPageView ? (containerSize.width - 48) / 2 : containerSize.width - 48;
+          const containerWidth = isDualPageView ? (containerSize.width - 24) / 2 : containerSize.width - 24;
           const widthScale = containerWidth / 595; // Width scale factor
-          const heightScale = (containerSize.height - 48) / 842; // Height scale factor (standard A4)
+          const heightScale = (containerSize.height - 80) / 842; // Height scale factor (standard A4) with space for controls
 
           // Use the smaller scale to ensure entire page fits
           setScale(Math.min(widthScale, heightScale));
@@ -347,6 +342,22 @@ export function PDFViewer({
       setPageNumber(progresso.pagina_atual);
     }
   }, [progresso]);
+
+  // Monitor scroll for back to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      if (mainContentRef.current) {
+        const scrollTop = mainContentRef.current.scrollTop;
+        setShowBackToTop(scrollTop > 300);
+      }
+    };
+
+    const contentElement = mainContentRef.current;
+    if (contentElement) {
+      contentElement.addEventListener('scroll', handleScroll);
+      return () => contentElement.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   // Auto-play functionality
   useEffect(() => {
@@ -406,6 +417,17 @@ export function PDFViewer({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isDualPageView]);
+
+  // Save progress when page changes
+  useEffect(() => {
+    if (user && pageNumber > 0) {
+      const timeout = setTimeout(() => {
+        updateProgress.mutate(pageNumber);
+      }, 1000);
+      return () => clearTimeout(timeout);
+    }
+  }, [pageNumber, user]);
+
   const toggleFullScreen = async () => {
     if (!document.fullscreenElement) {
       if (pdfContainerRef.current?.requestFullscreen) {
@@ -417,11 +439,15 @@ export function PDFViewer({
       }
     }
   };
-  const onDocumentLoadSuccess = ({
-    numPages
-  }: {
-    numPages: number;
-  }) => {
+
+  const scrollToTop = () => {
+    mainContentRef.current?.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  };
+
+  const onDocumentLoadSuccess = ({ numPages }: { numPages: number; }) => {
     setNumPages(numPages);
     if (livro.total_paginas === null) {
       // Update the book with total pages if not set
@@ -434,10 +460,12 @@ export function PDFViewer({
       });
     }
   };
+
   const onDocumentLoadError = (error: Error) => {
     console.error("PDF load error:", error);
     setPdfLoadError(error);
   };
+
   const changePage = (delta: number) => {
     if (!numPages) return;
     let newPage = pageNumber + delta;
@@ -450,6 +478,7 @@ export function PDFViewer({
       setPageNumber(newPage);
     }
   };
+
   const goToPage = (page: number) => {
     if (!numPages) return;
     if (page >= 1 && page <= numPages) {
@@ -475,30 +504,21 @@ export function PDFViewer({
     return [startPage, startPage + 1].filter(p => p <= (numPages || 0));
   }, [pageNumber, isDualPageView, numPages]);
 
-  // Save progress when page changes
-  useEffect(() => {
-    if (user && pageNumber > 0) {
-      const timeout = setTimeout(() => {
-        updateProgress.mutate(pageNumber);
-      }, 1000);
-      return () => clearTimeout(timeout);
-    }
-  }, [pageNumber, user]);
-
   // Perform search
   const searchInDocument = async () => {
     if (!searchText) return;
     try {
       // This is a simplified approach - in a real implementation,
       // you would need to use PDF.js text layer to do proper text search
-      // For now, we'll just set some mock results
       toast({
         title: "Pesquisa iniciada",
         description: "Pesquisando no documento..."
       });
 
       // Mock search results (random pages)
-      const mockResults = Array(Math.floor(Math.random() * 5) + 1).fill(0).map(() => Math.floor(Math.random() * (numPages || 1)) + 1);
+      const mockResults = Array(Math.floor(Math.random() * 5) + 1)
+        .fill(0)
+        .map(() => Math.floor(Math.random() * (numPages || 1)) + 1);
       setSearchResults(mockResults);
       setShowSearchResults(true);
     } catch (error) {
@@ -630,8 +650,10 @@ export function PDFViewer({
       });
     }
   }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer]);
+
   const renderAlternativeViewer = () => {
-    return <div className="w-full h-full flex flex-col">
+    return (
+      <div className="w-full h-full flex flex-col">
         <div className="bg-card/90 backdrop-blur-sm p-4 text-center mb-4 rounded-lg border">
           <div className="flex items-center justify-center gap-2 mb-2">
             <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -642,33 +664,54 @@ export function PDFViewer({
           </p>
         </div>
         
-        <iframe src={getGoogleViewerUrl()} className="flex-1 w-full rounded-lg border shadow-lg bg-white" title="Visualizador de PDF alternativo" />
+        <iframe 
+          src={getGoogleViewerUrl()} 
+          className="flex-1 w-full rounded-lg border shadow-lg bg-white" 
+          title="Visualizador de PDF alternativo" 
+        />
         
         <div className="flex justify-between mt-4">
-          <Button variant="outline" onClick={() => {
-          setPdfLoadRetries(0);
-          setPdfLoadError(null);
-          setUseAlternativeViewer(false);
-        }} className="gap-2">
+          <Button 
+            variant="outline" 
+            onClick={() => {
+              setPdfLoadRetries(0);
+              setPdfLoadError(null);
+              setUseAlternativeViewer(false);
+            }} 
+            className="gap-2"
+          >
             <RotateCw className="h-4 w-4" />
             Tentar visualizador normal
           </Button>
           
-          <Button variant="default" onClick={() => window.open(livro.pdf, '_blank')} className="gap-2">
+          <Button 
+            variant="default" 
+            onClick={() => window.open(livro.pdf, '_blank')} 
+            className="gap-2"
+          >
             <Download className="h-4 w-4" />
             Baixar PDF
           </Button>
         </div>
-      </div>;
+      </div>
+    );
   };
-  return <div ref={pdfContainerRef} className="fixed inset-0 bg-background z-50 flex flex-col">
+
+  return (
+    <div ref={pdfContainerRef} className="fixed inset-0 bg-background z-50 flex flex-col">
       <style>{textLayerStyles}</style>
       
       {/* Header toolbar */}
       <div className="bg-card border-b shadow-sm p-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X size={18} />
+          <Button 
+            variant="yellow" 
+            size="sm" 
+            onClick={onClose} 
+            className="bg-yellow-400 hover:bg-yellow-500 text-black"
+          >
+            <ArrowLeft size={18} className="mr-1" />
+            Voltar
           </Button>
           <h1 className="font-medium truncate max-w-[200px] md:max-w-md">
             {livro.nome}
@@ -676,42 +719,18 @@ export function PDFViewer({
         </div>
         
         <div className="flex items-center gap-2">
-          {!useAlternativeViewer && <>
-              <span className="text-sm text-muted-foreground">
-                {pageNumber} / {numPages || '?'}
-              </span>
-              
-              <div className="hidden md:flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
-                  <ArrowLeft size={18} />
-                </Button>
-                
-                <Input type="number" min={1} max={numPages || 1} value={pageNumber} onChange={e => setPageNumber(Number(e.target.value))} onBlur={e => goToPage(Number(e.target.value))} className="w-16 text-center h-8" />
-                
-                <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 1)}>
-                  <ArrowRight size={18} />
-                </Button>
-              </div>
-              
-              <div className="hidden md:flex items-center gap-1">
-                <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.max(0.5, s - 0.1))}>
-                  <ZoomOut size={18} />
-                </Button>
-                
-                <Button variant="ghost" size="sm" onClick={() => setScale(1)}>
-                  {Math.round(scale * 100)}%
-                </Button>
-                
-                <Button variant="ghost" size="icon" onClick={() => setScale(s => Math.min(3, s + 0.1))}>
-                  <ZoomIn size={18} />
-                </Button>
-              </div>
-            </>}
+          {!useAlternativeViewer && (
+            <span className="text-sm text-muted-foreground">
+              {pageNumber} / {numPages || '?'}
+            </span>
+          )}
           
           <div className="hidden md:flex items-center gap-1">
-            {!useAlternativeViewer && <Button variant={isDualPageView ? "default" : "ghost"} size="icon" onClick={() => setIsDualPageView(!isDualPageView)} disabled={window.innerWidth < 1024} title={isDualPageView ? "Modo de página única" : "Modo de página dupla"}>
+            {!useAlternativeViewer && (
+              <Button variant={isDualPageView ? "default" : "ghost"} size="icon" onClick={() => setIsDualPageView(!isDualPageView)} disabled={window.innerWidth < 1024} title={isDualPageView ? "Modo de página única" : "Modo de página dupla"}>
                 {isDualPageView ? <LayoutGrid size={18} /> : <Columns size={18} />}
-              </Button>}
+              </Button>
+            )}
             
             <Popover>
               <PopoverTrigger asChild>
@@ -723,26 +742,55 @@ export function PDFViewer({
                 <div className="space-y-4">
                   <h4 className="font-medium text-sm">Modo de visualização</h4>
                   <div className="flex flex-col gap-2">
-                    {!useAlternativeViewer ? <>
-                        <Button variant={viewMode === "fit-width" ? "default" : "outline"} size="sm" onClick={() => setViewMode("fit-width")} className="justify-start">
+                    {!useAlternativeViewer ? (
+                      <>
+                        <Button 
+                          variant={viewMode === "fit-width" ? "default" : "outline"} 
+                          size="sm" 
+                          onClick={() => setViewMode("fit-width")} 
+                          className="justify-start"
+                        >
                           Ajustar à largura
                         </Button>
-                        <Button variant={viewMode === "fit-page" ? "default" : "outline"} size="sm" onClick={() => setViewMode("fit-page")} className="justify-start">
+                        <Button 
+                          variant={viewMode === "fit-page" ? "default" : "outline"} 
+                          size="sm" 
+                          onClick={() => setViewMode("fit-page")} 
+                          className="justify-start"
+                        >
                           Ajustar à página
                         </Button>
-                        <Button variant={viewMode === "custom" ? "default" : "outline"} size="sm" onClick={() => setViewMode("custom")} className="justify-start">
+                        <Button 
+                          variant={viewMode === "custom" ? "default" : "outline"} 
+                          size="sm" 
+                          onClick={() => setViewMode("custom")} 
+                          className="justify-start"
+                        >
                           Tamanho personalizado
                         </Button>
-                      </> : <Button variant="outline" size="sm" onClick={() => {
-                    setUseAlternativeViewer(false);
-                    setPdfLoadRetries(0);
-                    setPdfLoadError(null);
-                  }} className="justify-start">
+                      </>
+                    ) : (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => {
+                          setUseAlternativeViewer(false);
+                          setPdfLoadRetries(0);
+                          setPdfLoadError(null);
+                        }} 
+                        className="justify-start"
+                      >
                         <RotateCw className="mr-2 h-4 w-4" />
                         Usar visualizador normal
-                      </Button>}
+                      </Button>
+                    )}
                     
-                    <Button variant="outline" size="sm" onClick={() => window.open(livro.pdf, '_blank')} className="justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => window.open(livro.pdf, '_blank')} 
+                      className="justify-start"
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Baixar PDF original
                     </Button>
@@ -775,16 +823,34 @@ export function PDFViewer({
             <div className="space-y-2">
               <h3 className="text-sm font-medium">Navegação</h3>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => changePage(-1)} 
+                  disabled={pageNumber <= 1}
+                >
                   <ArrowLeft size={16} className="mr-1" /> Anterior
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 1)}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => changePage(1)} 
+                  disabled={pageNumber >= (numPages || 1)}
+                >
                   Próxima <ArrowRight size={16} className="ml-1" />
                 </Button>
               </div>
               
               <div className="flex items-center gap-2 mt-2">
-                <Input type="number" min={1} max={numPages || 1} value={pageNumber} onChange={e => setPageNumber(Number(e.target.value))} onBlur={e => goToPage(Number(e.target.value))} className="w-20 text-center" />
+                <Input 
+                  type="number" 
+                  min={1} 
+                  max={numPages || 1} 
+                  value={pageNumber} 
+                  onChange={e => setPageNumber(Number(e.target.value))} 
+                  onBlur={e => goToPage(Number(e.target.value))} 
+                  className="w-20 text-center" 
+                />
                 <span className="text-sm text-muted-foreground">
                   de {numPages || '?'}
                 </span>
@@ -825,30 +891,21 @@ export function PDFViewer({
               <h3 className="text-sm font-medium">Visualização</h3>
               <div className="space-y-2">
                 <div className="flex gap-2">
-                  <Button variant={viewMode === "fit-width" ? "default" : "outline"} size="sm" onClick={() => setViewMode("fit-width")} className="flex-1">
+                  <Button 
+                    variant={viewMode === "fit-width" ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => setViewMode("fit-width")} 
+                    className="flex-1"
+                  >
                     Ajustar largura
                   </Button>
-                  <Button variant={viewMode === "fit-page" ? "default" : "outline"} size="sm" onClick={() => setViewMode("fit-page")} className="flex-1">
+                  <Button 
+                    variant={viewMode === "fit-page" ? "default" : "outline"} 
+                    size="sm" 
+                    onClick={() => setViewMode("fit-page")} 
+                    className="flex-1"
+                  >
                     Ajustar página
-                  </Button>
-                </div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h3 className="text-sm font-medium">Leitura automática</h3>
-              <div className="flex items-center gap-2">
-                <Button variant={isPlaying ? "default" : "outline"} size="sm" onClick={() => setIsPlaying(!isPlaying)}>
-                  {isPlaying ? "Pausar" : "Iniciar"}
-                </Button>
-                
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setPlaySpeed(s => Math.min(30, s + 1))}>
-                    <Plus size={16} />
-                  </Button>
-                  <span className="text-sm min-w-12 text-center">{playSpeed}s</span>
-                  <Button variant="ghost" size="icon" onClick={() => setPlaySpeed(s => Math.max(1, s - 1))}>
-                    <Minus size={16} />
                   </Button>
                 </div>
               </div>
@@ -858,19 +915,36 @@ export function PDFViewer({
       </Sheet>
       
       {/* Main content */}
-      <div className="flex-1 flex">
+      <div className="flex-1 flex overflow-hidden">
         {/* PDF Document */}
-        <div className="flex-1 overflow-auto flex items-center justify-center bg-stone-100 dark:bg-stone-900 p-4" ref={textLayerRef}>
-          {useAlternativeViewer ? renderAlternativeViewer() : <div className={`relative mx-auto ${isDualPageView ? 'flex gap-2' : ''}`} style={{
-          width: isDualPageView ? 'auto' : '100%',
-          maxWidth: isDualPageView ? 'none' : '1200px'
-        }}>
-              <Document file={livro.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} loading={<div className="flex items-center justify-center h-full min-h-[300px]">
+        <div 
+          className="flex-1 overflow-auto flex items-center justify-center bg-stone-100 dark:bg-stone-900 p-0" 
+          ref={mainContentRef}
+        >
+          {useAlternativeViewer ? (
+            renderAlternativeViewer()
+          ) : (
+            <div 
+              className={`relative mx-auto ${isDualPageView ? 'flex gap-2' : ''}`} 
+              style={{
+                width: isDualPageView ? 'auto' : '100%',
+                maxWidth: isDualPageView ? 'none' : '100%'
+              }}
+            >
+              <Document 
+                file={livro.pdf} 
+                onLoadSuccess={onDocumentLoadSuccess} 
+                onLoadError={onDocumentLoadError} 
+                loading={
+                  <div className="flex items-center justify-center h-full min-h-[300px]">
                     <div className="text-center">
                       <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
                       <p className="text-muted-foreground">Carregando documento...</p>
                     </div>
-                  </div>} error={<div className="flex items-center justify-center h-full min-h-[300px]">
+                  </div>
+                } 
+                error={
+                  <div className="flex items-center justify-center h-full min-h-[300px]">
                     <div className="text-center p-8 max-w-md mx-auto">
                       <div className="bg-destructive/10 p-3 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-4">
                         <AlertTriangle className="h-6 w-6 text-destructive" />
@@ -881,60 +955,110 @@ export function PDFViewer({
                         {pdfLoadRetries > 0 && ` Tentativa ${pdfLoadRetries} de 3.`}
                       </p>
                       <div className="flex flex-col gap-2">
-                        <Button variant="outline" onClick={() => {
-                  setPdfLoadError(null);
-                  setPdfLoadRetries(prev => prev + 1);
-                }} disabled={pdfLoadRetries >= 3} className="w-full">
+                        <Button 
+                          variant="outline" 
+                          onClick={() => {
+                            setPdfLoadError(null);
+                            setPdfLoadRetries(prev => prev + 1);
+                          }} 
+                          disabled={pdfLoadRetries >= 3} 
+                          className="w-full"
+                        >
                           <RotateCw className="mr-2 h-4 w-4" />
                           Tentar novamente
                         </Button>
-                        <Button variant="default" onClick={() => setUseAlternativeViewer(true)} className="w-full">
+                        <Button 
+                          variant="default" 
+                          onClick={() => setUseAlternativeViewer(true)} 
+                          className="w-full"
+                        >
                           Usar visualizador alternativo
                         </Button>
-                        <Button variant="link" onClick={() => window.open(livro.pdf, '_blank')} className="w-full">
+                        <Button 
+                          variant="link" 
+                          onClick={() => window.open(livro.pdf, '_blank')} 
+                          className="w-full"
+                        >
                           <Download className="mr-2 h-4 w-4" />
                           Baixar PDF
                         </Button>
                       </div>
                     </div>
-                  </div>} className="transition-transform duration-300" options={{
-            cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-            isEvalSupported: false,
-            worker: pdfLoadRetries > 0 ? null : undefined
-          }}>
-                {pageSequence.map(pageNum => <div key={pageNum} className="page-container shadow-lg mb-2 bg-white" style={{
-              display: 'inline-block',
-              verticalAlign: 'middle'
-            }}>
-                    <Page pageNumber={pageNum} scale={scale} rotate={rotation} renderTextLayer={false} // Disable text layer to fix the error
-              renderAnnotationLayer={true} className="transition-transform duration-300" width={isDualPageView ? containerSize.width / 2 - 24 : undefined} canvasBackground="white" error={<div className="flex items-center justify-center p-4 h-[200px]">
+                  </div>
+                } 
+                className="transition-transform duration-300" 
+                options={{
+                  cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                  isEvalSupported: false,
+                  worker: pdfLoadRetries > 0 ? null : undefined
+                }}
+              >
+                {pageSequence.map(pageNum => (
+                  <div 
+                    key={pageNum} 
+                    className="page-container mb-2 bg-white" 
+                    style={{
+                      display: 'inline-block',
+                      verticalAlign: 'middle'
+                    }}
+                  >
+                    <Page 
+                      pageNumber={pageNum} 
+                      scale={scale} 
+                      rotate={rotation} 
+                      renderTextLayer={false}
+                      renderAnnotationLayer={false}
+                      className="transition-transform duration-300" 
+                      width={isDualPageView ? containerSize.width / 2 - 24 : undefined} 
+                      canvasBackground="white"
+                      error={
+                        <div className="flex items-center justify-center p-4 h-[200px]">
                           <p className="text-sm text-muted-foreground">Erro ao renderizar página {pageNum}</p>
-                        </div>} />
+                        </div>
+                      } 
+                    />
                     
                     {/* Overlay annotations on current page */}
-                    {currentPageAnnotations.filter(note => note.pagina === pageNum).map(note => <div key={note.id} className="absolute p-1 rounded" style={{
-                backgroundColor: `${note.cor}40`,
-                border: `2px solid ${note.cor}`,
-                maxWidth: '90%',
-                // If we have position data, use it, otherwise just show at top
-                top: note.posicao?.y || "10px",
-                left: note.posicao?.x || "10px"
-              }}>
-                          <div className="text-xs p-1 bg-background/80 backdrop-blur-sm rounded">
-                            {note.texto}
-                          </div>
-                        </div>)}
-                  </div>)}
+                    {currentPageAnnotations.filter(note => note.pagina === pageNum).map(note => (
+                      <div 
+                        key={note.id} 
+                        className="absolute p-1 rounded" 
+                        style={{
+                          backgroundColor: `${note.cor}40`,
+                          border: `2px solid ${note.cor}`,
+                          maxWidth: '90%',
+                          // If we have position data, use it, otherwise just show at top
+                          top: note.posicao?.y || "10px",
+                          left: note.posicao?.x || "10px"
+                        }}
+                      >
+                        <div className="text-xs p-1 bg-background/80 backdrop-blur-sm rounded">
+                          {note.texto}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
               </Document>
-            </div>}
-
+            </div>
+          )}
+          
           {/* Highlighted text context menu */}
-          {isTextSelected && <div className="fixed z-20 bg-card/95 backdrop-blur-sm shadow-lg rounded-lg overflow-hidden border" style={{
-          top: window.getSelection()?.getRangeAt(0).getBoundingClientRect().bottom || 0 + 10,
-          left: window.getSelection()?.getRangeAt(0).getBoundingClientRect().left || 0
-        }}>
+          {isTextSelected && (
+            <div 
+              className="fixed z-20 bg-card/95 backdrop-blur-sm shadow-lg rounded-lg overflow-hidden border" 
+              style={{
+                top: window.getSelection()?.getRangeAt(0).getBoundingClientRect().bottom || 0 + 10,
+                left: window.getSelection()?.getRangeAt(0).getBoundingClientRect().left || 0
+              }}
+            >
               <div className="flex p-1">
-                <Button variant="ghost" size="sm" onClick={() => navigator.clipboard.writeText(selectedText)} className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => navigator.clipboard.writeText(selectedText)} 
+                  className="text-xs"
+                >
                   Copiar
                 </Button>
                 
@@ -948,24 +1072,46 @@ export function PDFViewer({
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium">Escolha uma cor</h4>
                       <div className="grid grid-cols-5 gap-1">
-                        {["#FFFF00", "#90EE90", "#ADD8E6", "#FFA07A", "#D8BFD8"].map(color => <div key={color} className="w-8 h-8 rounded-full cursor-pointer border hover:scale-110 transition-transform" style={{
-                      backgroundColor: color
-                    }} onClick={() => {
-                      handleHighlightText(color);
-                    }} />)}
+                        {["#FFFF00", "#90EE90", "#ADD8E6", "#FFA07A", "#D8BFD8"].map(color => (
+                          <div 
+                            key={color} 
+                            className="w-8 h-8 rounded-full cursor-pointer border hover:scale-110 transition-transform" 
+                            style={{
+                              backgroundColor: color
+                            }} 
+                            onClick={() => {
+                              handleHighlightText(color);
+                            }} 
+                          />
+                        ))}
                       </div>
                     </div>
                   </PopoverContent>
                 </Popover>
                 
-                <Button variant="ghost" size="sm" onClick={() => {
-              setAnnotation(selectedText);
-              setShowAnnotationTool(true);
-            }} className="text-xs">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => {
+                    setAnnotation(selectedText);
+                    setShowAnnotationTool(true);
+                  }} 
+                  className="text-xs"
+                >
                   Anotar
                 </Button>
               </div>
-            </div>}
+            </div>
+          )}
+
+          {/* Use FloatingControls for zoom */}
+          <FloatingControls 
+            fontSize={Math.round(scale * 100)} 
+            increaseFontSize={() => setScale(s => Math.min(3, s + 0.1))}
+            decreaseFontSize={() => setScale(s => Math.max(0.5, s - 0.1))}
+            showBackToTop={showBackToTop}
+            scrollToTop={scrollToTop}
+          />
         </div>
         
         {/* Sidebar */}
@@ -989,8 +1135,16 @@ export function PDFViewer({
                   <PopoverContent className="w-80">
                     <div className="space-y-4">
                       <h4 className="font-medium">Adicionar marcador</h4>
-                      <Input placeholder="Título do marcador" value={bookmarkTitle} onChange={e => setBookmarkTitle(e.target.value)} />
-                      <Button onClick={() => addBookmark.mutate()} disabled={addBookmark.isPending} className="w-full">
+                      <Input 
+                        placeholder="Título do marcador" 
+                        value={bookmarkTitle} 
+                        onChange={e => setBookmarkTitle(e.target.value)} 
+                      />
+                      <Button 
+                        onClick={() => addBookmark.mutate()} 
+                        disabled={addBookmark.isPending} 
+                        className="w-full"
+                      >
                         {addBookmark.isPending ? "Adicionando..." : "Adicionar marcador"}
                       </Button>
                     </div>
@@ -998,21 +1152,39 @@ export function PDFViewer({
                 </Popover>
               </div>
               
-              {marcadores.length === 0 ? <div className="text-sm text-muted-foreground text-center py-8">
+              {marcadores.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
                   Nenhum marcador adicionado
-                </div> : <div className="space-y-2">
-                  {marcadores.map(marcador => <div key={marcador.id} className={`flex justify-between p-2 rounded ${marcador.pagina === pageNumber ? 'bg-accent' : 'hover:bg-muted'}`}>
-                      <button className="flex items-center gap-2 text-start flex-1" onClick={() => goToPage(marcador.pagina)}>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {marcadores.map(marcador => (
+                    <div 
+                      key={marcador.id} 
+                      className={`flex justify-between p-2 rounded ${marcador.pagina === pageNumber ? 'bg-accent' : 'hover:bg-muted'}`}
+                    >
+                      <button 
+                        className="flex items-center gap-2 text-start flex-1" 
+                        onClick={() => goToPage(marcador.pagina)}
+                      >
                         <Bookmark size={16} className="min-w-4" />
                         <span className="truncate">
                           {marcador.titulo || `Página ${marcador.pagina}`}
                         </span>
                       </button>
-                      <Button variant="ghost" size="icon" onClick={() => deleteBookmark.mutate(marcador.id)} disabled={deleteBookmark.isPending} className="opacity-0 group-hover:opacity-100 h-6 w-6">
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => deleteBookmark.mutate(marcador.id)} 
+                        disabled={deleteBookmark.isPending} 
+                        className="opacity-0 group-hover:opacity-100 h-6 w-6"
+                      >
                         <X size={12} />
                       </Button>
-                    </div>)}
-                </div>}
+                    </div>
+                  ))}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="annotations" className="mt-4 h-[calc(100vh-180px)] overflow-y-auto">
@@ -1023,27 +1195,47 @@ export function PDFViewer({
                 </Button>
               </div>
               
-              {anotacoes.length === 0 ? <div className="text-sm text-muted-foreground text-center py-8">
+              {anotacoes.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-8">
                   Nenhuma anotação adicionada
-                </div> : <div className="space-y-4">
-                  {anotacoes.map(anotacao => <div key={anotacao.id} className={`p-3 rounded border ${anotacao.pagina === pageNumber ? 'border-primary' : 'border-border'}`} style={{
-                borderLeft: `4px solid ${anotacao.cor}`
-              }}>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {anotacoes.map(anotacao => (
+                    <div 
+                      key={anotacao.id} 
+                      className={`p-3 rounded border ${anotacao.pagina === pageNumber ? 'border-primary' : 'border-border'}`} 
+                      style={{
+                        borderLeft: `4px solid ${anotacao.cor}`
+                      }}
+                    >
                       <div className="flex justify-between items-start mb-2">
-                        <button className="text-sm text-muted-foreground hover:text-foreground" onClick={() => goToPage(anotacao.pagina)}>
+                        <button 
+                          className="text-sm text-muted-foreground hover:text-foreground" 
+                          onClick={() => goToPage(anotacao.pagina)}
+                        >
                           Página {anotacao.pagina}
                         </button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteAnnotation.mutate(anotacao.id)} disabled={deleteAnnotation.isPending} className="h-6 w-6">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => deleteAnnotation.mutate(anotacao.id)} 
+                          disabled={deleteAnnotation.isPending} 
+                          className="h-6 w-6"
+                        >
                           <X size={12} />
                         </Button>
                       </div>
                       <p className="text-sm whitespace-pre-wrap break-words">
                         {anotacao.texto}
                       </p>
-                    </div>)}
-                </div>}
+                    </div>
+                  ))}
+                </div>
+              )}
               
-              {showAnnotationTool && <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+              {showAnnotationTool && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
                   <div className="bg-card border rounded-lg shadow-lg w-[90%] max-w-md max-h-[90vh] overflow-y-auto p-6">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-medium">Nova anotação - Página {pageNumber}</h3>
@@ -1053,101 +1245,136 @@ export function PDFViewer({
                     </div>
                     
                     <div className="space-y-4">
-                      <Textarea placeholder="Escreva sua anotação aqui..." value={annotation} onChange={e => setAnnotation(e.target.value)} className="min-h-[150px]" />
+                      <Textarea 
+                        placeholder="Escreva sua anotação aqui..." 
+                        value={annotation} 
+                        onChange={e => setAnnotation(e.target.value)} 
+                        className="min-h-[150px]" 
+                      />
                       
                       <div className="flex items-center gap-2">
                         <label className="text-sm">Cor:</label>
-                        <input type="color" value={annotationColor} onChange={e => setAnnotationColor(e.target.value)} className="h-8 w-8 rounded-full overflow-hidden" />
+                        <input 
+                          type="color" 
+                          value={annotationColor} 
+                          onChange={e => setAnnotationColor(e.target.value)} 
+                          className="h-8 w-8 rounded-full overflow-hidden" 
+                        />
                       </div>
                       
                       <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setShowAnnotationTool(false)}>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowAnnotationTool(false)}
+                        >
                           Cancelar
                         </Button>
-                        <Button onClick={() => addAnnotation.mutate()} disabled={!annotation || addAnnotation.isPending}>
+                        <Button 
+                          onClick={() => addAnnotation.mutate()} 
+                          disabled={!annotation || addAnnotation.isPending}
+                        >
                           {addAnnotation.isPending ? "Salvando..." : "Salvar anotação"}
                         </Button>
                       </div>
                     </div>
                   </div>
-                </div>}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="search" className="mt-4 h-[calc(100vh-180px)] overflow-y-auto">
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
-                  <Input placeholder="Pesquisar no documento..." value={searchText} onChange={e => setSearchText(e.target.value)} onKeyDown={e => {
-                  if (e.key === "Enter") searchInDocument();
-                }} />
-                  <Button variant="secondary" size="icon" onClick={searchInDocument} disabled={!searchText}>
+                  <Input 
+                    placeholder="Pesquisar no documento..." 
+                    value={searchText} 
+                    onChange={e => setSearchText(e.target.value)} 
+                    onKeyDown={e => {
+                      if (e.key === "Enter") searchInDocument();
+                    }} 
+                  />
+                  <Button 
+                    variant="secondary" 
+                    size="icon" 
+                    onClick={searchInDocument} 
+                    disabled={!searchText}
+                  >
                     <Search size={16} />
                   </Button>
                 </div>
                 
-                {showSearchResults && <div>
+                {showSearchResults && (
+                  <div>
                     <h4 className="text-sm font-medium mb-2">
                       {searchResults.length} resultados encontrados
                     </h4>
                     
-                    {searchResults.length > 0 ? <div className="space-y-1">
-                        {searchResults.map((page, index) => <button key={index} className="flex items-center gap-2 p-2 w-full text-left rounded hover:bg-muted" onClick={() => goToPage(page)}>
+                    {searchResults.length > 0 ? (
+                      <div className="space-y-1">
+                        {searchResults.map((page, index) => (
+                          <button 
+                            key={index} 
+                            className="flex items-center gap-2 p-2 w-full text-left rounded hover:bg-muted" 
+                            onClick={() => goToPage(page)}
+                          >
                             <span className="text-sm text-muted-foreground">
                               Página {page}
                             </span>
-                          </button>)}
-                      </div> : <div className="text-sm text-muted-foreground">
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
                         Nenhum resultado encontrado para "{searchText}"
-                      </div>}
-                  </div>}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
         </div>
       </div>
       
-      {/* Bottom toolbar (mobile) */}
-      <div className="md:hidden flex items-center justify-between border-t p-2 bg-card">
-        <Button variant="ghost" size="icon" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
-          <ArrowLeft size={18} />
+      {/* Bottom pagination controls */}
+      <div className="bg-card/90 backdrop-blur-sm border-t p-4 flex items-center justify-center gap-4">
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => changePage(-1)} 
+          disabled={pageNumber <= 1}
+          className="h-12 px-6"
+        >
+          <ArrowLeft size={20} className="mr-2" /> 
+          Anterior
         </Button>
         
         <div className="flex items-center gap-2">
-          <Input type="number" min={1} max={numPages || 1} value={pageNumber} onChange={e => setPageNumber(Number(e.target.value))} onBlur={e => goToPage(Number(e.target.value))} className="w-16 text-center h-8" />
-          <span className="text-sm text-muted-foreground">/ {numPages || '?'}</span>
+          <Input 
+            type="number" 
+            min={1} 
+            max={numPages || 1} 
+            value={pageNumber} 
+            onChange={e => setPageNumber(Number(e.target.value))} 
+            onBlur={e => goToPage(Number(e.target.value))} 
+            className="w-16 text-center h-10" 
+          />
+          <span className="text-sm font-medium">
+            de {numPages || '?'}
+          </span>
         </div>
         
-        <Button variant="ghost" size="icon" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 1)}>
-          <ArrowRight size={18} />
+        <Button 
+          variant="outline" 
+          size="lg"
+          onClick={() => changePage(1)} 
+          disabled={pageNumber >= (numPages || 1)}
+          className="h-12 px-6"
+        >
+          Próxima
+          <ArrowRight size={20} className="ml-2" />
         </Button>
       </div>
-      
-      {/* Bottom buttons */}
-      <div className="fixed bottom-16 md:bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-2 bg-card/80 backdrop-blur-sm rounded-full border shadow-lg p-1">
-        <Popover>
-          <PopoverTrigger asChild>
-            
-          </PopoverTrigger>
-          <PopoverContent side="top">
-            <div className="space-y-4">
-              <h4 className="font-medium">
-                {currentPageBookmark ? "Página marcada" : "Marcar página"}
-              </h4>
-              {currentPageBookmark ? <div className="space-y-2">
-                  <p className="text-sm">{currentPageBookmark.titulo || `Página ${pageNumber}`}</p>
-                  <Button variant="destructive" size="sm" onClick={() => deleteBookmark.mutate(currentPageBookmark.id)} disabled={deleteBookmark.isPending}>
-                    {deleteBookmark.isPending ? "Removendo..." : "Remover marcador"}
-                  </Button>
-                </div> : <div className="space-y-2">
-                  <Input placeholder="Título do marcador" value={bookmarkTitle} onChange={e => setBookmarkTitle(e.target.value)} />
-                  <Button onClick={() => addBookmark.mutate()} disabled={addBookmark.isPending} className="w-full">
-                    {addBookmark.isPending ? "Adicionando..." : "Adicionar marcador"}
-                  </Button>
-                </div>}
-            </div>
-          </PopoverContent>
-        </Popover>
-        
-        
-      </div>
-    </div>;
+    </div>
+  );
 }

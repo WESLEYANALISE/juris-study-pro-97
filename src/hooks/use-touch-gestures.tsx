@@ -58,7 +58,12 @@ export function useTouchGestures(options: TouchGestureOptions) {
       const scale = (distance / touchState.touchStart.distance) * touchState.scale;
       const boundedScale = Math.min(Math.max(scale, options.minScale || 0.5), options.maxScale || 3);
       
-      options.onZoomChange?.(boundedScale);
+      if (options.onZoomChange) {
+        options.onZoomChange(boundedScale);
+      }
+
+      // Update scale in state
+      setTouchState(prev => ({ ...prev, scale: boundedScale }));
     } else if (e.touches.length === 1) {
       // Handle swipe
       const deltaX = e.touches[0].clientX - touchState.touchStart.x;
@@ -81,8 +86,8 @@ export function useTouchGestures(options: TouchGestureOptions) {
   };
 
   useEffect(() => {
-    document.addEventListener('touchstart', handleTouchStart);
-    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchstart', handleTouchStart, { passive: false });
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleTouchEnd);
 
     return () => {
@@ -94,5 +99,6 @@ export function useTouchGestures(options: TouchGestureOptions) {
 
   return {
     scale: touchState.scale,
+    onZoomChange: options.onZoomChange
   };
 }
