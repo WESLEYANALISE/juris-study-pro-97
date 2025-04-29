@@ -219,7 +219,6 @@ export function CourseViewer({
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   loading="eager"
-                  importance="high"
                 />
               ) : videoUrl ? (
                 <iframe
@@ -230,7 +229,6 @@ export function CourseViewer({
                   allowFullScreen
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   loading="eager"
-                  importance="high"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center bg-black text-white">
