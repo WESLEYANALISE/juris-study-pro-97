@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -8,7 +7,6 @@ import './PDFViewer.css';
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
-
 interface PDFViewerProps {
   livro: {
     id: string | number;
@@ -18,8 +16,10 @@ interface PDFViewerProps {
   };
   onClose: () => void;
 }
-
-export function PDFViewer({ livro, onClose }: PDFViewerProps) {
+export function PDFViewer({
+  livro,
+  onClose
+}: PDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [searchText, setSearchText] = useState<string>('');
@@ -36,7 +36,6 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
         setIsLoading(false);
         return;
       }
-
       try {
         // Basic URL validation
         new URL(livro.pdf);
@@ -46,16 +45,18 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
         setError('URL do PDF inválida');
       }
     };
-
     validateURL();
   }, [livro.pdf]);
 
   // Handle document load success
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }): void {
+  function onDocumentLoadSuccess({
+    numPages
+  }: {
+    numPages: number;
+  }): void {
     setNumPages(numPages);
     setIsLoading(false);
   }
-
   function onDocumentLoadError(error: Error): void {
     console.error('Error loading PDF:', error);
     setError('Erro ao carregar o PDF. Por favor, tente novamente mais tarde.');
@@ -64,22 +65,20 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
 
   // Navigation functions
   const goToPreviousPage = () => {
-    setPageNumber((prev) => Math.max(prev - 1, 1));
+    setPageNumber(prev => Math.max(prev - 1, 1));
   };
-
   const goToNextPage = () => {
     if (numPages) {
-      setPageNumber((prev) => Math.min(prev + 1, numPages));
+      setPageNumber(prev => Math.min(prev + 1, numPages));
     }
   };
 
   // Zoom functions
   const zoomIn = () => {
-    setScale((prev) => Math.min(prev + 0.2, 3));
+    setScale(prev => Math.min(prev + 0.2, 3));
   };
-
   const zoomOut = () => {
-    setScale((prev) => Math.max(prev - 0.2, 0.5));
+    setScale(prev => Math.max(prev - 0.2, 0.5));
   };
 
   // Search function
@@ -89,9 +88,7 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
     console.log('Search for:', searchText);
     alert(`Funcionalidade de busca para "${searchText}" será implementada em breve.`);
   };
-
-  return (
-    <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
+  return <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
       <div className="bg-card shadow-lg p-4 border-b flex justify-between items-center">
         <h2 className="text-xl font-medium truncate">{livro.nome}</h2>
         <Button variant="ghost" size="sm" onClick={onClose}>
@@ -101,23 +98,13 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
 
       <div className="flex items-center justify-between p-2 bg-card/50 border-b">
         <div className="flex items-center space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={goToPreviousPage}
-            disabled={pageNumber <= 1}
-          >
+          <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={pageNumber <= 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="text-sm">
             {pageNumber} de {numPages || '--'}
           </div>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={goToNextPage}
-            disabled={!numPages || pageNumber >= numPages}
-          >
+          <Button variant="outline" size="sm" onClick={goToNextPage} disabled={!numPages || pageNumber >= numPages}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
@@ -134,26 +121,11 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
           </Button>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Input
-            type="text"
-            placeholder="Buscar no PDF..."
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-            className="h-8 w-36 md:w-64 text-sm"
-          />
-          <Button variant="outline" size="sm" onClick={handleSearch}>
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
+        
       </div>
 
-      <div 
-        ref={containerRef}
-        className="flex-grow overflow-auto p-4 flex justify-center"
-      >
-        {error ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+      <div ref={containerRef} className="flex-grow overflow-auto p-4 flex justify-center px-0">
+        {error ? <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg">
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
               <p>{error}</p>
@@ -161,30 +133,12 @@ export function PDFViewer({ livro, onClose }: PDFViewerProps) {
                 Voltar
               </Button>
             </div>
-          </div>
-        ) : (
-          <Document
-            file={livro.pdf}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex flex-col items-center justify-center h-full">
+          </div> : <Document file={livro.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} loading={<div className="flex flex-col items-center justify-center h-full">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
-              </div>
-            }
-            className="pdf-container"
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={false}
-              renderAnnotationLayer={false}
-              className="pdf-page"
-            />
-          </Document>
-        )}
+              </div>} className="pdf-container">
+            <Page pageNumber={pageNumber} scale={scale} renderTextLayer={false} renderAnnotationLayer={false} className="pdf-page" />
+          </Document>}
       </div>
-    </div>
-  );
+    </div>;
 }
