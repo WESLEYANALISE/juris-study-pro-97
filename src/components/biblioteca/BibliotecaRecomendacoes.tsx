@@ -52,17 +52,17 @@ export function BibliotecaRecomendacoes() {
   const { data: viewHistory } = useQuery({
     queryKey: ["livrospro-history"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("livrospro_progresso")
-        .select("*")
-        .order("updated_at", { ascending: false })
-        .limit(5);
-      
-      if (error) {
+      try {
+        // Use raw SQL query via rpc since the table isn't recognized in the types yet
+        const { data, error } = await supabase
+          .rpc('get_view_history', {});
+          
+        if (error) throw error;
+        return data || [];
+      } catch (error) {
         console.error("Error fetching view history:", error);
         return [];
       }
-      return data;
     }
   });
 
@@ -98,7 +98,7 @@ export function BibliotecaRecomendacoes() {
   useEffect(() => {
     if (viewHistory && livros) {
       const viewed = viewHistory
-        .map(history => livros.find(l => l.id === history.livro_id))
+        .map((history: any) => livros.find(l => l.id === history.livro_id))
         .filter(Boolean) as LivroPro[];
       setRecentlyViewed(viewed);
     }
@@ -129,11 +129,14 @@ export function BibliotecaRecomendacoes() {
   const trackBookView = async (bookId: string) => {
     try {
       const newHistory = {
-        livro_id: bookId,
-        timestamp: new Date().toISOString()
+        user_id: (await supabase.auth.getUser()).data.user?.id,
+        livro_id: bookId
       };
       
-      await supabase.from("livros_historico_visualizacao").upsert(newHistory);
+      // Use rpc to handle this operation since the table isn't in types yet
+      await supabase.rpc('track_book_view', { 
+        p_livro_id: bookId 
+      });
     } catch (error) {
       console.error("Error tracking book view:", error);
     }

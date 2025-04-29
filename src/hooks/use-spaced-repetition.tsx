@@ -15,6 +15,7 @@ interface StudyItem {
   next_review_date: string;
   last_reviewed_at?: string;
   created_at: string;
+  user_id: string;
 }
 
 interface UseSpacedRepetitionOptions {
@@ -33,19 +34,29 @@ export function useSpacedRepetition(options: UseSpacedRepetitionOptions = {}) {
     queryFn: async () => {
       if (!user) return [];
       
-      const query = supabase
-        .from('estudo_repetido')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('next_review_date', { ascending: true });
-      
-      if (options.contentType) {
-        query.eq('content_type', options.contentType);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) {
+      try {
+        // Using .from('estudo_repetido') with a casting to ensure type safety
+        const { data, error } = await supabase
+          .from('estudo_repetido')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('next_review_date', { ascending: true });
+        
+        if (options.contentType) {
+          const { data: filteredData, error: filterError } = await supabase
+            .from('estudo_repetido')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('content_type', options.contentType)
+            .order('next_review_date', { ascending: true });
+            
+          if (filterError) throw filterError;
+          return filteredData as StudyItem[];
+        }
+        
+        if (error) throw error;
+        return data as StudyItem[];
+      } catch (error) {
         console.error('Error fetching study items:', error);
         toast({
           title: 'Erro ao carregar itens de estudo',
@@ -54,8 +65,6 @@ export function useSpacedRepetition(options: UseSpacedRepetitionOptions = {}) {
         });
         return [];
       }
-      
-      return data as StudyItem[];
     },
     enabled: !!user
   });

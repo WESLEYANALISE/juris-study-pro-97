@@ -925,6 +925,42 @@ export type Database = {
         }
         Relationships: []
       }
+      estudo_repetido: {
+        Row: {
+          consecutive_correct: number
+          content_id: string
+          content_type: string
+          created_at: string
+          id: string
+          interval_days: number
+          last_reviewed_at: string | null
+          next_review_date: string
+          user_id: string
+        }
+        Insert: {
+          consecutive_correct?: number
+          content_id: string
+          content_type: string
+          created_at?: string
+          id?: string
+          interval_days?: number
+          last_reviewed_at?: string | null
+          next_review_date: string
+          user_id: string
+        }
+        Update: {
+          consecutive_correct?: number
+          content_id?: string
+          content_type?: string
+          created_at?: string
+          id?: string
+          interval_days?: number
+          last_reviewed_at?: string | null
+          next_review_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       flash_cards: {
         Row: {
           area: string | null
@@ -1168,6 +1204,27 @@ export type Database = {
           materia?: string
           titulo?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      livros_historico_visualizacao: {
+        Row: {
+          id: string
+          livro_id: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          livro_id: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          livro_id?: string
+          timestamp?: string
+          user_id?: string
         }
         Relationships: []
       }

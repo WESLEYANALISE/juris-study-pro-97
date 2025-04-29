@@ -9,6 +9,16 @@ import { BookOpen, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-rea
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
+interface ContentDetails {
+  id: string;
+  content_type: 'flashcard' | 'book_section' | 'legal_article';
+  pergunta?: string;
+  resposta?: string;
+  nome?: string;
+  titulo?: string;
+  [key: string]: any;
+}
+
 export function EstudosHoje() {
   const { dueItems, updateStudyItem, isLoading } = useSpacedRepetition();
   const [currentItemIndex, setCurrentItemIndex] = useState(0);
@@ -56,7 +66,7 @@ export function EstudosHoje() {
       });
       
       const results = await Promise.all(detailsPromises);
-      return results.flat();
+      return results.flat() as ContentDetails[];
     },
     enabled: dueItems.length > 0
   });
@@ -72,7 +82,7 @@ export function EstudosHoje() {
     ? itemDetails.find(i => 
         i.id === currentItem.content_id && 
         i.content_type === currentItem.content_type
-      )
+      ) as ContentDetails
     : null;
 
   // Avaliar conhecimento do item atual
