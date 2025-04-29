@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { Volume2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,33 +41,35 @@ export const PracticalExample = ({ example, onNarration }: PracticalExampleProps
   }
 
   return (
-    <ScrollArea className="h-full max-h-[350px]">
-      <div className="space-y-2">
-        <div className="flex justify-between items-center">
-          <h4 className="font-medium">Exemplo</h4>
-          <div className="space-x-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => onNarration(example)}
-              title="Narrar exemplo"
-            >
-              <Volume2 size={14} />
-            </Button>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => handleCopy(example)}
-              title="Copiar exemplo"
-            >
-              <Copy size={14} />
-            </Button>
-          </div>
+    <div className="space-y-2 bg-muted/30 p-4 rounded-lg">
+      <h4 className="font-medium mb-3 flex items-center justify-between border-b pb-2">
+        Exemplo Prático
+        <div className="space-x-2">
+          <Button 
+            variant="purple" 
+            size="sm" 
+            className="gap-1"
+            onClick={() => onNarration(example)}
+            title="Narrar exemplo"
+          >
+            <Volume2 size={14} />
+            Narrar
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-1"
+            onClick={() => handleCopy(example)}
+            title="Copiar exemplo"
+          >
+            <Copy size={14} />
+            Copiar
+          </Button>
         </div>
-        <div className="text-sm">
-          {formatText(example)}
-        </div>
+      </h4>
+      <div className="text-sm space-y-2">
+        {formatText(example)}
       </div>
-    </ScrollArea>
+    </div>
   );
 };

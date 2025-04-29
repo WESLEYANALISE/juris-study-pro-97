@@ -28,6 +28,17 @@ export function VadeMecumArticleList({
 }: VadeMecumArticleListProps) {
   const isMobile = useIsMobile();
   
+  // Helper function to get the correct article properties regardless of database column naming
+  const getArticleProps = (article: any) => {
+    return {
+      articleNumber: article.numero || article.article_number || '',
+      articleText: article.artigo || article.article_text || '',
+      technicalExplanation: article.tecnica || article.technical_explanation,
+      formalExplanation: article.formal || article.formal_explanation,
+      practicalExample: article.exemplo || article.practical_example
+    };
+  };
+  
   return (
     <div className="space-y-4 md:space-y-6">
       <AnimatePresence>
@@ -55,19 +66,29 @@ export function VadeMecumArticleList({
             </p>
           </motion.div>
         ) : (
-          visibleArticles.map((article) => (
-            <ArticleCard
-              key={article.id}
-              lawName={tableName || ''}
-              articleNumber={article.numero || article.article_number || ''} 
-              articleText={article.artigo || article.article_text || ''}
-              technicalExplanation={article.tecnica || article.technical_explanation}
-              formalExplanation={article.formal || article.formal_explanation}
-              practicalExample={article.exemplo || article.practical_example}
-              fontSize={fontSize}
-              onFontSizeChange={setFontSize}
-            />
-          ))
+          visibleArticles.map((article, index) => {
+            const { 
+              articleNumber, 
+              articleText, 
+              technicalExplanation, 
+              formalExplanation, 
+              practicalExample 
+            } = getArticleProps(article);
+            
+            return (
+              <ArticleCard
+                key={article.id || `article-${index}`}
+                lawName={tableName || ''}
+                articleNumber={articleNumber}
+                articleText={articleText}
+                technicalExplanation={technicalExplanation}
+                formalExplanation={formalExplanation}
+                practicalExample={practicalExample}
+                fontSize={fontSize}
+                onFontSizeChange={setFontSize}
+              />
+            );
+          })
         )}
       </AnimatePresence>
       

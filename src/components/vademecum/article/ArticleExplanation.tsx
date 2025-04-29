@@ -47,65 +47,72 @@ export const ArticleExplanation = ({
   }
 
   return (
-    <ScrollArea className="h-full max-h-[350px]">
-      <div className="space-y-4">
-        {technicalExplanation && (
-          <div>
-            <h4 className="font-medium mb-2 flex items-center justify-between">
-              Explicação Técnica
-              <div className="space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => onNarration(technicalExplanation)}
-                  title="Narrar explicação técnica"
-                >
-                  <Volume2 size={14} />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => handleCopy(technicalExplanation)}
-                  title="Copiar explicação técnica"
-                >
-                  <Copy size={14} />
-                </Button>
-              </div>
-            </h4>
-            <div className="text-sm">
-              {formatText(technicalExplanation)}
+    <div className="space-y-6">
+      {technicalExplanation && (
+        <div className="bg-muted/30 p-4 rounded-lg">
+          <h4 className="font-medium mb-3 flex items-center justify-between border-b pb-2">
+            Explicação Técnica
+            <div className="space-x-2">
+              <Button 
+                variant="purple" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => onNarration(technicalExplanation)}
+                title="Narrar explicação técnica"
+              >
+                <Volume2 size={14} />
+                Narrar
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => handleCopy(technicalExplanation)}
+                title="Copiar explicação técnica"
+              >
+                <Copy size={14} />
+                Copiar
+              </Button>
             </div>
+          </h4>
+          <div className="text-sm space-y-2">
+            {formatText(technicalExplanation)}
           </div>
-        )}
-        {formalExplanation && (
-          <div>
-            <h4 className="font-medium mb-2 flex items-center justify-between">
-              Explicação Formal
-              <div className="space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => onNarration(formalExplanation)}
-                  title="Narrar explicação formal"
-                >
-                  <Volume2 size={14} />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={() => handleCopy(formalExplanation)}
-                  title="Copiar explicação formal"
-                >
-                  <Copy size={14} />
-                </Button>
-              </div>
-            </h4>
-            <div className="text-sm">
-              {formatText(formalExplanation)}
+        </div>
+      )}
+      
+      {formalExplanation && (
+        <div className="bg-muted/30 p-4 rounded-lg">
+          <h4 className="font-medium mb-3 flex items-center justify-between border-b pb-2">
+            Explicação Formal
+            <div className="space-x-2">
+              <Button 
+                variant="purple" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => onNarration(formalExplanation)}
+                title="Narrar explicação formal"
+              >
+                <Volume2 size={14} />
+                Narrar
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-1"
+                onClick={() => handleCopy(formalExplanation)}
+                title="Copiar explicação formal"
+              >
+                <Copy size={14} />
+                Copiar
+              </Button>
             </div>
+          </h4>
+          <div className="text-sm space-y-2">
+            {formatText(formalExplanation)}
           </div>
-        )}
-      </div>
-    </ScrollArea>
+        </div>
+      )}
+    </div>
   );
 };
