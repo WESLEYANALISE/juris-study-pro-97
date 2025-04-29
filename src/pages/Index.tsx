@@ -1,58 +1,37 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  Scale, 
-  Video, 
-  BookOpen, 
-  Brain, 
-  FileText, 
-  GraduationCap, 
-  FilePlus, 
-  Gavel, 
-  PenTool, 
-  Newspaper, 
-  MessageSquare, 
-  Monitor 
-} from "lucide-react";
+import { Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor } from "lucide-react";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
-
 const Index = () => {
   const navigate = useNavigate();
-  
+
   // Define categories for the main content
-  const featuredCategories = [
-    {
-      title: "Ferramentas Jurídicas Principais",
-      items: [
-        {
-          icon: BookOpen,
-          title: "Vade-Mecum",
-          description: "Acesse códigos e estatutos jurídicos atualizados",
-          path: "/vademecum",
-          color: "bg-blue-500"
-        },
-        {
-          icon: Video,
-          title: "JurisFlix",
-          description: "Conteúdo jurídico em vídeo e áudio",
-          path: "/jurisflix",
-          color: "bg-red-500"
-        },
-        {
-          icon: GraduationCap,
-          title: "Questões",
-          description: "Pratique com questões das principais bancas",
-          path: "/questoes",
-          color: "bg-amber-500"
-        }
-      ]
-    }
-  ];
+  const featuredCategories = [{
+    title: "Ferramentas Jurídicas Principais",
+    items: [{
+      icon: BookOpen,
+      title: "Vade-Mecum",
+      description: "Acesse códigos e estatutos jurídicos atualizados",
+      path: "/vademecum",
+      color: "bg-blue-500"
+    }, {
+      icon: Video,
+      title: "JurisFlix",
+      description: "Conteúdo jurídico em vídeo e áudio",
+      path: "/jurisflix",
+      color: "bg-red-500"
+    }, {
+      icon: GraduationCap,
+      title: "Questões",
+      description: "Pratique com questões das principais bancas",
+      path: "/questoes",
+      color: "bg-amber-500"
+    }]
+  }];
 
   // Categories for the carousels
   const categories = [{
@@ -137,15 +116,16 @@ const Index = () => {
       color: "text-orange-500"
     }]
   }];
-
-  return (
-    <div className="container mx-auto px-4 py-6 pb-20 md:pb-6">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center text-center mb-8"
-      >
+  return <div className="container mx-auto py-6 pb-20 md:pb-6 px-[5px]">
+      <motion.div initial={{
+      opacity: 0,
+      y: -20
+    }} animate={{
+      opacity: 1,
+      y: 0
+    }} transition={{
+      duration: 0.5
+    }} className="flex flex-col items-center text-center mb-8">
         <div className="mb-6">
           <Scale className="h-16 w-16 text-primary mx-auto mb-3" />
           <h1 className="text-4xl font-bold mb-2">JurisStudy Pro</h1>
@@ -156,32 +136,22 @@ const Index = () => {
       </motion.div>
 
       {/* Featured Categories at the top */}
-      {featuredCategories.map((category, index) => (
-        <FeaturedCategories 
-          key={index}
-          title={category.title}
-          items={category.items}
-        />
-      ))}
+      {featuredCategories.map((category, index) => <FeaturedCategories key={index} title={category.title} items={category.items} />)}
 
       {/* Category Carousels */}
       <div className="space-y-10">
-        {categories.map((category, categoryIndex) => (
-          <CategoryCarousel
-            key={categoryIndex}
-            title={category.title}
-            items={category.items}
-          />
-        ))}
+        {categories.map((category, categoryIndex) => <CategoryCarousel key={categoryIndex} title={category.title} items={category.items} />)}
       </div>
 
       {/* Profile selection */}
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="bg-card p-6 rounded-lg shadow-sm mt-10 mb-6"
-      >
+      <motion.div initial={{
+      opacity: 0
+    }} animate={{
+      opacity: 1
+    }} transition={{
+      duration: 0.5,
+      delay: 0.3
+    }} className="bg-card p-6 rounded-lg shadow-sm mt-10 mb-6">
         <h2 className="text-2xl font-bold mb-4">Escolha seu perfil de estudos</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card className="bg-accent hover:bg-accent/80 transition-colors cursor-pointer">
@@ -212,8 +182,6 @@ const Index = () => {
           </Card>
         </div>
       </motion.div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
