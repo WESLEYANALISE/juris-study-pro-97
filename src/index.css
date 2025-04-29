@@ -5,48 +5,6 @@
 
 @layer base {
   :root {
-    /* Tema claro - cores base */
-    --background: 220 33% 98%;
-    --foreground: 224 71% 4%;
-    
-    /* Cores de cartões e elementos */
-    --card: 0 0% 100%;
-    --card-foreground: 224 71% 4%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71% 4%;
-    
-    /* Cores primárias - Azul Marinho */
-    --primary: 222 47% 31%;
-    --primary-foreground: 210 40% 98%;
-    
-    /* Cores secundárias - Dourado */
-    --secondary: 43 96% 56%;
-    --secondary-foreground: 220 33% 98%;
-    
-    /* Estados e feedback */
-    --success: 142 72% 29%;
-    --success-foreground: 210 40% 98%;
-    --warning: 45 93% 47%;
-    --warning-foreground: 224 71% 4%;
-    --destructive: 0 84% 43%;
-    --destructive-foreground: 210 40% 98%;
-    
-    /* Elementos de interface */
-    --muted: 220 33% 96%;
-    --muted-foreground: 224 71% 45%;
-    --accent: 222 47% 40%;
-    --accent-foreground: 220 33% 98%;
-    
-    /* Bordas e inputs */
-    --border: 220 33% 90%;
-    --input: 220 33% 90%;
-    --ring: 222 47% 31%;
-
-    /* Raio padrão para elementos */
-    --radius: 0.75rem;
-  }
-
-  .dark {
     /* Tema escuro - cores base */
     --background: 222 47% 7%;
     --foreground: 220 33% 98%;
@@ -83,6 +41,9 @@
     --border: 222 47% 20%;
     --input: 222 47% 20%;
     --ring: 222 47% 40%;
+
+    /* Raio padrão para elementos */
+    --radius: 0.75rem;
   }
 }
 
@@ -93,11 +54,13 @@
 
   html {
     -webkit-tap-highlight-color: transparent;
+    overscroll-behavior: none;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    overscroll-behavior: none;
   }
 }
 
@@ -124,11 +87,6 @@
   /* Efeitos de glassmorfismo */
   .glass {
     @apply bg-background/80 backdrop-blur-sm border border-border/50;
-  }
-
-  /* Animações de entrada */
-  .enter-animation {
-    @apply animate-fade-in motion-reduce:animate-none;
   }
 
   /* Mobile-specific utilities */
@@ -161,6 +119,15 @@
   /* Sticky header offset */
   .header-offset {
     @apply pt-16;
+  }
+
+  /* Shadow optimization */
+  .shadow-card {
+    @apply shadow-md shadow-black/20;
+  }
+  
+  .shadow-hover {
+    @apply shadow-lg shadow-black/30;
   }
 }
 
@@ -222,4 +189,15 @@
 }
 .z-content {
   @apply z-0;
+}
+
+/* Removing heavy animations for better performance on mobile */
+@media (max-width: 768px) {
+  .motion-reduce {
+    @apply transform-none transition-none;
+  }
+  
+  .animate-none-mobile {
+    animation: none !important;
+  }
 }

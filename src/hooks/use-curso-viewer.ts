@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 
 interface Curso {
   id: number;
@@ -27,7 +27,7 @@ interface CursoViewerState {
 }
 
 export function useCursoViewer() {
-  const { id } = useParams<{ id: string }>();
+  const { cursoId } = useParams<{ cursoId: string }>();
   const location = useLocation();
   const navigate = useNavigate();
   const videoRef = useRef<HTMLIFrameElement>(null);
@@ -57,10 +57,10 @@ export function useCursoViewer() {
     // Skip if already initialized in StrictMode
     if (initialized.current) return;
     
-    if (id) {
-      const savedProgress = localStorage.getItem(`curso_${id}_progress`);
-      const savedNotes = localStorage.getItem(`curso_${id}_notes`);
-      const isComplete = localStorage.getItem(`curso_${id}_complete`) === 'true';
+    if (cursoId) {
+      const savedProgress = localStorage.getItem(`curso_${cursoId}_progress`);
+      const savedNotes = localStorage.getItem(`curso_${cursoId}_notes`);
+      const isComplete = localStorage.getItem(`curso_${cursoId}_complete`) === 'true';
       
       if (savedProgress || savedNotes || isComplete) {
         if (mountedRef.current) {
@@ -76,21 +76,27 @@ export function useCursoViewer() {
       
       initialized.current = true;
     }
-  }, [id]);
+  }, [cursoId]);
 
   useEffect(() => {
     const getCurso = async () => {
       // Only fetch if we don't have curso data and have an ID
-      if (!state.curso && id) {
+      if (!state.curso && cursoId) {
         setState(prev => ({ ...prev, loading: true }));
         try {
+          console.log("Fetching curso with ID:", cursoId);
           const { data, error } = await supabase
             .from("cursos_narrados")
             .select("*")
-            .eq("id", parseInt(id))
+            .eq("id", parseInt(cursoId))
             .single();
             
-          if (error) throw error;
+          if (error) {
+            console.error("Error fetching course:", error);
+            throw error;
+          }
+          
+          console.log("Curso data received:", data);
           
           // Only update state if component is still mounted
           if (mountedRef.current) {
@@ -99,11 +105,7 @@ export function useCursoViewer() {
         } catch (error) {
           console.error("Error fetching course:", error);
           if (mountedRef.current) {
-            toast({
-              variant: "destructive",
-              title: "Erro ao carregar curso",
-              description: "Não foi possível carregar as informações do curso.",
-            });
+            toast.error("Erro ao carregar curso. Por favor, tente novamente.");
             setState(prev => ({ ...prev, loading: false }));
           }
         }
@@ -111,12 +113,7 @@ export function useCursoViewer() {
     };
     
     getCurso();
-    
-    // Cleanup function
-    return () => {
-      // Any cleanup needed (handled by mountedRef)
-    };
-  }, [id]);
+  }, [cursoId, state.curso]);
 
   const handleStartCourse = useCallback(() => {
     // Batch state updates to avoid multiple renders
@@ -128,9 +125,9 @@ export function useCursoViewer() {
   }, []);
 
   const handleBack = useCallback(() => {
-    if (state.progress > 0 && id) {
+    if (state.progress > 0 && cursoId) {
       // Save progress before going back to menu
-      localStorage.setItem(`curso_${id}_progress`, state.progress.toString());
+      localStorage.setItem(`curso_${cursoId}_progress`, state.progress.toString());
     }
     
     // Batch state updates to avoid multiple renders
@@ -139,7 +136,7 @@ export function useCursoViewer() {
       showCourse: false, 
       menuOpen: true 
     }));
-  }, [id, state.progress]);
+  }, [cursoId, state.progress]);
 
   const handleNavigateBack = useCallback(() => {
     navigate("/cursos");
@@ -155,22 +152,18 @@ export function useCursoViewer() {
     
     setState(prev => ({ ...prev, progress: newProgress }));
     
-    if (id) {
-      localStorage.setItem(`curso_${id}_progress`, newProgress.toString());
+    if (cursoId) {
+      localStorage.setItem(`curso_${cursoId}_progress`, newProgress.toString());
       
       // If progress is 100%, mark as complete
       if (newProgress >= 100) {
         setState(prev => ({ ...prev, isComplete: true }));
-        localStorage.setItem(`curso_${id}_complete`, 'true');
+        localStorage.setItem(`curso_${cursoId}_complete`, 'true');
         
-        toast({
-          title: "Curso concluído!",
-          description: "Parabéns por concluir este curso.",
-          variant: "success",
-        });
+        toast.success("Curso concluído! Parabéns por concluir este curso.");
       }
     }
-  }, [id]);
+  }, [cursoId]);
 
   const saveNotes = useCallback((notes: string) => {
     if (!mountedRef.current) return;
@@ -181,45 +174,39 @@ export function useCursoViewer() {
       hasNotes: !!notes.trim() 
     }));
     
-    if (id) {
+    if (cursoId) {
       if (notes.trim()) {
-        localStorage.setItem(`curso_${id}_notes`, notes);
+        localStorage.setItem(`curso_${cursoId}_notes`, notes);
       } else {
-        localStorage.removeItem(`curso_${id}_notes`);
+        localStorage.removeItem(`curso_${cursoId}_notes`);
       }
     }
-  }, [id]);
+  }, [cursoId]);
 
   const toggleBookmark = useCallback(() => {
-    if (!id) return false;
+    if (!cursoId) return false;
     
     const bookmarks = JSON.parse(localStorage.getItem('curso_bookmarks') || '[]');
-    const isBookmarked = bookmarks.includes(Number(id));
+    const isBookmarked = bookmarks.includes(Number(cursoId));
     
     let newBookmarks;
     if (isBookmarked) {
-      newBookmarks = bookmarks.filter((bookmarkId: number) => bookmarkId !== Number(id));
-      toast({
-        title: "Marcador removido",
-        description: "Curso removido dos seus marcadores."
-      });
+      newBookmarks = bookmarks.filter((bookmarkId: number) => bookmarkId !== Number(cursoId));
+      toast.success("Curso removido dos seus marcadores.");
     } else {
-      newBookmarks = [...bookmarks, Number(id)];
-      toast({
-        title: "Curso marcado",
-        description: "Curso adicionado aos seus marcadores."
-      });
+      newBookmarks = [...bookmarks, Number(cursoId)];
+      toast.success("Curso adicionado aos seus marcadores.");
     }
     
     localStorage.setItem('curso_bookmarks', JSON.stringify(newBookmarks));
     return !isBookmarked;
-  }, [id]);
+  }, [cursoId]);
   
   const isBookmarked = useCallback(() => {
-    if (!id) return false;
+    if (!cursoId) return false;
     const bookmarks = JSON.parse(localStorage.getItem('curso_bookmarks') || '[]');
-    return bookmarks.includes(Number(id));
-  }, [id]);
+    return bookmarks.includes(Number(cursoId));
+  }, [cursoId]);
 
   return {
     ...state,

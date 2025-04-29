@@ -1,8 +1,10 @@
 
-import React, { useState, useMemo } from "react";
-import { Film, Info, Star, TvIcon, Video } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Star, Film, Tv } from "lucide-react";
 import { motion } from "framer-motion";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface JurisFlixItem {
   id: number;
@@ -26,117 +28,112 @@ interface ContentGridProps {
   isLoading: boolean;
 }
 
-export const ContentGrid = ({ 
-  items, 
-  search, 
-  selectedType, 
-  onSelectItem,
-  isLoading 
-}: ContentGridProps) => {
-  // Memoize filtered items to avoid unnecessary re-filtering
-  const filteredItems = useMemo(() => {
-    return items.filter(item => {
-      const matchesSearch = item.nome.toLowerCase().includes(search.toLowerCase());
-      const matchesType = !selectedType || item.tipo === selectedType;
-      return matchesSearch && matchesType;
-    });
-  }, [items, search, selectedType]);
-
-  const getIcon = (tipo: string) => {
-    switch (tipo.toLowerCase()) {
-      case "filme":
-        return <Film className="h-5 w-5" />;
-      case "serie":
-        return <TvIcon className="h-5 w-5" />;
-      case "documentário":
-        return <Video className="h-5 w-5" />;
-      default:
-        return <Film className="h-5 w-5" />;
-    }
-  };
-
-  // Loading state
+export function ContentGrid({ items, search, selectedType, onSelectItem, isLoading }: ContentGridProps) {
+  
+  // Filter items based on search text and selected type
+  const filteredItems = items.filter((item) => {
+    const matchesSearch = search.trim() === "" || 
+      item.nome.toLowerCase().includes(search.toLowerCase()) ||
+      item.plataforma.toLowerCase().includes(search.toLowerCase());
+      
+    const matchesType = !selectedType || item.tipo === selectedType;
+    
+    return matchesSearch && matchesType;
+  });
+  
+  // If no items match filters, show message
+  if (filteredItems.length === 0 && !isLoading) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-center py-12"
+      >
+        <h3 className="text-lg font-medium mb-2">Nenhum conteúdo encontrado</h3>
+        <p className="text-muted-foreground">Tente ajustar os filtros ou buscar por outro termo</p>
+        
+        {selectedType && (
+          <button
+            className="mt-4 px-4 py-2 bg-primary/10 text-primary rounded-md hover:bg-primary/20 transition-colors"
+            onClick={() => onSelectItem({ id: -1, tipo: "reset" } as any)}
+          >
+            Limpar filtros
+          </button>
+        )}
+      </motion.div>
+    );
+  }
+  
+  // If loading, show skeleton cards
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {[...Array(8)].map((_, i) => (
-          <div key={i} className="animate-pulse">
-            <div className="bg-muted rounded-lg aspect-[2/3]" />
-            <div className="space-y-2 mt-2">
-              <div className="h-4 bg-muted rounded w-3/4" />
-              <div className="h-4 bg-muted rounded w-1/2" />
-            </div>
-          </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        {Array(10).fill(0).map((_, i) => (
+          <Card key={i} className="overflow-hidden border-0 shadow-md h-full">
+            <CardContent className="p-0 aspect-[2/3] relative">
+              <Skeleton className="h-full w-full" />
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
   }
-
-  // Empty state
-  if (filteredItems.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Info className="h-12 w-12 text-muted-foreground mb-4" />
-        <h3 className="text-xl font-semibold mb-2">Nenhum conteúdo encontrado</h3>
-        <p className="text-muted-foreground max-w-md">
-          Não encontramos nenhum conteúdo com os filtros atuais. Tente ajustar sua busca ou remover filtros.
-        </p>
-        {selectedType && (
-          <Button 
-            variant="outline" 
-            className="mt-4"
-            onClick={() => {
-              // This is just a placeholder since the parent component controls the state
-              // We'll use the onSelectItem function to communicate up
-              const resetTypeEvent = { id: -1, tipo: "reset" } as unknown as JurisFlixItem;
-              onSelectItem(resetTypeEvent);
-            }}
-          >
-            Limpar filtro de tipo
-          </Button>
-        )}
-      </div>
-    );
-  }
-
+  
+  // Grid of content cards
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {filteredItems.map((item, index) => (
-        <motion.div
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      {filteredItems.map((item) => (
+        <motion.div 
           key={item.id}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.98 }}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-          className="group relative rounded-lg overflow-hidden cursor-pointer hover:ring-2 ring-primary transition-all duration-200"
-          onClick={() => onSelectItem(item)}
+          transition={{ duration: 0.3 }}
         >
-          <img
-            src={item.capa}
-            alt={item.nome}
-            className="w-full aspect-[2/3] object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-            onError={(e) => {
-              e.currentTarget.src = "/placeholder.svg";
-            }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <div className="absolute bottom-0 p-4 text-white">
-              <h3 className="font-bold">{item.nome}</h3>
-              <div className="flex items-center gap-2 text-sm">
-                <span>{item.ano}</span>
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Star className="h-4 w-4" />
-                  {item.nota}
-                </span>
+          <Card
+            onClick={() => onSelectItem(item)}
+            className="cursor-pointer overflow-hidden hover:ring-1 hover:ring-primary/50 shadow-lg bg-black h-full border-0"
+          >
+            <CardContent className="p-0 aspect-[2/3] relative">
+              <img 
+                src={item.capa} 
+                alt={item.nome}
+                className="object-cover h-full w-full"
+                loading="lazy"
+              />
+              
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-3">
+                <div className="flex items-center gap-1 mb-1">
+                  {item.tipo === "filme" ? (
+                    <Film size={14} className="text-primary" />
+                  ) : (
+                    <Tv size={14} className="text-primary" />
+                  )}
+                  <span className="text-xs text-white/80">{item.ano}</span>
+                  
+                  {item.nota && (
+                    <Badge className="ml-auto flex items-center gap-1 h-5 bg-amber-600/90 hover:bg-amber-600 text-white">
+                      <Star size={10} className="fill-white" />
+                      <span className="text-[10px]">{item.nota}</span>
+                    </Badge>
+                  )}
+                </div>
+                
+                <h3 className="font-medium text-white text-sm line-clamp-2">
+                  {item.nome}
+                </h3>
+                
+                <div className="mt-1">
+                  <Badge variant="outline" className="h-5 text-white border-white/40 text-[10px]">
+                    {item.plataforma}
+                  </Badge>
+                </div>
               </div>
-              <span className="inline-block mt-1 text-xs bg-primary/20 backdrop-blur-sm px-2 py-1 rounded-full">
-                {item.plataforma}
-              </span>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </motion.div>
       ))}
     </div>
   );
-};
+}
