@@ -2,14 +2,21 @@
 import React from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { motion, MotionProps } from "framer-motion";
+import { motion } from "framer-motion";
 
-interface DataCardProps extends React.HTMLAttributes<HTMLDivElement>, MotionProps {
+// Fix: Separate the HTMLDiv props and MotionProps to avoid conflicts
+interface DataCardProps {
   title: string;
   icon?: React.ReactNode;
   footer?: React.ReactNode;
   variant?: "default" | "primary" | "success" | "warning" | "destructive";
   children: React.ReactNode;
+  className?: string;
+  // Add any motion props you need explicitly
+  initial?: any;
+  animate?: any;
+  exit?: any;
+  transition?: any;
 }
 
 export function DataCard({
@@ -19,6 +26,11 @@ export function DataCard({
   variant = "default",
   className,
   children,
+  // Extract motion props
+  initial,
+  animate,
+  exit,
+  transition,
   ...props
 }: DataCardProps) {
   const variantStyles = {
@@ -37,9 +49,17 @@ export function DataCard({
     destructive: "text-destructive",
   };
 
+  // Pass only the motion props to motion.div
+  const motionProps = {
+    initial,
+    animate,
+    exit,
+    transition
+  };
+
   return (
-    <motion.div {...props}>
-      <Card className={cn("overflow-hidden", variantStyles[variant], className)}>
+    <motion.div {...motionProps}>
+      <Card className={cn("overflow-hidden", variantStyles[variant], className)} {...props}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             {icon && <span className={cn(variantIconStyles[variant])}>{icon}</span>}

@@ -1,0 +1,59 @@
+
+/* PDF Viewer Styles */
+.pdf-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.pdf-page {
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+  margin: 1rem auto;
+}
+
+.pdf-page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* PDF Loading and Error States */
+.pdf-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 70vh;
+  width: 100%;
+}
+
+.pdf-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  max-width: 500px;
+  margin: 4rem auto;
+}
+
+/* Controls */
+.pdf-controls {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  padding: 0.5rem;
+  border-radius: 2rem;
+  z-index: 50;
+}
+
+@media (max-width: 640px) {
+  .pdf-controls {
+    width: 90%;
+    justify-content: center;
+  }
+}

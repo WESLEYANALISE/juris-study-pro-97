@@ -107,146 +107,146 @@ export const QuestionCard = ({
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
     >
-      <Card 
-        className="w-full"
-        as={motion.div}
-        variants={cardVariants}
-        animate={hasAnswered ? "answered" : "initial"}
-      >
-        <CardHeader>
-          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
-            <div className="flex items-center gap-2">
-              {area && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">{area}</span>}
-              {tema && (
-                <>
-                  <span>•</span>
-                  <span>{tema}</span>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-2">
-              {percentualAcertos && (
-                <div className="text-sm text-muted-foreground">
-                  Taxa de acerto: {percentualAcertos}%
+      <Card className="w-full">
+        <motion.div
+          variants={cardVariants}
+          animate={hasAnswered ? "answered" : "initial"}
+        >
+          <CardHeader>
+            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
+              <div className="flex items-center gap-2">
+                {area && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">{area}</span>}
+                {tema && (
+                  <>
+                    <span>•</span>
+                    <span>{tema}</span>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {percentualAcertos && (
+                  <div className="text-sm text-muted-foreground">
+                    Taxa de acerto: {percentualAcertos}%
+                  </div>
+                )}
+                <div className="flex items-center text-xs bg-muted/50 px-2 py-1 rounded-full">
+                  <Timer className="h-3 w-3 mr-1" />
+                  {formatTime(timeSpent)}
                 </div>
-              )}
-              <div className="flex items-center text-xs bg-muted/50 px-2 py-1 rounded-full">
-                <Timer className="h-3 w-3 mr-1" />
-                {formatTime(timeSpent)}
               </div>
             </div>
-          </div>
-          <CardTitle className="text-lg font-medium">{pergunta}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <RadioGroup
-            value={selectedAnswer}
-            onValueChange={setSelectedAnswer}
-            className="space-y-3"
-            disabled={hasAnswered}
-          >
-            {Object.entries(respostas)
-              .filter(([_, value]) => value !== null)
-              .map(([key, value]) => (
-                <motion.div
-                  key={key}
-                  className={cn(
-                    "flex items-center space-x-2 rounded-lg border p-4 transition-colors",
-                    getAnswerStyle(key)
-                  )}
-                  whileHover={!hasAnswered ? { scale: 1.01 } : {}}
-                  whileTap={!hasAnswered ? { scale: 0.99 } : {}}
-                >
-                  <RadioGroupItem value={key} id={`answer-${key}`} />
-                  <Label htmlFor={`answer-${key}`} className="flex-grow cursor-pointer">
-                    {value}
-                  </Label>
-                  {hasAnswered && key === respostaCorreta && (
-                    <CheckCircle2 className="h-5 w-5 text-success" />
-                  )}
-                  {hasAnswered && key === selectedAnswer && key !== respostaCorreta && (
-                    <XCircle className="h-5 w-5 text-destructive" />
-                  )}
-                </motion.div>
-              ))}
-          </RadioGroup>
-
-          {hasAnswered && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              transition={{ duration: 0.3 }}
+            <CardTitle className="text-lg font-medium">{pergunta}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <RadioGroup
+              value={selectedAnswer}
+              onValueChange={setSelectedAnswer}
+              className="space-y-3"
+              disabled={hasAnswered}
             >
-              <Alert className={cn(
-                selectedAnswer === respostaCorreta 
-                ? "bg-success/10 text-success border-success/20" 
-                : "bg-destructive/10 text-destructive border-destructive/20"
-              )}>
-                <AlertTitle className="flex items-center gap-2">
-                  {selectedAnswer === respostaCorreta ? (
-                    <>
-                      <CheckCircle2 className="h-5 w-5" />
-                      Parabéns! Você acertou!
-                    </>
-                  ) : (
-                    <>
-                      <XCircle className="h-5 w-5" />
-                      Não foi dessa vez...
-                    </>
+              {Object.entries(respostas)
+                .filter(([_, value]) => value !== null)
+                .map(([key, value]) => (
+                  <motion.div
+                    key={key}
+                    className={cn(
+                      "flex items-center space-x-2 rounded-lg border p-4 transition-colors",
+                      getAnswerStyle(key)
+                    )}
+                    whileHover={!hasAnswered ? { scale: 1.01 } : {}}
+                    whileTap={!hasAnswered ? { scale: 0.99 } : {}}
+                  >
+                    <RadioGroupItem value={key} id={`answer-${key}`} />
+                    <Label htmlFor={`answer-${key}`} className="flex-grow cursor-pointer">
+                      {value}
+                    </Label>
+                    {hasAnswered && key === respostaCorreta && (
+                      <CheckCircle2 className="h-5 w-5 text-success" />
+                    )}
+                    {hasAnswered && key === selectedAnswer && key !== respostaCorreta && (
+                      <XCircle className="h-5 w-5 text-destructive" />
+                    )}
+                  </motion.div>
+                ))}
+            </RadioGroup>
+
+            {hasAnswered && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                transition={{ duration: 0.3 }}
+              >
+                <Alert className={cn(
+                  selectedAnswer === respostaCorreta 
+                  ? "bg-success/10 text-success border-success/20" 
+                  : "bg-destructive/10 text-destructive border-destructive/20"
+                )}>
+                  <AlertTitle className="flex items-center gap-2">
+                    {selectedAnswer === respostaCorreta ? (
+                      <>
+                        <CheckCircle2 className="h-5 w-5" />
+                        Parabéns! Você acertou!
+                      </>
+                    ) : (
+                      <>
+                        <XCircle className="h-5 w-5" />
+                        Não foi dessa vez...
+                      </>
+                    )}
+                  </AlertTitle>
+                  {comentario && (
+                    <AlertDescription className="mt-2 text-foreground">
+                      {comentario}
+                    </AlertDescription>
                   )}
-                </AlertTitle>
-                {comentario && (
-                  <AlertDescription className="mt-2 text-foreground">
-                    {comentario}
-                  </AlertDescription>
-                )}
-              </Alert>
-            </motion.div>
-          )}
-        </CardContent>
-        <CardFooter className="flex flex-wrap gap-2">
-          <Button
-            onClick={handleSubmit}
-            disabled={!selectedAnswer || hasAnswered}
-            className="flex-1"
-            variant={!hasAnswered ? "default" : undefined}
-          >
-            Responder
-          </Button>
-          
-          {hasAnswered && onNext && (
-            <Button onClick={onNext} variant="outline" className="flex-1">
-              Próxima
-            </Button>
-          )}
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={handleBookmark}
-            title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-          >
-            {isBookmarked ? (
-              <BookmarkCheck className="h-4 w-4 text-primary" />
-            ) : (
-              <Bookmark className="h-4 w-4" />
+                </Alert>
+              </motion.div>
             )}
-          </Button>
-          
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => {
-              toast({
-                title: "Link copiado!",
-                description: "Link para esta questão copiado para a área de transferência",
-              });
-            }}
-            title="Compartilhar esta questão"
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </CardFooter>
+          </CardContent>
+          <CardFooter className="flex flex-wrap gap-2">
+            <Button
+              onClick={handleSubmit}
+              disabled={!selectedAnswer || hasAnswered}
+              className="flex-1"
+              variant={!hasAnswered ? "default" : undefined}
+            >
+              Responder
+            </Button>
+            
+            {hasAnswered && onNext && (
+              <Button onClick={onNext} variant="outline" className="flex-1">
+                Próxima
+              </Button>
+            )}
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleBookmark}
+              title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+            >
+              {isBookmarked ? (
+                <BookmarkCheck className="h-4 w-4 text-primary" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+            </Button>
+            
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                toast({
+                  title: "Link copiado!",
+                  description: "Link para esta questão copiado para a área de transferência",
+                });
+              }}
+              title="Compartilhar esta questão"
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </CardFooter>
+        </motion.div>
       </Card>
     </motion.div>
   );
