@@ -65,11 +65,8 @@ export const ArticleCard = ({
     return null; // Don't render invalid articles
   }
 
-  // Ensure isFavorite is always a boolean - fix typescript error by checking the specific type
-  const favoriteStatus = 
-    typeof isFavorite === 'boolean' ? isFavorite :
-    typeof isFavorite === 'string' ? isFavorite === 'true' : 
-    Boolean(isFavorite);
+  // Ensure isFavorite is always a boolean
+  const favoriteStatus = typeof isFavorite === 'boolean' ? isFavorite : false;
 
   return (
     <motion.div 

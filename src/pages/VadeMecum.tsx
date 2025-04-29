@@ -26,7 +26,7 @@ const VadeMecum = () => {
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .rpc('list_all_tables');
+          .rpc('list_tables', { prefix: '' });
         
         if (error) {
           throw error;
@@ -43,14 +43,14 @@ const VadeMecum = () => {
   });
 
   // Filter tables to separate codes and statutes
-  const codes = tables?.filter((table: string) => table.startsWith('Código_')) || [];
-  const statutes = tables?.filter((table: string) => table.startsWith('Estatuto_')) || [];
-  const laws = tables?.filter((table: string) => 
+  const codes = Array.isArray(tables) ? tables.filter((table: string) => table.startsWith('Código_')) : [];
+  const statutes = Array.isArray(tables) ? tables.filter((table: string) => table.startsWith('Estatuto_')) : [];
+  const laws = Array.isArray(tables) ? tables.filter((table: string) => 
     !table.startsWith('Código_') && 
     !table.startsWith('Estatuto_') && 
     !table.includes('_favoritos') && 
     !table.includes('_visualizacoes')
-  ) || [];
+  ) : [];
 
   return (
     <JuridicalBackground variant="books" opacity={0.04}>
