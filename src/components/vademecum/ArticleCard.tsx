@@ -32,7 +32,7 @@ export const ArticleCard = ({
   const isMobile = useIsMobile();
   const [isNarrating, setIsNarrating] = useState(false);
   
-  const { isFavorite, isLoading, checkIsFavorite, toggleFavorite, setIsFavorite } = useArticleFavorite({
+  const { isFavorite, isLoading, checkIsFavorite, toggleFavorite } = useArticleFavorite({
     lawName,
     articleNumber
   });
@@ -65,8 +65,8 @@ export const ArticleCard = ({
     return null; // Don't render invalid articles
   }
 
-  // Ensure isFavorite is always a boolean
-  const favoriteStatus: boolean = typeof isFavorite === 'boolean' ? isFavorite : false;
+  // Ensure isFavorite is always a boolean - cast for strict type safety
+  const favoriteStatus: boolean = Boolean(isFavorite);
 
   return (
     <motion.div 
@@ -91,7 +91,7 @@ export const ArticleCard = ({
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
               isFavorite={favoriteStatus} 
-              setIsFavorite={setIsFavorite}
+              setIsFavorite={(value) => toggleFavorite(articleText)}
               lawName={lawName}
               articleNumber={articleNumber}
               isLoading={isLoading}
