@@ -11,6 +11,7 @@ interface WelcomeCardProps {
   userName?: string;
   nextTaskTitle?: string;
   nextTaskTime?: string;
+  progress?: number; // Added the missing progress prop
 }
 
 const WelcomeCard = ({
