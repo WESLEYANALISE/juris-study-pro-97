@@ -1,12 +1,17 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { QuestionCard } from "@/components/questoes/QuestionCard";
 import { QuestionStats } from "@/components/questoes/QuestionStats";
 import { QuestionSetup } from "@/components/questoes/QuestionSetup";
-import { Loader2 } from "lucide-react";
+import { Loader2, BookOpen, Target, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import confetti from "canvas-confetti";
+import { FloatingControls } from "@/components/vademecum/FloatingControls";
 
 interface QuestionConfig {
   area: string;
@@ -15,12 +20,25 @@ interface QuestionConfig {
 }
 
 const Questoes = () => {
-  const [config, setConfig] = useState<{
-    area: string;
-    temas: string[];
-    quantidade: number;
-  } | null>(null);
+  const [config, setConfig] = useState<QuestionConfig | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Handle scroll for back to top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 300);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Scroll to top function
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const { data: questions, isLoading: isLoadingQuestions } = useQuery({
     queryKey: ["questions", config],
@@ -43,7 +61,7 @@ const Questoes = () => {
     }
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
     queryKey: ["question-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -56,7 +74,6 @@ const Questoes = () => {
     }
   });
 
-  const queryClient = useQueryClient();
   const answerMutation = useMutation({
     mutationFn: async ({ questionId, answer, correct }: { questionId: number, answer: string, correct: boolean }) => {
       const { error } = await supabase
@@ -69,9 +86,17 @@ const Questoes = () => {
 
       if (error) throw error;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["question-stats"] });
-      toast.success("Resposta registrada com sucesso!");
+      
+      // Show confetti on correct answer
+      if (variables.correct) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 }
+        });
+      }
     },
     onError: () => {
       toast.error("Erro ao registrar resposta. Tente novamente.");
@@ -86,6 +111,18 @@ const Questoes = () => {
     if (!questions) return;
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+    }
+  };
+  
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(prev => prev - 1);
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
     }
   };
 
@@ -97,7 +134,10 @@ const Questoes = () => {
   if (!config) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6">Banco de Questões</h1>
+        <h1 className="text-2xl font-bold mb-6 flex items-center">
+          <BookOpen className="mr-2 h-6 w-6 text-primary" />
+          Banco de Questões
+        </h1>
         <QuestionSetup onStart={setConfig} />
       </div>
     );
@@ -106,7 +146,7 @@ const Questoes = () => {
   if (isLoadingQuestions) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
@@ -114,11 +154,22 @@ const Questoes = () => {
   if (!questions?.length) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-4">Banco de Questões</h1>
-        <p>Nenhuma questão disponível para os filtros selecionados.</p>
-        <Button onClick={handleReset} className="mt-4">
-          Voltar
-        </Button>
+        <h1 className="text-2xl font-bold mb-4 flex items-center">
+          <BookOpen className="mr-2 h-6 w-6 text-primary" />
+          Banco de Questões
+        </h1>
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-12">
+            <Target className="h-12 w-12 text-muted-foreground mb-4" />
+            <h2 className="text-xl font-medium mb-2">Nenhuma questão disponível</h2>
+            <p className="text-muted-foreground text-center mb-6">
+              Não foram encontradas questões para os filtros selecionados.
+            </p>
+            <Button onClick={handleReset}>
+              Voltar aos filtros
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -136,14 +187,24 @@ const Questoes = () => {
     'D': currentQuestion.AnswerD,
   };
 
+  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Banco de Questões</h1>
+      <motion.div 
+        className="flex items-center justify-between mb-6"
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <h1 className="text-2xl font-bold flex items-center">
+          <BookOpen className="mr-2 h-6 w-6 text-primary" />
+          Banco de Questões
+        </h1>
         <Button variant="outline" onClick={handleReset}>
           Voltar ao Menu
         </Button>
-      </div>
+      </motion.div>
       
       <div className="grid gap-6 md:grid-cols-[1fr_300px]">
         <div className="space-y-6">
@@ -160,15 +221,88 @@ const Questoes = () => {
             onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined}
           />
           
-          <div className="text-sm text-muted-foreground text-center">
-            Questão {currentQuestionIndex + 1} de {questions.length}
+          <div className="flex justify-between items-center">
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious} 
+              disabled={currentQuestionIndex === 0}
+              className="flex items-center"
+            >
+              <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
+            </Button>
+            
+            <div className="text-sm text-muted-foreground text-center">
+              Questão {currentQuestionIndex + 1} de {questions.length}
+            </div>
+            
+            <Button 
+              variant="outline" 
+              onClick={handleNext}
+              disabled={currentQuestionIndex === questions.length - 1}
+              className="flex items-center"
+            >
+              Próxima <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
           </div>
         </div>
         
         <div className="space-y-6">
-          <QuestionStats stats={stats} />
+          <QuestionStats stats={stats} isLoading={isLoadingStats} />
+          
+          {/* Study Session Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Sessão de Estudo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Progresso</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div 
+                      className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
+                      style={{ width: `${progress}%` }} 
+                    />
+                  </div>
+                </div>
+                
+                <div className="pt-2 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Área:</span>
+                    <span className="font-medium">{config.area}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Temas:</span>
+                    <span className="font-medium">{config.temas.length} selecionados</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Questões:</span>
+                    <span className="font-medium">{questions.length}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </div>
       </div>
+      
+      <FloatingControls 
+        fontSize={16} // This prop isn't used here but is required
+        increaseFontSize={() => {}} // These are just placeholder functions
+        decreaseFontSize={() => {}}
+        showBackToTop={showBackToTop}
+        scrollToTop={scrollToTop}
+      />
     </div>
   );
 };
