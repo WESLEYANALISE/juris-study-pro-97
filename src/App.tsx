@@ -37,7 +37,7 @@ import Anotacoes from "@/pages/Anotacoes";
 
 function App() {
   return (
-    <ThemeProvider defaultTheme="light" storageKey="juspedia-theme">
+    <ThemeProvider storageKey="juspedia-theme">
       <AuthProvider>
         <Router>
           <RequireAuth>
