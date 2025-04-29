@@ -79,7 +79,7 @@ const CursoViewer = () => {
     );
   }
 
-  // Show course content
+  // Show fullscreen course content
   return (
     <CourseViewer
       title={curso.materia}

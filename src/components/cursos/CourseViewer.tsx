@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, Volume1, VolumeX } from "lucide-react";
+import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, Volume1, VolumeX, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CourseViewerProps {
@@ -47,6 +46,7 @@ export function CourseViewer({
 }: CourseViewerProps) {
   const [notes, setNotes] = useState(savedNotes);
   const [showNotes, setShowNotes] = useState(initialShowNotes);
+  const [showControls, setShowControls] = useState(false);
   const [volume, setVolume] = useState<"muted" | "low" | "normal">("normal");
   const localVideoRef = useRef<HTMLIFrameElement>(null);
   const actualVideoRef = videoRef || localVideoRef;
@@ -129,158 +129,157 @@ export function CourseViewer({
     const currentIndex = volumes.findIndex(v => v === volume);
     const nextIndex = (currentIndex + 1) % volumes.length;
     setVolume(volumes[nextIndex]);
-    
-    // If we had direct access to the YouTube player API, we would adjust volume here
   };
   
   const VolumeIcon = volume === "muted" ? VolumeX : volume === "low" ? Volume1 : Volume2;
 
-  return (
-    <div className="fixed inset-0 flex flex-col bg-background">
-      <div className="p-2 sm:p-4 flex items-center justify-between border-b bg-card">
-        <div className="flex items-center">
-          <Button variant="outline" size="icon" onClick={onBack} className="mr-2">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <h1 className="text-sm sm:text-lg font-semibold truncate max-w-[200px] sm:max-w-none">{title}</h1>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-2">
-          {onToggleBookmark && (
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={onToggleBookmark}
-              title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
-              className="hidden sm:flex"
-            >
-              {isBookmarked ? (
-                <Bookmark className="h-5 w-5 fill-current" />
-              ) : (
-                <BookmarkPlus className="h-5 w-5" />
-              )}
-            </Button>
-          )}
-          
-          <Button 
-            variant="ghost" 
-            size="sm"
-            onClick={cycleVolume}
-            title={`Volume: ${volume}`}
-            className="hidden sm:flex"
-          >
-            <VolumeIcon className="h-5 w-5" />
-          </Button>
+  const toggleControls = () => {
+    setShowControls(!showControls);
+  };
 
-          {/* Mobile icons */}
-          {onToggleBookmark && (
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={onToggleBookmark}
-              title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
-              className="sm:hidden"
-            >
-              {isBookmarked ? (
-                <Bookmark className="h-4 w-4 fill-current" />
-              ) : (
-                <BookmarkPlus className="h-4 w-4" />
-              )}
-            </Button>
-          )}
-          
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={cycleVolume}
-            title={`Volume: ${volume}`}
-            className="sm:hidden"
-          >
-            <VolumeIcon className="h-4 w-4" />
-          </Button>
-        </div>
+  return (
+    <div className="fixed inset-0 flex flex-col bg-black">
+      {/* Simplified header - just a close button */}
+      <div className="absolute top-4 right-4 z-50">
+        <Button 
+          variant="destructive" 
+          size="icon" 
+          onClick={onBack} 
+          className="shadow-lg"
+          title="Fechar"
+        >
+          <X className="h-5 w-5" />
+        </Button>
       </div>
       
-      {updateProgress !== undefined && (
-        <div className="px-2 sm:px-4 py-1">
-          <Progress value={progress} className="h-1" />
+      {updateProgress !== undefined && progress > 0 && (
+        <div className="absolute top-0 left-0 right-0 z-40">
+          <Progress value={progress} className="h-1 bg-black/30" />
         </div>
       )}
       
-      <div className="flex-grow w-full h-full overflow-hidden">
-        <div className="w-full h-full flex items-center justify-center bg-black/50">
-          <div className="w-full h-full max-h-full">
-            <AspectRatio ratio={16/9} className="w-full h-full max-w-full max-h-full">
-              {youtubeId ? (
-                <iframe
-                  ref={actualVideoRef}
-                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
-                  className="w-full h-full border-0"
-                  title={title}
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  loading="eager"
-                />
-              ) : videoUrl ? (
-                <iframe
-                  ref={actualVideoRef}
-                  src={videoUrl}
-                  className="w-full h-full border-0"
-                  title={title}
-                  allowFullScreen
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  loading="eager"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-black text-white">
-                  Vídeo não disponível
-                </div>
-              )}
-            </AspectRatio>
-          </div>
+      {/* Full screen video container */}
+      <div className="flex-grow w-full h-full overflow-hidden relative">
+        <div className="absolute inset-0 flex items-center justify-center bg-black">
+          {youtubeId ? (
+            <iframe
+              ref={actualVideoRef}
+              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
+              className="w-full h-full border-0"
+              title={title}
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              loading="eager"
+            />
+          ) : videoUrl ? (
+            <iframe
+              ref={actualVideoRef}
+              src={videoUrl}
+              className="w-full h-full border-0"
+              title={title}
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              loading="eager"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-black text-white">
+              Vídeo não disponível
+            </div>
+          )}
         </div>
       </div>
       
-      <div className="p-2 sm:p-4 flex flex-wrap gap-2 justify-between items-center border-t bg-card">
-        <div className="flex gap-1 sm:gap-2">
-          <Button 
-            variant="outline" 
-            size={isMobile ? "sm" : "default"}
-            onClick={() => setShowNotes(!showNotes)}
-            className="flex items-center"
-          >
-            <MessageSquare className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="text-xs sm:text-sm">
-              {showNotes ? "Ocultar notas" : "Mostrar notas"}
-            </span>
-          </Button>
-          
-          {downloadUrl && (
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block"
-            >
+      {/* Hidden controls overlay triggered by button */}
+      {showControls && (
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-sm transition-all z-30">
+          <div className="flex flex-wrap gap-2 justify-between items-center">
+            <div className="flex gap-2">
               <Button 
                 variant="outline" 
                 size={isMobile ? "sm" : "default"}
-                className="flex items-center"
+                onClick={() => {
+                  setShowNotes(!showNotes);
+                  if (showNotes) setShowControls(false);
+                }}
+                className="flex items-center bg-black/40 text-white border-white/30"
               >
-                <Download className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="text-xs sm:text-sm">Material de apoio</span>
+                <MessageSquare className="h-4 w-4 mr-2" />
+                <span>
+                  {showNotes ? "Ocultar notas" : "Mostrar notas"}
+                </span>
               </Button>
-            </a>
-          )}
-        </div>
-        
-        {updateProgress !== undefined && (
-          <div className="text-xs sm:text-sm text-muted-foreground">
-            {progress >= 100 
-              ? "Curso concluído" 
-              : `Progresso: ${progress}%`
-            }
+              
+              {downloadUrl && (
+                <a
+                  href={downloadUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block"
+                >
+                  <Button 
+                    variant="outline" 
+                    size={isMobile ? "sm" : "default"}
+                    className="flex items-center bg-black/40 text-white border-white/30"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    <span>Material de apoio</span>
+                  </Button>
+                </a>
+              )}
+              
+              {onToggleBookmark && (
+                <Button 
+                  variant="outline" 
+                  size={isMobile ? "sm" : "default"}
+                  onClick={onToggleBookmark}
+                  title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
+                  className="bg-black/40 text-white border-white/30"
+                >
+                  {isBookmarked ? (
+                    <Bookmark className="h-4 w-4 mr-2 fill-current" />
+                  ) : (
+                    <BookmarkPlus className="h-4 w-4 mr-2" />
+                  )}
+                  <span>{isBookmarked ? "Remover marcador" : "Adicionar marcador"}</span>
+                </Button>
+              )}
+              
+              <Button 
+                variant="outline" 
+                size={isMobile ? "sm" : "default"}
+                onClick={cycleVolume}
+                title={`Volume: ${volume}`}
+                className="bg-black/40 text-white border-white/30"
+              >
+                <VolumeIcon className="h-4 w-4 mr-2" />
+                <span>
+                  {volume === "normal" ? "Volume normal" : volume === "low" ? "Volume baixo" : "Mudo"}
+                </span>
+              </Button>
+            </div>
+            
+            {updateProgress !== undefined && (
+              <div className="text-sm text-white/70">
+                {progress >= 100 
+                  ? "Curso concluído" 
+                  : `Progresso: ${progress}%`
+                }
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
+      
+      {/* Toggle controls button */}
+      <div className="absolute bottom-4 left-4 z-50">
+        <Button 
+          variant="outline" 
+          size="icon"
+          onClick={toggleControls}
+          className="rounded-full shadow-lg bg-black/40 border-white/30"
+        >
+          {showControls ? <X className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+        </Button>
       </div>
       
       <Sheet open={showNotes} onOpenChange={setShowNotes}>
