@@ -4,8 +4,8 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useState, useEffect } from "react";
-import { CheckCircle2, XCircle, Bookmark, BookmarkCheck, Timer, Share2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { CheckCircle2, XCircle, Bookmark, BookmarkCheck, Timer, Share2, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -40,22 +40,59 @@ export const QuestionCard = ({
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Fix: Using useEffect instead of useState for the timer
+  // Fix: Using useEffect with proper cleanup for timer
   useEffect(() => {
     if (!hasAnswered) {
-      const timer = setInterval(() => {
+      timerRef.current = setInterval(() => {
         setTimeSpent(prev => prev + 1);
       }, 1000);
       
-      return () => clearInterval(timer);
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      };
     }
   }, [hasAnswered]);
 
+  // Reset state when question changes
+  useEffect(() => {
+    setSelectedAnswer("");
+    setHasAnswered(false);
+    setTimeSpent(0);
+    
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
+    // Start new timer
+    timerRef.current = setInterval(() => {
+      setTimeSpent(prev => prev + 1);
+    }, 1000);
+    
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [id]);
+
   const handleSubmit = () => {
     if (!selectedAnswer || hasAnswered) return;
+    
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    
     const isCorrect = selectedAnswer === respostaCorreta;
     setHasAnswered(true);
     onAnswer(id, selectedAnswer, isCorrect);
@@ -66,6 +103,12 @@ export const QuestionCard = ({
         title: "Resposta correta!",
         description: `Você acertou em ${formatTime(timeSpent)}`,
         variant: "success",
+      });
+    } else {
+      toast({
+        title: "Resposta incorreta",
+        description: "Verifique a explicação para entender o tema.",
+        variant: "destructive",
       });
     }
   };
@@ -109,7 +152,7 @@ export const QuestionCard = ({
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="w-full">
+      <Card className="w-full gradient-card shadow-purple">
         <motion.div
           variants={cardVariants}
           animate={hasAnswered ? "answered" : "initial"}
@@ -119,7 +162,11 @@ export const QuestionCard = ({
               isMobile && "flex-col items-start gap-1"
             )}>
               <div className="flex items-center gap-2">
-                {area && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">{area}</span>}
+                {area && (
+                  <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs backdrop-blur-sm">
+                    {area}
+                  </span>
+                )}
                 {tema && (
                   <>
                     <span>•</span>
@@ -129,17 +176,20 @@ export const QuestionCard = ({
               </div>
               <div className="flex items-center gap-2">
                 {percentualAcertos && !isMobile && (
-                  <div className="text-sm text-muted-foreground">
+                  <div className="flex items-center text-sm text-muted-foreground bg-card/50 px-2 py-1 rounded-full backdrop-blur-sm">
+                    <Award className="h-3 w-3 mr-1 text-secondary" />
                     Taxa de acerto: {percentualAcertos}%
                   </div>
                 )}
-                <div className="flex items-center text-xs bg-muted/50 px-2 py-1 rounded-full">
+                <div className="flex items-center text-xs bg-muted/50 px-2 py-1 rounded-full backdrop-blur-sm">
                   <Timer className="h-3 w-3 mr-1" />
                   {formatTime(timeSpent)}
                 </div>
               </div>
             </div>
-            <CardTitle className="text-lg font-medium">{pergunta}</CardTitle>
+            <CardTitle className="text-lg font-medium">
+              {pergunta}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <RadioGroup
@@ -154,19 +204,22 @@ export const QuestionCard = ({
                   <motion.div
                     key={key}
                     className={cn(
-                      "flex items-center space-x-3 rounded-lg border p-4 transition-colors",
+                      "flex items-center space-x-3 rounded-lg border p-4 transition-colors shadow-sm",
                       isMobile && "p-3 items-start",
-                      getAnswerStyle(key)
+                      selectedAnswer === key && !hasAnswered && "bg-primary/10 border-primary/30",
+                      getAnswerStyle(key),
+                      hasAnswered && key === respostaCorreta && "bg-success/10 border-success",
+                      hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/10 border-destructive"
                     )}
-                    whileHover={!hasAnswered ? { scale: 1.01 } : {}}
+                    whileHover={!hasAnswered ? { scale: 1.01, backgroundColor: "rgba(139, 92, 246, 0.05)" } : {}}
                     whileTap={!hasAnswered ? { scale: 0.99 } : {}}
                   >
                     <div className={cn(
                       "flex items-center justify-center min-w-8 h-8 rounded-full border",
                       isMobile && "bg-muted/30",
-                      selectedAnswer === key && !hasAnswered && "bg-primary/10 border-primary",
-                      hasAnswered && key === respostaCorreta && "bg-success/10 border-success",
-                      hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/10 border-destructive"
+                      selectedAnswer === key && !hasAnswered && "bg-primary/20 border-primary",
+                      hasAnswered && key === respostaCorreta && "bg-success/20 border-success",
+                      hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/20 border-destructive"
                     )}>
                       <RadioGroupItem value={key} id={`answer-${key}`} className="mt-0" />
                     </div>
@@ -200,8 +253,9 @@ export const QuestionCard = ({
               >
                 <Alert className={cn(
                   selectedAnswer === respostaCorreta 
-                  ? "bg-success/10 text-success border-success/20" 
-                  : "bg-destructive/10 text-destructive border-destructive/20"
+                  ? "bg-success/10 text-success border-success/30" 
+                  : "bg-destructive/10 text-destructive border-destructive/30",
+                  "backdrop-blur-sm"
                 )}>
                   <AlertTitle className="flex items-center gap-2">
                     {selectedAnswer === respostaCorreta ? (
@@ -231,7 +285,7 @@ export const QuestionCard = ({
             <Button
               onClick={handleSubmit}
               disabled={!selectedAnswer || hasAnswered}
-              className={cn("flex-1", isMobile && "w-full")}
+              className={cn("flex-1", isMobile && "w-full", !hasAnswered && "gradient-button")}
               variant={!hasAnswered ? "default" : undefined}
             >
               Responder
@@ -254,6 +308,7 @@ export const QuestionCard = ({
                   size="icon"
                   onClick={handleBookmark}
                   title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  className="hover-glow"
                 >
                   {isBookmarked ? (
                     <BookmarkCheck className="h-4 w-4 text-primary" />
@@ -272,6 +327,7 @@ export const QuestionCard = ({
                     });
                   }}
                   title="Compartilhar esta questão"
+                  className="hover-glow"
                 >
                   <Share2 className="h-4 w-4" />
                 </Button>
@@ -297,6 +353,7 @@ export const QuestionCard = ({
                   variant="outline"
                   size="icon"
                   onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
                     toast({
                       title: "Link copiado!",
                       description: "Link para esta questão copiado para a área de transferência",

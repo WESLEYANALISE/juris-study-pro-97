@@ -4,7 +4,6 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-// Fix: Separate the HTMLDiv props and MotionProps to avoid conflicts
 interface DataCardProps {
   title: string;
   icon?: React.ReactNode;
@@ -35,10 +34,10 @@ export function DataCard({
 }: DataCardProps) {
   const variantStyles = {
     default: "gradient-card",
-    primary: "gradient-card border-primary/20",
-    success: "gradient-card border-green-500/20",
-    warning: "gradient-card border-yellow-500/20",
-    destructive: "gradient-card border-destructive/20",
+    primary: "gradient-card border-primary/20 shadow-purple/10",
+    success: "gradient-card border-green-500/20 shadow-success/10",
+    warning: "gradient-card border-yellow-500/20 shadow-warning/10",
+    destructive: "gradient-card border-destructive/20 shadow-destructive/10",
   };
 
   const variantIconStyles = {
@@ -51,18 +50,18 @@ export function DataCard({
 
   // Pass only the motion props to motion.div
   const motionProps = {
-    initial,
-    animate,
+    initial: initial || { opacity: 0, y: 10 },
+    animate: animate || { opacity: 1, y: 0 },
     exit,
-    transition
+    transition: transition || { duration: 0.3 }
   };
 
   return (
     <motion.div {...motionProps}>
-      <Card className={cn("overflow-hidden hover-lift", variantStyles[variant], className)} {...props}>
+      <Card className={cn("overflow-hidden hover-lift backdrop-blur-sm", variantStyles[variant], className)} {...props}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            {icon && <span className={cn(variantIconStyles[variant])}>{icon}</span>}
+            {icon && <span className={cn("bg-card/50 p-1.5 rounded-full", variantIconStyles[variant])}>{icon}</span>}
             {title}
           </CardTitle>
         </CardHeader>

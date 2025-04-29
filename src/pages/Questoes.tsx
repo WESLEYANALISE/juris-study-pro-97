@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -151,10 +152,15 @@ const Questoes = () => {
   if (!config) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-6 flex items-center">
+        <motion.h1 
+          className="text-2xl font-bold mb-6 flex items-center"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           <BookOpen className="mr-2 h-6 w-6 text-primary" />
           Banco de Questões
-        </h1>
+        </motion.h1>
         <QuestionSetup onStart={setConfig} />
       </div>
     );
@@ -227,7 +233,7 @@ const Questoes = () => {
         <div className="space-y-6">
           {/* We add a key prop to force component re-mount when question changes */}
           <QuestionCard
-            key={`question-${currentQuestion.id}`}
+            key={`question-${currentQuestion.id}-${currentQuestionIndex}`}
             id={currentQuestion.id}
             area={currentQuestion.Area}
             tema={currentQuestion.Tema}
@@ -275,7 +281,7 @@ const Questoes = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <Card>
+              <Card className="gradient-card shadow-purple">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5 text-primary" />
@@ -322,7 +328,7 @@ const Questoes = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <Card>
+            <Card className="gradient-card">
               <CardContent className="py-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
@@ -356,9 +362,9 @@ const Questoes = () => {
             transition={{ duration: 0.2 }}
           >
             <Button 
-              variant="purple" 
+              variant="default" 
               size="icon" 
-              className="rounded-full h-12 w-12 shadow-lg" 
+              className="rounded-full h-12 w-12 shadow-lg gradient-purple" 
               onClick={scrollToTop} 
               title="Voltar ao topo"
             >

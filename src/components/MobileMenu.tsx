@@ -8,7 +8,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { type ProfileType } from "@/components/WelcomeModal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
-import { Badge } from "@/components/ui/badge";
 import { 
   Home, 
   Lightbulb, 
@@ -27,6 +26,8 @@ import {
   PenTool, 
   User
 } from "lucide-react";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 interface MobileMenuProps {
   userProfile: ProfileType;
@@ -97,6 +98,11 @@ const menuItems = [
         url: "/simulados",
         icon: GraduationCap
       }, 
+      {
+        title: "Questões",
+        url: "/questoes",
+        icon: Brain
+      },
       {
         title: "Flashcards",
         url: "/flashcards",
@@ -182,7 +188,9 @@ const MobileMenu = ({
         <SheetContent side="left" className="p-0 w-[280px] sm:w-[350px] gradient-sidebar">
           <SheetHeader className="p-4 border-b">
             <SheetTitle className="flex items-center gap-2">
-              <span className="font-bold text-xl">JurisStudy</span>
+              <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
+                JurisStudy Pro
+              </span>
             </SheetTitle>
           </SheetHeader>
           
@@ -231,31 +239,53 @@ const MobileMenu = ({
           
           <ScrollArea className="h-[calc(100vh-4rem)]">
             {filteredMenuCategories.map((category, categoryIndex) => (
-              <div key={categoryIndex} className="py-2">
-                <h3 className="px-4 text-xs uppercase font-semibold text-muted-foreground mb-2">
+              <motion.div 
+                key={categoryIndex} 
+                className="py-2"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: categoryIndex * 0.1 }}
+              >
+                <h3 className="px-4 text-xs uppercase font-semibold text-primary mb-2">
                   {category.category}
                 </h3>
                 <div className="px-4 space-y-1">
-                  {category.items.map(item => {
+                  {category.items.map((item, itemIndex) => {
                     const isActive = location.pathname === item.url || (item.url !== "/" && location.pathname.startsWith(item.url));
                     const Icon = item.icon;
                     return (
-                      <Button 
-                        key={item.title} 
-                        variant={isActive ? "secondary" : "ghost"} 
-                        className={`w-full justify-start text-left h-auto py-3 min-h-[44px] ${isActive ? 'bg-primary/20' : ''}`}
-                        onClick={() => {
-                          navigate(item.url);
-                          setIsOpen(false);
-                        }}
+                      <motion.div
+                        key={item.title}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: (categoryIndex * 0.1) + (itemIndex * 0.05) }}
                       >
-                        {Icon && <Icon className="mr-2 h-4 w-4" />}
-                        <span className="truncate">{item.title}</span>
-                      </Button>
+                        <Button 
+                          variant={isActive ? "secondary" : "ghost"} 
+                          className={cn(
+                            "w-full justify-start text-left h-auto py-3 min-h-[44px]",
+                            isActive ? 'bg-primary/20 text-primary' : ''
+                          )}
+                          onClick={() => {
+                            navigate(item.url);
+                            setIsOpen(false);
+                          }}
+                        >
+                          {Icon && (
+                            <span className={cn(
+                              "mr-2 p-1 rounded-md",
+                              isActive ? "bg-primary/10" : "bg-muted/30"
+                            )}>
+                              <Icon className="h-4 w-4" />
+                            </span>
+                          )}
+                          <span className="truncate">{item.title}</span>
+                        </Button>
+                      </motion.div>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
             ))}
           </ScrollArea>
         </SheetContent>

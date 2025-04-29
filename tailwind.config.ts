@@ -61,19 +61,19 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Custom purple variants
+        // Custom purple variants with enhanced range
         purple: {
-          50: "#f5f3ff",
-          100: "#ede9fe",
-          200: "#ddd6fe",
-          300: "#c4b5fd",
-          400: "#a78bfa",
-          500: "#8b5cf6",
-          600: "#7c3aed",
-          700: "#6d28d9",
-          800: "#5b21b6",
-          900: "#4c1d95",
-          950: "#2e1065",
+          50: "#f8f5ff",
+          100: "#eee6ff",
+          200: "#dfd2fe",
+          300: "#c9b5fd",
+          400: "#b399fc",
+          500: "#9b87f5",
+          600: "#7c68e3",
+          700: "#6d56cc",
+          800: "#5641a3",
+          900: "#432f7d",
+          950: "#2e1e58",
         },
       },
       borderRadius: {
@@ -117,6 +117,14 @@ export default {
         "float": {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-5px)" }
+        },
+        "pulse-glow": {
+          "0%, 100%": { boxShadow: "0 0 10px rgba(139, 92, 246, 0.3)" },
+          "50%": { boxShadow: "0 0 20px rgba(139, 92, 246, 0.6)" }
+        },
+        "shimmer": {
+          "0%": { backgroundPosition: "-1000px 0" },
+          "100%": { backgroundPosition: "1000px 0" }
         }
       },
       animation: {
@@ -127,6 +135,8 @@ export default {
         "slide-up": "slide-up 0.3s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
         "float": "float 3s ease-in-out infinite",
+        "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "shimmer": "shimmer 2s infinite linear"
       },
       boxShadow: {
         'subtle': '0 2px 4px rgba(0,0,0,0.05)',
@@ -140,6 +150,7 @@ export default {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-purple': 'linear-gradient(to right, #8B5CF6, #D946EF)',
         'gradient-dark': 'linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--background)))',
+        'gradient-shimmer': 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0) 100%)',
       },
     },
   },
