@@ -705,10 +705,10 @@ export function PDFViewer({
       <div className="bg-card border-b shadow-sm p-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Button 
-            variant="yellow" 
+            variant="warning" 
             size="sm" 
             onClick={onClose} 
-            className="bg-yellow-400 hover:bg-yellow-500 text-black"
+            className="text-black"
           >
             <ArrowLeft size={18} className="mr-1" />
             Voltar
@@ -873,7 +873,7 @@ export function PDFViewer({
             </div>
             
             <div className="space-y-2">
-              <h3 className="text-sm font-medium">Rotação</h3>
+              <h3 className="text-sm font-medium">Rotaç��o</h3>
               <div className="flex items-center gap-2">
                 <Button variant="outline" size="sm" onClick={() => setRotation(r => (r - 90) % 360)}>
                   <RotateCcw size={16} />
