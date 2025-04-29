@@ -5,7 +5,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useState, useEffect, useRef } from "react";
-import { CheckCircle2, XCircle, Bookmark, BookmarkCheck, Timer, Share2, Award } from "lucide-react";
+import { CheckCircle2, XCircle, Bookmark, BookmarkCheck, Timer, Share2, Award, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -40,24 +40,30 @@ export const QuestionCard = ({
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const timerRef = useRef<number | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Fix: Using useEffect with proper cleanup for timer
+  // Corrigido: usando window.setInterval ao invés de NodeJS.Timeout
   useEffect(() => {
     if (!hasAnswered) {
-      timerRef.current = setInterval(() => {
+      // Limpa o timer anterior se existir
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+      }
+      
+      // Cria um novo timer
+      timerRef.current = window.setInterval(() => {
         setTimeSpent(prev => prev + 1);
       }, 1000);
-      
-      return () => {
-        if (timerRef.current) {
-          clearInterval(timerRef.current);
-          timerRef.current = null;
-        }
-      };
     }
+    
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [hasAnswered]);
 
   // Reset state when question changes
@@ -68,18 +74,19 @@ export const QuestionCard = ({
     
     // Clear any existing timer
     if (timerRef.current) {
-      clearInterval(timerRef.current);
+      window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
     
     // Start new timer
-    timerRef.current = setInterval(() => {
+    timerRef.current = window.setInterval(() => {
       setTimeSpent(prev => prev + 1);
     }, 1000);
     
     return () => {
       if (timerRef.current) {
-        clearInterval(timerRef.current);
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, [id]);
@@ -89,7 +96,7 @@ export const QuestionCard = ({
     
     // Stop timer
     if (timerRef.current) {
-      clearInterval(timerRef.current);
+      window.clearInterval(timerRef.current);
       timerRef.current = null;
     }
     
@@ -97,7 +104,7 @@ export const QuestionCard = ({
     setHasAnswered(true);
     onAnswer(id, selectedAnswer, isCorrect);
     
-    // Show success/error toast
+    // Show success/error toast with animation
     if (isCorrect) {
       toast({
         title: "Resposta correta!",
@@ -145,17 +152,34 @@ export const QuestionCard = ({
     }
   };
 
+  // Variante para a entrada de novas questões
+  const questionEntryVariants = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
+    exit: { opacity: 0, y: -20, transition: { duration: 0.3 } }
+  };
+
+  // Variantes para o feedback
+  const feedbackVariants = {
+    initial: { opacity: 0, height: 0 },
+    animate: { opacity: 1, height: "auto", transition: { duration: 0.4, ease: "easeOut" } },
+    exit: { opacity: 0, height: 0, transition: { duration: 0.3 } }
+  };
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -20 }}
-      transition={{ duration: 0.3 }}
+      key={`question-${id}`}
+      variants={questionEntryVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      layout
     >
-      <Card className="w-full gradient-card shadow-purple">
+      <Card className="w-full gradient-card shadow-purple border-primary/30">
         <motion.div
           variants={cardVariants}
           animate={hasAnswered ? "answered" : "initial"}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
         >
           <CardHeader>
             <div className={cn("flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2", 
@@ -187,8 +211,15 @@ export const QuestionCard = ({
                 </div>
               </div>
             </div>
-            <CardTitle className="text-lg font-medium">
-              {pergunta}
+            <CardTitle className="text-lg md:text-xl font-medium leading-relaxed">
+              <motion.div 
+                initial={{ opacity: 0.8 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+                className="bg-primary/5 p-3 rounded-lg border border-primary/10"
+              >
+                {pergunta}
+              </motion.div>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -213,20 +244,31 @@ export const QuestionCard = ({
                     )}
                     whileHover={!hasAnswered ? { scale: 1.01, backgroundColor: "rgba(139, 92, 246, 0.05)" } : {}}
                     whileTap={!hasAnswered ? { scale: 0.99 } : {}}
+                    initial={{ opacity: 0, x: -5 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.3, delay: parseInt(key.charCodeAt(0).toString()) * 0.1 }}
                   >
                     <div className={cn(
-                      "flex items-center justify-center min-w-8 h-8 rounded-full border",
+                      "relative flex items-center justify-center min-w-8 h-8 rounded-full border transition-all",
                       isMobile && "bg-muted/30",
                       selectedAnswer === key && !hasAnswered && "bg-primary/20 border-primary",
                       hasAnswered && key === respostaCorreta && "bg-success/20 border-success",
                       hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/20 border-destructive"
                     )}>
-                      <RadioGroupItem value={key} id={`answer-${key}`} className="mt-0" />
+                      <RadioGroupItem 
+                        value={key} 
+                        id={`answer-${key}`} 
+                        className={cn(
+                          "mt-0 transition-transform duration-200",
+                          selectedAnswer === key && "scale-[0.9]",
+                          hasAnswered && key === respostaCorreta && "animate-pulse-subtle"
+                        )}
+                      />
                     </div>
                     <Label 
                       htmlFor={`answer-${key}`} 
                       className={cn(
-                        "flex-grow cursor-pointer",
+                        "flex-grow cursor-pointer transition-colors",
                         isMobile && "text-sm pt-1"
                       )}
                     >
@@ -236,48 +278,82 @@ export const QuestionCard = ({
                       </div>
                     </Label>
                     {hasAnswered && key === respostaCorreta && (
-                      <CheckCircle2 className="h-5 w-5 text-success" />
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                      >
+                        <CheckCircle2 className="h-5 w-5 text-success" />
+                      </motion.div>
                     )}
                     {hasAnswered && key === selectedAnswer && key !== respostaCorreta && (
-                      <XCircle className="h-5 w-5 text-destructive" />
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                      >
+                        <XCircle className="h-5 w-5 text-destructive" />
+                      </motion.div>
                     )}
                   </motion.div>
                 ))}
             </RadioGroup>
 
-            {hasAnswered && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                transition={{ duration: 0.3 }}
-              >
-                <Alert className={cn(
-                  selectedAnswer === respostaCorreta 
-                  ? "bg-success/10 text-success border-success/30" 
-                  : "bg-destructive/10 text-destructive border-destructive/30",
-                  "backdrop-blur-sm"
-                )}>
-                  <AlertTitle className="flex items-center gap-2">
-                    {selectedAnswer === respostaCorreta ? (
-                      <>
-                        <CheckCircle2 className="h-5 w-5" />
-                        Parabéns! Você acertou!
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-5 w-5" />
-                        Não foi dessa vez...
-                      </>
+            <AnimatePresence>
+              {hasAnswered && (
+                <motion.div
+                  variants={feedbackVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <Alert className={cn(
+                    selectedAnswer === respostaCorreta 
+                    ? "bg-success/10 text-success-foreground border-success/30" 
+                    : "bg-destructive/10 text-destructive-foreground border-destructive/30",
+                    "backdrop-blur-sm"
+                  )}>
+                    <AlertTitle className="flex items-center gap-2">
+                      {selectedAnswer === respostaCorreta ? (
+                        <>
+                          <CheckCircle2 className="h-5 w-5" />
+                          <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            Parabéns! Você acertou!
+                          </motion.span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-5 w-5" />
+                          <motion.span
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                          >
+                            Não foi dessa vez...
+                          </motion.span>
+                        </>
+                      )}
+                    </AlertTitle>
+                    {comentario && (
+                      <AlertDescription className="mt-3 text-foreground">
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ delay: 0.3, duration: 0.5 }}
+                          className="prose prose-sm dark:prose-invert"
+                        >
+                          {comentario}
+                        </motion.div>
+                      </AlertDescription>
                     )}
-                  </AlertTitle>
-                  {comentario && (
-                    <AlertDescription className="mt-2 text-foreground">
-                      {comentario}
-                    </AlertDescription>
-                  )}
-                </Alert>
-              </motion.div>
-            )}
+                  </Alert>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
           <CardFooter className={cn("flex flex-wrap gap-2", 
             isMobile && "flex-col"
@@ -285,19 +361,36 @@ export const QuestionCard = ({
             <Button
               onClick={handleSubmit}
               disabled={!selectedAnswer || hasAnswered}
-              className={cn("flex-1", isMobile && "w-full", !hasAnswered && "gradient-button")}
+              className={cn(
+                "flex-1 transition-all duration-300", 
+                isMobile && "w-full", 
+                !hasAnswered && "gradient-button"
+              )}
               variant={!hasAnswered ? "default" : undefined}
             >
-              Responder
+              <motion.div
+                className="flex items-center"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Responder
+              </motion.div>
             </Button>
             
             {hasAnswered && onNext && (
               <Button 
                 onClick={onNext} 
                 variant="outline" 
-                className={cn("flex-1", isMobile && "w-full")}
+                className={cn("flex-1 hover:bg-primary/10", isMobile && "w-full")}
               >
-                Próxima
+                <motion.div 
+                  className="flex items-center"
+                  whileHover={{ x: 5 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Próxima
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </motion.div>
               </Button>
             )}
             
@@ -310,17 +403,23 @@ export const QuestionCard = ({
                   title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                   className="hover-glow"
                 >
-                  {isBookmarked ? (
-                    <BookmarkCheck className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Bookmark className="h-4 w-4" />
-                  )}
+                  <motion.div
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    {isBookmarked ? (
+                      <BookmarkCheck className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
+                  </motion.div>
                 </Button>
                 
                 <Button
                   variant="outline"
                   size="icon"
                   onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
                     toast({
                       title: "Link copiado!",
                       description: "Link para esta questão copiado para a área de transferência",
@@ -329,7 +428,15 @@ export const QuestionCard = ({
                   title="Compartilhar esta questão"
                   className="hover-glow"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <motion.div
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: isBookmarked ? [0, -15, 15, -10, 10, 0] : 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </motion.div>
                 </Button>
               </>
             )}
@@ -342,11 +449,16 @@ export const QuestionCard = ({
                   onClick={handleBookmark}
                   title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                 >
-                  {isBookmarked ? (
-                    <BookmarkCheck className="h-4 w-4 text-primary" />
-                  ) : (
-                    <Bookmark className="h-4 w-4" />
-                  )}
+                  <motion.div
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    {isBookmarked ? (
+                      <BookmarkCheck className="h-4 w-4 text-primary" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
+                  </motion.div>
                 </Button>
                 
                 <Button
@@ -361,7 +473,12 @@ export const QuestionCard = ({
                   }}
                   title="Compartilhar esta questão"
                 >
-                  <Share2 className="h-4 w-4" />
+                  <motion.div
+                    whileHover={{ scale: 1.2 }}
+                    whileTap={{ scale: 0.8 }}
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </motion.div>
                 </Button>
               </div>
             )}

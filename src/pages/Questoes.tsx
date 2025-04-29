@@ -153,12 +153,12 @@ const Questoes = () => {
     return (
       <div className="container mx-auto px-4 py-8">
         <motion.h1 
-          className="text-2xl font-bold mb-6 flex items-center"
+          className="text-3xl font-bold mb-6 flex items-center"
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          <BookOpen className="mr-2 h-6 w-6 text-primary" />
+          <BookOpen className="mr-2 h-7 w-7 text-primary" />
           Banco de Questões
         </motion.h1>
         <QuestionSetup onStart={setConfig} />
@@ -168,8 +168,21 @@ const Questoes = () => {
 
   if (isLoadingQuestions) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+        >
+          <Loader2 className="h-12 w-12 text-primary" />
+        </motion.div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="text-muted-foreground font-medium"
+        >
+          Carregando questões...
+        </motion.p>
       </div>
     );
   }
@@ -177,18 +190,27 @@ const Questoes = () => {
   if (!questions?.length) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-4 flex items-center">
-          <BookOpen className="mr-2 h-6 w-6 text-primary" />
+        <h1 className="text-3xl font-bold mb-4 flex items-center">
+          <BookOpen className="mr-2 h-7 w-7 text-primary" />
           Banco de Questões
         </h1>
-        <Card>
+        <Card className="gradient-card">
           <CardContent className="flex flex-col items-center justify-center py-12">
-            <Target className="h-12 w-12 text-muted-foreground mb-4" />
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Target className="h-16 w-16 text-muted-foreground mb-4" />
+            </motion.div>
             <h2 className="text-xl font-medium mb-2">Nenhuma questão disponível</h2>
             <p className="text-muted-foreground text-center mb-6">
               Não foram encontradas questões para os filtros selecionados.
             </p>
-            <Button onClick={handleReset}>
+            <Button 
+              onClick={handleReset}
+              className="gradient-button"
+            >
               Voltar aos filtros
             </Button>
           </CardContent>
@@ -220,43 +242,55 @@ const Questoes = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-2xl font-bold flex items-center">
+        <h1 className="text-2xl md:text-3xl font-bold flex items-center">
           <BookOpen className="mr-2 h-6 w-6 text-primary" />
           Banco de Questões
         </h1>
-        <Button variant="outline" onClick={handleReset}>
-          Voltar ao Menu
+        <Button 
+          variant="outline" 
+          onClick={handleReset}
+          className="hover-glow"
+        >
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            Voltar ao Menu
+          </motion.div>
         </Button>
       </motion.div>
       
       <div className={cn("grid gap-6", isMobile ? "grid-cols-1" : "md:grid-cols-[1fr_300px]")}>
         <div className="space-y-6">
-          {/* We add a key prop to force component re-mount when question changes */}
-          <QuestionCard
-            key={`question-${currentQuestion.id}-${currentQuestionIndex}`}
-            id={currentQuestion.id}
-            area={currentQuestion.Area}
-            tema={currentQuestion.Tema}
-            pergunta={currentQuestion.QuestionText || ""}
-            respostas={respostas}
-            respostaCorreta={currentQuestion.CorrectAnswers}
-            comentario={currentQuestion.CorrectAnswerInfo}
-            percentualAcertos={percentualAcertos}
-            onAnswer={handleAnswer}
-            onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined}
-          />
+          <AnimatePresence mode="wait">
+            <QuestionCard
+              key={`question-${currentQuestion.id}-${currentQuestionIndex}`}
+              id={currentQuestion.id}
+              area={currentQuestion.Area}
+              tema={currentQuestion.Tema}
+              pergunta={currentQuestion.QuestionText || ""}
+              respostas={respostas}
+              respostaCorreta={currentQuestion.CorrectAnswers}
+              comentario={currentQuestion.CorrectAnswerInfo}
+              percentualAcertos={percentualAcertos}
+              onAnswer={handleAnswer}
+              onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined}
+            />
+          </AnimatePresence>
           
-          <div className="flex justify-between items-center">
+          <motion.div 
+            className="flex justify-between items-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
             <Button 
               variant="outline" 
               onClick={handlePrevious} 
               disabled={currentQuestionIndex === 0}
-              className="flex items-center"
+              className="flex items-center hover:bg-primary/10 hover:border-primary/30"
             >
               <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
             </Button>
             
-            <div className="text-sm text-muted-foreground text-center">
+            <div className="text-sm text-muted-foreground text-center bg-muted/30 backdrop-blur-sm px-3 py-1 rounded-full">
               Questão {currentQuestionIndex + 1} de {questions.length}
             </div>
             
@@ -264,11 +298,11 @@ const Questoes = () => {
               variant="outline" 
               onClick={handleNext}
               disabled={currentQuestionIndex === questions.length - 1}
-              className="flex items-center"
+              className="flex items-center hover:bg-primary/10 hover:border-primary/30"
             >
               Próxima <ChevronRight className="ml-1 h-4 w-4" />
             </Button>
-          </div>
+          </motion.div>
         </div>
         
         {!isMobile && (
@@ -281,7 +315,7 @@ const Questoes = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <Card className="gradient-card shadow-purple">
+              <Card className="gradient-card shadow-purple border-primary/20">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Target className="h-5 w-5 text-primary" />
@@ -294,10 +328,12 @@ const Questoes = () => {
                       <span>Progresso</span>
                       <span>{Math.round(progress)}%</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2">
-                      <div 
-                        className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
-                        style={{ width: `${progress}%` }} 
+                    <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                      <motion.div 
+                        className="bg-primary h-2.5 rounded-full"
+                        initial={{ width: "0%" }}
+                        animate={{ width: `${progress}%` }} 
+                        transition={{ duration: 0.6, ease: "easeOut" }}
                       />
                     </div>
                   </div>
@@ -305,7 +341,7 @@ const Questoes = () => {
                   <div className="pt-2 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span>Área:</span>
-                      <span className="font-medium">{config.area}</span>
+                      <span className="font-medium text-primary">{config.area}</span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span>Temas:</span>
@@ -328,21 +364,47 @@ const Questoes = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <Card className="gradient-card">
+            <Card className="gradient-card border border-primary/20">
               <CardContent className="py-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Progresso</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
-                      style={{ width: `${progress}%` }} 
+                  <div className="w-full bg-muted rounded-full h-2.5 overflow-hidden">
+                    <motion.div 
+                      className="bg-primary h-2.5 rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: `${progress}%` }} 
+                      transition={{ duration: 0.6, ease: "easeOut" }}
                     />
                   </div>
-                  <div className="text-xs text-muted-foreground text-center mt-2">
-                    Deslize para o lado para navegar entre as questões
+                  <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground mt-2 px-2 py-1 bg-primary/5 rounded-full">
+                    <motion.div 
+                      animate={{ 
+                        x: [0, 10, 0],
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      <ChevronLeft className="h-3 w-3" />
+                    </motion.div>
+                    Deslize para navegar entre questões
+                    <motion.div 
+                      animate={{ 
+                        x: [0, -10, 0],
+                      }}
+                      transition={{ 
+                        duration: 2,
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      <ChevronRight className="h-3 w-3" />
+                    </motion.div>
                   </div>
                 </div>
               </CardContent>
@@ -364,11 +426,16 @@ const Questoes = () => {
             <Button 
               variant="default" 
               size="icon" 
-              className="rounded-full h-12 w-12 shadow-lg gradient-purple" 
+              className="rounded-full h-12 w-12 shadow-lg gradient-button" 
               onClick={scrollToTop} 
               title="Voltar ao topo"
             >
-              <ArrowUp size={20} />
+              <motion.div
+                whileHover={{ y: -3 }}
+                whileTap={{ y: -8 }}
+              >
+                <ArrowUp size={20} />
+              </motion.div>
             </Button>
           </motion.div>
         }

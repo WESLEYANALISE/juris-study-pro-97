@@ -1,166 +1,113 @@
 
-import { useState, useEffect, useCallback } from 'react';
-
-interface TouchState {
-  touchStart: { x: number; y: number; distance: number } | null;
-  scale: number;
-  lastTap: number;
-  tapCount: number;
-  pinching: boolean;
-}
+import { useEffect, useRef } from "react";
 
 interface TouchGestureOptions {
   onSwipeLeft?: () => void;
   onSwipeRight?: () => void;
-  onZoomChange?: (scale: number) => void;
-  onDoubleTap?: (position: { x: number; y: number }) => void;
-  minScale?: number;
-  maxScale?: number;
-  usePreventDefault?: boolean;
+  onSwipeUp?: () => void;
+  onSwipeDown?: () => void;
   swipeThreshold?: number;
-  doubleTapThreshold?: number;
+  elementSelector?: string;
+  disabled?: boolean;
 }
 
-export function useTouchGestures(options: TouchGestureOptions) {
-  const {
-    minScale = 0.5,
-    maxScale = 3,
-    swipeThreshold = 50,
-    doubleTapThreshold = 300,
-    usePreventDefault = false
-  } = options;
-
-  const [touchState, setTouchState] = useState<TouchState>({
-    touchStart: null,
-    scale: 1,
-    lastTap: 0,
-    tapCount: 0,
-    pinching: false,
-  });
-
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    if (usePreventDefault) {
-      e.preventDefault();
-    }
-    
-    const now = Date.now();
-    const timeSinceLastTap = now - touchState.lastTap;
-    let newTapCount = touchState.tapCount;
-    
-    // Handle double tap detection
-    if (timeSinceLastTap < doubleTapThreshold) {
-      newTapCount += 1;
-      if (newTapCount === 2 && options.onDoubleTap && e.touches.length === 1) {
-        options.onDoubleTap({
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY
-        });
-        newTapCount = 0;
-      }
-    } else {
-      newTapCount = 1;
-    }
-    
-    if (e.touches.length === 2) {
-      // Handle pinch start
-      const distance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      
-      setTouchState(prev => ({
-        ...prev,
-        touchStart: { x: 0, y: 0, distance },
-        pinching: true,
-        lastTap: now,
-        tapCount: newTapCount
-      }));
-    } else if (e.touches.length === 1) {
-      // Handle swipe start
-      setTouchState(prev => ({
-        ...prev,
-        touchStart: {
-          x: e.touches[0].clientX,
-          y: e.touches[0].clientY,
-          distance: 0,
-        },
-        pinching: false,
-        lastTap: now,
-        tapCount: newTapCount
-      }));
-    }
-  }, [touchState.lastTap, touchState.tapCount, options, doubleTapThreshold, usePreventDefault]);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (usePreventDefault) {
-      e.preventDefault();
-    }
-    
-    if (!touchState.touchStart) return;
-
-    if (e.touches.length === 2 && touchState.touchStart.distance > 0) {
-      // Handle pinch
-      const distance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      
-      const scale = (distance / touchState.touchStart.distance) * touchState.scale;
-      const boundedScale = Math.min(Math.max(scale, minScale), maxScale);
-      
-      if (options.onZoomChange) {
-        options.onZoomChange(boundedScale);
-      }
-
-      // Update scale in state
-      setTouchState(prev => ({ ...prev, scale: boundedScale }));
-    } else if (e.touches.length === 1 && !touchState.pinching) {
-      // Handle swipe
-      const deltaX = e.touches[0].clientX - touchState.touchStart.x;
-      
-      if (Math.abs(deltaX) > swipeThreshold) {
-        if (deltaX > 0) {
-          options.onSwipeRight?.();
-        } else {
-          options.onSwipeLeft?.();
-        }
-        
-        // Reset touch state after swipe
-        setTouchState(prev => ({ ...prev, touchStart: null }));
-      }
-    }
-  }, [touchState, options, minScale, maxScale, swipeThreshold, usePreventDefault]);
-
-  const handleTouchEnd = useCallback(() => {
-    setTouchState(prev => ({ 
-      ...prev, 
-      touchStart: null,
-      pinching: false
-    }));
-  }, []);
+export function useTouchGestures({
+  onSwipeLeft,
+  onSwipeRight,
+  onSwipeUp,
+  onSwipeDown,
+  swipeThreshold = 75,
+  elementSelector,
+  disabled = false
+}: TouchGestureOptions) {
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const preventClickRef = useRef<boolean>(false);
 
   useEffect(() => {
-    const passiveOptions = usePreventDefault ? { passive: false } : { passive: true };
-    document.addEventListener('touchstart', handleTouchStart, passiveOptions);
-    document.addEventListener('touchmove', handleTouchMove, passiveOptions);
-    document.addEventListener('touchend', handleTouchEnd);
+    if (disabled) return;
 
-    return () => {
-      document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', handleTouchEnd);
+    const targetElement = elementSelector
+      ? document.querySelector(elementSelector) || document
+      : document;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartXRef.current = e.changedTouches[0].screenX;
+      touchStartYRef.current = e.changedTouches[0].screenY;
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd, usePreventDefault]);
 
-  return {
-    scale: touchState.scale,
-    onZoomChange: options.onZoomChange,
-    reset: () => setTouchState({
-      touchStart: null,
-      scale: 1,
-      lastTap: 0,
-      tapCount: 0,
-      pinching: false
-    })
-  };
+    const handleTouchEnd = (e: TouchEvent) => {
+      if (touchStartXRef.current === null || touchStartYRef.current === null) {
+        return;
+      }
+
+      const touchEndX = e.changedTouches[0].screenX;
+      const touchEndY = e.changedTouches[0].screenY;
+      const xDiff = touchStartXRef.current - touchEndX;
+      const yDiff = touchStartYRef.current - touchEndY;
+
+      // Only trigger if the swipe distance is greater than the threshold
+      const absXDiff = Math.abs(xDiff);
+      const absYDiff = Math.abs(yDiff);
+
+      // Determine if it's a horizontal or vertical swipe
+      if (absXDiff > absYDiff) {
+        // Horizontal swipe detection
+        if (absXDiff > swipeThreshold) {
+          preventClickRef.current = true;
+
+          if (xDiff > 0 && onSwipeLeft) {
+            // Left swipe
+            onSwipeLeft();
+          } else if (xDiff < 0 && onSwipeRight) {
+            // Right swipe
+            onSwipeRight();
+          }
+        }
+      } else {
+        // Vertical swipe detection
+        if (absYDiff > swipeThreshold) {
+          preventClickRef.current = true;
+
+          if (yDiff > 0 && onSwipeUp) {
+            // Up swipe
+            onSwipeUp();
+          } else if (yDiff < 0 && onSwipeDown) {
+            // Down swipe
+            onSwipeDown();
+          }
+        }
+      }
+
+      // Reset touch coordinates
+      touchStartXRef.current = null;
+      touchStartYRef.current = null;
+
+      // Reset the preventClick flag after a short delay
+      setTimeout(() => {
+        preventClickRef.current = false;
+      }, 300);
+    };
+
+    const handleClick = (e: MouseEvent) => {
+      if (preventClickRef.current) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    };
+
+    // Add event listeners
+    targetElement.addEventListener('touchstart', handleTouchStart, { passive: true });
+    targetElement.addEventListener('touchend', handleTouchEnd);
+    targetElement.addEventListener('click', handleClick, { capture: true });
+
+    // Clean up
+    return () => {
+      targetElement.removeEventListener('touchstart', handleTouchStart);
+      targetElement.removeEventListener('touchend', handleTouchEnd);
+      targetElement.removeEventListener('click', handleClick, { capture: true });
+    };
+  }, [onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDown, swipeThreshold, elementSelector, disabled]);
+
+  return { preventClickRef };
 }

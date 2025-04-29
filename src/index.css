@@ -5,42 +5,42 @@
 
 @layer base {
   :root {
-    /* Dark theme with purple accents - base colors */
-    --background: 240 20% 5%;
-    --foreground: 220 33% 98%;
+    /* Dark theme with purple accents - base colors (improved contrast) */
+    --background: 240 20% 6%;
+    --foreground: 220 40% 98%;
     
-    /* Card and elements with subtle gradients */
-    --card: 240 20% 9%;
-    --card-foreground: 220 33% 98%;
-    --popover: 240 20% 9%;
-    --popover-foreground: 220 33% 98%;
+    /* Card and elements with subtle gradients (enhanced contrast) */
+    --card: 240 20% 10%;
+    --card-foreground: 220 40% 98%;
+    --popover: 240 20% 10%;
+    --popover-foreground: 220 40% 98%;
     
-    /* Primary colors - Purple tones */
-    --primary: 260 60% 60%;
-    --primary-foreground: 220 33% 98%;
+    /* Primary colors - Purple tones (made brighter) */
+    --primary: 260 70% 65%;
+    --primary-foreground: 220 40% 98%;
     
-    /* Secondary colors - Gold accents */
-    --secondary: 45 96% 50%;
+    /* Secondary colors - Gold accents (enhanced) */
+    --secondary: 45 96% 60%;
     --secondary-foreground: 240 20% 9%;
     
     /* States and feedback */
-    --success: 142 72% 35%;
+    --success: 142 75% 40%;
     --success-foreground: 210 40% 98%;
-    --warning: 45 93% 47%;
+    --warning: 45 95% 50%;
     --warning-foreground: 224 71% 4%;
-    --destructive: 0 84% 43%;
+    --destructive: 0 84% 50%;
     --destructive-foreground: 210 40% 98%;
     
-    /* UI elements */
-    --muted: 240 20% 14%;
-    --muted-foreground: 220 33% 75%;
-    --accent: 260 30% 45%;
-    --accent-foreground: 220 33% 98%;
+    /* UI elements (improved contrast) */
+    --muted: 240 20% 15%;
+    --muted-foreground: 220 33% 80%;
+    --accent: 260 35% 50%;
+    --accent-foreground: 220 40% 98%;
     
     /* Borders and inputs */
-    --border: 240 20% 18%;
-    --input: 240 20% 18%;
-    --ring: 260 60% 60%;
+    --border: 240 20% 20%;
+    --input: 240 20% 20%;
+    --ring: 260 70% 65%;
 
     /* Radius for elements */
     --radius: 0.75rem;
@@ -49,7 +49,7 @@
 
 @layer base {
   * {
-    @apply border-border selection:bg-primary/20 selection:text-primary;
+    @apply border-border selection:bg-primary/30 selection:text-primary-foreground;
   }
 
   html {
@@ -146,11 +146,11 @@
 
 /* Glassmorphism Effects */
 .glass-card {
-  @apply bg-black/30 backdrop-blur-md border border-white/10;
+  @apply bg-black/30 backdrop-blur-md border border-white/10 shadow-lg;
 }
 
 .glass-purple {
-  @apply bg-primary/10 backdrop-blur-md border border-primary/20;
+  @apply bg-primary/15 backdrop-blur-md border border-primary/30 shadow-lg;
 }
 
 /* Gradient Backgrounds */
@@ -159,7 +159,7 @@
 }
 
 .gradient-card {
-  @apply bg-gradient-to-br from-muted to-background border-primary/20;
+  @apply bg-gradient-to-br from-muted/80 to-background border-primary/20;
 }
 
 .gradient-sidebar {
@@ -175,21 +175,21 @@
 }
 
 .gradient-welcome {
-  @apply bg-gradient-to-r from-primary/15 to-accent/5 border border-primary/20;
+  @apply bg-gradient-to-r from-primary/20 to-accent/10 border border-primary/30;
 }
 
 /* Enhanced Shadow Effects */
 .shadow-purple {
-  @apply shadow-lg shadow-purple-800/20;
+  @apply shadow-lg shadow-purple-800/30;
 }
 
 .shadow-glow {
-  @apply shadow-lg shadow-primary/30;
+  @apply shadow-lg shadow-primary/40;
 }
 
 /* Hover Effects */
 .hover-lift {
-  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10;
+  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/15;
 }
 
 .hover-glow {
@@ -206,11 +206,11 @@
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted;
+  @apply bg-muted/50 rounded-full;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/40 rounded-full hover:bg-primary/60;
+  @apply bg-primary/50 rounded-full hover:bg-primary/70;
 }
 
 /* Mobile specific overrides */
@@ -316,4 +316,29 @@
 
 .status-inactive {
   @apply bg-muted-foreground;
+}
+
+/* Enhanced button hover effects */
+button, a {
+  @apply transition-all duration-200;
+}
+
+/* Enhanced text elements */
+h1, h2, h3, h4, h5, h6 {
+  @apply font-medium;
+}
+
+/* New Card Styles */
+.card-glass {
+  @apply bg-card/70 backdrop-blur-md border border-primary/20 shadow-lg;
+}
+
+/* Radio button enhancement */
+.radio-enhanced:checked {
+  @apply ring-2 ring-primary ring-offset-1;
+}
+
+/* Focus styles */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary/50 ring-offset-1;
 }
