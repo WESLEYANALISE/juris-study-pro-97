@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -39,6 +40,14 @@ const VadeMecumViewer = () => {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [visibleBatch, setVisibleBatch] = useState(10); // Reduced initial batch for faster loading
+  const [dataStats, setDataStats] = useState({
+    total: 0,
+    withArticleNumber: 0,
+    withArticleText: 0,
+    withTechnicalExplanation: 0,
+    withFormalExplanation: 0,
+    withPracticalExample: 0
+  });
   const isMobile = useIsMobile();
   
   // Use react-intersection-observer para detecção de "infinite scroll"
@@ -74,6 +83,52 @@ const VadeMecumViewer = () => {
     }
   }, []);
 
+  // Processa os dados brutos do banco para o formato correto
+  const processRawData = (data: any[]): LawArticle[] => {
+    if (!data || !Array.isArray(data)) {
+      console.error("Dados inválidos recebidos:", data);
+      return [];
+    }
+
+    // Mapear e transformar os dados
+    const mappedData = data.map((item: any) => {
+      // Garante que temos pelo menos os campos necessários
+      return {
+        id: item.id ? item.id.toString() : '',
+        law_name: getTableName(lawId) || '',
+        article_number: item.numero || '',
+        article_text: item.artigo || '',
+        technical_explanation: item.tecnica || '',
+        formal_explanation: item.formal || '',
+        practical_example: item.exemplo || ''
+      };
+    });
+
+    // Coleta estatísticas para debugging
+    const stats = {
+      total: mappedData.length,
+      withArticleNumber: mappedData.filter(a => !!a.article_number.trim()).length,
+      withArticleText: mappedData.filter(a => !!a.article_text.trim()).length,
+      withTechnicalExplanation: mappedData.filter(a => !!a.technical_explanation.trim()).length,
+      withFormalExplanation: mappedData.filter(a => !!a.formal_explanation.trim()).length,
+      withPracticalExample: mappedData.filter(a => !!a.practical_example.trim()).length
+    };
+    
+    console.log("Dados processados:", {
+      tableName: getTableName(lawId),
+      totalRecords: mappedData.length,
+      stats
+    });
+    
+    setDataStats(stats);
+
+    // Filtra artigos com dados essenciais
+    return mappedData.filter(article => {
+      // Exigir pelo menos um texto de artigo ou número de artigo
+      return article.article_text.trim() || article.article_number.trim();
+    });
+  };
+
   // Carregar artigos com retry automático
   const loadArticles = useCallback(async (retryCount = 0) => {
     setLoading(true);
@@ -89,6 +144,8 @@ const VadeMecumViewer = () => {
         toast.error("Lei não encontrada ou não disponível");
         return;
       }
+      
+      console.log(`Carregando dados da tabela: ${tableName}`);
       
       // Consultar a tabela específica
       const { data, error } = await supabase
@@ -110,23 +167,17 @@ const VadeMecumViewer = () => {
         return;
       }
 
-      // Mapear os dados para o formato LawArticle, garantindo valores defaults
-      const lawArticles = (data || []).map((item: any) => ({
-        id: item.id ? item.id.toString() : '',
-        law_name: tableName || '',
-        article_number: item.numero || '',
-        article_text: item.artigo || '',
-        technical_explanation: item.tecnica || '',
-        formal_explanation: item.formal || '',
-        practical_example: item.exemplo || ''
-      }));
-
-      setArticles(lawArticles);
-      setFilteredArticles(lawArticles);
+      console.log(`Dados recebidos da tabela ${tableName}:`, data);
+      
+      // Processar e validar os dados recebidos
+      const processedArticles = processRawData(data || []);
+      
+      setArticles(processedArticles);
+      setFilteredArticles(processedArticles);
       
       // Registrar vizualização bem-sucedida
-      if (lawArticles.length > 0) {
-        toast.success(`${lawArticles.length} artigos carregados`);
+      if (processedArticles.length > 0) {
+        toast.success(`${processedArticles.length} artigos carregados`);
       } else {
         toast.info("Nenhum artigo encontrado para esta lei");
       }
@@ -229,6 +280,21 @@ const VadeMecumViewer = () => {
             />
           </div>
         </div>
+        
+        {/* Estatísticas de dados para debugging - Remova em produção */}
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="mt-2 text-xs text-muted-foreground bg-muted p-2 rounded">
+            <p>Estatísticas de dados (debug):</p>
+            <ul className="list-disc list-inside">
+              <li>Total de registros: {dataStats.total}</li>
+              <li>Com número de artigo: {dataStats.withArticleNumber}</li>
+              <li>Com texto de artigo: {dataStats.withArticleText}</li>
+              <li>Com explicação técnica: {dataStats.withTechnicalExplanation}</li>
+              <li>Com explicação formal: {dataStats.withFormalExplanation}</li>
+              <li>Com exemplo prático: {dataStats.withPracticalExample}</li>
+            </ul>
+          </div>
+        )}
       </div>
 
       {filteredArticles.length === 0 && !loading ? (

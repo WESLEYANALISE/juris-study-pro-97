@@ -45,6 +45,18 @@ export const ArticleCard = ({
   const [isPracticalExampleOpen, setIsPracticalExampleOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // For debugging
+  useEffect(() => {
+    console.log('ArticleCard props:', {
+      lawName,
+      articleNumber,
+      articleTextLength: articleText?.length || 0,
+      hasTechnicalExplanation: !!technicalExplanation,
+      hasFormalExplanation: !!formalExplanation,
+      hasPracticalExample: !!practicalExample
+    });
+  }, [lawName, articleNumber, articleText, technicalExplanation, formalExplanation, practicalExample]);
+
   useEffect(() => {
     if (user) {
       checkIsFavorite();
@@ -120,6 +132,14 @@ export const ArticleCard = ({
     ));
   };
 
+  // Check if we have a valid article to display
+  if (!articleNumber?.trim() && !articleText?.trim()) {
+    return null; // Don't render invalid articles
+  }
+
+  // Format article number for display
+  const displayArticleNumber = articleNumber?.trim() ? `Art. ${articleNumber}` : 'Artigo';
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} 
@@ -130,7 +150,7 @@ export const ArticleCard = ({
       <Card className="p-4 md:p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300">
         <div className="flex justify-between items-start">
           <div className="flex flex-col">
-            <h3 className="text-lg font-semibold">Art. {articleNumber}</h3>
+            <h3 className="text-lg font-semibold">{displayArticleNumber}</h3>
             <div 
               style={{ fontSize: `${fontSize}px` }} 
               className="mt-2 whitespace-pre-line text-left px-1 py-3 ml-0"

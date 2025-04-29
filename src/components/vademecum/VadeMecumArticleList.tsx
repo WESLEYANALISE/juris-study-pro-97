@@ -59,11 +59,11 @@ export function VadeMecumArticleList({
             <ArticleCard
               key={article.id}
               lawName={tableName || ''}
-              articleNumber={article.numero || ''}
-              articleText={article.artigo || ''}
-              technicalExplanation={article.tecnica}
-              formalExplanation={article.formal}
-              practicalExample={article.exemplo}
+              articleNumber={article.numero || article.article_number || ''} 
+              articleText={article.artigo || article.article_text || ''}
+              technicalExplanation={article.tecnica || article.technical_explanation}
+              formalExplanation={article.formal || article.formal_explanation}
+              practicalExample={article.exemplo || article.practical_example}
               fontSize={fontSize}
               onFontSizeChange={setFontSize}
             />
