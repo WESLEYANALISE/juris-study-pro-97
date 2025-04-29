@@ -64,10 +64,13 @@ export function BibliotecaRecomendacoes() {
   }, [searchTerm, activeCategory, livros]);
 
   // Handle book selection and view mode
-  const handleBookSelect = (book: LivroPro) => {
+  const handleBookSelect = (book: LivroPro, initialViewMode?: "pdf" | "html") => {
     setSelectedBook(book);
-    // Default to HTML view if device is mobile
-    if (window.innerWidth < 768) {
+    // Set view mode if specified, otherwise use device-based default
+    if (initialViewMode) {
+      setViewMode(initialViewMode);
+    } else if (window.innerWidth < 768) {
+      // Default to HTML view on mobile devices
       setViewMode("html");
     }
   };
@@ -138,7 +141,6 @@ export function BibliotecaRecomendacoes() {
             <Card 
               key={livro.id} 
               className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-              onClick={() => handleBookSelect(livro)}
             >
               <div className="aspect-[3/4] relative overflow-hidden">
                 {livro.capa_url ? (
@@ -168,10 +170,26 @@ export function BibliotecaRecomendacoes() {
                     {livro.descricao || "Sem descrição disponível."}
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="secondary" className="w-full" size="sm">
+                    <Button 
+                      variant="secondary" 
+                      className="w-full" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookSelect(livro, "pdf");
+                      }}
+                    >
                       PDF
                     </Button>
-                    <Button variant="purple" className="w-full" size="sm">
+                    <Button 
+                      variant="purple" 
+                      className="w-full" 
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBookSelect(livro, "html");
+                      }}
+                    >
                       HTML
                     </Button>
                   </div>
