@@ -20,7 +20,7 @@ export function HTMLViewer({ livro, onClose }: HTMLViewerProps) {
   const contentRef = useRef<HTMLDivElement>(null);
 
   // Use the existing touch gestures hook for pinch-to-zoom
-  const { onZoomChange } = useTouchGestures({
+  const { scale } = useTouchGestures({
     onZoomChange: (scale) => {
       const newFontSize = Math.round(16 * scale);
       setFontSize(Math.max(12, Math.min(32, newFontSize)));

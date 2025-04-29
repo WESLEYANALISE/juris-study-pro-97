@@ -94,5 +94,6 @@ export function useTouchGestures(options: TouchGestureOptions) {
 
   return {
     scale: touchState.scale,
+    onZoomChange: options.onZoomChange, // Expose onZoomChange from options
   };
 }
