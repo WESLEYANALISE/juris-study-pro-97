@@ -45,9 +45,10 @@ export const ArticleCard = ({
       articleTextLength: articleText?.length || 0,
       hasTechnicalExplanation: !!technicalExplanation,
       hasFormalExplanation: !!formalExplanation,
-      hasPracticalExample: !!practicalExample
+      hasPracticalExample: !!practicalExample,
+      isFavoriteType: typeof isFavorite
     });
-  }, [lawName, articleNumber, articleText, technicalExplanation, formalExplanation, practicalExample]);
+  }, [lawName, articleNumber, articleText, technicalExplanation, formalExplanation, practicalExample, isFavorite]);
 
   // Check if article is a favorite when user is available
   useEffect(() => {
@@ -63,6 +64,11 @@ export const ArticleCard = ({
   if (!articleNumber?.trim() && !articleText?.trim()) {
     return null; // Don't render invalid articles
   }
+
+  // Ensure isFavorite is always a boolean
+  const favoriteStatus = typeof isFavorite === 'string' 
+    ? isFavorite.toLowerCase() === 'true'
+    : Boolean(isFavorite);
 
   return (
     <motion.div 
@@ -86,7 +92,7 @@ export const ArticleCard = ({
               articleText={articleText}
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
-              isFavorite={isFavorite}
+              isFavorite={favoriteStatus}
               setIsFavorite={setIsFavorite}
               lawName={lawName}
               articleNumber={articleNumber}

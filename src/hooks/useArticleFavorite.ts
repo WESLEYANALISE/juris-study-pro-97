@@ -11,7 +11,7 @@ interface UseArticleFavoriteProps {
 
 export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavoriteProps) => {
   const { user } = useAuth();
-  const [isFavorite, setIsFavorite] = useState(false); // Make sure it's initialized as a boolean
+  const [isFavorite, setIsFavorite] = useState<boolean>(false); // Explicitly type as boolean
   const [isLoading, setIsLoading] = useState(false);
 
   const checkIsFavorite = useCallback(async () => {
