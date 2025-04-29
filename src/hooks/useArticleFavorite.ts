@@ -11,7 +11,7 @@ interface UseArticleFavoriteProps {
 
 export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavoriteProps) => {
   const { user } = useAuth();
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(false); // Make sure it's initialized as a boolean
   const [isLoading, setIsLoading] = useState(false);
 
   const checkIsFavorite = useCallback(async () => {
@@ -34,7 +34,7 @@ export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavorit
         return;
       }
       
-      setIsFavorite(!!data);
+      setIsFavorite(!!data); // Ensure it's a boolean with !!
     } catch (err) {
       console.error("Exceção ao verificar favorito:", err);
     } finally {
@@ -97,7 +97,7 @@ export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavorit
   };
 
   return {
-    isFavorite,
+    isFavorite, // This is definitely a boolean now
     isLoading,
     checkIsFavorite,
     toggleFavorite,

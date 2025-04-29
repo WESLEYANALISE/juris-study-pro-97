@@ -8,7 +8,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BookmarkButtonProps {
-  isFavorite: boolean;
+  isFavorite: boolean;  // Ensure this is boolean, not string
   setIsFavorite: (isFavorite: boolean) => void;
   lawName: string;
   articleNumber: string;

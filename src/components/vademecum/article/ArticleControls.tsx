@@ -7,7 +7,7 @@ interface ArticleControlsProps {
   articleText: string;
   isNarrating: boolean;
   setIsNarrating: (isNarrating: boolean) => void;
-  isFavorite: boolean;
+  isFavorite: boolean; // Make sure this is explicitly a boolean
   setIsFavorite: (isFavorite: boolean) => void;
   lawName: string;
   articleNumber: string;

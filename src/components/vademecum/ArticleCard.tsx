@@ -32,7 +32,7 @@ export const ArticleCard = ({
   const isMobile = useIsMobile();
   const [isNarrating, setIsNarrating] = useState(false);
   
-  const { isFavorite, isLoading, checkIsFavorite, setIsFavorite } = useArticleFavorite({
+  const { isFavorite, isLoading, checkIsFavorite, toggleFavorite, setIsFavorite } = useArticleFavorite({
     lawName,
     articleNumber
   });
