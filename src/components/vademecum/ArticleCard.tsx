@@ -14,6 +14,7 @@ import { FontSizeControls } from './article/FontSizeControls';
 import { ArticleExplanation } from './article/ArticleExplanation';
 import { PracticalExample } from './article/PracticalExample';
 import { supabase } from '@/integrations/supabase/client';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface ArticleCardProps {
   lawName: string;
@@ -36,9 +37,8 @@ export const ArticleCard = ({
   fontSize,
   onFontSizeChange
 }: ArticleCardProps) => {
-  const {
-    user
-  } = useAuth();
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [isNarrating, setIsNarrating] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -56,7 +56,6 @@ export const ArticleCard = ({
     
     try {
       setIsLoading(true);
-      console.log(`Verificando favorito para usuário: ${user.id}, lei: ${lawName}, artigo: ${articleNumber}`);
       
       const { data, error } = await supabase
         .from('vademecum_favorites')
@@ -81,6 +80,8 @@ export const ArticleCard = ({
   };
 
   const handleCopy = async (text: string) => {
+    if (!text) return;
+    
     try {
       await navigator.clipboard.writeText(text);
       toast.success('Texto copiado para a área de transferência');
@@ -91,6 +92,8 @@ export const ArticleCard = ({
   };
 
   const handleNarration = async (text: string) => {
+    if (!text) return;
+    
     try {
       if (isNarrating) {
         TextToSpeechService.stop();
@@ -110,24 +113,23 @@ export const ArticleCard = ({
 
   // Helper function to safely format text
   const formatArticleText = (text: string | undefined) => {
-    if (!text) return []; // Return empty array if text is undefined or null
+    if (!text || typeof text !== 'string') return []; 
+    
     return text.split('\n').map((para, i) => (
       <p key={i} className="mb-3 last:mb-0">{para.trim()}</p>
     ));
   };
 
-  return <motion.div 
-    initial={{ opacity: 0, y: 20 }} 
-    animate={{ opacity: 1, y: 0 }} 
-    transition={{ duration: 0.3 }}
-  >
-      <Card className="p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300">
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: isMobile ? 0.2 : 0.3 }}
+      className="will-change-transform"
+    >
+      <Card className="p-4 md:p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300">
         <div className="flex justify-between items-start">
-          <motion.div 
-            className="flex flex-col" 
-            whileHover={{ scale: 1.01 }} 
-            transition={{ type: 'spring', stiffness: 300 }}
-          >
+          <div className="flex flex-col">
             <h3 className="text-lg font-semibold">Art. {articleNumber}</h3>
             <div 
               style={{ fontSize: `${fontSize}px` }} 
@@ -135,7 +137,7 @@ export const ArticleCard = ({
             >
               {formatArticleText(articleText)}
             </div>
-          </motion.div>
+          </div>
           <div className="flex flex-col gap-2">
             <NarrationControls 
               text={articleText} 
@@ -156,25 +158,20 @@ export const ArticleCard = ({
         <div className="flex flex-wrap gap-2 pt-4 border-t">
           <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
             <PopoverTrigger asChild>
-              <motion.div 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }}
+              <Button 
+                variant="outline" 
+                className="gap-2"
+                disabled={!technicalExplanation && !formalExplanation}
               >
-                <Button 
-                  variant="outline" 
-                  className="gap-2"
-                  disabled={!technicalExplanation && !formalExplanation}
-                >
-                  <Info size={16} />
-                  Explicação
-                </Button>
-              </motion.div>
+                <Info size={16} />
+                Explicação
+              </Button>
             </PopoverTrigger>
             <AnimatePresence>
               {isPopoverOpen && (
                 <PopoverContent 
                   sideOffset={5} 
-                  className="w-80 max-h-[400px] overflow-auto px-[10px] mx-[27px] my-[12px] py-[4px]"
+                  className="w-80 max-h-[400px] overflow-auto px-[10px] mx-[27px] my-[12px] py-[4px] bg-card border-border"
                 >
                   <ArticleExplanation 
                     technicalExplanation={technicalExplanation} 
@@ -189,20 +186,15 @@ export const ArticleCard = ({
           {practicalExample && (
             <Popover open={isPracticalExampleOpen} onOpenChange={setIsPracticalExampleOpen}>
               <PopoverTrigger asChild>
-                <motion.div 
-                  whileHover={{ scale: 1.05 }} 
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Button variant="outline" className="gap-2">
-                    <FileText size={16} />
-                    Exemplo Prático
-                  </Button>
-                </motion.div>
+                <Button variant="outline" className="gap-2">
+                  <FileText size={16} />
+                  Exemplo Prático
+                </Button>
               </PopoverTrigger>
               <AnimatePresence>
                 {isPracticalExampleOpen && (
                   <PopoverContent 
-                    className="w-80 max-h-[400px] overflow-auto" 
+                    className="w-80 max-h-[400px] overflow-auto bg-card border-border" 
                     sideOffset={5}
                   >
                     <PracticalExample 
@@ -220,22 +212,18 @@ export const ArticleCard = ({
             onFontSizeChange={onFontSizeChange} 
           />
 
-          <motion.div 
-            whileHover={{ scale: 1.1 }} 
-            whileTap={{ scale: 0.9 }}
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={() => handleCopy(articleText)} 
+            title="Copiar artigo"
           >
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => handleCopy(articleText)} 
-              title="Copiar artigo"
-            >
-              <Copy size={16} />
-            </Button>
-          </motion.div>
+            <Copy size={16} />
+          </Button>
         </div>
       </Card>
-    </motion.div>;
+    </motion.div>
+  );
 };
 
 export default ArticleCard;

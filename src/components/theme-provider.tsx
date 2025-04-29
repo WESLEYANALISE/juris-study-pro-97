@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useEffect } from "react"
 
 type Theme = "dark"
 
@@ -26,12 +26,19 @@ export function ThemeProvider({
   storageKey = "vite-ui-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme] = useState<Theme>("dark")
+  // Force dark theme
+  const theme: Theme = "dark"
 
   useEffect(() => {
     const root = window.document.documentElement
+    
+    // Remove any other theme classes
     root.classList.remove("light")
+    
+    // Add dark theme
     root.classList.add("dark")
+    
+    // Store theme preference
     localStorage.setItem(storageKey, theme)
   }, [theme, storageKey])
 

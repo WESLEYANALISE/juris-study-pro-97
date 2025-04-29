@@ -11,6 +11,7 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Button } from "@/components/ui/button";
 import { Star, ExternalLink } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ContentModalProps {
   item: {
@@ -31,6 +32,8 @@ interface ContentModalProps {
 }
 
 export function ContentModal({ item, isOpen, onOpenChange }: ContentModalProps) {
+  const isMobile = useIsMobile();
+  
   if (!item) return null;
   
   // Extract YouTube video ID if it's a YouTube URL
@@ -38,20 +41,33 @@ export function ContentModal({ item, isOpen, onOpenChange }: ContentModalProps) 
     if (!url) return null;
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
     const match = url.match(regExp);
-    return (match && match[7].length === 11) ? match[7] : null;
+    return (match && match[7]?.length === 11) ? match[7] : null;
   };
   
   const youtubeId = getYoutubeId(item.trailer);
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
+      <DialogContent className={`${isMobile ? 'w-[95vw] p-0' : 'sm:max-w-[600px] p-0'} overflow-hidden max-h-[90vh] overflow-y-auto bg-card`}>
         <div className="relative">
-          <img 
-            src={item.capa} 
-            alt={item.nome}
-            className="w-full h-auto object-cover"
-          />
+          {item.capa ? (
+            <img 
+              src={item.capa} 
+              alt={item.nome}
+              className="w-full h-auto object-cover"
+              loading="eager"
+              onError={(e) => {
+                // Fallback if image fails to load
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = 'https://via.placeholder.com/600x400?text=Imagem+não+encontrada';
+              }}
+            />
+          ) : (
+            <div className="w-full h-40 bg-muted flex items-center justify-center">
+              Sem imagem de capa
+            </div>
+          )}
           <div className="absolute top-2 right-2">
             <Badge variant="secondary" className="flex items-center gap-1">
               <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />
@@ -60,7 +76,7 @@ export function ContentModal({ item, isOpen, onOpenChange }: ContentModalProps) 
           </div>
         </div>
         
-        <DialogHeader className="px-6 pt-6">
+        <DialogHeader className={`${isMobile ? 'px-4' : 'px-6'} pt-4 md:pt-6`}>
           <div className="flex justify-between items-start">
             <DialogTitle className="text-xl font-bold">{item.nome}</DialogTitle>
             <Badge variant="outline">
@@ -74,7 +90,7 @@ export function ContentModal({ item, isOpen, onOpenChange }: ContentModalProps) 
           </DialogDescription>
         </DialogHeader>
         
-        <div className="px-6 py-4 space-y-4">
+        <div className={`${isMobile ? 'px-4' : 'px-6'} py-4 space-y-4`}>
           <div>
             <h4 className="text-sm font-medium mb-1">Sinopse</h4>
             <p className="text-sm text-muted-foreground">{item.sinopse}</p>
@@ -100,7 +116,7 @@ export function ContentModal({ item, isOpen, onOpenChange }: ContentModalProps) 
             </div>
           )}
           
-          <div className="pt-2">
+          <div className={`${isMobile ? 'pt-1 pb-2' : 'pt-2'}`}>
             <Button asChild className="w-full">
               <a 
                 href={item.link} 

@@ -4,7 +4,6 @@ import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, 
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Sheet,
   SheetContent,
@@ -13,6 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CourseViewerProps {
   title: string;
@@ -52,6 +52,7 @@ export function CourseViewer({
   const actualVideoRef = videoRef || localVideoRef;
   const notesTimeoutRef = useRef<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
+  const isMobile = useIsMobile();
   
   // Handle initial notes panel visibility
   useEffect(() => {
@@ -112,12 +113,14 @@ export function CourseViewer({
   
   // Extract YouTube video ID from URL if it's a YouTube link
   const getYoutubeId = (url: string) => {
+    if (!url) return null;
+    
     const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
     const match = url.match(regExp);
-    return (match && match[7].length === 11) ? match[7] : url;
+    return (match && match[7]?.length === 11) ? match[7] : null;
   };
   
-  const youtubeId = videoUrl.includes('youtube') || videoUrl.includes('youtu.be') 
+  const youtubeId = videoUrl && (videoUrl.includes('youtube') || videoUrl.includes('youtu.be')) 
     ? getYoutubeId(videoUrl) 
     : null;
 
@@ -139,15 +142,16 @@ export function CourseViewer({
           <Button variant="outline" size="icon" onClick={onBack} className="mr-2">
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-sm sm:text-lg font-semibold truncate">{title}</h1>
+          <h1 className="text-sm sm:text-lg font-semibold truncate max-w-[200px] sm:max-w-none">{title}</h1>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2">
           {onToggleBookmark && (
             <Button 
               variant="ghost" 
-              size="icon"
+              size="sm"
               onClick={onToggleBookmark}
               title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
+              className="hidden sm:flex"
             >
               {isBookmarked ? (
                 <Bookmark className="h-5 w-5 fill-current" />
@@ -159,49 +163,97 @@ export function CourseViewer({
           
           <Button 
             variant="ghost" 
+            size="sm"
+            onClick={cycleVolume}
+            title={`Volume: ${volume}`}
+            className="hidden sm:flex"
+          >
+            <VolumeIcon className="h-5 w-5" />
+          </Button>
+
+          {/* Mobile icons */}
+          {onToggleBookmark && (
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={onToggleBookmark}
+              title={isBookmarked ? "Remover marcador" : "Adicionar marcador"}
+              className="sm:hidden"
+            >
+              {isBookmarked ? (
+                <Bookmark className="h-4 w-4 fill-current" />
+              ) : (
+                <BookmarkPlus className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          
+          <Button 
+            variant="ghost" 
             size="icon"
             onClick={cycleVolume}
             title={`Volume: ${volume}`}
+            className="sm:hidden"
           >
-            <VolumeIcon className="h-5 w-5" />
+            <VolumeIcon className="h-4 w-4" />
           </Button>
         </div>
       </div>
       
       {updateProgress !== undefined && (
-        <div className="px-4 py-1">
+        <div className="px-2 sm:px-4 py-1">
           <Progress value={progress} className="h-1" />
         </div>
       )}
       
-      <div className="flex-grow w-full px-0 sm:px-4 py-0 sm:py-4">
-        <div className="w-full h-full max-h-[calc(100vh-130px)]">
-          <AspectRatio ratio={16/9} className="sm:rounded-lg overflow-hidden bg-black">
-            <iframe
-              ref={actualVideoRef}
-              src={youtubeId 
-                ? `https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0` 
-                : videoUrl
-              }
-              className="w-full h-full border-0"
-              title={title}
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            />
-          </AspectRatio>
+      <div className="flex-grow w-full h-full overflow-hidden">
+        <div className="w-full h-full flex items-center justify-center bg-black/50">
+          <div className="w-full h-full max-h-full">
+            <AspectRatio ratio={16/9} className="w-full h-full max-w-full max-h-full">
+              {youtubeId ? (
+                <iframe
+                  ref={actualVideoRef}
+                  src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
+                  className="w-full h-full border-0"
+                  title={title}
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  loading="eager"
+                  importance="high"
+                />
+              ) : videoUrl ? (
+                <iframe
+                  ref={actualVideoRef}
+                  src={videoUrl}
+                  className="w-full h-full border-0"
+                  title={title}
+                  allowFullScreen
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  loading="eager"
+                  importance="high"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-black text-white">
+                  Vídeo não disponível
+                </div>
+              )}
+            </AspectRatio>
+          </div>
         </div>
       </div>
       
-      <div className="p-2 sm:p-4 flex flex-wrap gap-2 justify-between items-center">
-        <div className="flex gap-2">
+      <div className="p-2 sm:p-4 flex flex-wrap gap-2 justify-between items-center border-t bg-card">
+        <div className="flex gap-1 sm:gap-2">
           <Button 
             variant="outline" 
-            size="sm" 
+            size={isMobile ? "sm" : "default"}
             onClick={() => setShowNotes(!showNotes)}
             className="flex items-center"
           >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            {showNotes ? "Ocultar notas" : "Mostrar notas"}
+            <MessageSquare className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="text-xs sm:text-sm">
+              {showNotes ? "Ocultar notas" : "Mostrar notas"}
+            </span>
           </Button>
           
           {downloadUrl && (
@@ -211,16 +263,20 @@ export function CourseViewer({
               rel="noopener noreferrer"
               className="inline-block"
             >
-              <Button variant="outline" size="sm" className="flex items-center">
-                <Download className="h-4 w-4 mr-2" />
-                Material de apoio
+              <Button 
+                variant="outline" 
+                size={isMobile ? "sm" : "default"}
+                className="flex items-center"
+              >
+                <Download className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="text-xs sm:text-sm">Material de apoio</span>
               </Button>
             </a>
           )}
         </div>
         
         {updateProgress !== undefined && (
-          <div className="text-sm text-muted-foreground">
+          <div className="text-xs sm:text-sm text-muted-foreground">
             {progress >= 100 
               ? "Curso concluído" 
               : `Progresso: ${progress}%`
@@ -239,7 +295,7 @@ export function CourseViewer({
           </SheetHeader>
           <div className="mt-6">
             <Textarea
-              className="min-h-[300px] resize-none"
+              className="min-h-[300px] resize-none bg-background border-input"
               placeholder="Digite suas anotações sobre este curso..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}

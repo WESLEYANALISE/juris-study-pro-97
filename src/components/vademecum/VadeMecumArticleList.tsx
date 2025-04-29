@@ -3,6 +3,7 @@ import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
 import ArticleCard from "@/components/vademecum/ArticleCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface VadeMecumArticleListProps {
   isLoading: boolean;
@@ -25,17 +26,19 @@ export function VadeMecumArticleList({
   setFontSize,
   loadMoreRef
 }: VadeMecumArticleListProps) {
+  const isMobile = useIsMobile();
+  
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <AnimatePresence>
         {isLoading ? (
-          Array.from({ length: 3 }).map((_, i) => (
+          Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
             <motion.div
               key={`skeleton-${i}`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3, delay: i * 0.1 }}
+              transition={{ duration: 0.2, delay: i * 0.05 }}
             >
               <Skeleton className="h-32" />
             </motion.div>
@@ -45,7 +48,7 @@ export function VadeMecumArticleList({
             className="text-center py-12"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
+            transition={{ duration: 0.3 }}
           >
             <p className="text-muted-foreground">
               Nenhum artigo encontrado com os critérios de busca.
@@ -57,7 +60,7 @@ export function VadeMecumArticleList({
               key={article.id}
               lawName={tableName || ''}
               articleNumber={article.numero || ''}
-              articleText={article.artigo}
+              articleText={article.artigo || ''}
               technicalExplanation={article.tecnica}
               formalExplanation={article.formal}
               practicalExample={article.exemplo}

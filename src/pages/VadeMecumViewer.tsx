@@ -3,11 +3,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
-import ArticleCard from "@/components/vademecum/ArticleCard";
-import { toast } from "sonner";
-import { Skeleton } from "@/components/ui/skeleton";
 import { VadeMecumArticleList } from "@/components/vademecum/VadeMecumArticleList";
 import { useInView } from "react-intersection-observer";
+import { Button } from "@/components/ui/button";
+import { ReloadIcon } from "@radix-ui/react-icons";
+import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LawArticle {
   id: string;
@@ -38,7 +39,8 @@ const VadeMecumViewer = () => {
   const [fontSize, setFontSize] = useState(16);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [visibleBatch, setVisibleBatch] = useState(20);
+  const [visibleBatch, setVisibleBatch] = useState(10); // Reduced initial batch for faster loading
+  const isMobile = useIsMobile();
   
   // Use react-intersection-observer para detecção de "infinite scroll"
   const { ref: loadMoreRef, inView } = useInView({
@@ -59,7 +61,6 @@ const VadeMecumViewer = () => {
     try {
       // Decodificar o nome da tabela
       const decodedName = decodeURIComponent(encodedName);
-      console.log("Nome da tabela decodificado:", decodedName);
       
       // Verificar se a tabela está na lista de permitidas
       if (!ALLOWED_TABLES.includes(decodedName)) {
@@ -82,7 +83,6 @@ const VadeMecumViewer = () => {
     try {
       // Obter e verificar o nome da tabela
       const tableName = getTableName(lawId);
-      console.log("Tentando carregar artigos da tabela:", tableName);
       
       if (!tableName) {
         setError("Lei não encontrada ou não disponível");
@@ -102,7 +102,6 @@ const VadeMecumViewer = () => {
         
         // Retry automático para erros temporários, até 3 tentativas
         if (retryCount < 3) {
-          console.log(`Tentando novamente (${retryCount + 1}/3)...`);
           setTimeout(() => loadArticles(retryCount + 1), 1000 * (retryCount + 1));
           return;
         }
@@ -112,17 +111,15 @@ const VadeMecumViewer = () => {
         return;
       }
 
-      console.log(`Recuperados ${data?.length || 0} artigos`);
-      
-      // Mapear os dados para o formato LawArticle
+      // Mapear os dados para o formato LawArticle, garantindo valores defaults
       const lawArticles = (data || []).map((item: any) => ({
         id: item.id ? item.id.toString() : '',
         law_name: tableName || '',
         article_number: item.numero || '',
         article_text: item.artigo || '',
-        technical_explanation: item.tecnica,
-        formal_explanation: item.formal,
-        practical_example: item.exemplo
+        technical_explanation: item.tecnica || '',
+        formal_explanation: item.formal || '',
+        practical_example: item.exemplo || ''
       }));
 
       setArticles(lawArticles);
@@ -130,7 +127,7 @@ const VadeMecumViewer = () => {
       
       // Registrar vizualização bem-sucedida
       if (lawArticles.length > 0) {
-        toast.success(`${lawArticles.length} artigos carregados com sucesso`);
+        toast.success(`${lawArticles.length} artigos carregados`);
       } else {
         toast.info("Nenhum artigo encontrado para esta lei");
       }
@@ -154,23 +151,28 @@ const VadeMecumViewer = () => {
       setFilteredArticles(articles);
     } else {
       const lowerQuery = searchQuery.toLowerCase();
-      const filtered = articles.filter(article => 
-        article.article_text.toLowerCase().includes(lowerQuery) ||
-        article.article_number.toLowerCase().includes(lowerQuery)
-      );
+      const filtered = articles.filter(article => {
+        if (!article.article_text && !article.article_number) return false;
+        
+        return (
+          (article.article_text?.toLowerCase().includes(lowerQuery) || false) ||
+          (article.article_number?.toLowerCase().includes(lowerQuery) || false)
+        );
+      });
       setFilteredArticles(filtered);
     }
     
     // Resetar o batch quando a pesquisa mudar
-    setVisibleBatch(20);
+    setVisibleBatch(10);
   }, [searchQuery, articles]);
   
   // Efeito para carregar mais artigos quando o usuário rolar até o final da página
   useEffect(() => {
     if (inView && filteredArticles.length > visibleBatch) {
-      setVisibleBatch(prev => prev + 20);
+      const batchSize = isMobile ? 5 : 10;
+      setVisibleBatch(prev => prev + batchSize);
     }
-  }, [inView, filteredArticles.length, visibleBatch]);
+  }, [inView, filteredArticles.length, visibleBatch, isMobile]);
 
   if (loading) {
     return (
@@ -186,23 +188,20 @@ const VadeMecumViewer = () => {
   if (error) {
     return (
       <div className="container mx-auto p-4">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
+        <div className="bg-destructive/10 border-l-4 border-destructive p-4 rounded">
           <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
             <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">Erro ao carregar conteúdo</h3>
-              <div className="mt-2 text-sm text-red-700">
+              <h3 className="text-sm font-medium text-destructive">Erro ao carregar conteúdo</h3>
+              <div className="mt-2 text-sm">
                 <p>{error}</p>
-                <button 
+                <Button 
                   onClick={() => loadArticles()} 
-                  className="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200 transition-colors"
+                  className="mt-4 gap-2"
+                  variant="outline"
                 >
+                  <ReloadIcon className="h-4 w-4" />
                   Tentar novamente
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -217,7 +216,7 @@ const VadeMecumViewer = () => {
     <div className="container mx-auto p-4">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-2">{decodedLawName}</h1>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <p className="text-muted-foreground">
             {filteredArticles.length} artigos disponíveis
           </p>
@@ -225,7 +224,7 @@ const VadeMecumViewer = () => {
             <input
               type="search"
               placeholder="Buscar artigos..."
-              className="px-4 py-2 border rounded-md w-full md:w-64"
+              className="px-4 py-2 border rounded-md w-full bg-background border-input"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
@@ -236,12 +235,14 @@ const VadeMecumViewer = () => {
       {filteredArticles.length === 0 && !loading ? (
         <div className="text-center py-8">
           <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
-          <button 
+          <Button 
             onClick={() => loadArticles()} 
-            className="mt-4 px-4 py-2 bg-primary/10 text-primary rounded hover:bg-primary/20 transition-colors"
+            className="mt-4 gap-2"
+            variant="outline"
           >
+            <ReloadIcon className="h-4 w-4" />
             Recarregar
-          </button>
+          </Button>
         </div>
       ) : (
         <VadeMecumArticleList

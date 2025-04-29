@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Star, Film, Tv } from "lucide-react";
 import { motion } from "framer-motion";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface JurisFlixItem {
   id: number;
@@ -29,6 +30,7 @@ interface ContentGridProps {
 }
 
 export function ContentGrid({ items, search, selectedType, onSelectItem, isLoading }: ContentGridProps) {
+  const isMobile = useIsMobile();
   
   // Filter items based on search text and selected type
   const filteredItems = items.filter((item) => {
@@ -66,9 +68,11 @@ export function ContentGrid({ items, search, selectedType, onSelectItem, isLoadi
   
   // If loading, show skeleton cards
   if (isLoading) {
+    const skeletonCount = isMobile ? 4 : 10;
+    
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-        {Array(10).fill(0).map((_, i) => (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
+        {Array(skeletonCount).fill(0).map((_, i) => (
           <Card key={i} className="overflow-hidden border-0 shadow-md h-full">
             <CardContent className="p-0 aspect-[2/3] relative">
               <Skeleton className="h-full w-full" />
@@ -81,36 +85,49 @@ export function ContentGrid({ items, search, selectedType, onSelectItem, isLoadi
   
   // Grid of content cards
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
       {filteredItems.map((item) => (
         <motion.div 
           key={item.id}
-          whileHover={{ scale: 1.03 }}
+          whileHover={{ scale: isMobile ? 1.01 : 1.03 }}
           whileTap={{ scale: 0.98 }}
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.2 }}
+          className="will-change-transform"
         >
           <Card
             onClick={() => onSelectItem(item)}
             className="cursor-pointer overflow-hidden hover:ring-1 hover:ring-primary/50 shadow-lg bg-black h-full border-0"
           >
             <CardContent className="p-0 aspect-[2/3] relative">
-              <img 
-                src={item.capa} 
-                alt={item.nome}
-                className="object-cover h-full w-full"
-                loading="lazy"
-              />
+              {item.capa ? (
+                <img 
+                  src={item.capa} 
+                  alt={item.nome}
+                  className="object-cover h-full w-full"
+                  loading="lazy"
+                  onError={(e) => {
+                    // Fallback if image fails to load
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = 'https://via.placeholder.com/400x600?text=Imagem+não+encontrada';
+                  }}
+                />
+              ) : (
+                <div className="h-full w-full flex items-center justify-center bg-muted">
+                  Sem imagem
+                </div>
+              )}
               
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-3">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-2 sm:p-3">
                 <div className="flex items-center gap-1 mb-1">
                   {item.tipo === "filme" ? (
                     <Film size={14} className="text-primary" />
                   ) : (
                     <Tv size={14} className="text-primary" />
                   )}
-                  <span className="text-xs text-white/80">{item.ano}</span>
+                  <span className="text-[10px] sm:text-xs text-white/80">{item.ano}</span>
                   
                   {item.nota && (
                     <Badge className="ml-auto flex items-center gap-1 h-5 bg-amber-600/90 hover:bg-amber-600 text-white">
@@ -120,7 +137,7 @@ export function ContentGrid({ items, search, selectedType, onSelectItem, isLoadi
                   )}
                 </div>
                 
-                <h3 className="font-medium text-white text-sm line-clamp-2">
+                <h3 className="font-medium text-white text-xs sm:text-sm line-clamp-2">
                   {item.nome}
                 </h3>
                 
