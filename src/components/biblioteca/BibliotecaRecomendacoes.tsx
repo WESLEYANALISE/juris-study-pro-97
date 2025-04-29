@@ -1,4 +1,3 @@
-
 import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,10 +52,7 @@ export function BibliotecaRecomendacoes() {
     queryKey: ["livrospro-history"],
     queryFn: async () => {
       try {
-        // Use raw SQL query via rpc since the table isn't recognized in the types yet
-        const { data, error } = await supabase
-          .rpc('get_view_history', {});
-          
+        const { data, error } = await supabase.functions.invoke("get_view_history");
         if (error) throw error;
         return data || [];
       } catch (error) {
@@ -97,10 +93,13 @@ export function BibliotecaRecomendacoes() {
   // Livros recentemente visualizados
   useEffect(() => {
     if (viewHistory && livros) {
-      const viewed = viewHistory
-        .map((history: any) => livros.find(l => l.id === history.livro_id))
-        .filter(Boolean) as LivroPro[];
-      setRecentlyViewed(viewed);
+      // Ensure viewHistory is an array before mapping
+      if (Array.isArray(viewHistory)) {
+        const viewed = viewHistory
+          .map((history: any) => livros.find(l => l.id === history.livro_id))
+          .filter(Boolean) as LivroPro[];
+        setRecentlyViewed(viewed);
+      }
     }
   }, [viewHistory, livros]);
 
@@ -128,14 +127,8 @@ export function BibliotecaRecomendacoes() {
   // Função para registrar a visualização do livro
   const trackBookView = async (bookId: string) => {
     try {
-      const newHistory = {
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        livro_id: bookId
-      };
-      
-      // Use rpc to handle this operation since the table isn't in types yet
-      await supabase.rpc('track_book_view', { 
-        p_livro_id: bookId 
+      await supabase.functions.invoke("track_book_view", { 
+        body: { livro_id: bookId }
       });
     } catch (error) {
       console.error("Error tracking book view:", error);

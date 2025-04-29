@@ -37,32 +37,26 @@ export function EstudosHoje() {
         return acc;
       }, {});
       
-      // Buscar detalhes para cada tipo de conteúdo
+      // Buscar detalhes para cada tipo de conteúdo usando a RPC function
       const detailsPromises = Object.entries(byType).map(async ([type, ids]) => {
-        let table: string;
-        switch (type) {
-          case 'flashcard':
-            table = 'flash_cards_improved';
-            break;
-          case 'legal_article':
-            table = 'vademecum_articles';
-            break;
-          case 'book_section':
-            table = 'livrospro';
-            break;
-          default:
+        try {
+          const { data, error } = await supabase.functions.invoke('get_content_details', {
+            body: { content_type: type, content_ids: ids }
+          });
+          
+          if (error) {
+            console.error(`Error fetching ${type} details:`, error);
             return [];
+          }
+          
+          return (data || []).map((item: any) => ({
+            ...item,
+            content_type: type
+          }));
+        } catch (error) {
+          console.error(`Error in content details fetch for ${type}:`, error);
+          return [];
         }
-        
-        const { data } = await supabase
-          .from(table)
-          .select('*')
-          .in('id', ids);
-        
-        return (data || []).map(item => ({
-          ...item,
-          content_type: type
-        }));
       });
       
       const results = await Promise.all(detailsPromises);

@@ -35,24 +35,17 @@ export function useSpacedRepetition(options: UseSpacedRepetitionOptions = {}) {
       if (!user) return [];
       
       try {
-        // Using .from('estudo_repetido') with a casting to ensure type safety
-        const { data, error } = await supabase
+        let query = supabase
           .from('estudo_repetido')
           .select('*')
           .eq('user_id', user.id)
           .order('next_review_date', { ascending: true });
         
         if (options.contentType) {
-          const { data: filteredData, error: filterError } = await supabase
-            .from('estudo_repetido')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('content_type', options.contentType)
-            .order('next_review_date', { ascending: true });
-            
-          if (filterError) throw filterError;
-          return filteredData as StudyItem[];
+          query = query.eq('content_type', options.contentType);
         }
+        
+        const { data, error } = await query;
         
         if (error) throw error;
         return data as StudyItem[];

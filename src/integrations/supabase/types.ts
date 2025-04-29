@@ -2850,6 +2850,10 @@ export type Database = {
         Args: { topic: string; type: string }
         Returns: string
       }
+      get_content_details: {
+        Args: { p_content_type: string; p_content_ids: string[] }
+        Returns: Json
+      }
       get_simulado_leaderboard: {
         Args: { _categoria: string; _limit?: number }
         Returns: {
@@ -2858,6 +2862,15 @@ export type Database = {
           total_acertos: number
           percentual: number
           rank: number
+        }[]
+      }
+      get_view_history: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          livro_id: string
+          timestamp: string
+          user_id: string
         }[]
       }
       increment_user_statistic: {
@@ -2876,6 +2889,10 @@ export type Database = {
       }
       migrate_flashcards_data: {
         Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      track_book_view: {
+        Args: { p_livro_id: string }
         Returns: undefined
       }
     }
