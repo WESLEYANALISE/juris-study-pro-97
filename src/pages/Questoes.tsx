@@ -5,13 +5,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { QuestionCard } from "@/components/questoes/QuestionCard";
 import { QuestionStats } from "@/components/questoes/QuestionStats";
 import { QuestionSetup } from "@/components/questoes/QuestionSetup";
-import { Loader2, BookOpen, Target, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, BookOpen, Target, ChevronLeft, ChevronRight, ArrowUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
-import { FloatingControls } from "@/components/vademecum/FloatingControls";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useTouchGestures } from "@/hooks/use-touch-gestures";
 
 interface QuestionConfig {
   area: string;
@@ -24,6 +25,22 @@ const Questoes = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
+
+  // Handle touch swipe gestures for mobile
+  useTouchGestures({
+    onSwipeLeft: () => {
+      if (questions && currentQuestionIndex < questions.length - 1) {
+        handleNext();
+      }
+    },
+    onSwipeRight: () => {
+      if (currentQuestionIndex > 0) {
+        handlePrevious();
+      }
+    },
+    swipeThreshold: 80,
+  });
 
   // Handle scroll for back to top button
   useEffect(() => {
@@ -206,9 +223,11 @@ const Questoes = () => {
         </Button>
       </motion.div>
       
-      <div className="grid gap-6 md:grid-cols-[1fr_300px]">
+      <div className={cn("grid gap-6", isMobile ? "grid-cols-1" : "md:grid-cols-[1fr_300px]")}>
         <div className="space-y-6">
+          {/* We add a key prop to force component re-mount when question changes */}
           <QuestionCard
+            key={`question-${currentQuestion.id}`}
             id={currentQuestion.id}
             area={currentQuestion.Area}
             tema={currentQuestion.Tema}
@@ -246,23 +265,65 @@ const Questoes = () => {
           </div>
         </div>
         
-        <div className="space-y-6">
-          <QuestionStats stats={stats} isLoading={isLoadingStats} />
-          
-          {/* Study Session Card */}
+        {!isMobile && (
+          <div className="space-y-6">
+            <QuestionStats stats={stats} isLoading={isLoadingStats} />
+            
+            {/* Study Session Card */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.2 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5 text-primary" />
+                    Sessão de Estudo
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progresso</span>
+                      <span>{Math.round(progress)}%</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2">
+                      <div 
+                        className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out"
+                        style={{ width: `${progress}%` }} 
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="pt-2 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Área:</span>
+                      <span className="font-medium">{config.area}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Temas:</span>
+                      <span className="font-medium">{config.temas.length} selecionados</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>Questões:</span>
+                      <span className="font-medium">{questions.length}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        )}
+        
+        {isMobile && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.2 }}
           >
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5 text-primary" />
-                  Sessão de Estudo
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="py-4">
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Progresso</span>
@@ -274,35 +335,38 @@ const Questoes = () => {
                       style={{ width: `${progress}%` }} 
                     />
                   </div>
-                </div>
-                
-                <div className="pt-2 space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Área:</span>
-                    <span className="font-medium">{config.area}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Temas:</span>
-                    <span className="font-medium">{config.temas.length} selecionados</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span>Questões:</span>
-                    <span className="font-medium">{questions.length}</span>
+                  <div className="text-xs text-muted-foreground text-center mt-2">
+                    Deslize para o lado para navegar entre as questões
                   </div>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
-        </div>
+        )}
       </div>
       
-      <FloatingControls 
-        fontSize={16} // This prop isn't used here but is required
-        increaseFontSize={() => {}} // These are just placeholder functions
-        decreaseFontSize={() => {}}
-        showBackToTop={showBackToTop}
-        scrollToTop={scrollToTop}
-      />
+      {/* Only show back to top button, not the full floating controls */}
+      <AnimatePresence>
+        {showBackToTop && 
+          <motion.div 
+            className="fixed right-4 bottom-20 z-50" 
+            initial={{ opacity: 0, scale: 0.8 }} 
+            animate={{ opacity: 1, scale: 1 }} 
+            exit={{ opacity: 0, scale: 0.8 }} 
+            transition={{ duration: 0.2 }}
+          >
+            <Button 
+              variant="purple" 
+              size="icon" 
+              className="rounded-full h-12 w-12 shadow-lg" 
+              onClick={scrollToTop} 
+              title="Voltar ao topo"
+            >
+              <ArrowUp size={20} />
+            </Button>
+          </motion.div>
+        }
+      </AnimatePresence>
     </div>
   );
 };

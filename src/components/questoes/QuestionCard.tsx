@@ -4,11 +4,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckCircle2, XCircle, Bookmark, BookmarkCheck, Timer, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface QuestionCardProps {
   id: number;
@@ -40,9 +41,10 @@ export const QuestionCard = ({
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
-  // Timer effect
-  useState(() => {
+  // Fix: Using useEffect instead of useState for the timer
+  useEffect(() => {
     if (!hasAnswered) {
       const timer = setInterval(() => {
         setTimeSpent(prev => prev + 1);
@@ -50,7 +52,7 @@ export const QuestionCard = ({
       
       return () => clearInterval(timer);
     }
-  });
+  }, [hasAnswered]);
 
   const handleSubmit = () => {
     if (!selectedAnswer || hasAnswered) return;
@@ -113,7 +115,9 @@ export const QuestionCard = ({
           animate={hasAnswered ? "answered" : "initial"}
         >
           <CardHeader>
-            <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2">
+            <div className={cn("flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2", 
+              isMobile && "flex-col items-start gap-1"
+            )}>
               <div className="flex items-center gap-2">
                 {area && <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">{area}</span>}
                 {tema && (
@@ -124,7 +128,7 @@ export const QuestionCard = ({
                 )}
               </div>
               <div className="flex items-center gap-2">
-                {percentualAcertos && (
+                {percentualAcertos && !isMobile && (
                   <div className="text-sm text-muted-foreground">
                     Taxa de acerto: {percentualAcertos}%
                   </div>
@@ -150,15 +154,33 @@ export const QuestionCard = ({
                   <motion.div
                     key={key}
                     className={cn(
-                      "flex items-center space-x-2 rounded-lg border p-4 transition-colors",
+                      "flex items-center space-x-3 rounded-lg border p-4 transition-colors",
+                      isMobile && "p-3 items-start",
                       getAnswerStyle(key)
                     )}
                     whileHover={!hasAnswered ? { scale: 1.01 } : {}}
                     whileTap={!hasAnswered ? { scale: 0.99 } : {}}
                   >
-                    <RadioGroupItem value={key} id={`answer-${key}`} />
-                    <Label htmlFor={`answer-${key}`} className="flex-grow cursor-pointer">
-                      {value}
+                    <div className={cn(
+                      "flex items-center justify-center min-w-8 h-8 rounded-full border",
+                      isMobile && "bg-muted/30",
+                      selectedAnswer === key && !hasAnswered && "bg-primary/10 border-primary",
+                      hasAnswered && key === respostaCorreta && "bg-success/10 border-success",
+                      hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/10 border-destructive"
+                    )}>
+                      <RadioGroupItem value={key} id={`answer-${key}`} className="mt-0" />
+                    </div>
+                    <Label 
+                      htmlFor={`answer-${key}`} 
+                      className={cn(
+                        "flex-grow cursor-pointer",
+                        isMobile && "text-sm pt-1"
+                      )}
+                    >
+                      <div className="flex items-start">
+                        <span className="font-semibold mr-2">{key}.</span>
+                        <span>{value}</span>
+                      </div>
                     </Label>
                     {hasAnswered && key === respostaCorreta && (
                       <CheckCircle2 className="h-5 w-5 text-success" />
@@ -203,48 +225,89 @@ export const QuestionCard = ({
               </motion.div>
             )}
           </CardContent>
-          <CardFooter className="flex flex-wrap gap-2">
+          <CardFooter className={cn("flex flex-wrap gap-2", 
+            isMobile && "flex-col"
+          )}>
             <Button
               onClick={handleSubmit}
               disabled={!selectedAnswer || hasAnswered}
-              className="flex-1"
+              className={cn("flex-1", isMobile && "w-full")}
               variant={!hasAnswered ? "default" : undefined}
             >
               Responder
             </Button>
             
             {hasAnswered && onNext && (
-              <Button onClick={onNext} variant="outline" className="flex-1">
+              <Button 
+                onClick={onNext} 
+                variant="outline" 
+                className={cn("flex-1", isMobile && "w-full")}
+              >
                 Próxima
               </Button>
             )}
             
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleBookmark}
-              title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-            >
-              {isBookmarked ? (
-                <BookmarkCheck className="h-4 w-4 text-primary" />
-              ) : (
-                <Bookmark className="h-4 w-4" />
-              )}
-            </Button>
+            {!isMobile && (
+              <>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleBookmark}
+                  title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                >
+                  {isBookmarked ? (
+                    <BookmarkCheck className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    toast({
+                      title: "Link copiado!",
+                      description: "Link para esta questão copiado para a área de transferência",
+                    });
+                  }}
+                  title="Compartilhar esta questão"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </>
+            )}
             
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                toast({
-                  title: "Link copiado!",
-                  description: "Link para esta questão copiado para a área de transferência",
-                });
-              }}
-              title="Compartilhar esta questão"
-            >
-              <Share2 className="h-4 w-4" />
-            </Button>
+            {isMobile && (
+              <div className="flex justify-between w-full">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleBookmark}
+                  title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                >
+                  {isBookmarked ? (
+                    <BookmarkCheck className="h-4 w-4 text-primary" />
+                  ) : (
+                    <Bookmark className="h-4 w-4" />
+                  )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => {
+                    toast({
+                      title: "Link copiado!",
+                      description: "Link para esta questão copiado para a área de transferência",
+                    });
+                  }}
+                  title="Compartilhar esta questão"
+                >
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
           </CardFooter>
         </motion.div>
       </Card>
