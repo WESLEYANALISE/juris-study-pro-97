@@ -134,16 +134,17 @@ export const ArticleCard = ({
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: isMobile ? 0.2 : 0.3 }}
       className="will-change-transform"
+      whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
     >
       <Card className="p-4 md:p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300">
         <div className="flex justify-between items-start">
           <div className={`flex flex-col ${isHeading ? "w-full" : ""}`}>
             {articleNumber?.trim() ? (
-              <h3 className="text-lg font-semibold">Art. {articleNumber}</h3>
+              <h3 className="text-lg font-semibold bg-primary/5 px-3 py-1 rounded-lg inline-block">Art. {articleNumber}</h3>
             ) : null}
             <div 
               style={{ fontSize: `${fontSize}px` }} 
-              className={`mt-2 whitespace-pre-line px-1 py-3 ml-0 ${isHeading ? "text-center w-full font-semibold" : ""}`}
+              className={`mt-2 whitespace-pre-line px-1 py-3 ml-0 ${isHeading ? "text-center w-full font-semibold" : "border-l-2 border-primary/20 pl-3"}`}
             >
               <ReactMarkdown className="prose dark:prose-invert max-w-none">{articleText || ''}</ReactMarkdown>
             </div>
@@ -195,6 +196,7 @@ export const ArticleCard = ({
               size="icon" 
               onClick={() => handleCopy(articleText)} 
               title="Copiar artigo"
+              className="hover:scale-105 transition-transform"
             >
               <Copy size={16} />
             </Button>

@@ -187,7 +187,7 @@ export const QuestionCard = ({
                 </div>
               </div>
             </div>
-            <CardTitle className="text-lg font-medium">
+            <CardTitle className="text-lg font-medium p-3 bg-primary/5 border-l-2 border-primary/30 rounded">
               {pergunta}
             </CardTitle>
           </CardHeader>
@@ -205,7 +205,7 @@ export const QuestionCard = ({
                     key={key}
                     className={cn(
                       "flex items-center space-x-3 rounded-lg border p-4 transition-colors shadow-sm",
-                      isMobile && "p-3 items-start",
+                      isMobile && "p-3 items-center",
                       selectedAnswer === key && !hasAnswered && "bg-primary/10 border-primary/30",
                       getAnswerStyle(key),
                       hasAnswered && key === respostaCorreta && "bg-success/10 border-success",
@@ -215,8 +215,7 @@ export const QuestionCard = ({
                     whileTap={!hasAnswered ? { scale: 0.99 } : {}}
                   >
                     <div className={cn(
-                      "flex items-center justify-center min-w-8 h-8 rounded-full border",
-                      isMobile && "bg-muted/30",
+                      "flex items-center justify-center min-w-6 h-6 rounded-full border",
                       selectedAnswer === key && !hasAnswered && "bg-primary/20 border-primary",
                       hasAnswered && key === respostaCorreta && "bg-success/20 border-success",
                       hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/20 border-destructive"
@@ -227,10 +226,10 @@ export const QuestionCard = ({
                       htmlFor={`answer-${key}`} 
                       className={cn(
                         "flex-grow cursor-pointer",
-                        isMobile && "text-sm pt-1"
+                        isMobile && "text-base"
                       )}
                     >
-                      <div className="flex items-start">
+                      <div className="flex items-center">
                         <span className="font-semibold mr-2">{key}.</span>
                         <span>{value}</span>
                       </div>

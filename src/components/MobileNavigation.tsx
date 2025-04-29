@@ -4,6 +4,7 @@ import { Home, BookOpenText, Video, Brain, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
+import { motion } from "framer-motion";
 
 // Define os itens do menu de navegação móvel
 const navItems = [
@@ -19,10 +20,12 @@ export default function MobileNavigation() {
   const location = useLocation();
   const { state } = useSidebar();
   
-  // Renderizar a navegação móvel em todas as páginas, exceto quando o sidebar estiver expandido
-  // A checagem original estava impedindo que a navegação fosse mostrada em certas páginas
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden">
+    <motion.nav 
+      initial={{ y: 50, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden shadow-lg"
+    >
       <ul className="flex justify-around">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href || 
@@ -39,13 +42,21 @@ export default function MobileNavigation() {
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
-                <item.icon className="h-5 w-5 mb-1" />
+                <motion.div 
+                  whileTap={{ scale: 0.9 }}
+                  className={cn(
+                    "flex items-center justify-center w-10 h-10 rounded-full mb-1",
+                    isActive && "bg-primary/10"
+                  )}
+                >
+                  <item.icon className="h-5 w-5" />
+                </motion.div>
                 <span>{item.name}</span>
               </Link>
             </li>
           );
         })}
       </ul>
-    </nav>
+    </motion.nav>
   );
 }

@@ -23,12 +23,12 @@
     --secondary: 45 96% 50%;
     --secondary-foreground: 240 20% 9%;
     
-    /* States and feedback */
-    --success: 142 72% 35%;
+    /* States and feedback - Enhanced colors for better visibility */
+    --success: 142 72% 45%;
     --success-foreground: 210 40% 98%;
-    --warning: 45 93% 47%;
+    --warning: 45 93% 55%;
     --warning-foreground: 224 71% 4%;
-    --destructive: 0 84% 43%;
+    --destructive: 0 84% 55%;
     --destructive-foreground: 210 40% 98%;
     
     /* UI elements */
@@ -61,6 +61,11 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     overscroll-behavior: none;
+  }
+  
+  /* Better focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary/70;
   }
 }
 
@@ -142,6 +147,36 @@
   .animate-slide-in {
     animation: slide-in 0.3s ease-out forwards;
   }
+  
+  /* Better touch targets for mobile */
+  @media (max-width: 640px) {
+    button, a, .interactive {
+      @apply min-h-[44px] min-w-[44px];
+    }
+  }
+  
+  /* Question highlight styles */
+  .question-highlight {
+    @apply bg-primary/5 border-l-2 border-primary/30 pl-3 py-2 rounded-r-md;
+  }
+  
+  /* Enhanced alternative styles */
+  .alternative-item {
+    @apply flex items-center space-x-3 p-4 border rounded-lg transition-all hover:bg-primary/5;
+  }
+  
+  .alternative-circle {
+    @apply flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary;
+  }
+  
+  /* Enhanced success/error colors */
+  .status-success {
+    @apply bg-green-600 text-white;
+  }
+  
+  .status-error {
+    @apply bg-red-600 text-white;
+  }
 }
 
 /* Glassmorphism Effects */
@@ -180,11 +215,11 @@
 
 /* Enhanced Shadow Effects */
 .shadow-purple {
-  @apply shadow-lg shadow-purple-800/20;
+  @apply shadow-lg shadow-purple-800/30;
 }
 
 .shadow-glow {
-  @apply shadow-lg shadow-primary/30;
+  @apply shadow-lg shadow-primary/40;
 }
 
 /* Hover Effects */
@@ -224,15 +259,14 @@
     @apply text-base;
   }
   
-  /* Improve tap targets */
-  button, a {
-    min-height: 44px;
-    min-width: 44px;
-  }
-  
   /* Responsive navbar */
   .navbar-responsive {
     @apply flex-wrap gap-y-2;
+  }
+  
+  /* Enhanced touch targets */
+  .radio-option {
+    @apply p-4;
   }
 }
 

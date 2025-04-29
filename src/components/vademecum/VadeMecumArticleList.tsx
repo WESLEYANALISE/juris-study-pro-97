@@ -37,17 +37,35 @@ export function VadeMecumArticleList({
     };
   };
   
+  // Custom animation variants for staggered entry
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.3 } }
+  };
+  
   return (
-    <div className="space-y-4 md:space-y-6">
+    <motion.div 
+      variants={containerVariants}
+      initial="hidden"
+      animate="show" 
+      className="space-y-4 md:space-y-6"
+    >
       <AnimatePresence>
         {isLoading ? (
           Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
             <motion.div
               key={`skeleton-${i}`}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2, delay: i * 0.05 }}
+              variants={itemVariants}
             >
               <Skeleton className="h-32" />
             </motion.div>
@@ -74,16 +92,17 @@ export function VadeMecumArticleList({
             } = getArticleProps(article);
             
             return (
-              <ArticleCard
-                key={article.id || `article-${index}`}
-                lawName={tableName || ''}
-                articleNumber={articleNumber}
-                articleText={articleText}
-                technicalExplanation={technicalExplanation}
-                formalExplanation={formalExplanation}
-                practicalExample={practicalExample}
-                fontSize={fontSize}
-              />
+              <motion.div key={article.id || `article-${index}`} variants={itemVariants}>
+                <ArticleCard
+                  lawName={tableName || ''}
+                  articleNumber={articleNumber}
+                  articleText={articleText}
+                  technicalExplanation={technicalExplanation}
+                  formalExplanation={formalExplanation}
+                  practicalExample={practicalExample}
+                  fontSize={fontSize}
+                />
+              </motion.div>
             );
           })
         )}
@@ -91,10 +110,16 @@ export function VadeMecumArticleList({
       
       {!isLoading && filteredArticles.length > visibleBatch && (
         <div ref={loadMoreRef} className="py-4 flex justify-center">
-          <Skeleton className="h-8 w-32" />
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <Skeleton className="h-8 w-32" />
+          </motion.div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
 
