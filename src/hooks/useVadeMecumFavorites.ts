@@ -45,6 +45,31 @@ export const useVadeMecumFavorites = () => {
     fetchFavorites();
   }, [user]);
   
+  // Load history
+  const loadHistory = async () => {
+    if (!user) return [];
+    
+    try {
+      const { data, error } = await supabase
+        .from('vademecum_history')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('viewed_at', { ascending: false })
+        .limit(10);
+      
+      if (error) {
+        console.error('Error loading history:', error);
+        throw error;
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('Error loading history:', error);
+      toast.error('Erro ao carregar histórico');
+      return [];
+    }
+  };
+  
   // Add a favorite
   const addFavorite = async (article: {
     id: string;
@@ -165,6 +190,9 @@ export const useVadeMecumFavorites = () => {
     removeFavorite,
     isFavorite,
     toggleFavorite,
-    isLoading
+    isLoading,
+    loadHistory
   };
 };
+
+export default useVadeMecumFavorites;
