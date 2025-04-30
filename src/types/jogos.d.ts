@@ -150,4 +150,15 @@ export interface CustomTypes {
     created_at: string;
     updated_at: string;
   };
+  annotations: {
+    id: string;
+    user_id: string;
+    law_id: string;
+    article_number: string;
+    annotation_text?: string;
+    highlight_color?: string;
+    ai_generated?: boolean;
+    created_at: string;
+    updated_at: string;
+  };
 }

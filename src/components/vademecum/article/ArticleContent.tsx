@@ -18,7 +18,7 @@ export const ArticleContent = ({
   return (
     <div className={`flex flex-col ${isHeading ? "w-full" : ""}`}>
       {articleNumber?.trim() ? (
-        <h3 className="text-lg font-semibold bg-primary/5 px-3 py-1 rounded-lg inline-block shadow-sm">
+        <h3 className="text-lg font-semibold bg-primary/10 px-3 py-1 rounded-lg inline-block shadow-sm">
           Art. {articleNumber}
         </h3>
       ) : null}

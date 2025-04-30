@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,9 +29,9 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         setIsLoading(true);
         
         // Using type assertion to bypass type checking for the Supabase client
-        const { data, error } = await (supabase
+        const { data, error } = await supabase
           .from('jogos_rpg_cenarios')
-          .select('*') as any);
+          .select('*') as any;
         
         if (error) throw error;
         
@@ -48,7 +49,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
             .select('*')
             .eq('user_id', user.id)
             .eq('cenario_id', data?.[0]?.id)
-            .maybeSingle() as { data: ProgressoRPG | null, error: any };
+            .maybeSingle() as any;
             
           if (!progressoError && progressoData) {
             setProgresso(progressoData);
@@ -120,7 +121,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
           jogo_id: gameId
         })
         .select()
-        .single() as { data: ProgressoRPG | null, error: any };
+        .single() as any;
         
       if (error) throw error;
       

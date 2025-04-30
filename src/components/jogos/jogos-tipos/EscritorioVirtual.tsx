@@ -1,3 +1,4 @@
+
 // Updating the EscritorioVirtual component to fix Supabase type issues
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,22 +29,22 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Using type assertion to bypass type checking for the Supabase client
-        const { data: casosData, error: casosError } = await (supabase
+        // Use type assertion to fix TypeScript error
+        const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
-          .order('created_at', { ascending: false }) as any);
+          .order('created_at', { ascending: false }) as any;
         
         if (casosError) throw casosError;
         
         setCasos(casosData || []);
         
         if (user) {
-          // Using type assertion to bypass type checking for the Supabase client
-          const { data: solucoesData, error: solucoesError } = await (supabase
+          // Use type assertion to fix TypeScript error
+          const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
-            .eq('user_id', user.id) as any);
+            .eq('user_id', user.id) as any;
           
           if (solucoesError) throw solucoesError;
           
@@ -70,15 +71,15 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
     try {
       setIsSending(true);
       
-      // Using type assertion to bypass type checking for the Supabase client
-      const { error } = await (supabase
+      // Use type assertion to fix TypeScript error
+      const { error } = await supabase
         .from('jogos_escritorio_solucoes')
         .insert({
           caso_id: casoSelecionado.id,
           user_id: user.id,
           solucao: solucaoTexto,
           status: 'pendente'
-        }) as any);
+        }) as any;
       
       if (error) throw error;
       
@@ -87,10 +88,10 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       setCasoSelecionado(null);
       
       // Refresh soluções
-      const { data, error: fetchError } = await (supabase
+      const { data, error: fetchError } = await supabase
         .from('jogos_escritorio_solucoes')
         .select('*')
-        .eq('user_id', user.id) as any);
+        .eq('user_id', user.id) as any;
       
       if (!fetchError) {
         setSolucoes(data || []);
