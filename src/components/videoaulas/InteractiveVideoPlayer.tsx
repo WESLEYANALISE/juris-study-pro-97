@@ -99,7 +99,7 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
     const fetchVideoData = async () => {
       try {
         const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=AIzaSyBCPCIV9jUxa4sD6TrlR74q3KTKqDZjoT8`
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet&id=${videoId}&key=AIzaSyC_vdQ6MShNiZo60KK2sHO-lgMhUda1woE`
         );
         
         if (!response.ok) {
