@@ -1,4 +1,5 @@
 
+// This file defines types for jogos (games) functionality
 export interface Caso {
   id: string;
   titulo: string;

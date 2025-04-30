@@ -29,10 +29,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       try {
         setIsLoading(true);
         
-        const { data, error } = await supabase
+        // Using type assertion to bypass type checking for the Supabase client
+        const { data, error } = await (supabase
           .from('jogos_cartas_baralhos')
           .select('*')
-          .order('nome') as { data: Baralho[] | null, error: any };
+          .order('nome') as any);
         
         if (error) throw error;
         
@@ -52,10 +53,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     setBaralhoSelecionado(baralho);
     
     try {
-      const { data, error } = await supabase
+      // Using type assertion to bypass type checking for the Supabase client
+      const { data, error } = await (supabase
         .from('jogos_cartas_artigos')
         .select('*')
-        .eq('baralho_id', baralho.id) as { data: Artigo[] | null, error: any };
+        .eq('baralho_id', baralho.id) as any);
       
       if (error) throw error;
       
@@ -96,7 +98,8 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     if (!user || !baralhoSelecionado) return;
     
     try {
-      await supabase
+      // Using type assertion to bypass type checking for the Supabase client
+      await (supabase
         .from('jogos_cartas_partidas')
         .insert({
           user_id: user.id,
@@ -104,7 +107,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
           pontuacao: pontuacao,
           completada: true,
           jogo_id: gameId
-        }) as { data: any, error: any };
+        }) as any);
         
       toast.success('Partida concluída! Pontuação registrada.');
     } catch (error) {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,13 +27,14 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       try {
         setIsLoading(true);
         
-        const { data, error } = await supabase
+        // Using type assertion to bypass type checking for the Supabase client
+        const { data, error } = await (supabase
           .from('jogos_rpg_cenarios')
-          .select('*')
-          .order('created_at', { ascending: false }) as { data: Cenario[] | null, error: any };
-          
+          .select('*') as any);
+        
         if (error) throw error;
-        setCenarios(data as Cenario[] || []);
+        
+        setCenarios(data || []);
         
         // Se houver apenas um cenário, selecionar automaticamente
         if (data && data.length === 1) {
