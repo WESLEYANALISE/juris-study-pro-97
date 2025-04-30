@@ -56,7 +56,7 @@ export const FloatingControls = ({
       }} transition={{
         duration: 0.2
       }}>
-            <Button variant="purple" size="icon" onClick={scrollToTop} title="Voltar ao topo" className="rounded-full h-10 w-10 shadow-lg my-[14px]">
+            <Button variant="purple" size="icon" onClick={scrollToTop} title="Voltar ao topo" className="rounded-full h-10 w-10 shadow-lg my-[20px]">
               <ArrowUp size={18} />
             </Button>
           </motion.div>}
