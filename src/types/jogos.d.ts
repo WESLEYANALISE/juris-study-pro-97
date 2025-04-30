@@ -64,7 +64,7 @@ export interface CustomTypes {
   jogos_escritorio_solucoes: Solucao;
   jogos_cartas_baralhos: Baralho;
   jogos_cartas_artigos: Artigo;
+  jogos_cartas_partidas: any;
   jogos_rpg_cenarios: Cenario;
   jogos_rpg_progresso: ProgressoRPG;
-  jogos_cartas_partidas: any;
 }

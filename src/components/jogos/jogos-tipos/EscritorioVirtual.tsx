@@ -30,25 +30,25 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Use type assertion to tell TypeScript this table exists
+        // Using any to bypass type checking for the Supabase client
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false }) as { data: Caso[] | null, error: any };
           
         if (casosError) throw casosError;
-        setCasos(casosData as Caso[] || []);
+        setCasos(casosData || []);
         
         if (user) {
-          // Use type assertion for the solucoes table as well
+          // Using any to bypass type checking for the Supabase client
           const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }) as { data: Solucao[] | null, error: any };
             
           if (solucoesError) throw solucoesError;
-          setSolucoes(solucoesData as Solucao[] || []);
+          setSolucoes(solucoesData || []);
         }
       } catch (error) {
         console.error('Erro ao carregar casos:', error);
@@ -100,7 +100,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
           jogo_id: gameId
         })
         .select('*')
-        .single();
+        .single() as { data: Solucao | null, error: any };
         
       if (error) throw error;
       

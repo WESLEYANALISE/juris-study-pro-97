@@ -32,11 +32,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         const { data, error } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
-          .order('nome');
+          .order('nome') as { data: Baralho[] | null, error: any };
         
         if (error) throw error;
         
-        setBaralhos(data as Baralho[] || []);
+        setBaralhos(data || []);
       } catch (error) {
         console.error('Erro ao carregar baralhos:', error);
         toast.error('Não foi possível carregar os baralhos');
@@ -55,11 +55,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       const { data, error } = await supabase
         .from('jogos_cartas_artigos')
         .select('*')
-        .eq('baralho_id', baralho.id);
+        .eq('baralho_id', baralho.id) as { data: Artigo[] | null, error: any };
       
       if (error) throw error;
       
-      setArtigos(data as Artigo[] || []);
+      setArtigos(data || []);
       
       // Selecionar 5 cartas aleatórias para a mão inicial
       if (data && data.length >= 5) {
