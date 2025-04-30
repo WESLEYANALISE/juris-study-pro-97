@@ -84,7 +84,7 @@ export const ArticleCard = ({
               articleText={articleText}
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
-              isFavorite={isFavorite || false} 
+              isFavorite={!!isFavorite} 
               setIsFavorite={() => toggleFavorite(articleText)}
               lawName={lawName}
               articleNumber={articleNumber}

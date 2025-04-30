@@ -35,8 +35,8 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         if (error) throw error;
         
         if (data) {
-          // Ensure we only set data that matches the Cenario type
-          const cenariosData = data as Cenario[];
+          // First convert to unknown, then to the expected type to avoid TypeScript errors
+          const cenariosData = data as unknown as Cenario[];
           setCenarios(cenariosData);
           
           // Se houver apenas um cenário, selecionar automaticamente
@@ -128,13 +128,14 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       const { data, error } = await supabaseWithCustomTables
         .from('jogos_rpg_progresso')
         .upsert(progressoData)
-        .select()
-        .single();
+        .select();
         
       if (error) throw error;
       
-      // Explicitly cast returned data to ensure type safety
-      setProgresso(data as unknown as ProgressoRPG);
+      if (data && data.length > 0) {
+        // Explicitly cast first item of returned data array to ensure type safety
+        setProgresso(data[0] as unknown as ProgressoRPG);
+      }
       
       if (finalizado) {
         toast.success('Cenário completado! Pontuação registrada.');
