@@ -1,7 +1,6 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
-import type { CustomTypes } from '@/types/jogos';
 
 const SUPABASE_URL = "https://yovocuutiwwmbempxcyo.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlvdm9jdXV0aXd3bWJlbXB4Y3lvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ5MDcyMjUsImV4cCI6MjA2MDQ4MzIyNX0.vbY_vGFeD0iHqmh-NcMq3sAi-jAIgS-DBVwnn3blEs0";
@@ -15,13 +14,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// NOTE: This custom client approach is causing type issues.
-// We'll prefer using the standard supabase client with type assertions where needed
-// instead of trying to extend the client's type system in a way that creates deep instantiations.
-
-// Create a custom client for tables not in the generated types - removed as it causes type issues
-/*
-export const supabaseWithCustomTables = supabase as unknown as typeof supabase & {
-  from: <T extends keyof CustomTypes>(table: T) => ReturnType<typeof supabase.from>
-};
-*/
+// This approach allows us to maintain type safety while still accessing custom tables
+// that might not be fully captured in the generated types
+export const supabaseWithCustomTables = supabase;

@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
-import { supabaseWithCustomTables } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { MessageSquare, FileText, BarChart3 } from 'lucide-react';
@@ -28,8 +28,8 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Use the type-safe query with our custom tables
-        const { data: casosData, error: casosError } = await supabaseWithCustomTables
+        // Use the standard supabase client with type assertion
+        const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
           .order('created_at', { ascending: false });
@@ -39,7 +39,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         setCasos(casosData as unknown as Caso[]);
         
         if (user) {
-          const { data: solucoesData, error: solucoesError } = await supabaseWithCustomTables
+          const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
             .eq('user_id', user.id);
@@ -69,7 +69,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
     try {
       setIsSending(true);
       
-      const { error } = await supabaseWithCustomTables
+      const { error } = await supabase
         .from('jogos_escritorio_solucoes')
         .insert({
           caso_id: casoSelecionado.id,
@@ -85,7 +85,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       setCasoSelecionado(null);
       
       // Refresh soluções
-      const { data, error: fetchError } = await supabaseWithCustomTables
+      const { data, error: fetchError } = await supabase
         .from('jogos_escritorio_solucoes')
         .select('*')
         .eq('user_id', user.id);
@@ -95,7 +95,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       }
       
       // Update user stats
-      await supabaseWithCustomTables.from('jogos_user_stats').upsert({
+      await supabase.from('jogos_user_stats').upsert({
         user_id: user.id,
         jogo_id: gameId,
         partidas_jogadas: (solucoes.length || 0) + 1,

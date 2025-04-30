@@ -3,7 +3,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
-import { supabaseWithCustomTables } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { Baralho, Artigo } from '@/types/jogos';
@@ -30,8 +30,8 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       try {
         setIsLoading(true);
         
-        // Use type-safe query with our custom tables
-        const { data: baralhosData, error: baralhosError } = await supabaseWithCustomTables
+        // Use standard supabase client with type assertion
+        const { data: baralhosData, error: baralhosError } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
           .order('area_direito', { ascending: true });
@@ -56,8 +56,8 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         try {
           setIsLoading(true);
           
-          // Use type-safe query with our custom tables
-          const { data: artigosData, error: artigosError } = await supabaseWithCustomTables
+          // Use standard supabase client with type assertion
+          const { data: artigosData, error: artigosError } = await supabase
             .from('jogos_cartas_artigos')
             .select('*')
             .eq('baralho_id', baralhoSelecionado.id)
@@ -122,7 +122,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     
     try {
       // Salvar partida
-      await supabaseWithCustomTables.from('jogos_cartas_partidas').insert({
+      await supabase.from('jogos_cartas_partidas').insert({
         user_id: user.id,
         baralho_id: baralhoSelecionado.id,
         jogo_id: gameId,
@@ -131,7 +131,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       });
       
       // Atualizar estatísticas do usuário
-      await supabaseWithCustomTables.from('jogos_user_stats').upsert({
+      await supabase.from('jogos_user_stats').upsert({
         user_id: user.id,
         jogo_id: gameId,
         pontuacao: pontuacao,
