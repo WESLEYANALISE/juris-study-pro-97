@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { motion } from 'framer-motion';
@@ -22,6 +21,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { PodcastCard } from '@/components/podcast/PodcastCard';
 
 interface Podcast {
   id: string;
@@ -257,7 +257,7 @@ const Podcasts = () => {
         const { data, error } = await supabase
           .from('podcast_tabela')
           .select('url_audio, descricao')
-          .eq('id', podcast.id)
+          .eq('id', Number(podcast.id))
           .single();
           
         if (error) throw error;
