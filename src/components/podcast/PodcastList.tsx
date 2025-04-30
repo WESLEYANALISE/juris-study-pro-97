@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PodcastCard } from "./PodcastCard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -72,7 +73,9 @@ export function PodcastList({
             .eq('user_id', user.id);
           
           if (favoriteIds && favoriteIds.length > 0) {
-            const podcastIds = favoriteIds.map(f => f.podcast_id);
+            // Extract podcast IDs as an array and convert to string type explicitly
+            const podcastIds = favoriteIds.map(f => f.podcast_id.toString());
+            // Use the in operator with the properly typed array
             query = query.in('id', podcastIds);
           } else {
             // If no favorites and showing favorites only

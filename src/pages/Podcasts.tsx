@@ -169,7 +169,7 @@ const Podcasts = () => {
       }
 
       // Get the podcast details for each progress item
-      const podcastIds = progressData.map(item => item.podcast_id);
+      const podcastIds = progressData.map(item => item.podcast_id.toString());
       
       const { data: podcastData, error: podcastError } = await supabase
         .from('podcast_tabela')
