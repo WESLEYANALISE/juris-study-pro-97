@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { JuridicalCard } from '@/components/ui/juridical-card';
 import { supabase } from '@/integrations/supabase/client';
@@ -125,7 +124,7 @@ export const JogosLeaderboard = ({ gameId }: JogosLeaderboardProps) => {
   return (
     <JuridicalCard
       title="Ranking dos Jogadores"
-      icon="trophy"
+      icon="book"
       variant="default"
     >
       {isLoading ? (

@@ -1,38 +1,17 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { Briefcase, Files, CheckCircle2, Clock } from 'lucide-react';
+import { Caso, Solucao } from '@/types/jogos';
 
 interface EscritorioVirtualProps {
   gameId: string;
-}
-
-interface Caso {
-  id: string;
-  titulo: string;
-  descricao: string;
-  cliente: string;
-  problema: string;
-  documentos: any;
-  nivel_dificuldade: string;
-}
-
-interface Solucao {
-  id: string;
-  caso_id: string;
-  solucao: string;
-  status: string;
-  pontuacao: number;
-  feedback: string;
 }
 
 export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
@@ -50,10 +29,11 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
+        // Use the any type and explicit casting to avoid type errors
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false }) as { data: Caso[] | null, error: any };
           
         if (casosError) throw casosError;
         setCasos(casosData || []);
@@ -63,7 +43,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
             .from('jogos_escritorio_solucoes')
             .select('*')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false }) as { data: Solucao[] | null, error: any };
             
           if (solucoesError) throw solucoesError;
           setSolucoes(solucoesData || []);
@@ -118,14 +98,16 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
           jogo_id: gameId
         })
         .select('*')
-        .single();
+        .single() as { data: Solucao | null, error: any };
         
       if (error) throw error;
       
-      // Adicionar nova solução à lista local
-      setSolucoes(prev => [data, ...prev]);
-      toast.success('Solução submetida com sucesso!');
-      setActiveTab('solucoes');
+      if (data) {
+        // Adicionar nova solução à lista local
+        setSolucoes(prev => [data, ...prev]);
+        toast.success('Solução submetida com sucesso!');
+        setActiveTab('solucoes');
+      }
     } catch (error) {
       console.error('Erro ao submeter solução:', error);
       toast.error('Não foi possível submeter sua solução');

@@ -3,46 +3,26 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
-import { GitBranch, Clock, Trophy, History } from 'lucide-react';
+import { GitBranch, History, Trophy, CheckCircle2 } from 'lucide-react';
+import { Cenario, ProgressoRPG } from '@/types/jogos';
 
 interface RPGJuridicoProps {
   gameId: string;
 }
 
-interface Cenario {
-  id: string;
-  titulo: string;
-  descricao: string;
-  situacao_inicial: string;
-  opcoes: Array<{ id: number; texto: string }>;
-  consequencias: Array<{ opcao_id: number; resultado: string; pontos: number }>;
-  area_direito: string;
-  nivel_dificuldade: string;
-}
-
-interface Progresso {
-  id: string;
-  cenario_id: string;
-  caminho_escolhido: {
-    opcao_id: number;
-    resultado: string;
-    pontos: number;
-  } | null;
-  pontuacao: number;
-  completado: boolean;
-}
-
 export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
   const { user } = useAuth();
   const [cenarios, setCenarios] = useState<Cenario[]>([]);
-  const [progressos, setProgressos] = useState<Progresso[]>([]);
+  const [progressoUsuario, setProgressoUsuario] = useState<ProgressoRPG[]>([]);
   const [cenarioSelecionado, setCenarioSelecionado] = useState<Cenario | null>(null);
   const [opcaoSelecionada, setOpcaoSelecionada] = useState<number | null>(null);
-  const [resultado, setResultado] = useState<{ texto: string; pontos: number } | null>(null);
+  const [resultado, setResultado] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<string>('cenarios');
@@ -55,23 +35,22 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         const { data: cenariosData, error: cenariosError } = await supabase
           .from('jogos_rpg_cenarios')
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('titulo') as { data: Cenario[] | null, error: any };
           
         if (cenariosError) throw cenariosError;
         setCenarios(cenariosData || []);
         
         if (user) {
-          const { data: progressosData, error: progressosError } = await supabase
+          const { data: progressoData, error: progressoError } = await supabase
             .from('jogos_rpg_progresso')
             .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
+            .eq('user_id', user.id) as { data: ProgressoRPG[] | null, error: any };
             
-          if (progressosError) throw progressosError;
-          setProgressos(progressosData || []);
+          if (progressoError) throw progressoError;
+          setProgressoUsuario(progressoData || []);
         }
       } catch (error) {
-        console.error('Erro ao carregar cenários:', error);
+        console.error('Erro ao carregar cenários RPG:', error);
         toast.error('Não foi possível carregar os cenários');
       } finally {
         setIsLoading(false);
@@ -87,23 +66,10 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
     setResultado(null);
     
     // Verificar se usuário já completou este cenário
-    const progressoExistente = progressos.find(p => p.cenario_id === cenario.id);
+    const progressoExistente = progressoUsuario.find(p => p.cenario_id === cenario.id);
     if (progressoExistente && progressoExistente.completado) {
-      const consequencia = cenario.consequencias.find(
-        c => c.opcao_id === progressoExistente.caminho_escolhido?.opcao_id
-      );
-      if (consequencia) {
-        setResultado({
-          texto: consequencia.resultado,
-          pontos: consequencia.pontos
-        });
-        setOpcaoSelecionada(consequencia.opcao_id);
-      }
+      toast.info('Você já completou este cenário!');
     }
-  };
-  
-  const handleEscolhaOpcao = (opcaoId: number) => {
-    setOpcaoSelecionada(opcaoId);
   };
   
   const handleSubmitEscolha = async () => {
@@ -112,58 +78,49 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
     try {
       setIsSubmitting(true);
       
-      // Verificar se já existe progresso completado
-      const progressoExistente = progressos.find(
-        p => p.cenario_id === cenarioSelecionado.id && p.completado
-      );
+      const opcoes = cenarioSelecionado.opcoes as any[];
+      const consequencias = cenarioSelecionado.consequencias as any[];
       
-      if (progressoExistente) {
-        toast.error('Você já completou este cenário');
-        return;
-      }
-      
-      const consequencia = cenarioSelecionado.consequencias.find(
-        c => c.opcao_id === opcaoSelecionada
-      );
+      // Encontrar resultado baseado na opção selecionada
+      const consequencia = consequencias.find(c => c.opcao_id === opcaoSelecionada);
       
       if (!consequencia) {
-        toast.error('Opção inválida');
+        toast.error('Erro ao processar sua escolha');
         return;
       }
       
-      // Registrar a escolha
+      setResultado(consequencia);
+      
       const { data, error } = await supabase
         .from('jogos_rpg_progresso')
         .insert({
           cenario_id: cenarioSelecionado.id,
           user_id: user.id,
-          caminho_escolhido: {
-            opcao_id: opcaoSelecionada,
-            resultado: consequencia.resultado,
-            pontos: consequencia.pontos
-          },
+          caminho_escolhido: { opcao_id: opcaoSelecionada },
           pontuacao: consequencia.pontos,
           completado: true,
           jogo_id: gameId
         })
         .select('*')
-        .single();
+        .single() as { data: ProgressoRPG | null, error: any };
         
-      if (error) throw error;
+      if (error) {
+        // Checar se é erro de chave duplicada (já completou este cenário)
+        if (error.code === '23505') {
+          toast.info('Você já completou este cenário antes');
+        } else {
+          throw error;
+        }
+      }
       
-      // Atualizar progresso local
-      setProgressos(prev => [data, ...prev]);
-      
-      // Mostrar resultado
-      setResultado({
-        texto: consequencia.resultado,
-        pontos: consequencia.pontos
-      });
-      
-      toast.success('Decisão registrada com sucesso!');
+      if (data) {
+        // Atualizar progresso local
+        setProgressoUsuario(prev => [data, ...prev]);
+        toast.success(`Você ganhou ${consequencia.pontos} pontos!`);
+      }
     } catch (error) {
-      console.error('Erro ao registrar decisão:', error);
-      toast.error('Não foi possível registrar sua decisão');
+      console.error('Erro ao registrar escolha:', error);
+      toast.error('Não foi possível registrar sua escolha');
     } finally {
       setIsSubmitting(false);
     }
@@ -187,7 +144,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
           </TabsTrigger>
           <TabsTrigger value="historico">
             <History className="h-4 w-4 mr-2" /> 
-            Seu Histórico
+            Histórico
           </TabsTrigger>
         </TabsList>
         
@@ -202,24 +159,28 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 {cenarios.map(cenario => {
-                  const jaCompletado = progressos.some(p => p.cenario_id === cenario.id && p.completado);
+                  const jaConcluido = progressoUsuario.some(p => 
+                    p.cenario_id === cenario.id && p.completado);
+                  
                   return (
                     <Card 
                       key={cenario.id} 
-                      className={`cursor-pointer transition-all ${cenario.id === cenarioSelecionado?.id ? 'ring-2 ring-primary' : ''}`}
+                      className={`cursor-pointer transition-all ${cenario.id === cenarioSelecionado?.id ? 'ring-2 ring-primary' : ''} ${jaConcluido ? 'bg-primary-foreground/10' : ''}`}
                       onClick={() => handleCenarioSelecao(cenario)}
                     >
-                      <CardHeader>
-                        <div className="flex justify-between">
+                      <CardHeader className="flex flex-row items-start justify-between">
+                        <div>
                           <CardTitle className="text-lg">{cenario.titulo}</CardTitle>
-                          {jaCompletado && (
-                            <Trophy className="h-5 w-5 text-yellow-500" />
-                          )}
+                          <p className="text-sm mt-1">Área: {cenario.area_direito}</p>
+                          <p className={`text-xs font-medium ${cenario.nivel_dificuldade === 'iniciante' ? 'text-green-600' : cenario.nivel_dificuldade === 'intermediário' ? 'text-amber-600' : 'text-red-600'}`}>
+                            Dificuldade: {cenario.nivel_dificuldade}
+                          </p>
                         </div>
-                        <p className="text-sm mt-1">Área: {cenario.area_direito}</p>
-                        <p className={`text-xs font-medium ${cenario.nivel_dificuldade === 'iniciante' ? 'text-green-600' : cenario.nivel_dificuldade === 'intermediário' ? 'text-amber-600' : 'text-red-600'}`}>
-                          Dificuldade: {cenario.nivel_dificuldade}
-                        </p>
+                        {jaConcluido && (
+                          <span className="flex items-center text-green-600 text-sm font-medium">
+                            <CheckCircle2 className="h-4 w-4 mr-1" /> Concluído
+                          </span>
+                        )}
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm">{cenario.descricao}</p>
@@ -232,54 +193,46 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
               {cenarioSelecionado && (
                 <Card className="mt-4">
                   <CardHeader>
-                    <CardTitle>RPG Jurídico: {cenarioSelecionado.titulo}</CardTitle>
+                    <CardTitle>{cenarioSelecionado.titulo}</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      <div>
+                      <div className="bg-muted/50 p-4 rounded-md">
                         <h3 className="text-lg font-medium mb-2">Situação:</h3>
                         <p>{cenarioSelecionado.situacao_inicial}</p>
                       </div>
                       
-                      {resultado ? (
-                        <div className="pt-4 border-t">
-                          <h3 className="text-lg font-medium mb-2">Resultado:</h3>
-                          <div className="bg-muted p-4 rounded-md mb-4">
-                            <p>{resultado.texto}</p>
+                      {!resultado ? (
+                        <>
+                          <div className="pt-4">
+                            <h3 className="text-lg font-medium mb-3">O que você faria?</h3>
+                            <RadioGroup value={opcaoSelecionada?.toString()} onValueChange={val => setOpcaoSelecionada(parseInt(val))}>
+                              {(cenarioSelecionado.opcoes as any[]).map((opcao) => (
+                                <div className="flex items-center space-x-2 mb-2" key={opcao.id}>
+                                  <RadioGroupItem value={opcao.id.toString()} id={`option-${opcao.id}`} />
+                                  <Label htmlFor={`option-${opcao.id}`} className="text-base">{opcao.texto}</Label>
+                                </div>
+                              ))}
+                            </RadioGroup>
+                            
+                            <Button 
+                              onClick={handleSubmitEscolha} 
+                              disabled={isSubmitting || opcaoSelecionada === null}
+                              className="mt-4"
+                            >
+                              {isSubmitting ? <LoadingSpinner size="sm" className="mr-2" /> : null}
+                              Tomar Decisão
+                            </Button>
                           </div>
-                          
-                          <div className="flex items-center justify-between">
-                            <span>Você ganhou:</span>
-                            <span className={`text-xl font-bold ${resultado.pontos > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                              {resultado.pontos} pontos
-                            </span>
-                          </div>
-                        </div>
+                        </>
                       ) : (
-                        <div className="pt-4 border-t">
-                          <h3 className="text-lg font-medium mb-2">O que você fará?</h3>
-                          <div className="space-y-2">
-                            {cenarioSelecionado.opcoes.map(opcao => (
-                              <div 
-                                key={opcao.id}
-                                onClick={() => handleEscolhaOpcao(opcao.id)}
-                                className={`p-3 border rounded-md cursor-pointer transition-colors ${
-                                  opcaoSelecionada === opcao.id ? 'bg-primary/10 border-primary' : 'hover:bg-muted'
-                                }`}
-                              >
-                                {opcao.texto}
-                              </div>
-                            ))}
+                        <div className="bg-primary/10 p-4 rounded-md">
+                          <h3 className="text-lg font-medium mb-2">Resultado:</h3>
+                          <p>{resultado.resultado}</p>
+                          <div className="mt-4 flex items-center">
+                            <Trophy className="h-5 w-5 mr-2 text-primary" />
+                            <span className="font-bold">{resultado.pontos} pontos</span>
                           </div>
-                          
-                          <Button 
-                            className="mt-4" 
-                            onClick={handleSubmitEscolha} 
-                            disabled={opcaoSelecionada === null || isSubmitting}
-                          >
-                            {isSubmitting ? <LoadingSpinner size="sm" className="mr-2" /> : null}
-                            Confirmar Escolha
-                          </Button>
                         </div>
                       )}
                     </div>
@@ -291,40 +244,39 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         </TabsContent>
         
         <TabsContent value="historico">
-          {progressos.length === 0 ? (
+          {progressoUsuario.length === 0 ? (
             <Card>
               <CardContent className="text-center p-8">
-                <p>Você ainda não participou de nenhum cenário.</p>
+                <p>Você ainda não completou nenhum cenário.</p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
-              {progressos.filter(p => p.completado).map(progresso => {
+              {progressoUsuario.map(progresso => {
                 const cenarioRelacionado = cenarios.find(c => c.id === progresso.cenario_id);
+                if (!cenarioRelacionado) return null;
+                
                 return (
                   <Card key={progresso.id}>
                     <CardHeader>
-                      <div className="flex justify-between items-center">
-                        <CardTitle className="text-lg">{cenarioRelacionado?.titulo || 'Cenário não encontrado'}</CardTitle>
-                        <span className="text-lg font-bold">{progresso.pontuacao} pts</span>
-                      </div>
+                      <CardTitle className="text-lg">{cenarioRelacionado.titulo}</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-4">
-                        <div>
-                          <h3 className="font-medium mb-1">Situação:</h3>
-                          <p className="text-sm">{cenarioRelacionado?.situacao_inicial}</p>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span>Pontuação obtida:</span>
+                          <span className="font-bold">{progresso.pontuacao} pontos</span>
                         </div>
-                        
-                        <div>
-                          <h3 className="font-medium mb-1">Sua escolha:</h3>
-                          {cenarioRelacionado?.opcoes.find(o => o.id === progresso.caminho_escolhido?.opcao_id)?.texto}
-                        </div>
-                        
-                        <div>
-                          <h3 className="font-medium mb-1">Resultado:</h3>
-                          <p className="text-sm bg-muted p-3 rounded-md">{progresso.caminho_escolhido?.resultado}</p>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            handleCenarioSelecao(cenarioRelacionado);
+                            setActiveTab('cenarios');
+                          }}
+                        >
+                          Revisitar Cenário
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>

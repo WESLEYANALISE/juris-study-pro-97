@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -108,7 +107,7 @@ const JogoDetalhes = () => {
   
   return (
     <PageTransition>
-      <JuridicalBackground variant={gameDetails.background_variant as any || 'scales'} opacity={0.03}>
+      <JuridicalBackground variant={gameDetails?.background_variant as any || 'scales'} opacity={0.03}>
         <div className="container mx-auto px-4 py-6">
           <Button 
             variant="ghost" 
@@ -119,11 +118,11 @@ const JogoDetalhes = () => {
           </Button>
           
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">{gameDetails.nome}</h1>
-            <p className="text-muted-foreground">{gameDetails.descricao}</p>
+            <h1 className="text-3xl font-bold mb-2">{gameDetails?.nome}</h1>
+            <p className="text-muted-foreground">{gameDetails?.descricao}</p>
             <div className="flex items-center mt-2">
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
-                {gameDetails.nivel_dificuldade}
+                {gameDetails?.nivel_dificuldade}
               </span>
             </div>
           </div>
@@ -141,8 +140,8 @@ const JogoDetalhes = () => {
             
             <TabsContent value="jogar" className="mt-0">
               <JuridicalCard
-                title={gameDetails.nome}
-                icon={gameDetails.icone as any}
+                title={gameDetails?.nome || ''}
+                icon={gameDetails?.icone as any}
                 variant="default"
                 className="md:p-4"
               >
@@ -151,7 +150,7 @@ const JogoDetalhes = () => {
             </TabsContent>
             
             <TabsContent value="ranking" className="mt-0">
-              <JogosLeaderboard gameId={gameDetails.id} />
+              {gameDetails && <JogosLeaderboard gameId={gameDetails.id} />}
             </TabsContent>
             
             <TabsContent value="estatisticas" className="mt-0">

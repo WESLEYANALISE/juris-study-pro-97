@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,26 +7,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { BookOpen, LayoutGrid, Diamond } from 'lucide-react';
+import { Baralho, Artigo } from '@/types/jogos';
 
 interface JogoCartasProps {
   gameId: string;
-}
-
-interface Baralho {
-  id: string;
-  nome: string;
-  descricao: string;
-  area_direito: string;
-  nivel_dificuldade: string;
-}
-
-interface Artigo {
-  id: string;
-  baralho_id: string;
-  lei: string;
-  artigo: string;
-  texto: string;
-  pontos: number;
 }
 
 export const JogoCartas = ({ gameId }: JogoCartasProps) => {
@@ -48,7 +31,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         const { data, error } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
-          .order('nome');
+          .order('nome') as { data: Baralho[] | null, error: any };
         
         if (error) throw error;
         
@@ -71,7 +54,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       const { data, error } = await supabase
         .from('jogos_cartas_artigos')
         .select('*')
-        .eq('baralho_id', baralho.id);
+        .eq('baralho_id', baralho.id) as { data: Artigo[] | null, error: any };
       
       if (error) throw error;
       
