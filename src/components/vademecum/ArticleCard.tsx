@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
@@ -84,7 +83,7 @@ export const ArticleCard = ({
               articleText={articleText}
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
-              isFavorite={Boolean(isFavorite)} // Convert to boolean explicitly
+              isFavorite={Boolean(isFavorite)} 
               setIsFavorite={() => toggleFavorite(articleText)}
               lawName={lawName}
               articleNumber={articleNumber}
@@ -94,26 +93,24 @@ export const ArticleCard = ({
           )}
         </div>
 
-        {!isHeading && (
-          <ArticleActions
-            articleText={articleText}
-            articleNumber={articleNumber}
-            technicalExplanation={technicalExplanation}
-            formalExplanation={formalExplanation}
-            practicalExample={practicalExample}
-            handleNarration={(text) => {
-              setIsNarrating(true);
-              return new Promise((resolve) => {
-                setTimeout(() => {
-                  setIsNarrating(false);
-                  resolve();
-                }, 1000);
-              });
-            }}
-            isVisible={isHovered || isMobile}
-            lawName={lawName}
-          />
-        )}
+        <ArticleActions
+          articleText={articleText}
+          articleNumber={articleNumber}
+          technicalExplanation={technicalExplanation}
+          formalExplanation={formalExplanation}
+          practicalExample={practicalExample}
+          handleNarration={(text) => {
+            setIsNarrating(true);
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                setIsNarrating(false);
+                resolve();
+              }, 1000);
+            });
+          }}
+          isVisible={isHovered || isMobile}
+          lawName={lawName}
+        />
       </Card>
     </motion.div>
   );

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { motion } from 'framer-motion';
@@ -169,7 +170,7 @@ const Podcasts = () => {
       }
 
       // Get the podcast details for each progress item
-      const podcastIds = progressData.map(item => item.podcast_id.toString());
+      const podcastIds = progressData.map(item => Number(item.podcast_id));
       
       const { data: podcastData, error: podcastError } = await supabase
         .from('podcast_tabela')
