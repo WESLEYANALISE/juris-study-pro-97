@@ -102,7 +102,9 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     
     setDataStats(stats);
 
-    // Retornar TODOS os artigos, incluindo aqueles sem número
+    // Manter a ordenação original do banco de dados
+    // Os itens sem número de artigo (como títulos/subtítulos) já devem estar 
+    // posicionados corretamente na sequência do banco
     return mappedData;
   };
 
@@ -120,8 +122,9 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Consultar a tabela específica
-      const { data, error } = await supabase.from(tableName as any).select('*').order('numero', {
+      // Consultar a tabela específica - respeitar a ordem do banco de dados (id)
+      // que deve estar correta para mostrar os cabeçalhos antes dos artigos
+      const { data, error } = await supabase.from(tableName as any).select('*').order('id', {
         ascending: true
       });
       
