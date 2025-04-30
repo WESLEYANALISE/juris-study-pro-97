@@ -1,9 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseWithCustomTables } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { Map, MapPin, Sparkles } from 'lucide-react';
@@ -28,36 +27,36 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       try {
         setIsLoading(true);
         
-        // Using a more type-safe approach without type assertions
-        const { data, error } = await supabase
+        // Using a more type-safe approach with type assertion
+        const { data, error } = await supabaseWithCustomTables
           .from('jogos_rpg_cenarios')
           .select('*');
         
         if (error) throw error;
         
-        setCenarios(data || []);
+        setCenarios(data as unknown as Cenario[]);
         
         // Se houver apenas um cenário, selecionar automaticamente
         if (data && data.length === 1) {
-          setCenarioAtual(data[0]);
+          setCenarioAtual(data[0] as unknown as Cenario);
         }
         
         if (user) {
           // Verificar progresso do usuário
-          const { data: progressoData, error: progressoError } = await supabase
+          const { data: progressoData, error: progressoError } = await supabaseWithCustomTables
             .from('jogos_rpg_progresso')
             .select('*')
             .eq('user_id', user.id)
-            .eq('cenario_id', data?.[0]?.id)
+            .eq('cenario_id', (data?.[0] as any)?.id)
             .maybeSingle();
             
           if (!progressoError && progressoData) {
-            setProgresso(progressoData);
+            setProgresso(progressoData as unknown as ProgressoRPG);
             
-            if (progressoData.caminho_escolhido) {
+            if ((progressoData as any).caminho_escolhido) {
               // Converter string JSON para objeto
               try {
-                const caminhoObj = JSON.parse(progressoData.caminho_escolhido);
+                const caminhoObj = JSON.parse((progressoData as any).caminho_escolhido);
                 setCaminhoEscolhido(caminhoObj.opcao);
                 setEtapaAtual(caminhoObj.etapa || 0);
                 setHistoriaCenario(caminhoObj.historia || []);
@@ -110,7 +109,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       // Calcular pontuação com base na escolha
       const pontuacao = opcao === 'A' ? 10 : opcao === 'B' ? 5 : 3; // Exemplo simples
       
-      const { data, error } = await supabase
+      const { data, error } = await supabaseWithCustomTables
         .from('jogos_rpg_progresso')
         .upsert({
           user_id: user.id,
@@ -125,7 +124,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         
       if (error) throw error;
       
-      setProgresso(data);
+      setProgresso(data as unknown as ProgressoRPG);
       
       if (finalizado) {
         toast.success('Cenário completado! Pontuação registrada.');

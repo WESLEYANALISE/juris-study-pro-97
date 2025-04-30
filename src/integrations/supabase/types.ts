@@ -1093,6 +1093,109 @@ export type Database = {
         }
         Relationships: []
       }
+      jogos_cartas_artigos: {
+        Row: {
+          artigo: string
+          baralho_id: string
+          created_at: string | null
+          id: string
+          lei: string
+          pontos: number
+          texto: string
+        }
+        Insert: {
+          artigo: string
+          baralho_id: string
+          created_at?: string | null
+          id?: string
+          lei: string
+          pontos?: number
+          texto: string
+        }
+        Update: {
+          artigo?: string
+          baralho_id?: string
+          created_at?: string | null
+          id?: string
+          lei?: string
+          pontos?: number
+          texto?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_cartas_artigos_baralho_id_fkey"
+            columns: ["baralho_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_cartas_baralhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      jogos_cartas_baralhos: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          id: string
+          nivel_dificuldade: string | null
+          nome: string
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          nivel_dificuldade?: string | null
+          nome: string
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          nivel_dificuldade?: string | null
+          nome?: string
+        }
+        Relationships: []
+      }
+      jogos_cartas_partidas: {
+        Row: {
+          baralho_id: string
+          completada: boolean
+          created_at: string | null
+          id: string
+          jogo_id: string
+          pontuacao: number
+          user_id: string
+        }
+        Insert: {
+          baralho_id: string
+          completada?: boolean
+          created_at?: string | null
+          id?: string
+          jogo_id: string
+          pontuacao?: number
+          user_id: string
+        }
+        Update: {
+          baralho_id?: string
+          completada?: boolean
+          created_at?: string | null
+          id?: string
+          jogo_id?: string
+          pontuacao?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_cartas_partidas_baralho_id_fkey"
+            columns: ["baralho_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_cartas_baralhos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jogos_categorias: {
         Row: {
           ativo: boolean | null
@@ -1128,6 +1231,80 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      jogos_escritorio_casos: {
+        Row: {
+          cliente: string
+          created_at: string | null
+          descricao: string
+          documentos: Json | null
+          id: string
+          nivel_dificuldade: string | null
+          problema: string
+          titulo: string
+        }
+        Insert: {
+          cliente: string
+          created_at?: string | null
+          descricao: string
+          documentos?: Json | null
+          id?: string
+          nivel_dificuldade?: string | null
+          problema: string
+          titulo: string
+        }
+        Update: {
+          cliente?: string
+          created_at?: string | null
+          descricao?: string
+          documentos?: Json | null
+          id?: string
+          nivel_dificuldade?: string | null
+          problema?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
+      jogos_escritorio_solucoes: {
+        Row: {
+          caso_id: string
+          created_at: string | null
+          feedback: string | null
+          id: string
+          pontuacao: number | null
+          solucao: string
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          caso_id: string
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          pontuacao?: number | null
+          solucao: string
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          caso_id?: string
+          created_at?: string | null
+          feedback?: string | null
+          id?: string
+          pontuacao?: number | null
+          solucao?: string
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "jogos_escritorio_solucoes_caso_id_fkey"
+            columns: ["caso_id"]
+            isOneToOne: false
+            referencedRelation: "jogos_escritorio_casos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jogos_leaderboards: {
         Row: {

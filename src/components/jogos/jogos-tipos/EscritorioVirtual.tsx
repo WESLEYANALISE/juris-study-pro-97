@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
-import { supabaseWithCustomTables as supabase } from '@/integrations/supabase/client';
+import { supabaseWithCustomTables } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { MessageSquare, FileText, BarChart3 } from 'lucide-react';
@@ -29,7 +29,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         setIsLoading(true);
         
         // Use the type-safe query with our custom tables
-        const { data: casosData, error: casosError } = await supabase
+        const { data: casosData, error: casosError } = await supabaseWithCustomTables
           .from('jogos_escritorio_casos')
           .select('*')
           .order('created_at', { ascending: false });
@@ -39,7 +39,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         setCasos(casosData as unknown as Caso[]);
         
         if (user) {
-          const { data: solucoesData, error: solucoesError } = await supabase
+          const { data: solucoesData, error: solucoesError } = await supabaseWithCustomTables
             .from('jogos_escritorio_solucoes')
             .select('*')
             .eq('user_id', user.id);
@@ -69,7 +69,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
     try {
       setIsSending(true);
       
-      const { error } = await supabase
+      const { error } = await supabaseWithCustomTables
         .from('jogos_escritorio_solucoes')
         .insert({
           caso_id: casoSelecionado.id,
@@ -85,7 +85,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       setCasoSelecionado(null);
       
       // Refresh soluções
-      const { data, error: fetchError } = await supabase
+      const { data, error: fetchError } = await supabaseWithCustomTables
         .from('jogos_escritorio_solucoes')
         .select('*')
         .eq('user_id', user.id);
@@ -95,13 +95,13 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       }
       
       // Update user stats
-      await supabase.from('jogos_user_stats').upsert({
+      await supabaseWithCustomTables.from('jogos_user_stats').upsert({
         user_id: user.id,
         jogo_id: gameId,
         partidas_jogadas: (solucoes.length || 0) + 1,
         pontuacao: (solucoes.length || 0) + 1 * 10,
         ultimo_acesso: new Date().toISOString()
-      });
+      }, { onConflict: 'user_id, jogo_id' });
       
     } catch (error) {
       console.error('Erro ao enviar solução:', error);

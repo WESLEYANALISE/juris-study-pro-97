@@ -16,10 +16,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Add explicit type assertion for tables that aren't in the auto-generated types
-export type SupabaseWithCustomTables = typeof supabase & {
+// Create a custom client for tables not in the generated types
+export const supabaseWithCustomTables = supabase as unknown as typeof supabase & {
   from<T extends keyof CustomTypes>(table: T): ReturnType<typeof supabase.from<any>>;
 };
-
-// Use this cast when you need to access custom tables
-export const supabaseWithCustomTables = supabase as SupabaseWithCustomTables;

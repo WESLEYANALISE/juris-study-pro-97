@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
-import { supabaseWithCustomTables as supabase } from '@/integrations/supabase/client';
+import { supabaseWithCustomTables } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { Baralho, Artigo } from '@/types/jogos';
@@ -32,7 +31,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         setIsLoading(true);
         
         // Use type-safe query with our custom tables
-        const { data: baralhosData, error: baralhosError } = await supabase
+        const { data: baralhosData, error: baralhosError } = await supabaseWithCustomTables
           .from('jogos_cartas_baralhos')
           .select('*')
           .order('area_direito', { ascending: true });
@@ -58,7 +57,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
           setIsLoading(true);
           
           // Use type-safe query with our custom tables
-          const { data: artigosData, error: artigosError } = await supabase
+          const { data: artigosData, error: artigosError } = await supabaseWithCustomTables
             .from('jogos_cartas_artigos')
             .select('*')
             .eq('baralho_id', baralhoSelecionado.id)
@@ -123,7 +122,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     
     try {
       // Salvar partida
-      await supabase.from('jogos_cartas_partidas').insert({
+      await supabaseWithCustomTables.from('jogos_cartas_partidas').insert({
         user_id: user.id,
         baralho_id: baralhoSelecionado.id,
         jogo_id: gameId,
@@ -132,7 +131,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       });
       
       // Atualizar estatísticas do usuário
-      await supabase.from('jogos_user_stats').upsert({
+      await supabaseWithCustomTables.from('jogos_user_stats').upsert({
         user_id: user.id,
         jogo_id: gameId,
         pontuacao: pontuacao,

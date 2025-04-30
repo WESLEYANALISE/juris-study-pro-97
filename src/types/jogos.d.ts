@@ -44,8 +44,8 @@ export interface Cenario {
   titulo: string;
   descricao: string;
   situacao_inicial: string;
-  opcoes: any;
-  consequencias: any;
+  opcoes: Record<string, string>;
+  consequencias: Record<string, string>;
   area_direito: string;
   nivel_dificuldade?: string;
 }
