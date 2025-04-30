@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Layout from "@/components/Layout";
 import { RequireAuth } from "@/components/RequireAuth";
 import { AuthProvider } from "@/hooks/use-auth";
+import { SubscriptionProvider } from "@/hooks/useSubscription"; // Adicionado
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Podcasts from "@/pages/Podcasts";
@@ -37,51 +38,59 @@ import VideoAulasRecomendacoes from "./pages/VideoAulasRecomendacoes";
 import Anotacoes from "@/pages/Anotacoes";
 import JogosJuridicos from "@/pages/JogosJuridicos";
 import JogoDetalhes from "@/pages/JogoDetalhes";
+import Assinatura from "@/pages/Assinatura"; // Adicionado
+import AssinaturaResultado from "@/pages/AssinaturaResultado"; // Adicionado
 
 function App() {
   return (
     <ThemeProvider storageKey="juspedia-theme">
       <AuthProvider>
-        <Router>
-          <RequireAuth>
-            <Routes>
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/inicie" element={<Layout><IniciandoNoDireito /></Layout>} />
-              <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
-              <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
-              <Route path="/biblioteca" element={<Layout><Biblioteca /></Layout>} />
-              <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
-              <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
-              <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
-              <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
-              <Route path="/vademecum/:lawId/:articleId" element={<Layout><VadeMecumViewer /></Layout>} />
-              <Route path="/simulados" element={<Layout><Simulados /></Layout>} />
-              <Route path="/simulados/:sessaoId" element={<Layout><SimuladoSessao /></Layout>} />
-              <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
-              <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
-              <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />
-              <Route path="/noticias" element={<Layout><Noticias /></Layout>} />
-              <Route path="/peticoes" element={<Layout><Peticoes /></Layout>} />
-              <Route path="/assistente" element={<Layout><AssistenteJuridico /></Layout>} />
-              <Route path="/perfil" element={<Layout><Perfil /></Layout>} />
-              <Route path="/vermais/:categoria" element={<Layout><VerTudo /></Layout>} />
-              <Route path="/cursos" element={<Layout><Cursos /></Layout>} />
-              <Route path="/curso/:cursoId" element={<Layout><CursoViewer /></Layout>} />
-              <Route path="/redacao-juridica" element={<Layout><RedacaoJuridica /></Layout>} />
-              <Route path="/redacao-conteudo/:id?" element={<Layout><RedacaoConteudo /></Layout>} />
-              <Route path="/videoaulas" element={<Layout><VideoAulas /></Layout>} />
-              <Route path="/videoaulas/tradicionais" element={<Layout><VideoAulasTradicional /></Layout>} />
-              <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
-              <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
-              <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
-              <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
-              <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
-              <Route path="*" element={<Layout><NotFound /></Layout>} />
-            </Routes>
-          </RequireAuth>
-        </Router>
-        <Toaster />
+        <SubscriptionProvider> {/* Adicionado */}
+          <Router>
+            <RequireAuth>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/" element={<Layout><Index /></Layout>} />
+                <Route path="/inicie" element={<Layout><IniciandoNoDireito /></Layout>} />
+                <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
+                <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
+                <Route path="/biblioteca" element={<Layout><Biblioteca /></Layout>} />
+                <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
+                <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
+                <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
+                <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
+                <Route path="/vademecum/:lawId/:articleId" element={<Layout><VadeMecumViewer /></Layout>} />
+                <Route path="/simulados" element={<Layout><Simulados /></Layout>} />
+                <Route path="/simulados/:sessaoId" element={<Layout><SimuladoSessao /></Layout>} />
+                <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
+                <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
+                <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />
+                <Route path="/noticias" element={<Layout><Noticias /></Layout>} />
+                <Route path="/peticoes" element={<Layout><Peticoes /></Layout>} />
+                <Route path="/assistente" element={<Layout><AssistenteJuridico /></Layout>} />
+                <Route path="/perfil" element={<Layout><Perfil /></Layout>} />
+                <Route path="/vermais/:categoria" element={<Layout><VerTudo /></Layout>} />
+                <Route path="/cursos" element={<Layout><Cursos /></Layout>} />
+                <Route path="/curso/:cursoId" element={<Layout><CursoViewer /></Layout>} />
+                <Route path="/redacao-juridica" element={<Layout><RedacaoJuridica /></Layout>} />
+                <Route path="/redacao-conteudo/:id?" element={<Layout><RedacaoConteudo /></Layout>} />
+                <Route path="/videoaulas" element={<Layout><VideoAulas /></Layout>} />
+                <Route path="/videoaulas/tradicionais" element={<Layout><VideoAulasTradicional /></Layout>} />
+                <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
+                <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
+                <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
+                <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
+                <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
+                {/* Novas rotas para assinatura */}
+                <Route path="/assinatura" element={<Layout><Assinatura /></Layout>} />
+                <Route path="/assinatura/sucesso" element={<Layout><AssinaturaResultado /></Layout>} />
+                <Route path="/assinatura/cancelado" element={<Layout><AssinaturaResultado /></Layout>} />
+                <Route path="*" element={<Layout><NotFound /></Layout>} />
+              </Routes>
+            </RequireAuth>
+          </Router>
+          <Toaster />
+        </SubscriptionProvider>
       </AuthProvider>
     </ThemeProvider>
   );
