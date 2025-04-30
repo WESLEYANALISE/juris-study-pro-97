@@ -7,7 +7,7 @@ import { RequireAuth } from "@/components/RequireAuth";
 import { AuthProvider } from "@/hooks/use-auth";
 import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
-import JurisFlix from "@/pages/JurisFlix";
+import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
 import Biblioteca from "@/pages/Biblioteca";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
@@ -48,7 +48,7 @@ function App() {
               <Route path="/auth" element={<Auth />} />
               <Route path="/" element={<Layout><Index /></Layout>} />
               <Route path="/inicie" element={<Layout><IniciandoNoDireito /></Layout>} />
-              <Route path="/jurisflix" element={<Layout><JurisFlix /></Layout>} />
+              <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               <Route path="/biblioteca" element={<Layout><Biblioteca /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />

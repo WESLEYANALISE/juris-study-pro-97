@@ -1,11 +1,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor } from "lucide-react";
+import { Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor, Headphones } from "lucide-react";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { JuridicalCard } from "@/components/ui/juridical-card";
@@ -23,10 +22,10 @@ const Index = () => {
       path: "/vademecum",
       color: "bg-blue-500"
     }, {
-      icon: Video,
-      title: "JurisFlix",
-      description: "Conteúdo jurídico em vídeo e áudio",
-      path: "/jurisflix",
+      icon: Headphones,
+      title: "Podcasts",
+      description: "Conteúdo jurídico em áudio para estudar em qualquer lugar",
+      path: "/podcasts",
       color: "bg-red-500"
     }, {
       icon: GraduationCap,
@@ -59,11 +58,11 @@ const Index = () => {
       path: "/flashcards",
       color: "text-purple-500"
     }, {
-      icon: FileText,
-      title: "Resumos",
-      description: "Banco de resumos e geração de novos resumos",
-      path: "/resumos",
-      color: "text-yellow-500"
+      icon: Headphones,
+      title: "Podcasts",
+      description: "Aprenda direito ouvindo, em qualquer lugar",
+      path: "/podcasts",
+      color: "text-red-500"
     }]
   }, {
     title: "Prática e Treinamento",

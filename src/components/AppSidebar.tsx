@@ -1,4 +1,5 @@
-import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, Film, PenTool, User, GamepadIcon } from "lucide-react";
+
+import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -39,10 +40,10 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       items: [
         { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Podcasts", url: "/podcasts", icon: Headphones, profiles: ["concurseiro", "universitario", "advogado", "tudo"], isNew: true },
         { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "tudo"] },
         { title: "Mapas Mentais", url: "/mapas-mentais", icon: Brain, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-        { title: "JurisFlix", url: "/jurisflix", icon: Film, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
       ]
     },
     {
@@ -50,7 +51,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       items: [
         { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
         { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-        { title: "Jogos Jurídicos", url: "/jogos", icon: GamepadIcon, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Jogos Jurídicos", url: "/jogos", icon: Trophy, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Redação Jurídica", url: "/redacao-juridica", icon: FileText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
         { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
@@ -148,9 +149,9 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
                         >
                           <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
                           <span>{item.title}</span>
-                          {(item.url === "/assistente" || item.url === "/jogos") && (
+                          {item.isNew && (
                             <Badge variant="secondary" className="ml-auto text-[10px] py-0">
-                              {item.url === "/assistente" ? "IA" : "NOVO"}
+                              NOVO
                             </Badge>
                           )}
                         </a>

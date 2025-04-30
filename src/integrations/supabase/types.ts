@@ -2192,6 +2192,99 @@ export type Database = {
         }
         Relationships: []
       }
+      podcast_categories: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
+      podcast_category_links: {
+        Row: {
+          category_id: string | null
+          id: string
+          podcast_id: string | null
+        }
+        Insert: {
+          category_id?: string | null
+          id?: string
+          podcast_id?: string | null
+        }
+        Update: {
+          category_id?: string | null
+          id?: string
+          podcast_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "podcast_category_links_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "podcast_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "podcast_category_links_podcast_id_fkey"
+            columns: ["podcast_id"]
+            isOneToOne: false
+            referencedRelation: "podcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      podcasts: {
+        Row: {
+          audio_url: string
+          created_at: string | null
+          description: string
+          duration: number | null
+          id: string
+          published_at: string | null
+          thumbnail_url: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          audio_url: string
+          created_at?: string | null
+          description: string
+          duration?: number | null
+          id?: string
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          audio_url?: string
+          created_at?: string | null
+          description?: string
+          duration?: number | null
+          id?: string
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -3145,6 +3238,76 @@ export type Database = {
             columns: ["flashcard_id"]
             isOneToOne: false
             referencedRelation: "flash_cards_improved"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_podcast_favorites: {
+        Row: {
+          created_at: string | null
+          id: string
+          podcast_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          podcast_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          podcast_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_podcast_favorites_podcast_id_fkey"
+            columns: ["podcast_id"]
+            isOneToOne: false
+            referencedRelation: "podcasts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_podcast_progress: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          last_played_at: string | null
+          podcast_id: string | null
+          progress_seconds: number
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_played_at?: string | null
+          podcast_id?: string | null
+          progress_seconds?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          last_played_at?: string | null
+          podcast_id?: string | null
+          progress_seconds?: number
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_podcast_progress_podcast_id_fkey"
+            columns: ["podcast_id"]
+            isOneToOne: false
+            referencedRelation: "podcasts"
             referencedColumns: ["id"]
           },
         ]
