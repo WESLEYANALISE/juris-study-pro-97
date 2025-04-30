@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { PodcastCard } from "./PodcastCard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -72,7 +73,7 @@ export function PodcastList({
             .eq('user_id', user.id);
           
           if (favoriteIds && favoriteIds.length > 0) {
-            // Extract podcast IDs as an array (keeping them as numbers since that's the table's type)
+            // Extract podcast IDs as an array and convert to numbers
             const podcastIds = favoriteIds.map(f => Number(f.podcast_id));
             // Use the in operator with the properly typed array
             query = query.in('id', podcastIds);
@@ -135,7 +136,7 @@ export function PodcastList({
             if (podcast.tag) {
               // If tag is a comma-separated string, split it
               const tags = typeof podcast.tag === 'string' 
-                ? podcast.tag.split(',').map(t => t.trim())
+                ? podcast.tag.split(',').map((t: string) => t.trim())
                 : [podcast.tag];
                 
               tags.forEach((tag: string) => {
@@ -167,7 +168,7 @@ export function PodcastList({
               duration: duration,
               published_at: podcast.created_at || new Date().toISOString(),
               categories: categories,
-              tags: podcast.tag ? (typeof podcast.tag === 'string' ? podcast.tag.split(',').map(t => t.trim()) : [podcast.tag]) : [],
+              tags: podcast.tag ? (typeof podcast.tag === 'string' ? podcast.tag.split(',').map((t: string) => t.trim()) : [podcast.tag]) : [],
               area: podcast.area || 'Geral'
             };
           })
@@ -220,7 +221,7 @@ export function PodcastList({
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-8">
         <LoadingSpinner />
       </div>
     );
@@ -228,7 +229,7 @@ export function PodcastList({
 
   if (podcasts.length === 0) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-8">
         <p className="text-muted-foreground">
           {showFavoritesOnly
             ? "Você ainda não adicionou nenhum podcast aos favoritos."
@@ -250,11 +251,11 @@ export function PodcastList({
   }, {});
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {Object.entries(groupedPodcasts).map(([area, areaPodcasts]) => (
-        <div key={area} className="space-y-4">
-          <h3 className="text-xl font-semibold">{area}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div key={area} className="space-y-3">
+          <h3 className="text-lg font-medium">{area}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {areaPodcasts.map((podcast) => {
               const podcastProgress = progress[podcast.id];
               let progressRatio: number | undefined;
