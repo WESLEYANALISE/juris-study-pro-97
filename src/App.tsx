@@ -37,7 +37,6 @@ import VideoAulasRecomendacoes from "./pages/VideoAulasRecomendacoes";
 import Anotacoes from "@/pages/Anotacoes";
 import JogosJuridicos from "@/pages/JogosJuridicos";
 import JogoDetalhes from "@/pages/JogoDetalhes";
-import PlanosEnsino from "@/pages/PlanosEnsino";
 
 function App() {
   return (
@@ -78,7 +77,6 @@ function App() {
               <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
-              <Route path="/planos-ensino" element={<Layout><PlanosEnsino /></Layout>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>
           </RequireAuth>
