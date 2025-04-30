@@ -18,5 +18,5 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Create a custom client for tables not in the generated types
 export const supabaseWithCustomTables = supabase as unknown as typeof supabase & {
-  from<T extends keyof CustomTypes>(table: T): ReturnType<typeof supabase.from<any>>;
+  from<T extends keyof CustomTypes>(table: T): ReturnType<typeof supabase.from>;
 };
