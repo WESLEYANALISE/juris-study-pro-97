@@ -18,5 +18,25 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Create a custom client for tables not in the generated types
 export const supabaseWithCustomTables = supabase as unknown as typeof supabase & {
-  from<T extends keyof CustomTypes>(table: T): ReturnType<typeof supabase.from>;
+  from<T extends keyof CustomTypes>(
+    table: T
+  ): ReturnType<typeof supabase.from> & {
+    select<U extends string = '*'>(
+      columns?: U
+    ): {
+      then(callback: (data: { data: CustomTypes[T][] | null; error: any }) => void): void;
+      eq(column: string, value: any): {
+        then(callback: (data: { data: CustomTypes[T][] | null; error: any }) => void): void;
+        single(): Promise<{data: CustomTypes[T] | null; error: any}>;
+        maybeSingle(): Promise<{data: CustomTypes[T] | null; error: any}>;
+      };
+      single(): Promise<{data: CustomTypes[T] | null; error: any}>;
+      maybeSingle(): Promise<{data: CustomTypes[T] | null; error: any}>;
+    };
+    insert(values: CustomTypes[T]): Promise<{data: any; error: any}>;
+    upsert(values: Partial<CustomTypes[T]>): {
+      select(): Promise<{data: CustomTypes[T] | null; error: any}>;
+      single(): Promise<{data: CustomTypes[T] | null; error: any}>;
+    };
+  };
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,41 +28,42 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       try {
         setIsLoading(true);
         
-        // Using a more type-safe approach with type assertion
         const { data, error } = await supabaseWithCustomTables
           .from('jogos_rpg_cenarios')
           .select('*');
         
         if (error) throw error;
         
-        setCenarios(data as unknown as Cenario[]);
-        
-        // Se houver apenas um cenário, selecionar automaticamente
-        if (data && data.length === 1) {
-          setCenarioAtual(data[0] as unknown as Cenario);
-        }
-        
-        if (user) {
-          // Verificar progresso do usuário
-          const { data: progressoData, error: progressoError } = await supabaseWithCustomTables
-            .from('jogos_rpg_progresso')
-            .select('*')
-            .eq('user_id', user.id)
-            .eq('cenario_id', (data?.[0] as any)?.id)
-            .maybeSingle();
-            
-          if (!progressoError && progressoData) {
-            setProgresso(progressoData as unknown as ProgressoRPG);
-            
-            if ((progressoData as any).caminho_escolhido) {
-              // Converter string JSON para objeto
-              try {
-                const caminhoObj = JSON.parse((progressoData as any).caminho_escolhido);
-                setCaminhoEscolhido(caminhoObj.opcao);
-                setEtapaAtual(caminhoObj.etapa || 0);
-                setHistoriaCenario(caminhoObj.historia || []);
-              } catch (e) {
-                console.error('Erro ao processar histórico:', e);
+        if (data) {
+          setCenarios(data);
+          
+          // Se houver apenas um cenário, selecionar automaticamente
+          if (data.length === 1) {
+            setCenarioAtual(data[0]);
+          }
+          
+          if (user && data[0]) {
+            // Verificar progresso do usuário
+            const { data: progressoData, error: progressoError } = await supabaseWithCustomTables
+              .from('jogos_rpg_progresso')
+              .select('*')
+              .eq('user_id', user.id)
+              .eq('cenario_id', data[0].id)
+              .maybeSingle();
+              
+            if (!progressoError && progressoData) {
+              setProgresso(progressoData);
+              
+              if (progressoData.caminho_escolhido) {
+                // Converter string JSON para objeto
+                try {
+                  const caminhoObj = JSON.parse(progressoData.caminho_escolhido as string);
+                  setCaminhoEscolhido(caminhoObj.opcao);
+                  setEtapaAtual(caminhoObj.etapa || 0);
+                  setHistoriaCenario(caminhoObj.historia || []);
+                } catch (e) {
+                  console.error('Erro ao processar histórico:', e);
+                }
               }
             }
           }
@@ -120,11 +122,11 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
           jogo_id: gameId
         })
         .select()
-        .single() as any;
+        .single();
         
       if (error) throw error;
       
-      setProgresso(data as unknown as ProgressoRPG);
+      setProgresso(data);
       
       if (finalizado) {
         toast.success('Cenário completado! Pontuação registrada.');

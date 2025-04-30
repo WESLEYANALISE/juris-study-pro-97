@@ -11,10 +11,10 @@ import { useCurriculum } from '@/hooks/use-curriculum';
 import { useAuth } from '@/hooks/use-auth';
 import { PageHeader } from '@/components/curriculum/PageHeader';
 import { Button } from '@/components/ui/button';
-import { InfoCircle } from 'lucide-react';
+import { Info } from 'lucide-react';
 
 export function PlanosEnsino() {
-  const { isSignedIn } = useAuth();
+  const { user } = useAuth();
   const [selectedFaculdadeId, setSelectedFaculdadeId] = useState<string | undefined>();
   const [selectedGradeId, setSelectedGradeId] = useState<string | undefined>();
   
@@ -58,7 +58,7 @@ export function PlanosEnsino() {
           title="Planos de Ensino"
           description="Explore os currículos de direito, acompanhe seu progresso e organize seus estudos"
           progress={calculateOverallProgress()}
-          showProgress={isSignedIn && !!selectedGradeId}
+          showProgress={!!user && !!selectedGradeId}
         />
         
         <div className="mb-6">
@@ -104,7 +104,7 @@ export function PlanosEnsino() {
               />
             ) : (
               <div className="text-center py-16 border rounded-lg bg-muted/20">
-                <InfoCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium">Nenhuma disciplina encontrada</h3>
                 <p className="text-muted-foreground mb-4">
                   {searchQuery 
@@ -125,7 +125,7 @@ export function PlanosEnsino() {
           </>
         ) : (
           <div className="text-center py-16 border rounded-lg bg-muted/20">
-            <InfoCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <Info className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-medium">Selecione uma faculdade e curso</h3>
             <p className="text-muted-foreground">
               Escolha uma faculdade e curso para visualizar as disciplinas
