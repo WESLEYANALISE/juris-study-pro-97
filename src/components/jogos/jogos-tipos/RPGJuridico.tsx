@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,48 +28,51 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       try {
         setIsLoading(true);
         
-        // Using a more type-safe approach with type assertion
+        // Using a type-safe approach
         const { data, error } = await supabaseWithCustomTables
           .from('jogos_rpg_cenarios')
           .select('*');
         
         if (error) throw error;
         
-        setCenarios(data as unknown as Cenario[]);
+        // Explicitly cast the data to Cenario[] to avoid deep type instantiation
+        const cenariosData = data as unknown as Cenario[];
+        setCenarios(cenariosData);
         
-        // Se houver apenas um cenário, selecionar automaticamente
-        if (data && data.length === 1) {
-          setCenarioAtual(data[0] as unknown as Cenario);
+        // If there's only one scenario, select it automatically
+        if (cenariosData && cenariosData.length === 1) {
+          setCenarioAtual(cenariosData[0]);
         }
         
         if (user) {
-          // Verificar progresso do usuário
+          // Check user progress
           const { data: progressoData, error: progressoError } = await supabaseWithCustomTables
             .from('jogos_rpg_progresso')
             .select('*')
             .eq('user_id', user.id)
-            .eq('cenario_id', (data?.[0] as any)?.id)
+            .eq('cenario_id', cenariosData[0]?.id)
             .maybeSingle();
             
           if (!progressoError && progressoData) {
-            setProgresso(progressoData as unknown as ProgressoRPG);
+            const progressoTyped = progressoData as unknown as ProgressoRPG;
+            setProgresso(progressoTyped);
             
-            if ((progressoData as any).caminho_escolhido) {
-              // Converter string JSON para objeto
+            if ((progressoTyped as any).caminho_escolhido) {
+              // Convert JSON string to object
               try {
-                const caminhoObj = JSON.parse((progressoData as any).caminho_escolhido);
+                const caminhoObj = JSON.parse((progressoTyped as any).caminho_escolhido);
                 setCaminhoEscolhido(caminhoObj.opcao);
                 setEtapaAtual(caminhoObj.etapa || 0);
                 setHistoriaCenario(caminhoObj.historia || []);
               } catch (e) {
-                console.error('Erro ao processar histórico:', e);
+                console.error('Error processing history:', e);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar cenários:', error);
-        toast.error('Não foi possível carregar os cenários');
+        console.error('Error loading scenarios:', error);
+        toast.error('Unable to load scenarios');
       } finally {
         setIsLoading(false);
       }
@@ -87,7 +91,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
   const handleEscolherCaminho = async (opcao: string) => {
     if (!cenarioAtual || !user) return;
     
-    // Adicionar opção à história
+    // Add option to history
     const novaEtapa = etapaAtual + 1;
     const consequencia = cenarioAtual.consequencias[opcao];
     const novaHistoria = [...historiaCenario, consequencia];
@@ -96,18 +100,18 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
     setCaminhoEscolhido(opcao);
     setEtapaAtual(novaEtapa);
     
-    const finalizado = novaEtapa >= 3; // Exemplo: 3 etapas completa o cenário
+    const finalizado = novaEtapa >= 3; // Example: 3 steps complete the scenario
     
     try {
-      // Registrar progresso
+      // Record progress
       const caminhoObj = {
         opcao,
         etapa: novaEtapa,
         historia: novaHistoria
       };
       
-      // Calcular pontuação com base na escolha
-      const pontuacao = opcao === 'A' ? 10 : opcao === 'B' ? 5 : 3; // Exemplo simples
+      // Calculate score based on choice
+      const pontuacao = opcao === 'A' ? 10 : opcao === 'B' ? 5 : 3; // Simple example
       
       const { data, error } = await supabaseWithCustomTables
         .from('jogos_rpg_progresso')
@@ -119,19 +123,20 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
           completado: finalizado,
           jogo_id: gameId
         })
-        .select()
-        .single() as any;
+        .select();
         
       if (error) throw error;
       
-      setProgresso(data as unknown as ProgressoRPG);
+      if (data && data.length > 0) {
+        setProgresso(data[0] as unknown as ProgressoRPG);
+      }
       
       if (finalizado) {
-        toast.success('Cenário completado! Pontuação registrada.');
+        toast.success('Scenario completed! Score recorded.');
       }
     } catch (error) {
-      console.error('Erro ao salvar progresso:', error);
-      toast.error('Não foi possível salvar seu progresso');
+      console.error('Error saving progress:', error);
+      toast.error('Unable to save your progress');
     }
   };
   
@@ -141,7 +146,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
     const opcoes = cenarioAtual.opcoes;
     return (
       <div className="mt-6 space-y-4">
-        <h4 className="font-medium text-lg">O que você decide fazer?</h4>
+        <h4 className="font-medium text-lg">What do you decide to do?</h4>
         <div className="grid gap-3">
           {Object.entries(opcoes).map(([key, opcao]) => (
             <Button 
@@ -172,10 +177,10 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       <div className="mb-6">
         <h2 className="text-2xl font-bold flex items-center">
           <Map className="mr-2 h-6 w-6" />
-          Cenários Jurídicos
+          Legal Scenarios
         </h2>
         <p className="text-muted-foreground">
-          Explore situações jurídicas e tome decisões como um profissional do direito.
+          Explore legal situations and make decisions as a legal professional.
         </p>
       </div>
       
@@ -194,12 +199,12 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
                   cenario.nivel_dificuldade === 'intermediário' ? 'text-amber-600' : 
                   'text-red-600'
                 }`}>
-                  Dificuldade: {cenario.nivel_dificuldade}
+                  Difficulty: {cenario.nivel_dificuldade}
                 </p>
               </CardHeader>
               <CardContent>
                 <CardDescription className="mb-4">{cenario.descricao}</CardDescription>
-                <p className="text-sm">Área: {cenario.area_direito}</p>
+                <p className="text-sm">Area: {cenario.area_direito}</p>
               </CardContent>
             </Card>
           ))}
@@ -209,18 +214,18 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
           <CardHeader>
             <CardTitle>{cenarioAtual.titulo}</CardTitle>
             <div className="flex justify-between items-center">
-              <p className="text-sm text-muted-foreground">Área: {cenarioAtual.area_direito}</p>
+              <p className="text-sm text-muted-foreground">Area: {cenarioAtual.area_direito}</p>
               {progresso?.completado && (
                 <div className="flex items-center text-amber-600">
                   <Sparkles className="h-4 w-4 mr-1" />
-                  <span className="font-medium">{progresso.pontuacao} pontos</span>
+                  <span className="font-medium">{progresso.pontuacao} points</span>
                 </div>
               )}
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* História do cenário */}
+              {/* Scenario history */}
               <div className="space-y-4">
                 {historiaCenario.map((texto, i) => (
                   <div key={i} className={`p-4 rounded-lg ${i % 2 === 0 ? 'bg-muted' : 'border'}`}>
@@ -229,22 +234,22 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
                 ))}
               </div>
               
-              {/* Opções de decisão */}
+              {/* Decision options */}
               {renderOpcoes()}
               
-              {/* Cenário concluído */}
+              {/* Completed scenario */}
               {etapaAtual >= 3 && (
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <h3 className="font-bold flex items-center mb-2">
                     <Sparkles className="h-5 w-5 mr-2 text-green-600" />
-                    Cenário Concluído!
+                    Scenario Completed!
                   </h3>
-                  <p>Você completou este cenário jurídico e ganhou {progresso?.pontuacao || 0} pontos.</p>
+                  <p>You completed this legal scenario and earned {progresso?.pontuacao || 0} points.</p>
                   <Button
                     className="mt-4"
                     onClick={() => setCenarioAtual(null)}
                   >
-                    Voltar aos Cenários
+                    Return to Scenarios
                   </Button>
                 </div>
               )}

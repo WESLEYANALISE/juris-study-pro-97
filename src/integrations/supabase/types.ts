@@ -617,6 +617,139 @@ export type Database = {
           },
         ]
       }
+      disciplina_materiais: {
+        Row: {
+          autor: string | null
+          created_at: string | null
+          descricao: string | null
+          disciplina_id: string
+          id: string
+          thumbnail_url: string | null
+          tipo: string
+          titulo: string
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          autor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          disciplina_id: string
+          id?: string
+          thumbnail_url?: string | null
+          tipo: string
+          titulo: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          autor?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          disciplina_id?: string
+          id?: string
+          thumbnail_url?: string | null
+          tipo?: string
+          titulo?: string
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disciplina_materiais_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disciplina_prerequisitos: {
+        Row: {
+          created_at: string | null
+          disciplina_id: string
+          id: string
+          prerequisito_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          disciplina_id: string
+          id?: string
+          prerequisito_id: string
+        }
+        Update: {
+          created_at?: string | null
+          disciplina_id?: string
+          id?: string
+          prerequisito_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disciplina_prerequisitos_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "disciplina_prerequisitos_prerequisito_id_fkey"
+            columns: ["prerequisito_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      disciplinas: {
+        Row: {
+          area: string
+          carga_horaria: number | null
+          codigo: string | null
+          created_at: string | null
+          descricao: string | null
+          ementa: string | null
+          grade_id: string
+          id: string
+          nome: string
+          periodo: number
+          updated_at: string | null
+        }
+        Insert: {
+          area: string
+          carga_horaria?: number | null
+          codigo?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          ementa?: string | null
+          grade_id: string
+          id?: string
+          nome: string
+          periodo: number
+          updated_at?: string | null
+        }
+        Update: {
+          area?: string
+          carga_horaria?: number | null
+          codigo?: string | null
+          created_at?: string | null
+          descricao?: string | null
+          ementa?: string | null
+          grade_id?: string
+          id?: string
+          nome?: string
+          periodo?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disciplinas_grade_id_fkey"
+            columns: ["grade_id"]
+            isOneToOne: false
+            referencedRelation: "grade_curricular"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       estatisticas: {
         Row: {
           artigos_lidos: number | null
@@ -961,6 +1094,39 @@ export type Database = {
         }
         Relationships: []
       }
+      faculdades: {
+        Row: {
+          created_at: string | null
+          descricao: string | null
+          id: string
+          logo_url: string | null
+          nome: string
+          sigla: string
+          updated_at: string | null
+          website: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          logo_url?: string | null
+          nome: string
+          sigla: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descricao?: string | null
+          id?: string
+          logo_url?: string | null
+          nome?: string
+          sigla?: string
+          updated_at?: string | null
+          website?: string | null
+        }
+        Relationships: []
+      }
       flash_cards: {
         Row: {
           area: string | null
@@ -1092,6 +1258,47 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      grade_curricular: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          descricao: string | null
+          duracao_semestres: number
+          faculdade_id: string
+          id: string
+          nome: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          duracao_semestres: number
+          faculdade_id: string
+          id?: string
+          nome: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          descricao?: string | null
+          duracao_semestres?: number
+          faculdade_id?: string
+          id?: string
+          nome?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "grade_curricular_faculdade_id_fkey"
+            columns: ["faculdade_id"]
+            isOneToOne: false
+            referencedRelation: "faculdades"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       jogos_cartas_artigos: {
         Row: {
@@ -2938,6 +3145,56 @@ export type Database = {
             columns: ["flashcard_id"]
             isOneToOne: false
             referencedRelation: "flash_cards_improved"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progresso_disciplinas: {
+        Row: {
+          anotacoes: string | null
+          created_at: string | null
+          data_conclusao: string | null
+          disciplina_id: string
+          favorito: boolean | null
+          id: string
+          nota: number | null
+          progresso_percentual: number | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          anotacoes?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          disciplina_id: string
+          favorito?: boolean | null
+          id?: string
+          nota?: number | null
+          progresso_percentual?: number | null
+          status: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          anotacoes?: string | null
+          created_at?: string | null
+          data_conclusao?: string | null
+          disciplina_id?: string
+          favorito?: boolean | null
+          id?: string
+          nota?: number | null
+          progresso_percentual?: number | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progresso_disciplinas_disciplina_id_fkey"
+            columns: ["disciplina_id"]
+            isOneToOne: false
+            referencedRelation: "disciplinas"
             referencedColumns: ["id"]
           },
         ]
