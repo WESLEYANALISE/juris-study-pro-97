@@ -15,6 +15,9 @@ import { JogosLeaderboard } from '@/components/jogos/JogosLeaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { QuizJogo } from '@/components/jogos/jogos-tipos/QuizJogo';
 import { SimulacaoJulgamento } from '@/components/jogos/jogos-tipos/SimulacaoJulgamento';
+import { EscritorioVirtual } from '@/components/jogos/jogos-tipos/EscritorioVirtual';
+import { RPGJuridico } from '@/components/jogos/jogos-tipos/RPGJuridico';
+import { JogoCartas } from '@/components/jogos/jogos-tipos/JogoCartas';
 
 const JogoDetalhes = () => {
   const { jogoId } = useParams();
@@ -66,6 +69,12 @@ const JogoDetalhes = () => {
         return <QuizJogo gameId={gameDetails.id} />;
       case 'Simulações de Julgamentos':
         return <SimulacaoJulgamento gameId={gameDetails.id} />;
+      case 'Escritório Virtual':
+        return <EscritorioVirtual gameId={gameDetails.id} />;
+      case 'RPG Jurídico':
+        return <RPGJuridico gameId={gameDetails.id} />;
+      case 'Jogo de Cartas de Artigos':
+        return <JogoCartas gameId={gameDetails.id} />;
       default:
         return (
           <div className="flex flex-col items-center justify-center min-h-[300px] text-center px-4">
@@ -134,7 +143,7 @@ const JogoDetalhes = () => {
               <JuridicalCard
                 title={gameDetails.nome}
                 icon={gameDetails.icone as any}
-                variant="primary"
+                variant="default"
                 className="md:p-4"
               >
                 {renderGameContent()}

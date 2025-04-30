@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Book, Gavel, User, BookOpen, Users, MessageSquare, Key, Briefcase, GitBranch, FileText } from 'lucide-react';
+import { 
+  Book, Gavel, User, BookOpen, Users, MessageSquare, 
+  Key, Briefcase, GitBranch, FileText 
+} from 'lucide-react';
 import type { GameCategory } from '@/pages/JogosJuridicos';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
@@ -41,6 +44,19 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
     }
   };
   
+  const getBackgroundStyle = (variant: string) => {
+    switch (variant) {
+      case 'scales': return 'bg-gradient-to-br from-blue-50 to-blue-100';
+      case 'courthouse': return 'bg-gradient-to-br from-amber-50 to-amber-100';
+      case 'constitution': return 'bg-gradient-to-br from-emerald-50 to-emerald-100';
+      case 'books': return 'bg-gradient-to-br from-indigo-50 to-indigo-100';
+      case 'gavel': return 'bg-gradient-to-br from-rose-50 to-rose-100';
+      case 'landmark': return 'bg-gradient-to-br from-cyan-50 to-cyan-100';
+      case 'scroll': return 'bg-gradient-to-br from-violet-50 to-violet-100';
+      default: return 'bg-gradient-to-br from-slate-50 to-slate-100';
+    }
+  };
+  
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[400px]">
@@ -66,15 +82,15 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
         >
-          <Card className="h-full flex flex-col hover:shadow-md transition-all duration-200">
+          <Card className={`h-full flex flex-col hover:shadow-md transition-all duration-200 ${getBackgroundStyle(game.background_variant)}`}>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
-                <span className={`p-1.5 rounded-md bg-primary/10`}>
+                <span className="p-1.5 rounded-md bg-white/80 text-primary">
                   {getIconComponent(game.icone)}
                 </span>
                 <CardTitle className="text-lg">{game.nome}</CardTitle>
               </div>
-              <CardDescription className="line-clamp-2">
+              <CardDescription className="line-clamp-2 text-gray-700">
                 {game.descricao}
               </CardDescription>
             </CardHeader>
