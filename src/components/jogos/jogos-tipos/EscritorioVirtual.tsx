@@ -1,4 +1,4 @@
-// Updating the EscritorioVirtual component to fix Supabase type issues
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         
         // Use the standard supabase client with type assertion
         const { data: casosData, error: casosError } = await supabase
-          .from('jogos_escritorio_casos')
+          .from('jogos_escritorio_casos' as any)
           .select('*')
           .order('created_at', { ascending: false });
         
@@ -40,7 +40,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         
         if (user) {
           const { data: solucoesData, error: solucoesError } = await supabase
-            .from('jogos_escritorio_solucoes')
+            .from('jogos_escritorio_solucoes' as any)
             .select('*')
             .eq('user_id', user.id);
           
@@ -70,7 +70,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       setIsSending(true);
       
       const { error } = await supabase
-        .from('jogos_escritorio_solucoes')
+        .from('jogos_escritorio_solucoes' as any)
         .insert({
           caso_id: casoSelecionado.id,
           user_id: user.id,
@@ -86,7 +86,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       
       // Refresh soluções
       const { data, error: fetchError } = await supabase
-        .from('jogos_escritorio_solucoes')
+        .from('jogos_escritorio_solucoes' as any)
         .select('*')
         .eq('user_id', user.id);
       
@@ -95,7 +95,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       }
       
       // Update user stats
-      await supabase.from('jogos_user_stats').upsert({
+      await supabase.from('jogos_user_stats' as any).upsert({
         user_id: user.id,
         jogo_id: gameId,
         partidas_jogadas: (solucoes.length || 0) + 1,

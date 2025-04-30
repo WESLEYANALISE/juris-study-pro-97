@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -27,9 +28,9 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       try {
         setIsLoading(true);
         
-        // Using the standard supabase client instead of the custom one
+        // Use type assertion for custom table query
         const { data, error } = await supabase
-          .from('jogos_rpg_cenarios')
+          .from('jogos_rpg_cenarios' as any)
           .select('*');
         
         if (error) throw error;
@@ -46,7 +47,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         if (user) {
           // Check user progress
           const { data: progressoData, error: progressoError } = await supabase
-            .from('jogos_rpg_progresso')
+            .from('jogos_rpg_progresso' as any)
             .select('*')
             .eq('user_id', user.id)
             .eq('cenario_id', cenariosData[0]?.id)
@@ -117,9 +118,9 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       // Calculate score based on choice
       const pontuacao = opcao === 'A' ? 10 : opcao === 'B' ? 5 : 3; // Simple example
       
-      // Use the standard supabase client instead of supabaseWithCustomTables
+      // Use type assertion for custom table upsert
       const { data, error } = await supabase
-        .from('jogos_rpg_progresso')
+        .from('jogos_rpg_progresso' as any)
         .upsert({
           user_id: user.id,
           cenario_id: cenarioAtual.id,

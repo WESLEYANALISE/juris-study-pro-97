@@ -32,7 +32,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         
         // Use standard supabase client with type assertion
         const { data: baralhosData, error: baralhosError } = await supabase
-          .from('jogos_cartas_baralhos')
+          .from('jogos_cartas_baralhos' as any)
           .select('*')
           .order('area_direito', { ascending: true });
         
@@ -58,7 +58,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
           
           // Use standard supabase client with type assertion
           const { data: artigosData, error: artigosError } = await supabase
-            .from('jogos_cartas_artigos')
+            .from('jogos_cartas_artigos' as any)
             .select('*')
             .eq('baralho_id', baralhoSelecionado.id)
             .order('id', { ascending: false });
@@ -122,7 +122,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     
     try {
       // Salvar partida
-      await supabase.from('jogos_cartas_partidas').insert({
+      await supabase.from('jogos_cartas_partidas' as any).insert({
         user_id: user.id,
         baralho_id: baralhoSelecionado.id,
         jogo_id: gameId,
@@ -131,7 +131,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       });
       
       // Atualizar estatísticas do usuário
-      await supabase.from('jogos_user_stats').upsert({
+      await supabase.from('jogos_user_stats' as any).upsert({
         user_id: user.id,
         jogo_id: gameId,
         pontuacao: pontuacao,
