@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -40,7 +39,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         setCenarios(cenariosData);
         
         // If there's only one scenario, select it automatically
-        if (cenariosData && cenariosData.length === 1) {
+        if (cenariosData && cenariosData.length > 0) {
           setCenarioAtual(cenariosData[0]);
         }
         
@@ -54,14 +53,17 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
             .maybeSingle();
             
           if (!progressoError && progressoData) {
+            // Explicitly cast to avoid deep type instantiations
             const progressoTyped = progressoData as unknown as ProgressoRPG;
             setProgresso(progressoTyped);
             
-            if ((progressoTyped as any).caminho_escolhido) {
+            // Handle caminho_escolhido if present
+            const caminhoEscolhidoData = (progressoTyped as any).caminho_escolhido;
+            if (caminhoEscolhidoData) {
               // Convert JSON string to object
               try {
-                const caminhoObj = JSON.parse((progressoTyped as any).caminho_escolhido);
-                setCaminhoEscolhido(caminhoObj.opcao);
+                const caminhoObj = JSON.parse(caminhoEscolhidoData);
+                setCaminhoEscolhido(caminhoObj.opcao || null);
                 setEtapaAtual(caminhoObj.etapa || 0);
                 setHistoriaCenario(caminhoObj.historia || []);
               } catch (e) {

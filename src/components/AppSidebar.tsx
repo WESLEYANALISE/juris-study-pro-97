@@ -1,4 +1,3 @@
-
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, Film, PenTool, User, GamepadIcon } from "lucide-react";
 import {
   Sidebar,
@@ -26,7 +25,6 @@ interface AppSidebarProps {
 export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
   
-  // Menu items for main navigation, organized by categories
   const menuCategories = [
     {
       label: "Principal",
