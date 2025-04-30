@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
-import { BookOpen, LayoutGrid, Diamond } from 'lucide-react';
 import { Baralho, Artigo } from '@/types/jogos';
+import { GraduationCap } from 'lucide-react';
 
 interface JogoCartasProps {
   gameId: string;
@@ -19,25 +18,27 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
   const [baralhos, setBaralhos] = useState<Baralho[]>([]);
   const [artigos, setArtigos] = useState<Artigo[]>([]);
   const [baralhoSelecionado, setBaralhoSelecionado] = useState<Baralho | null>(null);
-  const [maoJogador, setMaoJogador] = useState<Artigo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('baralhos');
+  const [artigoAtual, setArtigoAtual] = useState<Artigo | null>(null);
+  const [mostrarResposta, setMostrarResposta] = useState(false);
   const [pontuacao, setPontuacao] = useState(0);
-  
+  const [cartasVistas, setCartasVistas] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [baralhoFinalizado, setBaralhoFinalizado] = useState(false);
+
   useEffect(() => {
     const fetchBaralhos = async () => {
       try {
         setIsLoading(true);
         
-        // Using a more type-safe approach without type assertions
-        const { data, error } = await supabase
+        // Use type assertion to handle Supabase types
+        const { data: baralhosData, error: baralhosError } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
-          .order('nome');
+          .order('area_direito', { ascending: true });
         
-        if (error) throw error;
+        if (baralhosError) throw baralhosError;
         
-        setBaralhos(data || []);
+        setBaralhos(baralhosData as unknown as Baralho[]);
       } catch (error) {
         console.error('Erro ao carregar baralhos:', error);
         toast.error('Não foi possível carregar os baralhos');
@@ -49,81 +50,108 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     fetchBaralhos();
   }, []);
   
-  const handleSelecionarBaralho = async (baralho: Baralho) => {
-    setBaralhoSelecionado(baralho);
+  useEffect(() => {
+    if (baralhoSelecionado) {
+      const fetchArtigos = async () => {
+        try {
+          setIsLoading(true);
+          
+          // Use type assertion to handle Supabase types
+          const { data: artigosData, error: artigosError } = await supabase
+            .from('jogos_cartas_artigos')
+            .select('*')
+            .eq('baralho_id', baralhoSelecionado.id)
+            .order('id', { ascending: false });
+          
+          if (artigosError) throw artigosError;
+          
+          setArtigos(artigosData as unknown as Artigo[]);
+          
+          // Selecionando o primeiro artigo
+          if (artigosData && artigosData.length > 0) {
+            setArtigoAtual(artigosData[0] as unknown as Artigo);
+          }
+          
+          setCartasVistas([]);
+          setPontuacao(0);
+          setMostrarResposta(false);
+          setBaralhoFinalizado(false);
+        } catch (error) {
+          console.error('Erro ao carregar artigos:', error);
+          toast.error('Não foi possível carregar os artigos do baralho');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      
+      fetchArtigos();
+    }
+  }, [baralhoSelecionado]);
+
+  const handleProximaCartaClick = () => {
+    if (!artigoAtual) return;
     
-    try {
-      // Using a more type-safe approach without type assertions
-      const { data, error } = await supabase
-        .from('jogos_cartas_artigos')
-        .select('*')
-        .eq('baralho_id', baralho.id);
-      
-      if (error) throw error;
-      
-      setArtigos(data || []);
-      
-      // Selecionar 5 cartas aleatórias para a mão inicial
-      if (data && data.length >= 5) {
-        const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setMaoJogador(shuffled.slice(0, 5));
-      } else {
-        setMaoJogador(data || []);
-      }
-      
-      setActiveTab('jogar');
-    } catch (error) {
-      console.error('Erro ao carregar artigos:', error);
-      toast.error('Não foi possível carregar este baralho');
+    // Adicionar o artigo atual à lista de vistos
+    setCartasVistas(prev => [...prev, artigoAtual.id]);
+    
+    // Se mostrou resposta, adiciona pontos
+    if (mostrarResposta) {
+      setPontuacao(prev => prev + (artigoAtual?.pontos || 1));
+    }
+    
+    // Pegando o próximo artigo não visto
+    const artigosNaoVistos = artigos.filter(a => !cartasVistas.includes(a.id) && a.id !== artigoAtual.id);
+    
+    if (artigosNaoVistos.length > 0) {
+      // Pega um artigo aleatório
+      const randomIndex = Math.floor(Math.random() * artigosNaoVistos.length);
+      setArtigoAtual(artigosNaoVistos[randomIndex]);
+      setMostrarResposta(false);
+    } else {
+      // Finalizar o jogo
+      setArtigoAtual(null);
+      setBaralhoFinalizado(true);
+      salvarProgresso();
     }
   };
   
-  const handleJogarCarta = (carta: Artigo) => {
-    // Simular jogar a carta
-    toast.success(`Você jogou: ${carta.lei} - ${carta.artigo}`);
-    
-    // Remover da mão
-    setMaoJogador(mao => mao.filter(c => c.id !== carta.id));
-    
-    // Adicionar pontuação
-    setPontuacao(prev => prev + carta.pontos);
-    
-    // Se não houver mais cartas, registrar a partida
-    if (maoJogador.length <= 1 && user) {
-      registerPartida();
-    }
-  };
-  
-  const registerPartida = async () => {
+  const salvarProgresso = async () => {
     if (!user || !baralhoSelecionado) return;
     
     try {
-      // Using type assertion to bypass type checking for the Supabase client
-      await supabase
-        .from('jogos_cartas_partidas')
-        .insert({
-          user_id: user.id,
-          baralho_id: baralhoSelecionado.id,
-          pontuacao: pontuacao,
-          completada: true,
-          jogo_id: gameId
-        }) as any;
-        
-      toast.success('Partida concluída! Pontuação registrada.');
+      // Salvar partida
+      await supabase.from('jogos_cartas_partidas').insert({
+        user_id: user.id,
+        baralho_id: baralhoSelecionado.id,
+        jogo_id: gameId,
+        pontuacao: pontuacao,
+        completada: true
+      });
+      
+      // Atualizar estatísticas do usuário
+      await supabase.from('jogos_user_stats').upsert({
+        user_id: user.id,
+        jogo_id: gameId,
+        pontuacao: pontuacao,
+        partidas_jogadas: 1,
+        partidas_vencidas: 1,
+        ultimo_acesso: new Date().toISOString()
+      }, { onConflict: 'user_id, jogo_id' });
+      
+      toast.success(`Baralho concluído! Pontuação: ${pontuacao}`);
     } catch (error) {
-      console.error('Erro ao registrar partida:', error);
+      console.error('Erro ao salvar progresso:', error);
     }
   };
   
-  const iniciarNovaPartida = () => {
-    if (!artigos.length) return;
-    
-    // Reembaralhar e pegar novas cartas
-    const shuffled = [...artigos].sort(() => Math.random() - 0.5);
-    setMaoJogador(shuffled.slice(0, 5) as Artigo[]);
+  const reiniciarBaralho = () => {
+    setArtigoAtual(artigos[0]);
+    setCartasVistas([]);
     setPontuacao(0);
+    setMostrarResposta(false);
+    setBaralhoFinalizado(false);
   };
-  
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
@@ -134,108 +162,96 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
   
   return (
     <div className="p-4">
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="mb-4">
-          <TabsTrigger value="baralhos">
-            <LayoutGrid className="h-4 w-4 mr-2" /> 
-            Baralhos
-          </TabsTrigger>
-          {baralhoSelecionado && (
-            <TabsTrigger value="jogar">
-              <Diamond className="h-4 w-4 mr-2" /> 
-              Jogar
-            </TabsTrigger>
-          )}
-        </TabsList>
-        
-        <TabsContent value="baralhos">
-          {baralhos.length === 0 ? (
-            <Card>
-              <CardContent className="text-center p-8">
-                <p>Nenhum baralho disponível no momento.</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {baralhos.map(baralho => (
-                <Card 
-                  key={baralho.id} 
-                  className="cursor-pointer hover:shadow-md transition-all"
-                  onClick={() => handleSelecionarBaralho(baralho)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                      {baralho.nome}
-                    </CardTitle>
-                    <p className="text-sm mt-1">Área: {baralho.area_direito}</p>
-                    <p className={`text-xs font-medium ${baralho.nivel_dificuldade === 'iniciante' ? 'text-green-600' : baralho.nivel_dificuldade === 'intermediário' ? 'text-amber-600' : 'text-red-600'}`}>
-                      Dificuldade: {baralho.nivel_dificuldade}
-                    </p>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm">{baralho.descricao}</p>
-                    <Button className="mt-4 w-full">Selecionar Baralho</Button>
-                  </CardContent>
-                </Card>
-              ))}
+      {isLoading ? (
+        <div className="flex justify-center items-center p-8">
+          <LoadingSpinner />
+        </div>
+      ) : !baralhoSelecionado ? (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">Escolha um Baralho</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {baralhos.map(baralho => (
+              <Card key={baralho.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => setBaralhoSelecionado(baralho)}>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <GraduationCap className="h-5 w-5 mr-2" />
+                    {baralho.nome}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">{baralho.descricao}</p>
+                  <div className="mt-2">
+                    <Badge>{baralho.area_direito}</Badge>
+                    {baralho.nivel_dificuldade && (
+                      <Badge variant="outline" className="ml-2">{baralho.nivel_dificuldade}</Badge>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ) : baralhoFinalizado ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Baralho Concluído!</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-4">
+              <h3 className="text-3xl font-bold">{pontuacao} pontos</h3>
+              <p className="mt-2 text-muted-foreground">Você completou o baralho {baralhoSelecionado.nome}</p>
             </div>
-          )}
-        </TabsContent>
-        
-        <TabsContent value="jogar">
-          {baralhoSelecionado && (
-            <>
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-xl font-bold">{baralhoSelecionado.nome}</h3>
-                <div className="text-lg font-bold">
-                  Pontuação: {pontuacao}
-                </div>
-              </div>
-              
-              <div className="bg-green-50 rounded-lg p-4 mb-6">
-                <h4 className="text-lg font-medium mb-3">Instruções:</h4>
-                <p>Selecione uma carta da sua mão para jogar. Cada carta tem um valor em pontos.</p>
-                <p className="mt-2">Objetivo: Use os artigos mais relevantes para conseguir mais pontos.</p>
-              </div>
-              
-              <h4 className="text-lg font-medium mb-2">Sua mão:</h4>
-              {maoJogador.length ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {maoJogador.map(carta => (
-                    <div 
-                      key={carta.id} 
-                      className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md transition-all cursor-pointer"
-                      onClick={() => handleJogarCarta(carta)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <h5 className="font-bold">{carta.lei}</h5>
-                        <span className="bg-primary/10 text-primary font-bold px-2 py-1 rounded-full text-xs">
-                          {carta.pontos} pts
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium mt-1">{carta.artigo}</p>
-                      <div className="mt-2 p-2 bg-slate-50 rounded text-sm">
-                        {carta.texto}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+          </CardContent>
+          <CardFooter className="justify-between">
+            <Button variant="outline" onClick={() => setBaralhoSelecionado(null)}>Escolher Outro Baralho</Button>
+            <Button onClick={reiniciarBaralho}>Jogar Novamente</Button>
+          </CardFooter>
+        </Card>
+      ) : artigoAtual ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>{baralhoSelecionado.nome}</CardTitle>
+            <div className="flex justify-between items-center">
+              <Badge>{artigoAtual.lei}</Badge>
+              <span className="text-sm text-muted-foreground">Pontuação: {pontuacao}</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="bg-secondary p-4 rounded-md mb-4">
+              <h3 className="font-bold mb-2">Artigo {artigoAtual.artigo}</h3>
+              {mostrarResposta ? (
+                <p>{artigoAtual.texto}</p>
               ) : (
-                <div className="text-center p-8 border border-dashed rounded-lg">
-                  <p>Você não tem mais cartas na mão.</p>
-                  <Button 
-                    className="mt-4"
-                    onClick={iniciarNovaPartida}
-                  >
-                    Iniciar Nova Partida
-                  </Button>
+                <div className="h-24 flex items-center justify-center border border-dashed border-primary/30 rounded">
+                  <p className="text-muted-foreground">Clique para revelar o conteúdo do artigo</p>
                 </div>
               )}
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
+            </div>
+          </CardContent>
+          <CardFooter className="justify-between">
+            {!mostrarResposta ? (
+              <Button 
+                className="w-full" 
+                onClick={() => setMostrarResposta(true)}
+              >
+                Revelar Artigo
+              </Button>
+            ) : (
+              <Button 
+                className="w-full" 
+                variant="default"
+                onClick={handleProximaCartaClick}
+              >
+                Próxima Carta
+              </Button>
+            )}
+          </CardFooter>
+        </Card>
+      ) : (
+        <div className="flex justify-center items-center p-8">
+          <p>Nenhuma carta disponível para este baralho.</p>
+        </div>
+      )}
     </div>
   );
 };

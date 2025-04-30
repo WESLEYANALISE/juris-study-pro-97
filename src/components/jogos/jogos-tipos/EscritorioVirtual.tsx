@@ -1,4 +1,3 @@
-
 // Updating the EscritorioVirtual component to fix Supabase type issues
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,7 +28,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Use a more type-safe approach without type assertion
+        // Fix type issue by using a typed query with type casting
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
@@ -37,10 +36,11 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         
         if (casosError) throw casosError;
         
-        setCasos(casosData || []);
+        // Cast the data to ensure it matches the Caso type
+        setCasos(casosData as unknown as Caso[]);
         
         if (user) {
-          // Use a more type-safe approach without type assertion
+          // Fix type issue by using a typed query with type casting
           const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
@@ -48,7 +48,8 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
           
           if (solucoesError) throw solucoesError;
           
-          setSolucoes(solucoesData || []);
+          // Cast the data to ensure it matches the Solucao type
+          setSolucoes(solucoesData as unknown as Solucao[]);
         }
       } catch (error) {
         console.error('Erro ao carregar casos:', error);
@@ -71,7 +72,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
     try {
       setIsSending(true);
       
-      // Use a more type-safe approach without type assertion
+      // Fix type issue by using a typed query with type casting
       const { error } = await supabase
         .from('jogos_escritorio_solucoes')
         .insert({
@@ -94,7 +95,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         .eq('user_id', user.id);
       
       if (!fetchError) {
-        setSolucoes(data || []);
+        setSolucoes(data as unknown as Solucao[]);
       }
       
       // Update user stats

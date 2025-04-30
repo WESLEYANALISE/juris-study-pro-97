@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,7 +9,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { InteractiveVideoPlayer } from "@/components/videoaulas/InteractiveVideoPlayer";
-import { Layout } from "@/components/Layout";
+import Layout from "@/components/Layout";
 import { 
   Dialog,
   DialogContent,

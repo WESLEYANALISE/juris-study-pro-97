@@ -73,7 +73,7 @@ function App() {
               <Route path="/videoaulas" element={<Layout><VideoAulas /></Layout>} />
               <Route path="/videoaulas/tradicionais" element={<Layout><VideoAulasTradicional /></Layout>} />
               <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
-              <Route path="/videoaulas-interativas" element={<Layout><VideoAulasInterativas /></Layout>} />
+              <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
               <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
