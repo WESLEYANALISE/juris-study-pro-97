@@ -29,11 +29,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       try {
         setIsLoading(true);
         
-        // Using type assertion to bypass type checking for the Supabase client
+        // Using a more type-safe approach without type assertions
         const { data, error } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
-          .order('nome') as any;
+          .order('nome');
         
         if (error) throw error;
         
@@ -53,11 +53,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     setBaralhoSelecionado(baralho);
     
     try {
-      // Using type assertion to bypass type checking for the Supabase client
+      // Using a more type-safe approach without type assertions
       const { data, error } = await supabase
         .from('jogos_cartas_artigos')
         .select('*')
-        .eq('baralho_id', baralho.id) as any;
+        .eq('baralho_id', baralho.id);
       
       if (error) throw error;
       
@@ -66,9 +66,9 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       // Selecionar 5 cartas aleatórias para a mão inicial
       if (data && data.length >= 5) {
         const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setMaoJogador(shuffled.slice(0, 5) as Artigo[]);
+        setMaoJogador(shuffled.slice(0, 5));
       } else {
-        setMaoJogador(data as Artigo[] || []);
+        setMaoJogador(data || []);
       }
       
       setActiveTab('jogar');

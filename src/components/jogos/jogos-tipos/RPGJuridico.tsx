@@ -28,10 +28,10 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       try {
         setIsLoading(true);
         
-        // Using type assertion to bypass type checking for the Supabase client
+        // Using a more type-safe approach without type assertions
         const { data, error } = await supabase
           .from('jogos_rpg_cenarios')
-          .select('*') as any;
+          .select('*');
         
         if (error) throw error;
         
@@ -39,7 +39,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         
         // Se houver apenas um cenário, selecionar automaticamente
         if (data && data.length === 1) {
-          setCenarioAtual(data[0] as Cenario);
+          setCenarioAtual(data[0]);
         }
         
         if (user) {
@@ -49,7 +49,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
             .select('*')
             .eq('user_id', user.id)
             .eq('cenario_id', data?.[0]?.id)
-            .maybeSingle() as any;
+            .maybeSingle();
             
           if (!progressoError && progressoData) {
             setProgresso(progressoData);

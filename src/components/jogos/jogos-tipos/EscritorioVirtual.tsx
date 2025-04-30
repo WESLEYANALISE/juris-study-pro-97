@@ -29,22 +29,22 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Use type assertion to fix TypeScript error
+        // Use a more type-safe approach without type assertion
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
-          .order('created_at', { ascending: false }) as any;
+          .order('created_at', { ascending: false });
         
         if (casosError) throw casosError;
         
         setCasos(casosData || []);
         
         if (user) {
-          // Use type assertion to fix TypeScript error
+          // Use a more type-safe approach without type assertion
           const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
-            .eq('user_id', user.id) as any;
+            .eq('user_id', user.id);
           
           if (solucoesError) throw solucoesError;
           
@@ -71,7 +71,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
     try {
       setIsSending(true);
       
-      // Use type assertion to fix TypeScript error
+      // Use a more type-safe approach without type assertion
       const { error } = await supabase
         .from('jogos_escritorio_solucoes')
         .insert({
@@ -79,7 +79,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
           user_id: user.id,
           solucao: solucaoTexto,
           status: 'pendente'
-        }) as any;
+        });
       
       if (error) throw error;
       
@@ -91,7 +91,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       const { data, error: fetchError } = await supabase
         .from('jogos_escritorio_solucoes')
         .select('*')
-        .eq('user_id', user.id) as any;
+        .eq('user_id', user.id);
       
       if (!fetchError) {
         setSolucoes(data || []);
