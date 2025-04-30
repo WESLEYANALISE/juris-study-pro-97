@@ -4,6 +4,8 @@ import { PodcastCard } from "./PodcastCard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { getDurationFromAudio } from "@/lib/utils";
 
 interface Podcast {
   id: string;
@@ -14,6 +16,8 @@ interface Podcast {
   duration: number;
   published_at: string;
   categories: { name: string; slug: string }[];
+  tags: string[];
+  area: string;
 }
 
 interface UserProgress {
@@ -43,24 +47,22 @@ export function PodcastList({
   const [favorites, setFavorites] = useState<Record<string, boolean>>({});
   const [progress, setProgress] = useState<Record<string, UserProgress>>({});
   const { user } = useAuth();
+  const [audioElement] = useState(new Audio());
 
   useEffect(() => {
     const fetchPodcasts = async () => {
       setLoading(true);
       try {
+        // New query to fetch from podcast_tabela
         let query = supabase
-          .from('podcasts')
+          .from('podcast_tabela')
           .select(`
-            id, title, description, audio_url, thumbnail_url, duration, published_at,
-            podcast_category_links!inner(
-              category_id,
-              podcast_categories(name, slug)
-            )
+            id, titulo, descricao, url_audio, imagem_miniatuta, tag, area, created_at
           `);
         
         // Apply search filter if provided
         if (searchTerm) {
-          query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+          query = query.or(`titulo.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%`);
         }
         
         if (showFavoritesOnly && user) {
@@ -80,33 +82,21 @@ export function PodcastList({
           }
         }
         
-        // Apply category filter
+        // Apply category/area filter
         if (category) {
-          const { data: categoryData } = await supabase
-            .from('podcast_categories')
-            .select('id')
-            .eq('slug', category)
-            .single();
-            
-          if (categoryData) {
-            query = query.in(
-              'podcast_category_links.category_id', 
-              [categoryData.id]
-            );
-          }
+          query = query.eq('area', category);
         }
         
         // Apply sorting
         switch (sortBy) {
           case "recent":
-            query = query.order('published_at', { ascending: false });
+            query = query.order('created_at', { ascending: false });
             break;
           case "alphabetical":
-            query = query.order('title', { ascending: true });
+            query = query.order('titulo', { ascending: true });
             break;
-          case "popular":
-            // We would need a view count or download count field
-            query = query.order('published_at', { ascending: false }); // Fallback to recent
+          case "popular": // Assuming we'll add a view count later
+            query = query.order('created_at', { ascending: false }); // Fallback to recent
             break;
         }
         
@@ -121,19 +111,65 @@ export function PodcastList({
           throw error;
         }
         
-        // Process data to format categories
-        const processedPodcasts = data ? data.map((podcast: any) => {
-          const categories = podcast.podcast_category_links
-            .map((link: any) => ({
-              name: link.podcast_categories.name,
-              slug: link.podcast_categories.slug
-            }));
-          
-          return {
-            ...podcast,
-            categories
-          };
-        }) : [];
+        if (!data) {
+          setPodcasts([]);
+          setLoading(false);
+          return;
+        }
+
+        // Process and transform the data to match our Podcast interface
+        const processedPodcasts: Podcast[] = await Promise.all(
+          data.map(async (podcast: any) => {
+            // Create appropriate category objects from area and tag
+            const categories = [];
+            
+            if (podcast.area) {
+              categories.push({
+                name: podcast.area,
+                slug: podcast.area.toLowerCase().replace(/\s+/g, '-')
+              });
+            }
+            
+            if (podcast.tag) {
+              // If tag is a comma-separated string, split it
+              const tags = typeof podcast.tag === 'string' 
+                ? podcast.tag.split(',').map(t => t.trim())
+                : [podcast.tag];
+                
+              tags.forEach((tag: string) => {
+                if (tag && !categories.some(c => c.name === tag)) {
+                  categories.push({
+                    name: tag,
+                    slug: tag.toLowerCase().replace(/\s+/g, '-')
+                  });
+                }
+              });
+            }
+
+            // Get audio duration if not available
+            let duration = 0;
+            try {
+              if (podcast.url_audio) {
+                duration = await getDurationFromAudio(podcast.url_audio);
+              }
+            } catch (err) {
+              console.warn("Could not get duration for audio:", podcast.url_audio);
+            }
+            
+            return {
+              id: podcast.id.toString(),
+              title: podcast.titulo || 'Untitled',
+              description: podcast.descricao || '',
+              audio_url: podcast.url_audio || '',
+              thumbnail_url: podcast.imagem_miniatuta || '',
+              duration: duration,
+              published_at: podcast.created_at || new Date().toISOString(),
+              categories: categories,
+              tags: podcast.tag ? (typeof podcast.tag === 'string' ? podcast.tag.split(',').map(t => t.trim()) : [podcast.tag]) : [],
+              area: podcast.area || 'Geral'
+            };
+          })
+        );
         
         setPodcasts(processedPodcasts);
         
@@ -171,6 +207,7 @@ export function PodcastList({
         }
       } catch (err) {
         console.error('Error fetching podcasts:', err);
+        toast.error("Erro ao carregar podcasts");
       } finally {
         setLoading(false);
       }
@@ -200,34 +237,53 @@ export function PodcastList({
     );
   }
 
+  // Group podcasts by area for better organization
+  const groupedPodcasts = podcasts.reduce((acc: Record<string, Podcast[]>, podcast) => {
+    const area = podcast.area || 'Outros';
+    if (!acc[area]) {
+      acc[area] = [];
+    }
+    acc[area].push(podcast);
+    return acc;
+  }, {});
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {podcasts.map((podcast) => {
-        const podcastProgress = progress[podcast.id];
-        let progressRatio: number | undefined;
-        
-        if (podcastProgress) {
-          progressRatio = podcastProgress.completed 
-            ? 1 
-            : (podcast.duration ? podcastProgress.progress_seconds / podcast.duration : 0);
-        }
-        
-        return (
-          <PodcastCard
-            key={podcast.id}
-            id={podcast.id}
-            title={podcast.title}
-            description={podcast.description}
-            thumbnail={podcast.thumbnail_url}
-            duration={podcast.duration}
-            publishedAt={podcast.published_at}
-            isFavorite={!!favorites[podcast.id]}
-            progress={progressRatio}
-            categories={podcast.categories}
-            onClick={() => onSelectPodcast(podcast)}
-          />
-        );
-      })}
+    <div className="space-y-8">
+      {Object.entries(groupedPodcasts).map(([area, areaPodcasts]) => (
+        <div key={area} className="space-y-4">
+          <h3 className="text-xl font-semibold">{area}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {areaPodcasts.map((podcast) => {
+              const podcastProgress = progress[podcast.id];
+              let progressRatio: number | undefined;
+              
+              if (podcastProgress) {
+                progressRatio = podcastProgress.completed 
+                  ? 1 
+                  : (podcast.duration ? podcastProgress.progress_seconds / podcast.duration : 0);
+              }
+              
+              return (
+                <PodcastCard
+                  key={podcast.id}
+                  id={podcast.id}
+                  title={podcast.title}
+                  description={podcast.description}
+                  thumbnail={podcast.thumbnail_url}
+                  duration={podcast.duration}
+                  publishedAt={podcast.published_at}
+                  isFavorite={!!favorites[podcast.id]}
+                  progress={progressRatio}
+                  categories={podcast.categories}
+                  tags={podcast.tags}
+                  area={podcast.area}
+                  onClick={() => onSelectPodcast(podcast)}
+                />
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

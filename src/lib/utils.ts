@@ -1,61 +1,90 @@
-import { type ClassValue, clsx } from "clsx"
+import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/**
- * Format seconds to mm:ss or hh:mm:ss format
- */
 export function formatDuration(seconds: number): string {
-  if (isNaN(seconds)) return "00:00";
+  if (!seconds || isNaN(seconds)) return '0:00';
   
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = Math.floor(seconds % 60);
   
-  const formattedMinutes = String(minutes).padStart(2, '0');
-  const formattedSeconds = String(remainingSeconds).padStart(2, '0');
+  if (hours > 0) {
+    return `${hours}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
   
-  return hours > 0
-    ? `${hours}:${formattedMinutes}:${formattedSeconds}`
-    : `${formattedMinutes}:${formattedSeconds}`;
+  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
 }
 
-/**
- * Format date to relative time (e.g., "2 days ago", "1 month ago")
- */
 export function formatRelativeTime(date: Date): string {
   const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  const diffMs = now.getTime() - date.getTime();
+  const diffSec = Math.floor(diffMs / 1000);
+  const diffMin = Math.floor(diffSec / 60);
+  const diffHour = Math.floor(diffMin / 60);
+  const diffDay = Math.floor(diffHour / 24);
+  const diffMonth = Math.floor(diffDay / 30);
+  const diffYear = Math.floor(diffMonth / 12);
   
-  const minute = 60;
-  const hour = minute * 60;
-  const day = hour * 24;
-  const week = day * 7;
-  const month = day * 30;
-  const year = day * 365;
-  
-  if (diffInSeconds < minute) {
-    return "agora mesmo";
-  } else if (diffInSeconds < hour) {
-    const minutes = Math.floor(diffInSeconds / minute);
-    return `${minutes} ${minutes === 1 ? 'minuto' : 'minutos'} atrás`;
-  } else if (diffInSeconds < day) {
-    const hours = Math.floor(diffInSeconds / hour);
-    return `${hours} ${hours === 1 ? 'hora' : 'horas'} atrás`;
-  } else if (diffInSeconds < week) {
-    const days = Math.floor(diffInSeconds / day);
-    return `${days} ${days === 1 ? 'dia' : 'dias'} atrás`;
-  } else if (diffInSeconds < month) {
-    const weeks = Math.floor(diffInSeconds / week);
-    return `${weeks} ${weeks === 1 ? 'semana' : 'semanas'} atrás`;
-  } else if (diffInSeconds < year) {
-    const months = Math.floor(diffInSeconds / month);
-    return `${months} ${months === 1 ? 'mês' : 'meses'} atrás`;
-  } else {
-    const years = Math.floor(diffInSeconds / year);
-    return `${years} ${years === 1 ? 'ano' : 'anos'} atrás`;
+  if (diffYear > 0) {
+    return diffYear === 1 ? 'há 1 ano' : `há ${diffYear} anos`;
   }
+  if (diffMonth > 0) {
+    return diffMonth === 1 ? 'há 1 mês' : `há ${diffMonth} meses`;
+  }
+  if (diffDay > 0) {
+    return diffDay === 1 ? 'ontem' : `há ${diffDay} dias`;
+  }
+  if (diffHour > 0) {
+    return diffHour === 1 ? 'há 1 hora' : `há ${diffHour} horas`;
+  }
+  if (diffMin > 0) {
+    return diffMin === 1 ? 'há 1 minuto' : `há ${diffMin} minutos`;
+  }
+  
+  return 'agora mesmo';
+}
+
+// Function to get audio duration from URL
+export async function getDurationFromAudio(audioUrl: string): Promise<number> {
+  return new Promise((resolve) => {
+    // If no URL, resolve with 0
+    if (!audioUrl) {
+      resolve(0);
+      return;
+    }
+    
+    const audio = new Audio();
+    
+    // Set up listeners
+    audio.addEventListener('loadedmetadata', () => {
+      if (audio.duration && !isNaN(audio.duration)) {
+        resolve(audio.duration);
+      } else {
+        resolve(0);
+      }
+    });
+    
+    audio.addEventListener('error', () => {
+      console.error('Error loading audio for duration check:', audioUrl);
+      resolve(0);
+    });
+    
+    // Add a timeout in case loading takes too long
+    const timeout = setTimeout(() => {
+      console.warn('Timeout getting audio duration:', audioUrl);
+      resolve(0);
+    }, 5000);
+    
+    // Set the source and try to load
+    audio.src = audioUrl;
+    audio.load();
+    
+    // Clean up timeout when done
+    audio.addEventListener('loadedmetadata', () => clearTimeout(timeout));
+    audio.addEventListener('error', () => clearTimeout(timeout));
+  });
 }

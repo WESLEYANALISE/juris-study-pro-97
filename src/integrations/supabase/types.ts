@@ -2249,6 +2249,39 @@ export type Database = {
           },
         ]
       }
+      podcast_tabela: {
+        Row: {
+          area: string | null
+          created_at: string
+          descricao: string | null
+          id: number
+          imagem_miniatuta: string | null
+          tag: string | null
+          titulo: string | null
+          url_audio: string | null
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: number
+          imagem_miniatuta?: string | null
+          tag?: string | null
+          titulo?: string | null
+          url_audio?: string | null
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          descricao?: string | null
+          id?: number
+          imagem_miniatuta?: string | null
+          tag?: string | null
+          titulo?: string | null
+          url_audio?: string | null
+        }
+        Relationships: []
+      }
       podcasts: {
         Row: {
           audio_url: string
