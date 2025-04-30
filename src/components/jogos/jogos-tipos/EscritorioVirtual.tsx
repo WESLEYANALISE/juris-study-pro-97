@@ -30,7 +30,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Using any to bypass type checking for the Supabase client
+        // Using type assertion to bypass type checking for the Supabase client
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
@@ -40,7 +40,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         setCasos(casosData || []);
         
         if (user) {
-          // Using any to bypass type checking for the Supabase client
+          // Using type assertion to bypass type checking for the Supabase client
           const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')

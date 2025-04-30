@@ -104,7 +104,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
           pontuacao: pontuacao,
           completada: true,
           jogo_id: gameId
-        });
+        }) as { data: any, error: any };
         
       toast.success('Partida concluída! Pontuação registrada.');
     } catch (error) {

@@ -67,4 +67,86 @@ export interface CustomTypes {
   jogos_cartas_partidas: any;
   jogos_rpg_cenarios: Cenario;
   jogos_rpg_progresso: ProgressoRPG;
+  jogos_categorias: {
+    id: string;
+    nome: string;
+    descricao: string;
+    icone: string;
+    nivel_dificuldade: string;
+    background_variant: string;
+    ativo: boolean;
+    created_at: string;
+    updated_at: string;
+  };
+  jogos_leaderboards: {
+    id: string;
+    user_id: string;
+    jogo_id: string;
+    pontuacao: number;
+    data_registro: string;
+  };
+  jogos_quiz_perguntas: {
+    id: string;
+    pergunta: string;
+    opcao_a: string;
+    opcao_b: string;
+    opcao_c: string;
+    opcao_d: string;
+    resposta_correta: string;
+    explicacao?: string;
+    categoria: string;
+    area: string;
+    nivel_dificuldade?: string;
+    created_at: string;
+  };
+  jogos_quiz_respostas: {
+    id: string;
+    user_id: string;
+    pergunta_id: string;
+    resposta_selecionada: string;
+    acertou: boolean;
+    tempo_resposta?: number;
+    created_at: string;
+  };
+  jogos_simulacoes_casos: {
+    id: string;
+    titulo: string;
+    descricao: string;
+    fatos: string;
+    provas?: string;
+    area_direito: string;
+    nivel_dificuldade?: string;
+    created_at: string;
+  };
+  jogos_simulacoes_submissoes: {
+    id: string;
+    user_id: string;
+    caso_id: string;
+    papel: string;
+    argumentacao: string;
+    pontuacao?: number;
+    feedback?: string;
+    created_at: string;
+  };
+  jogos_user_badges: {
+    id: string;
+    user_id: string;
+    jogo_id: string;
+    badge_nome: string;
+    badge_descricao?: string;
+    badge_icone?: string;
+    conquistado_em: string;
+  };
+  jogos_user_stats: {
+    id: string;
+    user_id: string;
+    jogo_id: string;
+    pontuacao: number;
+    partidas_jogadas: number;
+    partidas_vencidas: number;
+    melhor_resultado: number;
+    ultimo_acesso: string;
+    created_at: string;
+    updated_at: string;
+  };
 }

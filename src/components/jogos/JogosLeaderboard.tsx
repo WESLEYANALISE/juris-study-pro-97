@@ -1,5 +1,4 @@
 
-// Only modifying the icon property which was causing problems
 import React, { useState, useEffect } from 'react';
 import { JuridicalCard } from '@/components/ui/juridical-card';
 import { supabase } from '@/integrations/supabase/client';
@@ -126,7 +125,7 @@ export const JogosLeaderboard = ({ gameId }: JogosLeaderboardProps) => {
   return (
     <JuridicalCard
       title="Ranking dos Jogadores"
-      icon="scroll" // Changed from "trophy" to "scroll" which is a valid icon
+      icon="trophy"
       variant="default"
     >
       {isLoading ? (

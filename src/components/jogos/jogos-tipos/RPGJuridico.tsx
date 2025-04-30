@@ -38,7 +38,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         
         // Se houver apenas um cenário, selecionar automaticamente
         if (data && data.length === 1) {
-          setCenarioAtual(data[0]);
+          setCenarioAtual(data[0] as Cenario);
         }
         
         if (user) {
