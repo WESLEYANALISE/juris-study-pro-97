@@ -1,10 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { motion } from 'framer-motion';
 import { AlertCircle, Headphones, Podcast } from "lucide-react";
 import { PodcastFilters } from '@/components/podcast/PodcastFilters';
 import { PodcastList } from '@/components/podcast/PodcastList';
+import { PodcastCard } from '@/components/podcast/PodcastCard';
 import { AudioPlayer } from '@/components/podcast/AudioPlayer';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -31,6 +31,7 @@ interface Podcast {
   categories: { name: string; slug: string }[];
   tags?: string[];
   area?: string;
+  progress?: number;
 }
 
 const Podcasts = () => {

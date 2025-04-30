@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { PodcastCard } from "./PodcastCard";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -73,7 +72,8 @@ export function PodcastList({
             .eq('user_id', user.id);
           
           if (favoriteIds && favoriteIds.length > 0) {
-            query = query.in('id', favoriteIds.map(f => f.podcast_id));
+            const podcastIds = favoriteIds.map(f => f.podcast_id);
+            query = query.in('id', podcastIds);
           } else {
             // If no favorites and showing favorites only
             setPodcasts([]);
