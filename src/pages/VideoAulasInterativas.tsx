@@ -1,4 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from "@/integrations/supabase/client";
 import { InteractiveVideoPlayer } from "@/components/videoaulas/InteractiveVideoPlayer";
 import Layout from "@/components/Layout";
@@ -11,6 +13,36 @@ import {
   DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import { 
+  RadioGroup, 
+  RadioGroupItem 
+} from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { 
+  AlertCircle, 
+  BookOpen, 
+  CheckCircle2, 
+  Clock, 
+  Search, 
+  Trophy 
+} from "lucide-react";
 
 interface VideoAula {
   id: string;
@@ -18,7 +50,7 @@ interface VideoAula {
   description: string;
   video_id: string;
   area: string;
-  tags: string[];
+  tags?: string[];
   created_at: string;
   updated_at: string;
   thumbnail_url?: string;
@@ -77,7 +109,7 @@ export function VideoAulasInterativas() {
         description: item.description,
         video_id: item.url.split('v=')[1] || item.url,
         area: item.area,
-        tags: item.tags || [],
+        tags: [], // Initialize as empty array since tags don't exist in the video_aulas table
         created_at: item.created_at,
         updated_at: item.created_at,
         thumbnail_url: item.thumbnail_url || `https://img.youtube.com/vi/${item.url.split('v=')[1] || item.url}/hqdefault.jpg`
@@ -168,16 +200,12 @@ export function VideoAulasInterativas() {
     setHasAnswered(false);
   };
 
-  const handleAreaFilter = (area: string) => {
-    setAreaFilter(area === areaFilter ? null : area);
-  };
-
   const filteredVideoAulas = videoAulas.filter(video => {
     const matchesSearch = !searchTerm ||
       video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       video.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       video.area.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      video.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()));
+      (video.tags && video.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())));
 
     const matchesArea = !areaFilter || video.area === areaFilter;
     
@@ -235,7 +263,7 @@ export function VideoAulasInterativas() {
                     key={area}
                     variant={areaFilter === area ? "default" : "outline"}
                     size="sm"
-                    onClick={() => handleAreaFilter(area)}
+                    onClick={() => setAreaFilter(area === areaFilter ? null : area)}
                   >
                     {area}
                   </Button>
@@ -410,7 +438,7 @@ export function VideoAulasInterativas() {
             <DialogFooter className="sm:justify-between flex gap-2">
               <div className="text-sm text-muted-foreground flex items-center">
                 <Clock className="h-4 w-4 mr-1" />
-                {Math.floor(currentQuestion?.timestamp || 0 / 60)}:{String(Math.floor(currentQuestion?.timestamp || 0 % 60)).padStart(2, '0')}
+                {Math.floor((currentQuestion?.timestamp || 0) / 60)}:{String(Math.floor((currentQuestion?.timestamp || 0) % 60)).padStart(2, '0')}
               </div>
               
               {!hasAnswered ? (
