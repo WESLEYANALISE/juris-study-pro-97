@@ -5,6 +5,9 @@ import { Info, FileText, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExplanationDialog } from './ExplanationDialog';
 import { PracticalExampleDialog } from './PracticalExampleDialog';
+import { motion, AnimatePresence } from 'framer-motion';
+import { AnnotationButton } from './AnnotationButton';
+import { useAuth } from '@/hooks/use-auth';
 
 interface ArticleActionsProps {
   articleText: string;
@@ -13,6 +16,8 @@ interface ArticleActionsProps {
   formalExplanation?: string;
   practicalExample?: string;
   handleNarration: (text: string) => Promise<void>;
+  isVisible: boolean;
+  lawName: string;
 }
 
 export const ArticleActions = ({
@@ -21,57 +26,108 @@ export const ArticleActions = ({
   technicalExplanation,
   formalExplanation,
   practicalExample,
-  handleNarration
+  handleNarration,
+  isVisible,
+  lawName
 }: ArticleActionsProps) => {
+  const { user } = useAuth();
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
   const [isPracticalExampleDialogOpen, setIsPracticalExampleDialogOpen] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
 
   const handleCopy = async (text: string) => {
     if (!text) return;
     
+    setIsCopying(true);
+    
     try {
-      await navigator.clipboard.writeText(text);
-      toast.success('Texto copiado para a área de transferência');
+      // Try the modern clipboard API first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(text);
+        toast.success('Texto copiado para a área de transferência');
+      } else {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        if (successful) {
+          toast.success('Texto copiado para a área de transferência');
+        } else {
+          toast.error('Não foi possível copiar o texto');
+        }
+        
+        document.body.removeChild(textArea);
+      }
     } catch (err) {
       console.error("Erro ao copiar texto:", err);
       toast.error('Erro ao copiar texto. Por favor, tente novamente.');
+    } finally {
+      setIsCopying(false);
     }
   };
 
   return (
     <>
-      <div className="flex flex-wrap gap-2 pt-4 border-t">
-        <Button 
-          variant="purple" 
-          className="gap-2"
-          onClick={() => setIsExplanationDialogOpen(true)}
-          disabled={!technicalExplanation && !formalExplanation}
-        >
-          <Info size={16} />
-          Explicação
-        </Button>
-
-        {practicalExample && (
-          <Button 
-            variant="purple" 
-            className="gap-2"
-            onClick={() => setIsPracticalExampleDialogOpen(true)}
+      <AnimatePresence>
+        {isVisible && (
+          <motion.div 
+            className="flex flex-wrap gap-2 pt-4 border-t"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
           >
-            <FileText size={16} />
-            Exemplo Prático
-          </Button>
-        )}
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
+              onClick={() => setIsExplanationDialogOpen(true)}
+              disabled={!technicalExplanation && !formalExplanation}
+            >
+              <Info size={16} />
+              <span className="hidden sm:inline">Explicação</span>
+            </Button>
 
-        <Button 
-          variant="purple" 
-          size="icon" 
-          onClick={() => handleCopy(articleText)} 
-          title="Copiar artigo"
-          className="hover:scale-105 transition-transform"
-        >
-          <Copy size={16} />
-        </Button>
-      </div>
+            {practicalExample && (
+              <Button 
+                variant="outline"
+                size="sm"
+                className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
+                onClick={() => setIsPracticalExampleDialogOpen(true)}
+              >
+                <FileText size={16} />
+                <span className="hidden sm:inline">Exemplo Prático</span>
+              </Button>
+            )}
+
+            <Button 
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
+              onClick={() => handleCopy(articleText)} 
+              disabled={isCopying}
+            >
+              <Copy size={16} />
+              <span className="hidden sm:inline">Copiar</span>
+            </Button>
+            
+            {/* New annotation button, only shown for logged-in users */}
+            {user && articleNumber && (
+              <AnnotationButton 
+                lawName={lawName} 
+                articleNumber={articleNumber} 
+                articleText={articleText} 
+              />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Explanation Dialog */}
       <ExplanationDialog 

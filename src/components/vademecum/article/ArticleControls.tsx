@@ -2,6 +2,7 @@
 import React from 'react';
 import { NarrationControls } from './NarrationControls';
 import { BookmarkButton } from './BookmarkButton';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ArticleControlsProps {
   articleText: string;
@@ -12,6 +13,7 @@ interface ArticleControlsProps {
   lawName: string;
   articleNumber: string;
   isLoading: boolean;
+  isVisible: boolean;
 }
 
 export const ArticleControls = ({
@@ -22,23 +24,34 @@ export const ArticleControls = ({
   setIsFavorite,
   lawName,
   articleNumber,
-  isLoading
+  isLoading,
+  isVisible
 }: ArticleControlsProps) => {
   return (
-    <div className="flex flex-col gap-2">
-      <NarrationControls 
-        text={articleText} 
-        isNarrating={isNarrating} 
-        setIsNarrating={setIsNarrating} 
-      />
-      <BookmarkButton 
-        isFavorite={isFavorite} 
-        setIsFavorite={setIsFavorite}
-        lawName={lawName} 
-        articleNumber={articleNumber} 
-        articleText={articleText}
-        isLoading={isLoading}
-      />
-    </div>
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div 
+          className="flex flex-col gap-2"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ duration: 0.2 }}
+        >
+          <NarrationControls 
+            text={articleText} 
+            isNarrating={isNarrating} 
+            setIsNarrating={setIsNarrating} 
+          />
+          <BookmarkButton 
+            isFavorite={isFavorite} 
+            setIsFavorite={setIsFavorite}
+            lawName={lawName} 
+            articleNumber={articleNumber} 
+            articleText={articleText}
+            isLoading={isLoading}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };

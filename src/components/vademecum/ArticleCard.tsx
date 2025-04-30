@@ -31,24 +31,12 @@ export const ArticleCard = ({
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [isNarrating, setIsNarrating] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   const { isFavorite, isLoading, checkIsFavorite, toggleFavorite } = useArticleFavorite({
     lawName,
     articleNumber
   });
-
-  // For debugging
-  useEffect(() => {
-    console.log('ArticleCard props:', {
-      lawName,
-      articleNumber,
-      articleTextLength: articleText?.length || 0,
-      hasTechnicalExplanation: !!technicalExplanation,
-      hasFormalExplanation: !!formalExplanation,
-      hasPracticalExample: !!practicalExample,
-      isFavoriteType: typeof isFavorite
-    });
-  }, [lawName, articleNumber, articleText, technicalExplanation, formalExplanation, practicalExample, isFavorite]);
 
   // Check if article is a favorite when user is available
   useEffect(() => {
@@ -71,9 +59,18 @@ export const ArticleCard = ({
       animate={{ opacity: 1, y: 0 }} 
       transition={{ duration: isMobile ? 0.2 : 0.3 }}
       className="will-change-transform"
-      whileHover={{ scale: 1.01, transition: { duration: 0.2 } }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
     >
-      <Card className="p-4 md:p-6 space-y-4 shadow-card hover:shadow-hover transition-all duration-300 bg-card/80 backdrop-blur-sm border-primary/10">
+      <Card className={`
+        p-4 md:p-6 space-y-4 
+        transition-all duration-300 
+        shadow-sm hover:shadow-md
+        bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm 
+        border-primary/5 hover:border-primary/10
+        ${isHeading ? 'border-l-0' : 'border-l-4 border-l-primary/30'}
+      `}>
         <div className="flex justify-between items-start">
           <ArticleContent 
             articleNumber={articleNumber}
@@ -92,6 +89,7 @@ export const ArticleCard = ({
               lawName={lawName}
               articleNumber={articleNumber}
               isLoading={isLoading}
+              isVisible={isHovered || isMobile}
             />
           )}
         </div>
@@ -112,6 +110,8 @@ export const ArticleCard = ({
                 }, 1000);
               });
             }}
+            isVisible={isHovered || isMobile}
+            lawName={lawName}
           />
         )}
       </Card>

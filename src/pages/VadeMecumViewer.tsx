@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInView } from "react-intersection-observer";
@@ -13,13 +14,15 @@ import { VadeMecumHeader } from "@/components/vademecum/VadeMecumHeader";
 import { VadeMecumError } from "@/components/vademecum/VadeMecumError";
 import { useVadeMecumArticles } from "@/hooks/useVadeMecumArticles";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
+
 const VadeMecumViewer = () => {
+  // Initial batch size increased from 10 to 30
+  const [visibleBatch, setVisibleBatch] = useState(30);
+  const [recentHistory, setRecentHistory] = useState<any[]>([]);
   const {
     searchQuery,
     setSearchQuery
   } = useVadeMecumSearch();
-  const [visibleBatch, setVisibleBatch] = useState(10);
-  const [recentHistory, setRecentHistory] = useState<any[]>([]);
   const {
     favorites,
     loadHistory
@@ -44,6 +47,7 @@ const VadeMecumViewer = () => {
     threshold: 0.1,
     triggerOnce: false
   });
+  
   const {
     filteredArticles,
     loading,
@@ -53,20 +57,21 @@ const VadeMecumViewer = () => {
     tableName
   } = useVadeMecumArticles(searchQuery);
 
-  // Carregar histórico de visualização
+  // Load view history
   useState(() => {
     if (user) {
       loadHistory().then(history => setRecentHistory(history || []));
     }
   });
 
-  // Calcular artigos visíveis baseado no batch atual
+  // Calculate articles visible based on current batch
   const visibleArticles = filteredArticles.slice(0, visibleBatch);
 
-  // Efeito para carregar mais artigos quando o usuário rolar até o final da página
+  // Effect for loading more articles when user scrolls to bottom
   useState(() => {
     if (inView && filteredArticles.length > visibleBatch) {
-      const batchSize = isMobile ? 5 : 10;
+      // Improved batch size - load more articles at once
+      const batchSize = isMobile ? 10 : 20;
       setVisibleBatch(prev => prev + batchSize);
     }
   });
@@ -80,6 +85,7 @@ const VadeMecumViewer = () => {
     if (lawNameLower.includes('lei')) return "scales";
     return "books";
   };
+  
   if (loading) {
     return <div className="flex justify-center items-center min-h-[200px] py-12">
         <div className="text-center">
@@ -88,27 +94,66 @@ const VadeMecumViewer = () => {
         </div>
       </div>;
   }
+  
   if (error) {
     return <VadeMecumError error={error} onRetry={() => loadArticles()} />;
   }
-  return <JuridicalBackground variant={getBgVariant()} opacity={0.03}>
+  
+  return (
+    <JuridicalBackground variant={getBgVariant()} opacity={0.03}>
       <div className="container mx-auto p-4 px-[11px]">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* For mobile, display sidebar at top when on smaller screens */}
+          {isMobile && (
+            <div className="lg:col-span-1 mb-6">
+              <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
+            </div>
+          )}
+          
           <div className="lg:col-span-3">
-            <VadeMecumHeader title={decodedLawName} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onReload={() => loadArticles()} />
+            <VadeMecumHeader 
+              title={decodedLawName} 
+              searchQuery={searchQuery} 
+              setSearchQuery={setSearchQuery} 
+              onReload={() => loadArticles()} 
+            />
 
-            {filteredArticles.length === 0 && !loading ? <div className="text-center py-8">
+            {filteredArticles.length === 0 && !loading ? (
+              <div className="text-center py-8">
                 <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
-              </div> : <VadeMecumArticleList isLoading={loading} visibleArticles={visibleArticles} filteredArticles={filteredArticles} visibleBatch={visibleBatch} tableName={tableName} fontSize={fontSize} loadMoreRef={loadMoreRef} />}
+              </div>
+            ) : (
+              <VadeMecumArticleList 
+                isLoading={loading} 
+                visibleArticles={visibleArticles} 
+                filteredArticles={filteredArticles} 
+                visibleBatch={visibleBatch} 
+                tableName={tableName} 
+                fontSize={fontSize} 
+                loadMoreRef={loadMoreRef} 
+              />
+            )}
           </div>
           
-          {/* Sidebar with Favorites and History */}
-          <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
+          {/* Only show sidebar in this position on desktop */}
+          {!isMobile && (
+            <div className="lg:col-span-1">
+              <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
+            </div>
+          )}
         </div>
 
         {/* Bottom floating controls for font size and back to top */}
-        <FloatingControls fontSize={fontSize} increaseFontSize={increaseFontSize} decreaseFontSize={decreaseFontSize} showBackToTop={showBackToTop} scrollToTop={scrollToTop} />
+        <FloatingControls 
+          fontSize={fontSize} 
+          increaseFontSize={increaseFontSize} 
+          decreaseFontSize={decreaseFontSize} 
+          showBackToTop={showBackToTop} 
+          scrollToTop={scrollToTop} 
+        />
       </div>
-    </JuridicalBackground>;
+    </JuridicalBackground>
+  );
 };
+
 export default VadeMecumViewer;
