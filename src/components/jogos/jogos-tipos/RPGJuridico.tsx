@@ -115,8 +115,8 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       // Calcular pontuação com base na escolha
       const pontuacao = opcao === 'A' ? 10 : opcao === 'B' ? 5 : 3; // Exemplo simples
       
-      // Create a properly typed object for upsert
-      const progressoData: Partial<ProgressoRPG> & { jogo_id: string } = {
+      // Define the proper type for the upsert operation
+      const progressoData = {
         user_id: user.id,
         cenario_id: cenarioAtual.id,
         caminho_escolhido: JSON.stringify(caminhoObj),
@@ -132,7 +132,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         
       if (error) throw error;
       
-      if (data && data.length > 0) {
+      if (data) {
         // Explicitly cast first item of returned data array to ensure type safety
         setProgresso(data[0] as unknown as ProgressoRPG);
       }
@@ -266,3 +266,4 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
     </div>
   );
 };
+
