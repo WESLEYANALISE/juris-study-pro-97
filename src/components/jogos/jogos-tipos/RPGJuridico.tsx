@@ -35,29 +35,33 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         if (error) throw error;
         
         if (data) {
-          setCenarios(data);
+          // Ensure we only set data that matches the Cenario type
+          const cenariosData = data as Cenario[];
+          setCenarios(cenariosData);
           
           // Se houver apenas um cenário, selecionar automaticamente
-          if (data.length === 1) {
-            setCenarioAtual(data[0]);
+          if (cenariosData.length === 1) {
+            setCenarioAtual(cenariosData[0]);
           }
           
-          if (user && data[0]) {
+          if (user && cenariosData[0]) {
             // Verificar progresso do usuário
             const { data: progressoData, error: progressoError } = await supabaseWithCustomTables
               .from('jogos_rpg_progresso')
               .select('*')
               .eq('user_id', user.id)
-              .eq('cenario_id', data[0].id)
+              .eq('cenario_id', cenariosData[0].id)
               .maybeSingle();
               
             if (!progressoError && progressoData) {
-              setProgresso(progressoData);
+              // Explicitly cast to ProgressoRPG to ensure correct typing
+              const progressoTyped = progressoData as unknown as ProgressoRPG;
+              setProgresso(progressoTyped);
               
-              if (progressoData.caminho_escolhido) {
+              if (progressoTyped.caminho_escolhido) {
                 // Converter string JSON para objeto
                 try {
-                  const caminhoObj = JSON.parse(progressoData.caminho_escolhido as string);
+                  const caminhoObj = JSON.parse(progressoTyped.caminho_escolhido as string);
                   setCaminhoEscolhido(caminhoObj.opcao);
                   setEtapaAtual(caminhoObj.etapa || 0);
                   setHistoriaCenario(caminhoObj.historia || []);
@@ -111,22 +115,26 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       // Calcular pontuação com base na escolha
       const pontuacao = opcao === 'A' ? 10 : opcao === 'B' ? 5 : 3; // Exemplo simples
       
+      // Create a properly typed object for upsert
+      const progressoData: Partial<ProgressoRPG> & { jogo_id: string } = {
+        user_id: user.id,
+        cenario_id: cenarioAtual.id,
+        caminho_escolhido: JSON.stringify(caminhoObj),
+        pontuacao: pontuacao,
+        completado: finalizado,
+        jogo_id: gameId
+      };
+        
       const { data, error } = await supabaseWithCustomTables
         .from('jogos_rpg_progresso')
-        .upsert({
-          user_id: user.id,
-          cenario_id: cenarioAtual.id,
-          caminho_escolhido: JSON.stringify(caminhoObj),
-          pontuacao: pontuacao,
-          completado: finalizado,
-          jogo_id: gameId
-        })
+        .upsert(progressoData)
         .select()
         .single();
         
       if (error) throw error;
       
-      setProgresso(data);
+      // Explicitly cast returned data to ensure type safety
+      setProgresso(data as unknown as ProgressoRPG);
       
       if (finalizado) {
         toast.success('Cenário completado! Pontuação registrada.');
