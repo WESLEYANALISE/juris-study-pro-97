@@ -1,3 +1,4 @@
+
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones, CreditCard } from "lucide-react";
 import {
   Sidebar,
@@ -21,6 +22,16 @@ import { useSubscription } from "@/hooks/useSubscription";
 
 interface AppSidebarProps {
   userProfile: ProfileType;
+}
+
+// Add proper interface for menu items with all possible properties
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+  profiles: string[];
+  isNew?: boolean;
+  isPremium?: boolean;
 }
 
 export function AppSidebar({ userProfile }: AppSidebarProps) {

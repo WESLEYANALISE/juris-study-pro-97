@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Helmet } from "react-helmet";
 import { useSubscription } from "@/hooks/useSubscription";
 import { PlanCard } from "@/components/subscription/PlanCard";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
@@ -50,6 +49,14 @@ export default function Assinatura() {
 
   const [refreshing, setRefreshing] = useState(false);
 
+  // Set document title
+  useEffect(() => {
+    document.title = "Assinatura | Direito 360";
+    return () => {
+      document.title = "Direito 360";
+    };
+  }, []);
+
   // Verificar se usuário está autenticado
   useEffect(() => {
     if (!user) {
@@ -74,7 +81,7 @@ export default function Assinatura() {
     }, 10000);
 
     return () => clearInterval(interval);
-  }, [user]);
+  }, [user, checkSubscription]);
 
   // Função para refresh manual do status
   const handleRefresh = async () => {
@@ -112,10 +119,6 @@ export default function Assinatura() {
 
   return (
     <JuridicalBackground variant="scales" opacity={0.03}>
-      <Helmet>
-        <title>Assinatura | Direito 360</title>
-      </Helmet>
-
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center space-x-4">
