@@ -108,7 +108,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       <SidebarHeader className="flex items-center">
         <div className="flex items-center gap-2 ml-2">
           <Scale className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">JurisStudy</span>
+          <span className="font-bold text-xl">Direito 360</span>
         </div>
         <SidebarTrigger className="ml-auto" />
       </SidebarHeader>

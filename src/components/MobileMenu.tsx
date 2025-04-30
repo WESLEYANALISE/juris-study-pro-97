@@ -194,7 +194,7 @@ const MobileMenu = ({
           <SheetHeader className="p-4 border-b">
             <SheetTitle className="flex items-center gap-2">
               <span className="font-bold text-xl bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-                JurisStudy Pro
+                Direito 360
               </span>
             </SheetTitle>
           </SheetHeader>

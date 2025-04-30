@@ -19,9 +19,9 @@ export default defineConfig(({ mode }) => ({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'robots.txt', 'placeholder.svg'],
       manifest: {
-        name: 'JuriStudy Pro',
-        short_name: 'JuriStudy',
-        description: 'Aplicativo de estudos jurídicos',
+        name: 'Direito 360',
+        short_name: 'Direito 360',
+        description: 'Plataforma completa para estudantes e profissionais de direito',
         theme_color: '#121212',
         background_color: '#121212',
         display: 'standalone',
@@ -30,6 +30,11 @@ export default defineConfig(({ mode }) => ({
             src: '/favicon.ico',
             sizes: '48x48',
             type: 'image/x-icon'
+          },
+          {
+            src: 'https://imgur.com/G15NKWM.png',
+            sizes: '192x192',
+            type: 'image/png'
           }
         ]
       },

@@ -140,7 +140,7 @@ const Index = () => {
               />
             </div>
             <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-              JurisStudy Pro
+              Direito 360
             </h1>
             <p className="text-xl text-muted-foreground">
               Plataforma completa para estudos jurídicos

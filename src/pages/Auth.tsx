@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Card, CardHeader, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -231,12 +230,12 @@ const Auth = () => {
       <Card className="w-full max-w-md border shadow-xl rounded-xl bg-background animate-fade-in">
         <CardHeader className="flex flex-col items-center gap-2 pb-2">
           <img
-            src={LOGO_URL}
-            alt="JurisStudy Pro Logo"
-            className="h-20 w-20 mb-2 rounded-full bg-muted shadow"
+            src="https://imgur.com/G15NKWM.png"
+            alt="Direito 360 Logo"
+            className="h-20 w-20 mb-2 rounded-full shadow"
           />
           <CardTitle className="text-2xl font-black text-primary tracking-tight">
-            JurisStudy Pro
+            Direito 360
           </CardTitle>
           <CardDescription className="text-center">{SUBTITLE}</CardDescription>
         </CardHeader>

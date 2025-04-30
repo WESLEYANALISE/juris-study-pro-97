@@ -55,7 +55,7 @@ export function WelcomeModal({ onProfileSelect }: WelcomeModalProps) {
 
   useEffect(() => {
     // Verificar se é a primeira visita
-    const isFirstVisit = localStorage.getItem("juris-study-first-visit") !== "false";
+    const isFirstVisit = localStorage.getItem("direito360-first-visit") !== "false";
     
     if (isFirstVisit) {
       // Primeiro mostrar a animação do logo
@@ -78,8 +78,8 @@ export function WelcomeModal({ onProfileSelect }: WelcomeModalProps) {
 
   const handleConfirm = () => {
     if (selectedProfile) {
-      localStorage.setItem("juris-study-first-visit", "false");
-      localStorage.setItem("juris-study-profile", selectedProfile);
+      localStorage.setItem("direito360-first-visit", "false");
+      localStorage.setItem("direito360-profile", selectedProfile);
       onProfileSelect(selectedProfile);
       setOpen(false);
     }
@@ -89,8 +89,8 @@ export function WelcomeModal({ onProfileSelect }: WelcomeModalProps) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background z-50">
         <div className={`text-center transition-opacity duration-500 ${logoAnimation ? 'opacity-100' : 'opacity-0'}`}>
-          <Scale className="h-24 w-24 text-primary mx-auto mb-4 animate-pulse-subtle" />
-          <h1 className="text-4xl font-bold">JurisStudy Pro</h1>
+          <img src="https://imgur.com/G15NKWM.png" alt="Direito 360 Logo" className="h-24 w-24 mx-auto mb-4" />
+          <h1 className="text-4xl font-bold">Direito 360</h1>
           <p className="text-xl text-muted-foreground mt-2">Sua plataforma completa de estudos jurídicos</p>
         </div>
       </div>
@@ -101,7 +101,7 @@ export function WelcomeModal({ onProfileSelect }: WelcomeModalProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl">Bem-vindo ao JurisStudy Pro!</DialogTitle>
+          <DialogTitle className="text-center text-2xl">Bem-vindo ao Direito 360!</DialogTitle>
           <DialogDescription className="text-center pt-2">
             Selecione seu perfil para personalizar sua experiência
           </DialogDescription>
