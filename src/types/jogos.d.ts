@@ -57,3 +57,14 @@ export interface ProgressoRPG {
   pontuacao: number;
   completado: boolean;
 }
+
+// Type for the Supabase client when using custom tables
+export interface CustomTypes {
+  jogos_escritorio_casos: Caso;
+  jogos_escritorio_solucoes: Solucao;
+  jogos_cartas_baralhos: Baralho;
+  jogos_cartas_artigos: Artigo;
+  jogos_rpg_cenarios: Cenario;
+  jogos_rpg_progresso: ProgressoRPG;
+  jogos_cartas_partidas: any;
+}

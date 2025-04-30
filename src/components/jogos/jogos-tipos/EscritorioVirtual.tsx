@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,24 +30,25 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Use the any type and explicit casting to avoid type errors
+        // Use type assertion to tell TypeScript this table exists
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
-          .order('created_at', { ascending: false }) as { data: Caso[] | null, error: any };
+          .order('created_at', { ascending: false });
           
         if (casosError) throw casosError;
-        setCasos(casosData || []);
+        setCasos(casosData as Caso[] || []);
         
         if (user) {
+          // Use type assertion for the solucoes table as well
           const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
             .eq('user_id', user.id)
-            .order('created_at', { ascending: false }) as { data: Solucao[] | null, error: any };
+            .order('created_at', { ascending: false });
             
           if (solucoesError) throw solucoesError;
-          setSolucoes(solucoesData || []);
+          setSolucoes(solucoesData as Solucao[] || []);
         }
       } catch (error) {
         console.error('Erro ao carregar casos:', error);
@@ -98,13 +100,13 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
           jogo_id: gameId
         })
         .select('*')
-        .single() as { data: Solucao | null, error: any };
+        .single();
         
       if (error) throw error;
       
       if (data) {
         // Adicionar nova solução à lista local
-        setSolucoes(prev => [data, ...prev]);
+        setSolucoes(prev => [data as Solucao, ...prev]);
         toast.success('Solução submetida com sucesso!');
         setActiveTab('solucoes');
       }
@@ -232,7 +234,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
                     <CardHeader>
                       <div className="flex justify-between items-center">
                         <CardTitle className="text-lg">{casoRelacionado?.titulo || 'Caso não encontrado'}</CardTitle>
-                        {getStatusBadge(solucao.status)}
+                        {getStatusBadge(solucao.status || 'pendente')}
                       </div>
                     </CardHeader>
                     <CardContent>

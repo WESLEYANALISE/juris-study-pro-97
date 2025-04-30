@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -31,11 +32,11 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         const { data, error } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
-          .order('nome') as { data: Baralho[] | null, error: any };
+          .order('nome');
         
         if (error) throw error;
         
-        setBaralhos(data || []);
+        setBaralhos(data as Baralho[] || []);
       } catch (error) {
         console.error('Erro ao carregar baralhos:', error);
         toast.error('Não foi possível carregar os baralhos');
@@ -54,18 +55,18 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       const { data, error } = await supabase
         .from('jogos_cartas_artigos')
         .select('*')
-        .eq('baralho_id', baralho.id) as { data: Artigo[] | null, error: any };
+        .eq('baralho_id', baralho.id);
       
       if (error) throw error;
       
-      setArtigos(data || []);
+      setArtigos(data as Artigo[] || []);
       
       // Selecionar 5 cartas aleatórias para a mão inicial
       if (data && data.length >= 5) {
         const shuffled = [...data].sort(() => Math.random() - 0.5);
-        setMaoJogador(shuffled.slice(0, 5));
+        setMaoJogador(shuffled.slice(0, 5) as Artigo[]);
       } else {
-        setMaoJogador(data || []);
+        setMaoJogador(data as Artigo[] || []);
       }
       
       setActiveTab('jogar');
@@ -116,7 +117,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
     
     // Reembaralhar e pegar novas cartas
     const shuffled = [...artigos].sort(() => Math.random() - 0.5);
-    setMaoJogador(shuffled.slice(0, 5));
+    setMaoJogador(shuffled.slice(0, 5) as Artigo[]);
     setPontuacao(0);
   };
   

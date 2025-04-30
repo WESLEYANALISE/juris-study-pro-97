@@ -35,19 +35,19 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
         const { data: cenariosData, error: cenariosError } = await supabase
           .from('jogos_rpg_cenarios')
           .select('*')
-          .order('titulo') as { data: Cenario[] | null, error: any };
+          .order('titulo');
           
         if (cenariosError) throw cenariosError;
-        setCenarios(cenariosData || []);
+        setCenarios(cenariosData as Cenario[] || []);
         
         if (user) {
           const { data: progressoData, error: progressoError } = await supabase
             .from('jogos_rpg_progresso')
             .select('*')
-            .eq('user_id', user.id) as { data: ProgressoRPG[] | null, error: any };
+            .eq('user_id', user.id);
             
           if (progressoError) throw progressoError;
-          setProgressoUsuario(progressoData || []);
+          setProgressoUsuario(progressoData as ProgressoRPG[] || []);
         }
       } catch (error) {
         console.error('Erro ao carregar cenários RPG:', error);
@@ -102,7 +102,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
           jogo_id: gameId
         })
         .select('*')
-        .single() as { data: ProgressoRPG | null, error: any };
+        .single();
         
       if (error) {
         // Checar se é erro de chave duplicada (já completou este cenário)
@@ -115,7 +115,7 @@ export const RPGJuridico = ({ gameId }: RPGJuridicoProps) => {
       
       if (data) {
         // Atualizar progresso local
-        setProgressoUsuario(prev => [data, ...prev]);
+        setProgressoUsuario(prev => [data as ProgressoRPG, ...prev]);
         toast.success(`Você ganhou ${consequencia.pontos} pontos!`);
       }
     } catch (error) {
