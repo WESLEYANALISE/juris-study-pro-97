@@ -33,6 +33,7 @@ import RedacaoConteudo from "@/pages/RedacaoConteudo";
 import VideoAulas from "@/pages/VideoAulas";
 import VideoAulasTradicional from "@/pages/VideoAulasTradicional";
 import VideoAulasInterativas from "./pages/VideoAulasInterativas";
+import VideoAulasRecomendacoes from "./pages/VideoAulasRecomendacoes";
 import Anotacoes from "@/pages/Anotacoes";
 import JogosJuridicos from "@/pages/JogosJuridicos";
 import JogoDetalhes from "@/pages/JogoDetalhes";
@@ -71,7 +72,8 @@ function App() {
               <Route path="/redacao-conteudo/:id?" element={<Layout><RedacaoConteudo /></Layout>} />
               <Route path="/videoaulas" element={<Layout><VideoAulas /></Layout>} />
               <Route path="/videoaulas/tradicionais" element={<Layout><VideoAulasTradicional /></Layout>} />
-              <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
+              <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
+              <Route path="/videoaulas-interativas" element={<Layout><VideoAulasInterativas /></Layout>} />
               <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />

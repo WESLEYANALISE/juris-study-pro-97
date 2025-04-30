@@ -34,112 +34,236 @@ export interface StoredPlaylist {
   updated_at?: string;
 }
 
-// Mock data for playlists
-const MOCK_PLAYLISTS: YouTubePlaylist[] = [
-  {
-    id: 'PLgRnmS7DjCR5vUdKCF_-A2VdB9Dh_T9mi',
-    title: 'Direito Constitucional - Teoria Geral',
-    description: 'Aulas sobre fundamentos do Direito Constitucional',
-    thumbnail: 'https://i.ytimg.com/vi/XXX/default.jpg',
-    videoCount: 15,
-    channelTitle: 'Curso Jurídico'
-  },
-  {
-    id: 'PLgRnmS7DjCR5vUdKCF_-A2VdB9Dh_T9mj',
-    title: 'Direito Civil - Contratos',
-    description: 'Aulas sobre contratos no Direito Civil',
-    thumbnail: 'https://i.ytimg.com/vi/YYY/default.jpg',
-    videoCount: 12,
-    channelTitle: 'Curso Jurídico'
-  },
-  {
-    id: 'PLgRnmS7DjCR5vUdKCF_-A2VdB9Dh_T9mk',
-    title: 'Direito Penal - Parte Geral',
-    description: 'Aulas sobre parte geral do Direito Penal',
-    thumbnail: 'https://i.ytimg.com/vi/ZZZ/default.jpg',
-    videoCount: 18,
-    channelTitle: 'Curso Jurídico'
-  }
-];
+const YOUTUBE_API_KEY = 'AIzaSyC_vdQ6MShNiZo60KK2sHO-lgMhUda1woE';
 
-// Mock data for videos
-const MOCK_VIDEOS: YouTubeVideo[] = [
-  {
-    id: 'video1',
-    title: 'Introdução ao Direito Constitucional',
-    description: 'Nesta aula vamos aprender os conceitos básicos do Direito Constitucional.',
-    thumbnail: 'https://i.ytimg.com/vi/111/default.jpg',
-    publishedAt: '2023-01-15T14:00:00Z',
-    channelTitle: 'Curso Jurídico',
-    duration: '45:20'
-  },
-  {
-    id: 'video2',
-    title: 'Princípios Fundamentais da Constituição',
-    description: 'Análise dos princípios fundamentais da Constituição Federal.',
-    thumbnail: 'https://i.ytimg.com/vi/222/default.jpg',
-    publishedAt: '2023-01-22T14:00:00Z',
-    channelTitle: 'Curso Jurídico',
-    duration: '42:15'
-  },
-  {
-    id: 'video3',
-    title: 'Direitos e Garantias Fundamentais',
-    description: 'Estudo dos direitos e garantias fundamentais previstos na Constituição.',
-    thumbnail: 'https://i.ytimg.com/vi/333/default.jpg',
-    publishedAt: '2023-01-29T14:00:00Z',
-    channelTitle: 'Curso Jurídico',
-    duration: '50:10'
-  }
-];
-
-// Mock function to get juridic playlists
+// Function to get juridic playlists from YouTube
 export async function getJuridicPlaylists(keyword: string): Promise<YouTubePlaylist[]> {
   console.log(`Searching for playlists with keyword: ${keyword}`);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return MOCK_PLAYLISTS.filter(playlist => 
-    playlist.title.toLowerCase().includes(keyword.toLowerCase()) ||
-    playlist.description.toLowerCase().includes(keyword.toLowerCase())
-  );
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=direito ${keyword}&type=playlist&maxResults=10&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Extract playlist IDs
+    const playlistIds = data.items.map((item: any) => item.id.playlistId);
+    
+    // Get detailed info for each playlist
+    const playlistDetailsResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&id=${playlistIds.join(',')}&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!playlistDetailsResponse.ok) {
+      throw new Error(`YouTube API returned ${playlistDetailsResponse.status}`);
+    }
+    
+    const playlistDetails = await playlistDetailsResponse.json();
+    
+    return playlistDetails.items.map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description || '',
+      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+      videoCount: item.contentDetails.itemCount,
+      channelTitle: item.snippet.channelTitle
+    }));
+  } catch (error) {
+    console.error("Error fetching playlists:", error);
+    return [];
+  }
 }
 
-// Mock function to get videos from a playlist
+// Function to get videos from a playlist
 export async function getPlaylistVideos(playlistId: string): Promise<YouTubeVideo[]> {
   console.log(`Getting videos for playlist: ${playlistId}`);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return MOCK_VIDEOS;
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet,contentDetails&maxResults=25&playlistId=${playlistId}&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Extract video IDs for fetching additional details
+    const videoIds = data.items.map((item: any) => item.contentDetails.videoId);
+    
+    // Get video details including duration
+    const videoDetailsResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!videoDetailsResponse.ok) {
+      throw new Error(`YouTube API returned ${videoDetailsResponse.status}`);
+    }
+    
+    const videoDetails = await videoDetailsResponse.json();
+    
+    // Format duration from ISO 8601 to readable format
+    const formatDuration = (isoDuration: string) => {
+      const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+      const hours = match[1] ? match[1].replace('H', '') : '0';
+      const minutes = match[2] ? match[2].replace('M', '') : '0';
+      const seconds = match[3] ? match[3].replace('S', '') : '0';
+      
+      if (hours !== '0') {
+        return `${hours}:${minutes.padStart(2, '0')}:${seconds.padStart(2, '0')}`;
+      }
+      return `${minutes}:${seconds.padStart(2, '0')}`;
+    };
+    
+    return videoDetails.items.map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description || '',
+      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+      publishedAt: item.snippet.publishedAt,
+      channelTitle: item.snippet.channelTitle,
+      duration: formatDuration(item.contentDetails.duration)
+    }));
+  } catch (error) {
+    console.error("Error fetching videos:", error);
+    return [];
+  }
 }
 
-// Mock function to get channel ID from username
+// Function to get channel ID from username
 export async function getChannelId(channelUsername: string): Promise<string | null> {
-  console.log(`Getting channel ID for username: ${channelUsername}`);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // Return a mock channel ID
-  return 'UC123456789ABCDEFGH';
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/channels?part=id&forUsername=${channelUsername}&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.items && data.items.length > 0) {
+      return data.items[0].id;
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("Error getting channel ID:", error);
+    return null;
+  }
 }
 
-// Mock function to get channel videos
+// Function to get channel videos
 export async function getChannelVideos(channelId: string): Promise<YouTubeVideo[]> {
-  console.log(`Getting videos from channel: ${channelId}`);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return MOCK_VIDEOS;
+  try {
+    // First get uploads playlist ID
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${channelId}&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.items && data.items.length > 0) {
+      const uploadsPlaylistId = data.items[0].contentDetails.relatedPlaylists.uploads;
+      return getPlaylistVideos(uploadsPlaylistId);
+    }
+    
+    return [];
+  } catch (error) {
+    console.error("Error getting channel videos:", error);
+    return [];
+  }
 }
 
 // Function to get channel playlists
 export async function getChannelPlaylists(channelId: string): Promise<YouTubePlaylist[]> {
-  console.log(`Getting playlists for channel: ${channelId}`);
-  // Simulate API delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  return MOCK_PLAYLISTS;
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlists?part=snippet,contentDetails&channelId=${channelId}&maxResults=25&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return data.items.map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description || '',
+      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+      videoCount: item.contentDetails.itemCount,
+      channelTitle: item.snippet.channelTitle
+    }));
+  } catch (error) {
+    console.error("Error getting channel playlists:", error);
+    return [];
+  }
+}
+
+// Function to search videos
+export async function searchVideos(query: string): Promise<YouTubeVideo[]> {
+  try {
+    const response = await fetch(
+      `https://www.googleapis.com/youtube/v3/search?part=snippet&q=direito ${query}&type=video&maxResults=25&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`YouTube API returned ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Extract video IDs
+    const videoIds = data.items.map((item: any) => item.id.videoId);
+    
+    // Get video details including duration
+    const videoDetailsResponse = await fetch(
+      `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoIds.join(',')}&key=${YOUTUBE_API_KEY}`
+    );
+    
+    if (!videoDetailsResponse.ok) {
+      throw new Error(`YouTube API returned ${videoDetailsResponse.status}`);
+    }
+    
+    const videoDetails = await videoDetailsResponse.json();
+    
+    // Format duration from ISO 8601 to readable format
+    const formatDuration = (isoDuration: string) => {
+      const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+      const hours = match[1] ? match[1].replace('H', '') : '0';
+      const minutes = match[2] ? match[2].replace('M', '') : '0';
+      const seconds = match[3] ? match[3].replace('S', '') : '0';
+      
+      if (hours !== '0') {
+        return `${hours}:${minutes.padStart(2, '0')}:${seconds.padStart(2, '0')}`;
+      }
+      return `${minutes}:${seconds.padStart(2, '0')}`;
+    };
+    
+    return videoDetails.items.map((item: any) => ({
+      id: item.id,
+      title: item.snippet.title,
+      description: item.snippet.description || '',
+      thumbnail: item.snippet.thumbnails.high?.url || item.snippet.thumbnails.default?.url,
+      publishedAt: item.snippet.publishedAt,
+      channelTitle: item.snippet.channelTitle,
+      duration: formatDuration(item.contentDetails.duration)
+    }));
+  } catch (error) {
+    console.error("Error searching videos:", error);
+    return [];
+  }
 }
 
 // Function to get playlists from the database
@@ -166,6 +290,72 @@ export async function getStoredPlaylists(): Promise<StoredPlaylist[]> {
   } catch (error) {
     console.error('Exception fetching playlists:', error);
     return [];
+  }
+}
+
+// Function to get video transcript
+export async function getVideoTranscript(videoId: string): Promise<string> {
+  try {
+    // First check if we already have the transcript in our database
+    const { data: existingTranscript, error: fetchError } = await supabase
+      .from('video_transcripts')
+      .select('transcript')
+      .eq('video_id', videoId)
+      .single();
+    
+    if (existingTranscript) {
+      return existingTranscript.transcript;
+    }
+    
+    // If not in database, fetch it using our edge function
+    const { data, error } = await supabase.functions.invoke('fetch-video-transcript', {
+      body: { videoId }
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    if (data?.transcript) {
+      // Store the transcript in the database for future use
+      await supabase
+        .from('video_transcripts')
+        .insert({
+          video_id: videoId,
+          transcript: data.transcript
+        });
+      
+      return data.transcript;
+    }
+    
+    return 'Transcrição não disponível para este vídeo.';
+  } catch (error) {
+    console.error('Error fetching video transcript:', error);
+    return 'Erro ao buscar a transcrição do vídeo.';
+  }
+}
+
+// Function to generate questions for a video
+export async function generateQuestionsForVideo(videoId: string, transcript?: string): Promise<any> {
+  try {
+    // If no transcript provided, fetch it
+    const videoTranscript = transcript || await getVideoTranscript(videoId);
+    
+    const { data, error } = await supabase.functions.invoke('generate-video-questions', {
+      body: { 
+        videoId, 
+        transcript: videoTranscript 
+      }
+    });
+    
+    if (error) {
+      throw error;
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('Error generating questions:', error);
+    throw error;
   }
 }
 

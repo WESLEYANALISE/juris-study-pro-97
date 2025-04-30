@@ -6,7 +6,10 @@ import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { AlertCircle, Book, Play } from "lucide-react";
+import { getVideoTranscript, generateQuestionsForVideo } from "@/lib/youtube-service";
 
 interface InteractiveVideoPlayerProps {
   videoId: string;
@@ -21,6 +24,9 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
   const [videoTitle, setVideoTitle] = useState("");
   const [userResponses, setUserResponses] = useState<{[key: string]: boolean}>({});
   const [videoEnded, setVideoEnded] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [showTranscript, setShowTranscript] = useState(false);
   const questionsShown = useRef<{[key: string]: boolean}>({});
 
   useEffect(() => {
@@ -42,8 +48,39 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
         throw error;
       }
 
-      if (data) {
+      if (data && data.length > 0) {
         setQuestions(data);
+      } else {
+        // No questions found, check if we should generate some
+        setLoadingQuestions(true);
+        try {
+          // First get transcript
+          const videoTranscript = await getVideoTranscript(videoId);
+          setTranscript(videoTranscript);
+          
+          // Generate questions
+          const generatedData = await generateQuestionsForVideo(videoId, videoTranscript);
+          
+          if (generatedData?.questions) {
+            toast.success(`Criamos ${generatedData.questions.length} perguntas para esta aula!`);
+            
+            // Fetch the questions that were just added to the database
+            const { data: newQuestions } = await supabase
+              .from("video_questions")
+              .select("*")
+              .eq("video_id", videoId)
+              .order("timestamp");
+              
+            if (newQuestions) {
+              setQuestions(newQuestions);
+            }
+          }
+        } catch (genError) {
+          console.error("Error generating questions:", genError);
+          toast.error("Não foi possível gerar perguntas para este vídeo");
+        } finally {
+          setLoadingQuestions(false);
+        }
       }
 
       if (supabase.auth.getUser()) {
@@ -136,6 +173,56 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
     };
   };
 
+  const loadTranscript = async () => {
+    if (transcript) {
+      setShowTranscript(!showTranscript);
+      return;
+    }
+    
+    try {
+      const videoTranscript = await getVideoTranscript(videoId);
+      setTranscript(videoTranscript);
+      setShowTranscript(true);
+    } catch (error) {
+      console.error("Error loading transcript:", error);
+      toast.error("Não foi possível carregar a transcrição deste vídeo");
+    }
+  };
+
+  const generateMoreQuestions = async () => {
+    setLoadingQuestions(true);
+    try {
+      // Make sure we have a transcript
+      const videoTranscript = transcript || await getVideoTranscript(videoId);
+      if (!transcript) {
+        setTranscript(videoTranscript);
+      }
+      
+      // Generate questions
+      const generatedData = await generateQuestionsForVideo(videoId, videoTranscript);
+      
+      if (generatedData?.questions) {
+        toast.success(`Geramos ${generatedData.questions.length} perguntas adicionais!`);
+        
+        // Fetch all questions for this video
+        const { data: allQuestions } = await supabase
+          .from("video_questions")
+          .select("*")
+          .eq("video_id", videoId)
+          .order("timestamp");
+          
+        if (allQuestions) {
+          setQuestions(allQuestions);
+        }
+      }
+    } catch (error) {
+      console.error("Error generating questions:", error);
+      toast.error("Não foi possível gerar novas perguntas");
+    } finally {
+      setLoadingQuestions(false);
+    }
+  };
+
   const stats = calculateStats();
 
   return (
@@ -150,35 +237,75 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
           />
         </div>
         
-        {!loading && questions.length > 0 && (
-          <CardFooter className="p-4 flex flex-col space-y-2">
-            <div className="w-full flex justify-between items-center">
-              <div className="flex gap-2">
-                <Badge variant="outline">
-                  {questions.length} perguntas
-                </Badge>
-                <Badge variant="outline">
-                  {stats.answeredQuestions} respondidas
-                </Badge>
-              </div>
-              <Badge 
-                variant={stats.percentageCorrect >= 70 ? "default" : 
-                       stats.percentageCorrect >= 40 ? "secondary" : "destructive"}
-              >
-                {stats.correctAnswers} corretas ({stats.percentageCorrect}%) 
+        <CardFooter className="p-4 flex flex-col space-y-4">
+          <div className="w-full flex flex-wrap justify-between items-center gap-2">
+            <div className="flex flex-wrap gap-2">
+              <Badge variant="outline">
+                {questions.length} perguntas
               </Badge>
+              <Badge variant="outline">
+                {stats.answeredQuestions} respondidas
+              </Badge>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={loadTranscript}
+                className="flex items-center gap-1"
+              >
+                <Book className="h-4 w-4" />
+                {showTranscript ? "Ocultar transcrição" : "Ver transcrição"}
+              </Button>
             </div>
+            <Badge 
+              variant={stats.percentageCorrect >= 70 ? "default" : 
+                    stats.percentageCorrect >= 40 ? "secondary" : "destructive"}
+            >
+              {stats.correctAnswers} corretas ({stats.percentageCorrect}%) 
+            </Badge>
+          </div>
+          
+          {!loading && questions.length > 0 && (
             <Progress 
               value={stats.percentageCompleted} 
-              className={cn("h-4", {
-                "bg-green-500": stats.percentageCorrect >= 70,
-                "bg-yellow-500": stats.percentageCorrect >= 40,
-                "bg-red-500": stats.percentageCorrect < 40
-              })}
+              className="h-4"
+              color={
+                stats.percentageCorrect >= 70 ? "bg-green-500" :
+                stats.percentageCorrect >= 40 ? "bg-yellow-500" :
+                "bg-red-500"
+              }
             />
-          </CardFooter>
-        )}
+          )}
+          
+          {loadingQuestions && (
+            <div className="text-center py-2">
+              <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+              <span className="ml-2">Gerando perguntas...</span>
+            </div>
+          )}
+        </CardFooter>
       </Card>
+      
+      {showTranscript && transcript && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex justify-between items-center">
+              <span>Transcrição</span>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setShowTranscript(false)}
+              >
+                Fechar
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="max-h-[300px] overflow-y-auto">
+              <p className="whitespace-pre-line">{transcript}</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {videoEnded && (
         <Card>
@@ -202,7 +329,7 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
                 value={stats.percentageCorrect} 
                 className={cn("h-4", {
                   "bg-green-500": stats.percentageCorrect >= 70,
-                  "bg-yellow-500": stats.percentageCorrect >= 40,
+                  "bg-yellow-500": stats.percentageCorrect >= 40 && stats.percentageCorrect < 70,
                   "bg-red-500": stats.percentageCorrect < 40
                 })}
               />
@@ -214,6 +341,26 @@ export function InteractiveVideoPlayer({ videoId, onQuestionAppear }: Interactiv
                   ? "Bom trabalho! Continue estudando para melhorar." 
                   : "Continue estudando este tema para melhorar seu desempenho."}
               </p>
+              
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  onClick={generateMoreQuestions}
+                  disabled={loadingQuestions}
+                >
+                  {loadingQuestions ? (
+                    <>
+                      <span className="mr-2">Gerando...</span>
+                      <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full"></div>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="mr-2 h-4 w-4" />
+                      Gerar mais perguntas
+                    </>
+                  )}
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
