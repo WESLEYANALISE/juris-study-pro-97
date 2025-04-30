@@ -1,26 +1,16 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { toast } from "sonner";
+import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { InteractiveVideoPlayer } from "@/components/videoaulas/InteractiveVideoPlayer";
 import Layout from "@/components/Layout";
 import { 
   Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
+  DialogContent, 
+  DialogDescription, 
   DialogHeader,
   DialogTitle,
+  DialogFooter
 } from "@/components/ui/dialog";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle2, Clock, Search, BookOpen, Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface VideoAula {
   id: string;

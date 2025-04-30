@@ -4,7 +4,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseWithCustomTables as supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { MessageSquare, FileText, BarChart3 } from 'lucide-react';
@@ -28,7 +28,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
       try {
         setIsLoading(true);
         
-        // Fix type issue by using a typed query with type casting
+        // Use the type-safe query with our custom tables
         const { data: casosData, error: casosError } = await supabase
           .from('jogos_escritorio_casos')
           .select('*')
@@ -36,11 +36,9 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         
         if (casosError) throw casosError;
         
-        // Cast the data to ensure it matches the Caso type
         setCasos(casosData as unknown as Caso[]);
         
         if (user) {
-          // Fix type issue by using a typed query with type casting
           const { data: solucoesData, error: solucoesError } = await supabase
             .from('jogos_escritorio_solucoes')
             .select('*')
@@ -48,7 +46,6 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
           
           if (solucoesError) throw solucoesError;
           
-          // Cast the data to ensure it matches the Solucao type
           setSolucoes(solucoesData as unknown as Solucao[]);
         }
       } catch (error) {
@@ -72,7 +69,6 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
     try {
       setIsSending(true);
       
-      // Fix type issue by using a typed query with type casting
       const { error } = await supabase
         .from('jogos_escritorio_solucoes')
         .insert({
@@ -94,7 +90,7 @@ export const EscritorioVirtual = ({ gameId }: EscritorioVirtualProps) => {
         .select('*')
         .eq('user_id', user.id);
       
-      if (!fetchError) {
+      if (!fetchError && data) {
         setSolucoes(data as unknown as Solucao[]);
       }
       

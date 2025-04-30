@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/hooks/use-auth';
-import { supabase } from '@/integrations/supabase/client';
+import { supabaseWithCustomTables as supabase } from '@/integrations/supabase/client';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { toast } from 'sonner';
 import { Baralho, Artigo } from '@/types/jogos';
@@ -30,7 +31,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
       try {
         setIsLoading(true);
         
-        // Use type assertion to handle Supabase types
+        // Use type-safe query with our custom tables
         const { data: baralhosData, error: baralhosError } = await supabase
           .from('jogos_cartas_baralhos')
           .select('*')
@@ -56,7 +57,7 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
         try {
           setIsLoading(true);
           
-          // Use type assertion to handle Supabase types
+          // Use type-safe query with our custom tables
           const { data: artigosData, error: artigosError } = await supabase
             .from('jogos_cartas_artigos')
             .select('*')
@@ -65,11 +66,13 @@ export const JogoCartas = ({ gameId }: JogoCartasProps) => {
           
           if (artigosError) throw artigosError;
           
-          setArtigos(artigosData as unknown as Artigo[]);
-          
-          // Selecionando o primeiro artigo
-          if (artigosData && artigosData.length > 0) {
-            setArtigoAtual(artigosData[0] as unknown as Artigo);
+          if (artigosData) {
+            setArtigos(artigosData as unknown as Artigo[]);
+            
+            // Selecionando o primeiro artigo
+            if (artigosData.length > 0) {
+              setArtigoAtual(artigosData[0] as unknown as Artigo);
+            }
           }
           
           setCartasVistas([]);

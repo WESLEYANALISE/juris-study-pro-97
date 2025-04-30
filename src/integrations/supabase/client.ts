@@ -10,4 +10,16 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database & { Tables: CustomTypes }>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    persistSession: true
+  }
+});
+
+// Add explicit type assertion for tables that aren't in the auto-generated types
+export type SupabaseWithCustomTables = typeof supabase & {
+  from<T extends keyof CustomTypes>(table: T): ReturnType<typeof supabase.from<any>>;
+};
+
+// Use this cast when you need to access custom tables
+export const supabaseWithCustomTables = supabase as SupabaseWithCustomTables;
