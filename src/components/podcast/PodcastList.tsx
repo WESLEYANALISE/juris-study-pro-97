@@ -82,10 +82,18 @@ export function PodcastList({
         
         // Apply category filter
         if (category) {
-          query = query
-            .in('podcast_category_links.category_id', [
-              supabase.from('podcast_categories').select('id').eq('slug', category)
-            ]);
+          const { data: categoryData } = await supabase
+            .from('podcast_categories')
+            .select('id')
+            .eq('slug', category)
+            .single();
+            
+          if (categoryData) {
+            query = query.in(
+              'podcast_category_links.category_id', 
+              [categoryData.id]
+            );
+          }
         }
         
         // Apply sorting

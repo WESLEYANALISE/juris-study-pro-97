@@ -15,7 +15,13 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
   }
 });
 
-// Create a custom client for tables not in the generated types
+// NOTE: This custom client approach is causing type issues.
+// We'll prefer using the standard supabase client with type assertions where needed
+// instead of trying to extend the client's type system in a way that creates deep instantiations.
+
+// Create a custom client for tables not in the generated types - removed as it causes type issues
+/*
 export const supabaseWithCustomTables = supabase as unknown as typeof supabase & {
   from: <T extends keyof CustomTypes>(table: T) => ReturnType<typeof supabase.from>
 };
+*/
