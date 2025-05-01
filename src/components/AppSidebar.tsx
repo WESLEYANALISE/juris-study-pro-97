@@ -24,7 +24,7 @@ interface AppSidebarProps {
   userProfile: ProfileType;
 }
 
-// Add proper interface for menu items with all possible properties
+// Complete interface for menu items with all possible properties
 interface MenuItem {
   title: string;
   url: string;

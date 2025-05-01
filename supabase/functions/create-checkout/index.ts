@@ -25,7 +25,10 @@ serve(async (req) => {
     
     // Obter o STRIPE_SECRET_KEY do ambiente
     const stripeKey = Deno.env.get("STRIPE_SECRET_KEY");
-    if (!stripeKey) throw new Error("STRIPE_SECRET_KEY não está configurada");
+    if (!stripeKey) {
+      logStep("ERRO", { message: "STRIPE_SECRET_KEY não está configurada" });
+      throw new Error("STRIPE_SECRET_KEY não está configurada. Por favor, configure esta variável de ambiente no painel do Supabase.");
+    }
     logStep("Chave do Stripe verificada");
 
     // Criar cliente Supabase
