@@ -13,8 +13,6 @@ import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
-const COLORS = ['#22c55e', '#ef4444'];
-
 const SimuladoResultado = () => {
   const { sessaoId } = useParams();
   const navigate = useNavigate();
@@ -93,15 +91,15 @@ const SimuladoResultado = () => {
           if (questoesError) throw questoesError;
           
           // Check if data is available before processing
-          if (questoesData) {
-            setQuestoes(questoesData || []);
+          if (questoesData && Array.isArray(questoesData)) {
+            setQuestoes(questoesData);
             
             // Calculate stats per area
             const areaMap = new Map<string, {acertos: number, total: number}>();
             
             respostasData?.forEach(resposta => {
-              const questao = questoesData?.find(q => q.id === resposta.questao_id);
-              if (questao) {
+              const questao = questoesData?.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
+              if (questao && typeof questao === 'object' && 'area' in questao) {
                 const area = questao.area || 'Não categorizada';
                 const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
                 
@@ -183,7 +181,7 @@ const SimuladoResultado = () => {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Resultado do Simulado</h1>
             <p className="text-muted-foreground">
-              {sessao.categoria} • {new Date(sessao.data_inicio).toLocaleDateString()}
+              {sessao?.categoria} • {sessao?.data_inicio && new Date(sessao.data_inicio).toLocaleDateString()}
             </p>
           </div>
           
@@ -196,7 +194,7 @@ const SimuladoResultado = () => {
               <Share2 className="h-4 w-4" />
               <span>Compartilhar</span>
             </Button>
-            <Button onClick={() => navigate(`/simulados/${sessao.categoria.toLowerCase()}`)}>
+            <Button onClick={() => navigate(`/simulados/${sessao?.categoria?.toLowerCase()}`)}>
               <ArrowRight className="h-4 w-4 mr-2" />
               <span>Novo Simulado</span>
             </Button>
@@ -222,7 +220,10 @@ const SimuladoResultado = () => {
                       <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                           <Pie
-                            data={pieChartData}
+                            data={[
+                              { name: 'Acertos', value: sessao?.acertos || 0 },
+                              { name: 'Erros', value: (sessao?.total_questoes || 0) - (sessao?.acertos || 0) }
+                            ]}
                             cx="50%"
                             cy="50%"
                             innerRadius={40}
@@ -232,15 +233,18 @@ const SimuladoResultado = () => {
                             dataKey="value"
                             label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                           >
-                            {pieChartData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            {[
+                              { name: 'Acertos', value: sessao?.acertos || 0 },
+                              { name: 'Erros', value: (sessao?.total_questoes || 0) - (sessao?.acertos || 0) }
+                            ].map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={['#22c55e', '#ef4444'][index % 2]} />
                             ))}
                           </Pie>
                         </PieChart>
                       </ResponsiveContainer>
                     </div>
                     <p className="text-2xl font-bold mt-2">
-                      {sessao.acertos}/{sessao.total_questoes}
+                      {sessao?.acertos}/{sessao?.total_questoes}
                     </p>
                     <p className="text-sm text-muted-foreground">questões corretas</p>
                   </div>
@@ -250,22 +254,22 @@ const SimuladoResultado = () => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">Percentual de Acerto</span>
-                      <span className="text-sm font-semibold">{sessao.pontuacao.toFixed(1)}%</span>
+                      <span className="text-sm font-semibold">{sessao?.pontuacao?.toFixed(1)}%</span>
                     </div>
-                    <Progress value={sessao.pontuacao} className="h-2" />
+                    <Progress value={sessao?.pontuacao} className="h-2" />
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="border rounded-md p-3 text-center">
                       <div className="flex items-center justify-center space-x-1 text-2xl font-bold">
                         <Clock className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatTime(sessao.tempo_total)}</span>
+                        <span>{formatTime(sessao?.tempo_total)}</span>
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Tempo total</p>
                     </div>
                     <div className="border rounded-md p-3 text-center">
                       <div className="text-2xl font-bold">
-                        {formatTime(Math.round(sessao.tempo_total / sessao.total_questoes))}
+                        {formatTime(Math.round((sessao?.tempo_total || 0) / (sessao?.total_questoes || 1)))}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Média por questão</p>
                     </div>
@@ -394,7 +398,7 @@ const SimuladoResultado = () => {
               <TabsContent value="all">
                 <div className="space-y-4">
                   {respostas.map((resposta, index) => {
-                    const questao = questoes.find(q => q.id === resposta.questao_id);
+                    const questao = questoes.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
                     if (!questao) return null;
                     
                     return (
@@ -579,6 +583,18 @@ const SimuladoResultado = () => {
       </div>
     </JuridicalBackground>
   );
+};
+
+// Add the missing formatTime and calcularPercentual functions
+const formatTime = (seconds: number) => {
+  if (!seconds) return '00:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+};
+
+const calcularPercentual = (valor: number, total: number) => {
+  return total > 0 ? Math.round((valor / total) * 100) : 0;
 };
 
 export default SimuladoResultado;

@@ -97,23 +97,25 @@ const SimuladoSessao = () => {
         
         if (questoesError) throw questoesError;
         
-        if (questoesData) {
-          // Type assertion to ensure data conforms to Questao[]
-          const typedQuestoes = questoesData.map(q => ({
-            id: q.id || '', 
-            ano: q.ano || '',
-            banca: q.banca || '',
-            numero_questao: q.numero_questao || '',
-            questao: q.questao || '',
-            alternativa_a: q.alternativa_a || '',
-            alternativa_b: q.alternativa_b || '',
-            alternativa_c: q.alternativa_c || '',
-            alternativa_d: q.alternativa_d || '',
-            alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
-            imagem_url: q.imagem_url,
-            area: q.area,
-            explicacao: q.explicacao
-          })) as Questao[];
+        if (questoesData && Array.isArray(questoesData)) {
+          // Safe type casting after array validation
+          const typedQuestoes = questoesData
+            .filter(q => q && typeof q === 'object')
+            .map(q => ({
+              id: q.id || '', 
+              ano: q.ano || '',
+              banca: q.banca || '',
+              numero_questao: q.numero_questao || '',
+              questao: q.questao || '',
+              alternativa_a: q.alternativa_a || '',
+              alternativa_b: q.alternativa_b || '',
+              alternativa_c: q.alternativa_c || '',
+              alternativa_d: q.alternativa_d || '',
+              alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
+              imagem_url: q.imagem_url,
+              area: q.area,
+              explicacao: q.explicacao
+            })) as Questao[];
           
           setQuestoes(typedQuestoes);
         } else {
