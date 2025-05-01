@@ -26,6 +26,21 @@ const SimuladoResultado = () => {
   const [questoes, setQuestoes] = useState<any[]>([]);
   const [areaStats, setAreaStats] = useState<{area: string, acertos: number, total: number}[]>([]);
   
+  // Type guard to check if an object is a valid question
+  const isValidQuestion = (item: any): item is Questao => {
+    return (
+      item &&
+      typeof item === 'object' &&
+      'id' in item &&
+      'questao' in item &&
+      'alternativa_a' in item &&
+      'alternativa_b' in item &&
+      'alternativa_c' in item &&
+      'alternativa_d' in item &&
+      'alternativa_correta' in item
+    );
+  };
+
   // Redirect to auth if not authenticated
   useEffect(() => {
     if (!user) {
@@ -406,9 +421,9 @@ const SimuladoResultado = () => {
                 <div className="space-y-4">
                   {respostas.map((resposta, index) => {
                     // Apply proper type checking and null safety
-                    const questao = questoes.find(q => {
-                      return q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id;
-                    });
+                    const questao = questoes.find(q => 
+                      q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id
+                    );
                     if (!questao) return null;
                     
                     return (
