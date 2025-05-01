@@ -112,7 +112,7 @@ const SimuladoSessao = () => {
         if (questoesError) throw questoesError;
         
         if (questoesData && Array.isArray(questoesData)) {
-          // Filter and map valid questions
+          // Filter and map valid questions with proper type checking
           const validQuestoes = questoesData
             .filter(q => isValidQuestion(q))
             .map(q => ({

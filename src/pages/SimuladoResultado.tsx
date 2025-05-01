@@ -2,10 +2,12 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen, Video } from "lucide-react";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
@@ -97,9 +99,12 @@ const SimuladoResultado = () => {
             const areaMap = new Map<string, {acertos: number, total: number}>();
             
             respostasData?.forEach(resposta => {
+              // Fix: Add null check and proper type guard for 'q'
               const questao = questoesData?.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
+              // Fix: Add null check and proper type guard for 'questao'
               if (questao && typeof questao === 'object' && 'area' in questao) {
-                const area = questao.area ?? 'Não categorizada';
+                // Fix: Use nullish coalescing for safe access
+                const area = questao?.area ?? 'Não categorizada';
                 const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
                 
                 areaMap.set(area, {

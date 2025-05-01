@@ -89,7 +89,8 @@ export const ArticleCard = ({
               lawName={lawName}
               articleNumber={articleNumber}
               isLoading={isLoading}
-              isVisible={isHovered || isMobile}
+              // Fix: Convert to a boolean using Boolean() instead of ternary
+              isVisible={Boolean(isHovered || isMobile)}
             />
           )}
         </div>
@@ -110,7 +111,8 @@ export const ArticleCard = ({
                 }, 1000);
               });
             }}
-            isVisible={isHovered || isMobile}
+            // Fix: Convert to a boolean using Boolean() instead of ternary
+            isVisible={Boolean(isHovered || isMobile)}
             lawName={lawName}
           />
         )}
