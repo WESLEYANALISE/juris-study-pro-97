@@ -85,6 +85,28 @@ namespace YT {
   }
 }
 
+// Add YouTubeVideo interface to match what's used in the codebase
+interface YouTubeVideo {
+  id: string;
+  videoId: string;  // Added videoId property
+  title: string;
+  description: string;
+  thumbnail: string;
+  publishedAt?: string;
+  channelId?: string;
+  channelTitle?: string;
+}
+
+// Add YouTubePlaylist interface to match what's used in the codebase
+interface YouTubePlaylist {
+  id: string;
+  title: string;
+  description: string;
+  thumbnail?: string;
+  channelTitle: string;
+  videoCount: number;
+}
+
 interface Window {
   YT: YT;
   onYouTubeIframeAPIReady: () => void;

@@ -99,12 +99,12 @@ const SimuladoResultado = () => {
             const areaMap = new Map<string, {acertos: number, total: number}>();
             
             respostasData?.forEach(resposta => {
-              // Find the corresponding question with proper type safety
-              const questao = questoesData?.find(q => {
+              // Find the corresponding question with proper type safety and null checks
+              const questao = questoesData.find(q => {
                 return q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id;
               });
               
-              // Safely check if question has area property
+              // Safely check if question has area property with null safety
               if (questao && typeof questao === 'object' && 'area' in questao) {
                 // Use nullish coalescing to default if area is null/undefined
                 const area = questao?.area ?? 'Não categorizada';
@@ -405,11 +405,14 @@ const SimuladoResultado = () => {
               <TabsContent value="all">
                 <div className="space-y-4">
                   {respostas.map((resposta, index) => {
+                    // Apply proper type checking and null safety
                     const questao = questoes.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
                     if (!questao) return null;
                     
                     return (
-                      <Card key={resposta.id} className={`border-l-4 ${resposta.acertou ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                      <Card key={resposta.id} className={`
+                        border-l-4 ${resposta.acertou ? 'border-l-green-500' : 'border-l-red-500'}
+                      `}>
                         <CardContent className="p-4 space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
@@ -474,7 +477,8 @@ const SimuladoResultado = () => {
                 <div className="space-y-4">
                   {/* Similar to above but filtered for correct answers */}
                   {respostas.filter(r => r.acertou).map((resposta, index) => {
-                    const questao = questoes.find(q => q.id === resposta.questao_id);
+                    // Apply proper type checking and null safety
+                    const questao = questoes.find(q => q && q.id === resposta.questao_id);
                     if (!questao) return null;
                     
                     return (
@@ -528,7 +532,8 @@ const SimuladoResultado = () => {
                 <div className="space-y-4">
                   {/* Similar to above but filtered for incorrect answers */}
                   {respostas.filter(r => !r.acertou).map((resposta, index) => {
-                    const questao = questoes.find(q => q.id === resposta.questao_id);
+                    // Apply proper type checking and null safety
+                    const questao = questoes.find(q => q && q.id === resposta.questao_id);
                     if (!questao) return null;
                     
                     return (

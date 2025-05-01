@@ -2935,62 +2935,53 @@ export type Database = {
       }
       simulados_juiz: {
         Row: {
-          alternativa_a: string
-          alternativa_b: string
-          alternativa_c: string
-          alternativa_correta: string
-          alternativa_d: string
-          ano: number
-          area: string | null
+          alternativa_a: string | null
+          alternativa_b: string | null
+          alternativa_c: string | null
+          alternativa_correta: string | null
+          alternativa_d: string | null
+          ano: string
+          area: string
           banca: string
-          created_at: string | null
+          edicao: string
           edicao_id: string | null
-          explicacao: string | null
           id: string
-          imagem_url: string | null
-          numero_questao: number
-          questao: string
-          updated_at: string | null
+          numero_questao: string
+          questao: string | null
         }
         Insert: {
-          alternativa_a: string
-          alternativa_b: string
-          alternativa_c: string
-          alternativa_correta: string
-          alternativa_d: string
-          ano: number
-          area?: string | null
+          alternativa_a?: string | null
+          alternativa_b?: string | null
+          alternativa_c?: string | null
+          alternativa_correta?: string | null
+          alternativa_d?: string | null
+          ano: string
+          area: string
           banca: string
-          created_at?: string | null
+          edicao: string
           edicao_id?: string | null
-          explicacao?: string | null
           id?: string
-          imagem_url?: string | null
-          numero_questao: number
-          questao: string
-          updated_at?: string | null
+          numero_questao: string
+          questao?: string | null
         }
         Update: {
-          alternativa_a?: string
-          alternativa_b?: string
-          alternativa_c?: string
-          alternativa_correta?: string
-          alternativa_d?: string
-          ano?: number
-          area?: string | null
+          alternativa_a?: string | null
+          alternativa_b?: string | null
+          alternativa_c?: string | null
+          alternativa_correta?: string | null
+          alternativa_d?: string | null
+          ano?: string
+          area?: string
           banca?: string
-          created_at?: string | null
+          edicao?: string
           edicao_id?: string | null
-          explicacao?: string | null
           id?: string
-          imagem_url?: string | null
-          numero_questao?: number
-          questao?: string
-          updated_at?: string | null
+          numero_questao?: string
+          questao?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "simulados_juiz_edicao_id_fkey"
+            foreignKeyName: "simulados_juiz_federal_edicao_id_fkey"
             columns: ["edicao_id"]
             isOneToOne: false
             referencedRelation: "simulado_edicoes"

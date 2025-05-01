@@ -10,13 +10,8 @@ interface VideoPlayerProps {
   onError?: (error: any) => void;
 }
 
-// YouTube Player API interface
-declare global {
-  interface Window {
-    YT: any;
-    onYouTubeIframeAPIReady: () => void;
-  }
-}
+// Using the YouTube Player API interface defined in types/youtube.d.ts
+// We're not redefining YT as that would cause the error
 
 export const FixedVideoPlayer = ({ 
   videoId, 

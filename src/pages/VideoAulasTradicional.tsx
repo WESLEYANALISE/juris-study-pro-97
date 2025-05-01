@@ -228,7 +228,7 @@ const VideoAulas = () => {
                   <div className="space-y-6">
                     <div className="rounded-lg overflow-hidden">
                       <FixedVideoPlayer
-                        videoId={selectedVideo?.videoId || ''}
+                        videoId={selectedVideo.videoId || ''} {/* Fixed: Access videoId property */}
                         autoplay={true}
                         onReady={() => console.log('Video ready')}
                         onError={(err) => console.error('Video error:', err)}
