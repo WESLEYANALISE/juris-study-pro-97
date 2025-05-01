@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -407,7 +406,9 @@ const SimuladoResultado = () => {
                 <div className="space-y-4">
                   {respostas.map((resposta, index) => {
                     // Apply proper type checking and null safety
-                    const questao = questoes.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
+                    const questao = questoes.find(q => {
+                      return q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id;
+                    });
                     if (!questao) return null;
                     
                     return (
@@ -417,7 +418,7 @@ const SimuladoResultado = () => {
                         <CardContent className="p-4 space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao && questao.area ? questao.area : 'Área não especificada'}
+                              Questão {index + 1} • {questao && 'area' in questao ? questao.area : 'Área não especificada'}
                             </span>
                             {resposta.acertou ? (
                               <div className="flex items-center gap-1 text-green-500 text-sm">
@@ -474,7 +475,6 @@ const SimuladoResultado = () => {
                 </div>
               </TabsContent>
               
-              {/* Similar corrections needed for the other tabs - corretas and erradas */}
               <TabsContent value="corretas">
                 <div className="space-y-4">
                   {respostas.filter(r => r.acertou).map((resposta, index) => {
@@ -487,7 +487,7 @@ const SimuladoResultado = () => {
                         <CardContent className="p-4 space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao && questao.area ? questao.area : 'Área não especificada'}
+                              Questão {index + 1} • {questao && 'area' in questao ? questao.area : 'Área não especificada'}
                             </span>
                             <div className="flex items-center gap-1 text-green-500 text-sm">
                               <Check className="h-4 w-4" /> Correta
@@ -540,7 +540,7 @@ const SimuladoResultado = () => {
                         <CardContent className="p-4 space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao && questao.area ? questao.area : 'Área não especificada'}
+                              Questão {index + 1} • {questao && 'area' in questao ? questao.area : 'Área não especificada'}
                             </span>
                             <div className="flex items-center gap-1 text-red-500 text-sm">
                               <X className="h-4 w-4" /> Incorreta

@@ -10,9 +10,6 @@ interface VideoPlayerProps {
   onError?: (error: any) => void;
 }
 
-// Using the YouTube Player API interface defined in types/youtube.d.ts
-// We're not redefining YT as that would cause the error
-
 export const FixedVideoPlayer = ({ 
   videoId, 
   autoplay = false, 
