@@ -2883,55 +2883,46 @@ export type Database = {
       }
       simulados_oab: {
         Row: {
-          alternativa_a: string
-          alternativa_b: string
-          alternativa_c: string
+          alternativa_a: string | null
+          alternativa_b: string | null
+          alternativa_c: string | null
           alternativa_correta: string | null
-          alternativa_d: string
-          ano: number
-          area: string | null
+          alternativa_d: string | null
+          ano: string
+          area: string
           banca: string
-          created_at: string | null
-          explicacao: string | null
+          edicao: string
           id: string
-          imagem_url: string | null
           numero_questao: string
-          questao: string
-          updated_at: string | null
+          questao: string | null
         }
         Insert: {
-          alternativa_a: string
-          alternativa_b: string
-          alternativa_c: string
+          alternativa_a?: string | null
+          alternativa_b?: string | null
+          alternativa_c?: string | null
           alternativa_correta?: string | null
-          alternativa_d: string
-          ano: number
-          area?: string | null
+          alternativa_d?: string | null
+          ano: string
+          area: string
           banca: string
-          created_at?: string | null
-          explicacao?: string | null
+          edicao: string
           id?: string
-          imagem_url?: string | null
           numero_questao: string
-          questao: string
-          updated_at?: string | null
+          questao?: string | null
         }
         Update: {
-          alternativa_a?: string
-          alternativa_b?: string
-          alternativa_c?: string
+          alternativa_a?: string | null
+          alternativa_b?: string | null
+          alternativa_c?: string | null
           alternativa_correta?: string | null
-          alternativa_d?: string
-          ano?: number
-          area?: string | null
+          alternativa_d?: string | null
+          ano?: string
+          area?: string
           banca?: string
-          created_at?: string | null
-          explicacao?: string | null
+          edicao?: string
           id?: string
-          imagem_url?: string | null
           numero_questao?: string
-          questao?: string
-          updated_at?: string | null
+          questao?: string | null
         }
         Relationships: []
       }
@@ -3148,6 +3139,42 @@ export type Database = {
           numero_questao?: number
           questao?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      subscribers: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          stripe_customer_id: string | null
+          subscribed: boolean
+          subscription_end: string | null
+          subscription_tier: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          stripe_customer_id?: string | null
+          subscribed?: boolean
+          subscription_end?: string | null
+          subscription_tier?: string | null
+          updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -1,80 +1,55 @@
 
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  Cell, PieChart, Pie
-} from "recharts";
-import { CheckCircle2, XCircle, Clock, ArrowRight, Award, BookOpen } from "lucide-react";
-import { motion } from "framer-motion";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { useToast } from "@/hooks/use-toast";
+import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen } from "lucide-react";
+import { JuridicalBackground } from "@/components/ui/juridical-background";
+import { Skeleton } from "@/components/ui/skeleton";
+import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 
-interface ResultadoQuestao {
-  questao_id: string;
-  questao_texto: string;
-  resposta_selecionada: string;
-  resposta_correta: string;
-  acertou: boolean;
-  tempo_resposta: number;
-  area?: string;
-}
-
-interface ResultadoSessao {
-  id: string;
-  categoria: string;
-  data_inicio: string;
-  data_fim: string;
-  total_questoes: number;
-  acertos: number;
-  pontuacao: number;
-  tempo_total: number;
-  completo: boolean;
-}
+const COLORS = ['#22c55e', '#ef4444'];
 
 const SimuladoResultado = () => {
-  const { id } = useParams();
+  const { sessaoId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
-  const [sessao, setSessao] = useState<ResultadoSessao | null>(null);
-  const [respostas, setRespostas] = useState<ResultadoQuestao[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [areaStats, setAreaStats] = useState<{ name: string, acertos: number, erros: number }[]>([]);
-
+  
+  const [loading, setLoading] = useState(true);
+  const [sessao, setSessao] = useState<any>(null);
+  const [respostas, setRespostas] = useState<any[]>([]);
+  const [questoes, setQuestoes] = useState<any[]>([]);
+  const [areaStats, setAreaStats] = useState<{area: string, acertos: number, total: number}[]>([]);
+  
   // Redirect to auth if not authenticated
   useEffect(() => {
     if (!user) {
       navigate("/auth");
+      return;
     }
-  }, [user, navigate]);
-
-  // Fetch session and answers data
-  useEffect(() => {
+    
     const fetchResultados = async () => {
-      if (!user) return;
+      if (!sessaoId) return;
       
       try {
-        setIsLoading(true);
-        
-        // Fetch session data
+        // Fetch session details
         const { data: sessaoData, error: sessaoError } = await supabase
-          .from("simulado_sessoes")
-          .select("*")
-          .eq("id", id)
-          .eq("user_id", user.id)
+          .from('simulado_sessoes')
+          .select('*')
+          .eq('id', sessaoId)
           .single();
           
         if (sessaoError) throw sessaoError;
         if (!sessaoData) {
           toast({
-            title: "Simulado não encontrado",
-            description: "Não foi possível encontrar este simulado.",
+            title: "Erro",
+            description: "Sessão não encontrada",
             variant: "destructive"
           });
           navigate("/simulados");
@@ -83,344 +58,519 @@ const SimuladoResultado = () => {
         
         setSessao(sessaoData);
         
-        // Fetch answers with questions
+        // Fetch responses with questions
         const { data: respostasData, error: respostasError } = await supabase
-          .from("simulado_respostas")
-          .select(`
-            id,
-            questao_id,
-            resposta_selecionada,
-            acertou,
-            tempo_resposta,
-            simulados_${sessaoData.categoria.toLowerCase()}!inner(
-              questao,
-              alternativa_correta,
-              area
-            )
-          `)
-          .eq("sessao_id", id);
+          .from('simulado_respostas')
+          .select('*')
+          .eq('sessao_id', sessaoId);
           
         if (respostasError) throw respostasError;
+        setRespostas(respostasData || []);
         
-        // Transform the data
-        const formattedRespostas: ResultadoQuestao[] = respostasData.map((item: any) => {
-          const questaoData = item[`simulados_${sessaoData.categoria.toLowerCase()}`];
-          return {
-            questao_id: item.questao_id,
-            questao_texto: questaoData.questao,
-            resposta_selecionada: item.resposta_selecionada,
-            resposta_correta: questaoData.alternativa_correta,
-            acertou: item.acertou,
-            tempo_resposta: item.tempo_resposta,
-            area: questaoData.area
-          };
-        });
+        // Determine which table to query based on category
+        let tableName;
+        switch(sessaoData.categoria) {
+          case 'OAB': tableName = 'simulados_oab'; break;
+          case 'PRF': tableName = 'simulados_prf'; break;
+          case 'PF': tableName = 'simulados_pf'; break;
+          case 'TJSP': tableName = 'simulados_tjsp'; break;
+          case 'JUIZ': tableName = 'simulados_juiz'; break;
+          case 'PROMOTOR': tableName = 'simulados_promotor'; break;
+          case 'DELEGADO': tableName = 'simulados_delegado'; break;
+          default: tableName = 'simulados_oab';
+        }
         
-        setRespostas(formattedRespostas);
+        // Extract question IDs from responses
+        const questaoIds = respostasData?.map(r => r.questao_id) || [];
         
-        // Calculate stats by area
-        const areaMap = new Map<string, { acertos: number, erros: number }>();
-        
-        formattedRespostas.forEach(resposta => {
-          const area = resposta.area || "Geral";
-          if (!areaMap.has(area)) {
-            areaMap.set(area, { acertos: 0, erros: 0 });
-          }
+        if (questaoIds.length > 0) {
+          // Fetch question details
+          const { data: questoesData, error: questoesError } = await supabase
+            .from(tableName)
+            .select('*')
+            .in('id', questaoIds);
+            
+          if (questoesError) throw questoesError;
+          setQuestoes(questoesData || []);
           
-          const stat = areaMap.get(area)!;
-          if (resposta.acertou) {
-            stat.acertos += 1;
-          } else {
-            stat.erros += 1;
-          }
-        });
-        
-        const areaStatsArray = Array.from(areaMap.entries()).map(([name, stats]) => ({
-          name,
-          acertos: stats.acertos,
-          erros: stats.erros
-        }));
-        
-        setAreaStats(areaStatsArray);
+          // Calculate stats per area
+          const areaMap = new Map<string, {acertos: number, total: number}>();
+          
+          respostasData?.forEach(resposta => {
+            const questao = questoesData?.find(q => q.id === resposta.questao_id);
+            if (questao) {
+              const area = questao.area || 'Não categorizada';
+              const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
+              
+              areaMap.set(area, {
+                acertos: currentStats.acertos + (resposta.acertou ? 1 : 0),
+                total: currentStats.total + 1
+              });
+            }
+          });
+          
+          // Convert map to array for chart data
+          const areaStatsArray = Array.from(areaMap.entries()).map(([area, stats]) => ({
+            area,
+            acertos: stats.acertos,
+            total: stats.total
+          }));
+          
+          setAreaStats(areaStatsArray);
+        }
       } catch (error) {
-        console.error("Erro ao carregar resultados:", error);
+        console.error('Erro ao carregar resultados:', error);
         toast({
-          title: "Erro ao carregar resultados",
-          description: "Ocorreu um erro ao carregar os resultados do simulado.",
+          title: "Erro",
+          description: "Não foi possível carregar os resultados do simulado",
           variant: "destructive"
         });
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
     
     fetchResultados();
-  }, [id, user, navigate, toast]);
-  
-  if (isLoading) {
-    return (
-      <div className="container mx-auto py-12 flex flex-col items-center justify-center h-[60vh]">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="mt-4 text-muted-foreground">Carregando resultados...</p>
-      </div>
-    );
-  }
-  
-  if (!sessao) {
-    return (
-      <div className="container mx-auto py-12 flex flex-col items-center justify-center h-[60vh]">
-        <h2 className="text-2xl font-bold">Simulado não encontrado</h2>
-        <p className="text-muted-foreground mb-6">Não foi possível encontrar este simulado.</p>
-        <Button onClick={() => navigate("/simulados")}>Voltar para Simulados</Button>
-      </div>
-    );
-  }
+  }, [sessaoId, navigate, toast, user]);
 
   const formatTime = (seconds: number) => {
+    if (!seconds) return '00:00';
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
   
-  const percentAcertos = (sessao.acertos / sessao.total_questoes) * 100;
-  const data = [
-    { name: "Acertos", value: sessao.acertos, color: "#4ADE80" },
-    { name: "Erros", value: sessao.total_questoes - sessao.acertos, color: "#F87171" }
-  ];
-  
-  const tempoMedio = Math.round(sessao.tempo_total / sessao.total_questoes);
-  
-  const getPerformanceMessage = () => {
-    if (percentAcertos >= 90) return "Excelente! Você está dominando o conteúdo.";
-    if (percentAcertos >= 75) return "Muito bom! Continue assim.";
-    if (percentAcertos >= 60) return "Bom trabalho! Mas ainda há espaço para melhorar.";
-    if (percentAcertos >= 40) return "Você está no caminho certo, mas precisa estudar mais.";
-    return "Dedique mais tempo ao estudo deste conteúdo.";
+  const calcularPercentual = (valor: number, total: number) => {
+    return total > 0 ? Math.round((valor / total) * 100) : 0;
   };
-  
-  return (
-    <div className="container mx-auto py-8 max-w-4xl px-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="mb-8"
-      >
-        <h1 className="text-3xl font-bold mb-2">Resultado do Simulado</h1>
-        <p className="text-muted-foreground">
-          Categoria: {sessao.categoria} • Concluído em: {new Date(sessao.data_fim).toLocaleDateString()}
-        </p>
-      </motion.div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-        >
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                Pontuação
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">{Math.round(sessao.pontuacao)}</div>
-              <Progress value={sessao.pontuacao} className="h-2 mt-2" />
-              <p className="text-sm text-muted-foreground mt-2">{getPerformanceMessage()}</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-        >
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-success" />
-                Acertos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">{sessao.acertos}/{sessao.total_questoes}</div>
-              <Progress value={percentAcertos} className="h-2 mt-2" />
-              <p className="text-sm text-muted-foreground mt-2">{percentAcertos.toFixed(1)}% de acertos</p>
-            </CardContent>
-          </Card>
-        </motion.div>
-        
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Clock className="h-5 w-5 text-primary" />
-                Tempo
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold">{formatTime(sessao.tempo_total)}</div>
-              <p className="text-sm text-muted-foreground mt-2">
-                Média por questão: {formatTime(tempoMedio)}
-              </p>
-            </CardContent>
-          </Card>
-        </motion.div>
+
+  const pieChartData = [
+    { name: 'Acertos', value: sessao?.acertos || 0 },
+    { name: 'Erros', value: (sessao?.total_questoes || 0) - (sessao?.acertos || 0) }
+  ];
+
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8 space-y-6">
+        <Skeleton className="h-12 w-72 mb-4" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+        <Skeleton className="h-64 w-full rounded-lg" />
       </div>
-      
-      <Tabs defaultValue="charts" className="w-full">
-        <TabsList className="w-full justify-start mb-4 bg-card/50 backdrop-blur-sm">
-          <TabsTrigger value="charts">Estatísticas</TabsTrigger>
-          <TabsTrigger value="answers">Respostas</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="charts">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Desempenho por Área</CardTitle>
-              </CardHeader>
-              <CardContent className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={areaStats}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis type="number" />
-                    <YAxis dataKey="name" type="category" width={100} />
-                    <Tooltip />
-                    <Bar dataKey="acertos" fill="#4ADE80" name="Acertos" />
-                    <Bar dataKey="erros" fill="#F87171" name="Erros" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Distribuição de Acertos</CardTitle>
-              </CardHeader>
-              <CardContent className="h-72">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      paddingAngle={4}
-                      dataKey="value"
-                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {data.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
+    );
+  }
+
+  if (!sessao) {
+    return (
+      <div className="container mx-auto py-12 flex flex-col items-center justify-center h-[60vh]">
+        <h2 className="text-2xl font-bold mb-4">Resultado não encontrado</h2>
+        <p className="text-muted-foreground mb-6">Não foi possível encontrar os dados deste simulado.</p>
+        <Button onClick={() => navigate("/simulados")}>Voltar para Simulados</Button>
+      </div>
+    );
+  }
+
+  return (
+    <JuridicalBackground variant="scales" opacity={0.03}>
+      <div className="container mx-auto py-6 space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">Resultado do Simulado</h1>
+            <p className="text-muted-foreground">
+              {sessao.categoria} • {new Date(sessao.data_inicio).toLocaleDateString()}
+            </p>
           </div>
-        </TabsContent>
+          
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" className="flex items-center gap-2">
+              <FilePlus className="h-4 w-4" />
+              <span>Salvar PDF</span>
+            </Button>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Share2 className="h-4 w-4" />
+              <span>Compartilhar</span>
+            </Button>
+            <Button onClick={() => navigate(`/simulados/${sessao.categoria.toLowerCase()}`)}>
+              <ArrowRight className="h-4 w-4 mr-2" />
+              <span>Novo Simulado</span>
+            </Button>
+          </div>
+        </div>
         
-        <TabsContent value="answers">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="md:col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg">Suas respostas</CardTitle>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Desempenho Geral
+              </CardTitle>
+              <CardDescription>
+                Resumo do seu resultado neste simulado
+              </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {respostas.map((resposta, index) => (
-                  <motion.div
-                    key={resposta.questao_id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.05 * index }}
-                    className="border rounded-lg p-4"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="font-semibold">Questão {index + 1}</div>
-                        {resposta.area && (
-                          <div className="text-sm text-muted-foreground">Área: {resposta.area}</div>
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        {resposta.acertou ? (
-                          <div className="flex items-center text-success">
-                            <CheckCircle2 className="h-5 w-5 mr-1" />
-                            <span>Correto</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center text-destructive">
-                            <XCircle className="h-5 w-5 mr-1" />
-                            <span>Incorreto</span>
-                          </div>
-                        )}
-                      </div>
+            <CardContent className="space-y-6">
+              <div className="flex flex-col md:flex-row gap-4 md:gap-8">
+                <div className="flex-1">
+                  <div className="flex flex-col items-center justify-center p-4 h-full">
+                    <div className="h-40 w-40">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieChartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={60}
+                            fill="#8884d8"
+                            paddingAngle={5}
+                            dataKey="value"
+                            label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                          >
+                            {pieChartData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
-                    
-                    <p className="text-sm mb-4">{resposta.questao_texto}</p>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-                      <div className="flex items-center">
-                        <span className="text-sm font-medium">Sua resposta:</span>
-                        <span className={`ml-2 px-2 py-1 rounded text-sm ${
-                          resposta.acertou ? 'bg-success/20 text-success' : 'bg-destructive/20 text-destructive'
-                        }`}>
-                          {resposta.resposta_selecionada}
-                        </span>
+                    <p className="text-2xl font-bold mt-2">
+                      {sessao.acertos}/{sessao.total_questoes}
+                    </p>
+                    <p className="text-sm text-muted-foreground">questões corretas</p>
+                  </div>
+                </div>
+
+                <div className="flex-1 space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Percentual de Acerto</span>
+                      <span className="text-sm font-semibold">{sessao.pontuacao.toFixed(1)}%</span>
+                    </div>
+                    <Progress value={sessao.pontuacao} className="h-2" />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="border rounded-md p-3 text-center">
+                      <div className="flex items-center justify-center space-x-1 text-2xl font-bold">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span>{formatTime(sessao.tempo_total)}</span>
                       </div>
-                      
-                      {!resposta.acertou && (
-                        <div className="flex items-center">
-                          <span className="text-sm font-medium">Resposta correta:</span>
-                          <span className="ml-2 px-2 py-1 rounded bg-success/20 text-success text-sm">
-                            {resposta.resposta_correta}
-                          </span>
-                        </div>
-                      )}
+                      <p className="text-xs text-muted-foreground mt-1">Tempo total</p>
                     </div>
-                    
-                    <div className="text-xs text-muted-foreground">
-                      Tempo: {formatTime(resposta.tempo_resposta)}
+                    <div className="border rounded-md p-3 text-center">
+                      <div className="text-2xl font-bold">
+                        {formatTime(Math.round(sessao.tempo_total / sessao.total_questoes))}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Média por questão</p>
                     </div>
-                  </motion.div>
-                ))}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t">
+                <h3 className="text-lg font-medium mb-4">Desempenho por Área</h3>
+                {areaStats.length > 0 ? (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={areaStats}
+                        margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="area" />
+                        <YAxis />
+                        <Tooltip 
+                          formatter={(value, name, props) => {
+                            if (name === 'percentual') return [`${value}%`, 'Percentual'];
+                            return [value, name];
+                          }}
+                        />
+                        <Bar 
+                          name="Percentual de Acerto" 
+                          dataKey={(data) => calcularPercentual(data.acertos, data.total)}
+                          fill="#3b82f6" 
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <p className="text-center text-muted-foreground">
+                    Nenhum dado de área disponível para este simulado.
+                  </p>
+                )}
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-      
-      <div className="mt-8 flex justify-between">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate("/simulados")}
-        >
-          Voltar para Simulados
-        </Button>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Recomendações
+              </CardTitle>
+              <CardDescription>
+                Sugestões para melhorar seu desempenho
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {areaStats.length > 0 ? (
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <h3 className="font-medium">Áreas para focar:</h3>
+                    <ul className="space-y-2">
+                      {areaStats
+                        .sort((a, b) => calcularPercentual(a.acertos, a.total) - calcularPercentual(b.acertos, b.total))
+                        .slice(0, 3)
+                        .map((area, index) => (
+                          <li key={index} className="flex items-center justify-between border-b pb-1">
+                            <span>{area.area}</span>
+                            <span className="text-sm font-medium">
+                              {calcularPercentual(area.acertos, area.total)}%
+                            </span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <h3 className="font-medium mb-2">Materiais recomendados:</h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-center gap-2 text-sm">
+                        <div className="p-1.5 rounded-md bg-primary/10">
+                          <BookOpen className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span>Livro: Manual Completo de Direito Civil</span>
+                      </li>
+                      <li className="flex items-center gap-2 text-sm">
+                        <div className="p-1.5 rounded-md bg-primary/10">
+                          <Video className="h-3.5 w-3.5 text-primary" />
+                        </div>
+                        <span>Vídeo-aula: Princípios Constitucionais</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground">
+                  Complete mais simulados para obter recomendações personalizadas.
+                </p>
+              )}
+            </CardContent>
+            <CardFooter>
+              <Button variant="outline" className="w-full" onClick={() => navigate("/biblioteca")}>
+                Ver todos os materiais
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
         
-        <Button
-          onClick={() => navigate("/simulados/novo")}
-          className="flex items-center gap-2"
-        >
-          <BookOpen className="h-4 w-4" />
-          Iniciar novo simulado
-        </Button>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Revisão das Questões</CardTitle>
+            <CardDescription>
+              Reveja as questões e suas respostas
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="all" className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="all">Todas ({respostas.length})</TabsTrigger>
+                <TabsTrigger value="corretas">
+                  <Check className="h-4 w-4 mr-1" />
+                  Corretas ({respostas.filter(r => r.acertou).length})
+                </TabsTrigger>
+                <TabsTrigger value="erradas">
+                  <X className="h-4 w-4 mr-1" />
+                  Incorretas ({respostas.filter(r => !r.acertou).length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="all">
+                <div className="space-y-4">
+                  {respostas.map((resposta, index) => {
+                    const questao = questoes.find(q => q.id === resposta.questao_id);
+                    if (!questao) return null;
+                    
+                    return (
+                      <Card key={resposta.id} className={`border-l-4 ${resposta.acertou ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                        <CardContent className="p-4 space-y-2">
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Questão {index + 1} • {questao.area || 'Área não especificada'}
+                            </span>
+                            {resposta.acertou ? (
+                              <div className="flex items-center gap-1 text-green-500 text-sm">
+                                <Check className="h-4 w-4" /> Correta
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-red-500 text-sm">
+                                <X className="h-4 w-4" /> Incorreta
+                              </div>
+                            )}
+                          </div>
+                          
+                          <p className="font-medium">{questao.questao}</p>
+                          
+                          <div className="space-y-1 mt-3">
+                            {['A', 'B', 'C', 'D'].map(option => (
+                              <div key={option} className={`
+                                p-3 rounded-md text-sm
+                                ${resposta.resposta_selecionada === option && 
+                                  (resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30')}
+                                ${questao.alternativa_correta === option && !resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : ''}
+                                ${resposta.resposta_selecionada !== option && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
+                              `}>
+                                <div className="flex gap-2">
+                                  <span className="font-semibold">{option})</span>
+                                  <span>{questao[`alternativa_${option.toLowerCase()}`]}</span>
+                                </div>
+                                {resposta.resposta_selecionada === option && (
+                                  <div className="mt-1 flex items-center gap-1 text-xs">
+                                    <span className={resposta.acertou ? 'text-green-500' : 'text-red-500'}>
+                                      Sua resposta
+                                    </span>
+                                  </div>
+                                )}
+                                {questao.alternativa_correta === option && !resposta.acertou && (
+                                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
+                                    <span>Resposta correta</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {questao.explicacao && (
+                            <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
+                              <p className="font-medium mb-1">Explicação:</p>
+                              <p>{questao.explicacao}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="corretas">
+                <div className="space-y-4">
+                  {/* Similar to above but filtered for correct answers */}
+                  {respostas.filter(r => r.acertou).map((resposta, index) => {
+                    const questao = questoes.find(q => q.id === resposta.questao_id);
+                    if (!questao) return null;
+                    
+                    return (
+                      <Card key={resposta.id} className="border-l-4 border-l-green-500">
+                        <CardContent className="p-4 space-y-2">
+                          {/* Similar content as above */}
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Questão {index + 1} • {questao.area || 'Área não especificada'}
+                            </span>
+                            <div className="flex items-center gap-1 text-green-500 text-sm">
+                              <Check className="h-4 w-4" /> Correta
+                            </div>
+                          </div>
+                          
+                          <p className="font-medium">{questao.questao}</p>
+                          
+                          <div className="space-y-1 mt-3">
+                            {['A', 'B', 'C', 'D'].map(option => (
+                              <div key={option} className={`
+                                p-3 rounded-md text-sm
+                                ${resposta.resposta_selecionada === option ? 'bg-green-500/10 border border-green-500/30' : 'bg-card/50 border'}
+                              `}>
+                                <div className="flex gap-2">
+                                  <span className="font-semibold">{option})</span>
+                                  <span>{questao[`alternativa_${option.toLowerCase()}`]}</span>
+                                </div>
+                                {resposta.resposta_selecionada === option && (
+                                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
+                                    <span>Sua resposta (correta)</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {questao.explicacao && (
+                            <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
+                              <p className="font-medium mb-1">Explicação:</p>
+                              <p>{questao.explicacao}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="erradas">
+                <div className="space-y-4">
+                  {/* Similar to above but filtered for incorrect answers */}
+                  {respostas.filter(r => !r.acertou).map((resposta, index) => {
+                    const questao = questoes.find(q => q.id === resposta.questao_id);
+                    if (!questao) return null;
+                    
+                    return (
+                      <Card key={resposta.id} className="border-l-4 border-l-red-500">
+                        <CardContent className="p-4 space-y-2">
+                          {/* Similar content as above */}
+                          <div className="flex justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">
+                              Questão {index + 1} • {questao.area || 'Área não especificada'}
+                            </span>
+                            <div className="flex items-center gap-1 text-red-500 text-sm">
+                              <X className="h-4 w-4" /> Incorreta
+                            </div>
+                          </div>
+                          
+                          <p className="font-medium">{questao.questao}</p>
+                          
+                          <div className="space-y-1 mt-3">
+                            {['A', 'B', 'C', 'D'].map(option => (
+                              <div key={option} className={`
+                                p-3 rounded-md text-sm
+                                ${resposta.resposta_selecionada === option ? 'bg-red-500/10 border border-red-500/30' : ''}
+                                ${questao.alternativa_correta === option ? 'bg-green-500/10 border border-green-500/30' : ''}
+                                ${resposta.resposta_selecionada !== option && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
+                              `}>
+                                <div className="flex gap-2">
+                                  <span className="font-semibold">{option})</span>
+                                  <span>{questao[`alternativa_${option.toLowerCase()}`]}</span>
+                                </div>
+                                {resposta.resposta_selecionada === option && (
+                                  <div className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                                    <span>Sua resposta (incorreta)</span>
+                                  </div>
+                                )}
+                                {questao.alternativa_correta === option && (
+                                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
+                                    <span>Resposta correta</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          
+                          {questao.explicacao && (
+                            <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
+                              <p className="font-medium mb-1">Explicação:</p>
+                              <p>{questao.explicacao}</p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
-    </div>
+    </JuridicalBackground>
   );
 };
 

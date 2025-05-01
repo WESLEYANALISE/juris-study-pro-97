@@ -3,9 +3,9 @@ export type SimuladoCategoria = 'OAB' | 'PRF' | 'PF' | 'TJSP' | 'JUIZ' | 'PROMOT
 
 export interface Questao {
   id: string;
-  ano: number;
+  ano: number | string;
   banca: string;
-  numero_questao: number;
+  numero_questao: number | string;
   questao: string;
   alternativa_a: string;
   alternativa_b: string;
@@ -27,6 +27,7 @@ export interface SimuladoSessao {
   pontuacao: number;
   tempo_total: number;
   completo: boolean;
+  user_id: string;
 }
 
 export interface SimuladoResposta {
@@ -45,4 +46,12 @@ export interface SimuladoEstatistica {
   total_respondidas: number;
   total_acertos: number;
   percentual: number;
+}
+
+export interface SimuladoAreaDificil {
+  area: string;
+  categoria: SimuladoCategoria;
+  media_percentual: number;
+  total_questoes: number;
+  total_usuarios: number;
 }

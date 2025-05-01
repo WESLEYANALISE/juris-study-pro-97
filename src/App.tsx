@@ -15,6 +15,7 @@ import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
 import VadeMecumViewer from "@/pages/VadeMecumViewer";
 import Simulados from "@/pages/Simulados";
+import SimuladoCategoria from "@/pages/SimuladoCategoria";
 import SimuladoSessao from "@/pages/SimuladoSessao";
 import SimuladoResultado from "@/pages/SimuladoResultado";
 import Flashcards from "@/pages/Flashcards";
@@ -57,7 +58,8 @@ function App() {
               <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
               <Route path="/vademecum/:lawId/:articleId" element={<Layout><VadeMecumViewer /></Layout>} />
               <Route path="/simulados" element={<Layout><Simulados /></Layout>} />
-              <Route path="/simulados/:sessaoId" element={<Layout><SimuladoSessao /></Layout>} />
+              <Route path="/simulados/:categoria" element={<Layout><SimuladoCategoria /></Layout>} />
+              <Route path="/simulados/:categoria/sessao/:sessaoId" element={<Layout><SimuladoSessao /></Layout>} />
               <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
               <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
               <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />

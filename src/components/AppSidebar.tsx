@@ -23,6 +23,16 @@ interface AppSidebarProps {
   userProfile: ProfileType;
 }
 
+// Define the interface for menu items
+interface MenuItem {
+  title: string;
+  url: string;
+  icon: React.ElementType;
+  profiles: string[];
+  isNew?: boolean;
+  isPremium?: boolean;
+}
+
 export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
   
@@ -152,6 +162,11 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
                           {item.isNew && (
                             <Badge variant="secondary" className="ml-auto text-[10px] py-0">
                               NOVO
+                            </Badge>
+                          )}
+                          {item.isPremium && (
+                            <Badge variant="outline" className="ml-auto text-[10px] py-0 bg-amber-500/20 text-amber-500 border-amber-500/30">
+                              PRO
                             </Badge>
                           )}
                         </a>

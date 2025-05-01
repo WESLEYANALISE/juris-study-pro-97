@@ -12,9 +12,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { SimuladoCategoria, Questao } from "@/types/simulados";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 const SimuladoSessao = () => {
-  const { id } = useParams();
+  const { categoria, sessaoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -25,10 +26,16 @@ const SimuladoSessao = () => {
   const [questionTimer, setQuestionTimer] = useState<number>(0);
   const [totalTime, setTotalTime] = useState<number>(0);
   const [animationDirection, setAnimationDirection] = useState<"next" | "prev">("next");
+  const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [sessionInfo, setSessionInfo] = useState<{
+    id: string;
+    categoria: SimuladoCategoria;
+    total_questoes: number;
+  } | null>(null);
   
-  const categoria = location.state?.categoria as SimuladoCategoria;
-  const { useQuestoes, useSubmitResposta } = useSimulado(categoria);
-  const { data: questoes, isLoading } = useQuestoes();
+  const categoriaUpper = categoria?.toUpperCase() as SimuladoCategoria || "OAB";
+  const { useSubmitResposta } = useSimulado(categoriaUpper);
   const submitResposta = useSubmitResposta();
 
   // Redirect to auth if not authenticated
@@ -37,6 +44,87 @@ const SimuladoSessao = () => {
       navigate("/auth");
     }
   }, [user, navigate]);
+
+  // Fetch session and questions
+  useEffect(() => {
+    const fetchSessionData = async () => {
+      if (!sessaoId || !categoria) return;
+      
+      try {
+        // Fetch session details
+        const { data: sessionData, error: sessionError } = await supabase
+          .from('simulado_sessoes')
+          .select('*')
+          .eq('id', sessaoId)
+          .single();
+          
+        if (sessionError) throw sessionError;
+        if (!sessionData) {
+          toast({
+            title: "Sessão não encontrada",
+            description: "A sessão de simulado solicitada não foi encontrada.",
+            variant: "destructive"
+          });
+          navigate("/simulados");
+          return;
+        }
+        
+        setSessionInfo(sessionData);
+        
+        // Now fetch questions from the appropriate table based on categoria
+        let tableName;
+        switch(categoriaUpper) {
+          case 'OAB': tableName = 'simulados_oab'; break;
+          case 'PRF': tableName = 'simulados_prf'; break;
+          case 'PF': tableName = 'simulados_pf'; break;
+          case 'TJSP': tableName = 'simulados_tjsp'; break;
+          case 'JUIZ': tableName = 'simulados_juiz'; break;
+          case 'PROMOTOR': tableName = 'simulados_promotor'; break;
+          case 'DELEGADO': tableName = 'simulados_delegado'; break;
+          default: tableName = 'simulados_oab';
+        }
+        
+        // Fetch random questions from the table
+        const { data: questoesData, error: questoesError } = await supabase
+          .from(tableName)
+          .select('*')
+          .limit(sessionData.total_questoes);
+        
+        if (questoesError) throw questoesError;
+        setQuestoes(questoesData);
+        
+        // Fetch existing answers
+        const { data: respostasData, error: respostasError } = await supabase
+          .from('simulado_respostas')
+          .select('questao_id, resposta_selecionada')
+          .eq('sessao_id', sessaoId);
+          
+        if (respostasError) throw respostasError;
+        
+        // Map existing answers to state
+        if (respostasData && respostasData.length) {
+          const answersMap: Record<string, 'A' | 'B' | 'C' | 'D'> = {};
+          respostasData.forEach(resp => {
+            if (resp.resposta_selecionada) {
+              answersMap[resp.questao_id] = resp.resposta_selecionada as 'A' | 'B' | 'C' | 'D';
+            }
+          });
+          setAnswers(answersMap);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar dados do simulado:", error);
+        toast({
+          title: "Erro ao carregar simulado",
+          description: "Ocorreu um erro ao carregar os dados do simulado.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchSessionData();
+  }, [sessaoId, categoria, categoriaUpper, navigate, toast, user]);
 
   // Timer effect
   useEffect(() => {
@@ -68,7 +156,7 @@ const SimuladoSessao = () => {
         <AlertCircle className="w-16 h-16 text-destructive mb-4" />
         <h2 className="text-2xl font-bold">Nenhuma questão encontrada</h2>
         <p className="text-muted-foreground mb-6">Não foi possível carregar as questões para este simulado.</p>
-        <Button onClick={() => navigate("/simulados")}>Voltar para Simulados</Button>
+        <Button onClick={() => navigate(`/simulados/${categoria}`)}>Voltar para Simulados</Button>
       </div>
     );
   }
@@ -100,7 +188,7 @@ const SimuladoSessao = () => {
     }
 
     await submitResposta.mutateAsync({
-      sessao_id: id!,
+      sessao_id: sessaoId!,
       questao_id: currentQuestionData.id,
       resposta_selecionada: answers[currentQuestionData.id],
       acertou: answers[currentQuestionData.id] === currentQuestionData.alternativa_correta,
@@ -111,7 +199,17 @@ const SimuladoSessao = () => {
       setAnimationDirection("next");
       setCurrentQuestion(currentQuestion + 1);
     } else {
-      navigate(`/simulados/resultado/${id}`);
+      // Update session as complete
+      if (sessaoId) {
+        await supabase
+          .from('simulado_sessoes')
+          .update({ 
+            completo: true,
+            data_fim: new Date().toISOString()
+          })
+          .eq('id', sessaoId);
+      }
+      navigate(`/simulados/resultado/${sessaoId}`);
     }
   };
 
@@ -144,8 +242,8 @@ const SimuladoSessao = () => {
   return (
     <div className="container mx-auto py-8 max-w-4xl px-4">
       <div className="mb-8 space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Simulado {categoria}</h1>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold">Simulado {sessionInfo?.categoria}</h1>
           <div className="flex items-center gap-2 text-muted-foreground bg-card p-2 rounded-md border">
             <Clock className="h-5 w-5" />
             <span className="font-mono">{formatTime(totalTime)}</span>
@@ -185,7 +283,7 @@ const SimuladoSessao = () => {
               </div>
               {currentQuestionData.area && (
                 <CardDescription className="text-sm">
-                  Área: {currentQuestionData.area} • Ano: {currentQuestionData.ano}
+                  Área: {currentQuestionData.area} • Ano: {currentQuestionData.ano} • Banca: {currentQuestionData.banca}
                 </CardDescription>
               )}
             </CardHeader>
