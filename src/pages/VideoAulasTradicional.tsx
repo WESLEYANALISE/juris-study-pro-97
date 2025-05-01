@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { VideoPlayer } from "@/components/VideoPlayer";
+import { FixedVideoPlayer } from '@/components/videoaulas/FixedVideoPlayer';
 import { SearchIcon } from "lucide-react";
 import { getJuridicPlaylists, getPlaylistVideos, type YouTubePlaylist, type YouTubeVideo } from "@/lib/youtube-service";
 import { VideoCard } from "@/components/videoaulas/VideoCard";
@@ -228,7 +227,12 @@ const VideoAulas = () => {
                 ) : selectedVideo ? (
                   <div className="space-y-6">
                     <div className="rounded-lg overflow-hidden">
-                      <VideoPlayer videoId={selectedVideo.id} />
+                      <FixedVideoPlayer
+                        videoId={selectedVideo?.videoId || ''}
+                        autoplay={true}
+                        onReady={() => console.log('Video ready')}
+                        onError={(err) => console.error('Video error:', err)}
+                      />
                     </div>
                     
                     <div>

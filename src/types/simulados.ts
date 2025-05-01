@@ -1,6 +1,17 @@
 
 export type SimuladoCategoria = 'OAB' | 'PRF' | 'PF' | 'TJSP' | 'JUIZ' | 'PROMOTOR' | 'DELEGADO';
 
+export interface SimuladoEdicao {
+  id: string;
+  categoria: SimuladoCategoria;
+  nome: string;
+  ano: number;
+  numero: number;
+  total_questoes: number;
+  data_prova?: string;
+  descricao?: string;
+}
+
 export interface Questao {
   id: string;
   ano: number | string;
@@ -15,11 +26,13 @@ export interface Questao {
   imagem_url?: string;
   area?: string;
   explicacao?: string;
+  edicao_id?: string;
 }
 
 export interface SimuladoSessao {
   id: string;
   categoria: SimuladoCategoria;
+  edicao_id: string;
   data_inicio: string;
   data_fim?: string;
   total_questoes: number;
@@ -54,4 +67,19 @@ export interface SimuladoAreaDificil {
   media_percentual: number;
   total_questoes: number;
   total_usuarios: number;
+}
+
+export interface SimuladoUsuarioProgresso {
+  id: string;
+  user_id: string;
+  categoria: SimuladoCategoria;
+  total_simulados: number;
+  total_questoes: number;
+  total_acertos: number;
+  percentual_acertos: number;
+  tempo_medio_questao: number;
+  pontuacao_media: number;
+  ultima_sessao: string;
+  created_at: string;
+  updated_at: string;
 }

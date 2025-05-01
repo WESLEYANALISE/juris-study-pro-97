@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -121,11 +120,11 @@ const SimuladoCategoria = () => {
     fetchSessoes();
   }, [user, categoriaUpper, navigate, toast]);
 
-  const handleCreateSimulado = async (config: { categoria: CategoriaType; questoes: number }) => {
+  const handleCreateSimulado = async (config: { categoria: CategoriaType; edicaoId: string }) => {
     try {
       const sessao = await createSessaoMutation.mutateAsync({
         categoria: config.categoria,
-        total_questoes: config.questoes
+        edicaoId: config.edicaoId
       });
       
       navigate(`/simulados/${categoria}/sessao/${sessao.id}`);

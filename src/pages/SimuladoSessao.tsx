@@ -46,6 +46,7 @@ const SimuladoSessao = () => {
     id: string;
     categoria: SimuladoCategoria;
     total_questoes: number;
+    edicao_id: string;
   } | null>(null);
   
   const categoriaUpper = categoria?.toUpperCase() as SimuladoCategoria || "OAB";
@@ -87,7 +88,8 @@ const SimuladoSessao = () => {
         setSessionInfo({
           id: sessionData.id,
           categoria: sessionData.categoria as SimuladoCategoria,
-          total_questoes: sessionData.total_questoes
+          total_questoes: sessionData.total_questoes,
+          edicao_id: sessionData.edicao_id
         });
         
         // Now fetch questions from the appropriate table based on categoria
@@ -103,11 +105,11 @@ const SimuladoSessao = () => {
           default: tableName = 'simulados_oab';
         }
         
-        // Fetch random questions from the table
+        // Fetch questions specific to this edition
         const { data: questoesData, error: questoesError } = await supabase
           .from(tableName)
           .select('*')
-          .limit(sessionData.total_questoes);
+          .eq('edicao_id', sessionData.edicao_id);
         
         if (questoesError) throw questoesError;
         
@@ -128,7 +130,8 @@ const SimuladoSessao = () => {
               alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
               imagem_url: q.imagem_url,
               area: q.area,
-              explicacao: q.explicacao
+              explicacao: q.explicacao,
+              edicao_id: q.edicao_id
             })) as Questao[];
           
           setQuestoes(validQuestoes);

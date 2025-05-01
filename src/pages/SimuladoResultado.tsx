@@ -99,11 +99,14 @@ const SimuladoResultado = () => {
             const areaMap = new Map<string, {acertos: number, total: number}>();
             
             respostasData?.forEach(resposta => {
-              // Fix: Add null check and proper type guard for 'q'
-              const questao = questoesData?.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
-              // Fix: Add null check and proper type guard for 'questao'
+              // Find the corresponding question with proper type safety
+              const questao = questoesData?.find(q => {
+                return q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id;
+              });
+              
+              // Safely check if question has area property
               if (questao && typeof questao === 'object' && 'area' in questao) {
-                // Fix: Use nullish coalescing for safe access
+                // Use nullish coalescing to default if area is null/undefined
                 const area = questao?.area ?? 'Não categorizada';
                 const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
                 
