@@ -334,7 +334,7 @@ export type Database = {
           artigo?: string | null
           exemplo?: string | null
           formal?: string | null
-          id: number
+          id?: number
           numero?: string | null
           tecnica?: string | null
         }
