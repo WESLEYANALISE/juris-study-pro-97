@@ -1,4 +1,3 @@
-
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones, CreditCard } from "lucide-react";
 import {
   Sidebar,
