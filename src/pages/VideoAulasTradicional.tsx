@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -228,7 +229,7 @@ const VideoAulas = () => {
                   <div className="space-y-6">
                     <div className="rounded-lg overflow-hidden">
                       <FixedVideoPlayer
-                        videoId={selectedVideo.videoId || ''} {/* Fixed: Access videoId property */}
+                        videoId={selectedVideo.videoId || ''}
                         autoplay={true}
                         onReady={() => console.log('Video ready')}
                         onError={(err) => console.error('Video error:', err)}
