@@ -2660,6 +2660,45 @@ export type Database = {
         }
         Relationships: []
       }
+      simulado_edicoes: {
+        Row: {
+          ano: number
+          categoria: string
+          created_at: string
+          data_prova: string | null
+          descricao: string | null
+          id: string
+          nome: string
+          numero: number
+          total_questoes: number
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          categoria: string
+          created_at?: string
+          data_prova?: string | null
+          descricao?: string | null
+          id?: string
+          nome: string
+          numero: number
+          total_questoes: number
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          categoria?: string
+          created_at?: string
+          data_prova?: string | null
+          descricao?: string | null
+          id?: string
+          nome?: string
+          numero?: number
+          total_questoes?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       simulado_estatisticas: {
         Row: {
           area: string | null
@@ -2739,6 +2778,7 @@ export type Database = {
           created_at: string | null
           data_fim: string | null
           data_inicio: string | null
+          edicao_id: string | null
           id: string
           pontuacao: number | null
           tempo_total: number | null
@@ -2752,6 +2792,7 @@ export type Database = {
           created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          edicao_id?: string | null
           id?: string
           pontuacao?: number | null
           tempo_total?: number | null
@@ -2765,10 +2806,64 @@ export type Database = {
           created_at?: string | null
           data_fim?: string | null
           data_inicio?: string | null
+          edicao_id?: string | null
           id?: string
           pontuacao?: number | null
           tempo_total?: number | null
           total_questoes?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulado_sessoes_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulado_usuario_progresso: {
+        Row: {
+          categoria: string
+          created_at: string
+          id: string
+          percentual_acertos: number
+          pontuacao_media: number
+          tempo_medio_questao: number
+          total_acertos: number
+          total_questoes: number
+          total_simulados: number
+          ultima_sessao: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          id?: string
+          percentual_acertos?: number
+          pontuacao_media?: number
+          tempo_medio_questao?: number
+          total_acertos?: number
+          total_questoes?: number
+          total_simulados?: number
+          ultima_sessao?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          id?: string
+          percentual_acertos?: number
+          pontuacao_media?: number
+          tempo_medio_questao?: number
+          total_acertos?: number
+          total_questoes?: number
+          total_simulados?: number
+          ultima_sessao?: string | null
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -2784,6 +2879,7 @@ export type Database = {
           area: string | null
           banca: string
           created_at: string | null
+          edicao_id: string | null
           explicacao: string | null
           id: string
           imagem_url: string | null
@@ -2801,6 +2897,7 @@ export type Database = {
           area?: string | null
           banca: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -2818,6 +2915,7 @@ export type Database = {
           area?: string | null
           banca?: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -2825,7 +2923,15 @@ export type Database = {
           questao?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_delegado_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulados_juiz: {
         Row: {
@@ -2838,6 +2944,7 @@ export type Database = {
           area: string | null
           banca: string
           created_at: string | null
+          edicao_id: string | null
           explicacao: string | null
           id: string
           imagem_url: string | null
@@ -2855,6 +2962,7 @@ export type Database = {
           area?: string | null
           banca: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -2872,6 +2980,7 @@ export type Database = {
           area?: string | null
           banca?: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -2879,7 +2988,15 @@ export type Database = {
           questao?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_juiz_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulados_oab: {
         Row: {
@@ -2892,6 +3009,7 @@ export type Database = {
           area: string
           banca: string
           edicao: string
+          edicao_id: string | null
           id: string
           numero_questao: string
           questao: string | null
@@ -2906,6 +3024,7 @@ export type Database = {
           area: string
           banca: string
           edicao: string
+          edicao_id?: string | null
           id?: string
           numero_questao: string
           questao?: string | null
@@ -2920,11 +3039,20 @@ export type Database = {
           area?: string
           banca?: string
           edicao?: string
+          edicao_id?: string | null
           id?: string
           numero_questao?: string
           questao?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_oab_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulados_pf: {
         Row: {
@@ -2937,6 +3065,7 @@ export type Database = {
           area: string | null
           banca: string
           created_at: string | null
+          edicao_id: string | null
           explicacao: string | null
           id: string
           imagem_url: string | null
@@ -2954,6 +3083,7 @@ export type Database = {
           area?: string | null
           banca: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -2971,6 +3101,7 @@ export type Database = {
           area?: string | null
           banca?: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -2978,7 +3109,15 @@ export type Database = {
           questao?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_pf_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulados_prf: {
         Row: {
@@ -2991,6 +3130,7 @@ export type Database = {
           area: string | null
           banca: string
           created_at: string | null
+          edicao_id: string | null
           explicacao: string | null
           id: string
           imagem_url: string | null
@@ -3008,6 +3148,7 @@ export type Database = {
           area?: string | null
           banca: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -3025,6 +3166,7 @@ export type Database = {
           area?: string | null
           banca?: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -3032,7 +3174,15 @@ export type Database = {
           questao?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_prf_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulados_promotor: {
         Row: {
@@ -3045,6 +3195,7 @@ export type Database = {
           area: string | null
           banca: string
           created_at: string | null
+          edicao_id: string | null
           explicacao: string | null
           id: string
           imagem_url: string | null
@@ -3062,6 +3213,7 @@ export type Database = {
           area?: string | null
           banca: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -3079,6 +3231,7 @@ export type Database = {
           area?: string | null
           banca?: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -3086,7 +3239,15 @@ export type Database = {
           questao?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_promotor_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       simulados_tjsp: {
         Row: {
@@ -3099,6 +3260,7 @@ export type Database = {
           area: string | null
           banca: string
           created_at: string | null
+          edicao_id: string | null
           explicacao: string | null
           id: string
           imagem_url: string | null
@@ -3116,6 +3278,7 @@ export type Database = {
           area?: string | null
           banca: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -3133,6 +3296,7 @@ export type Database = {
           area?: string | null
           banca?: string
           created_at?: string | null
+          edicao_id?: string | null
           explicacao?: string | null
           id?: string
           imagem_url?: string | null
@@ -3140,7 +3304,15 @@ export type Database = {
           questao?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "simulados_tjsp_edicao_id_fkey"
+            columns: ["edicao_id"]
+            isOneToOne: false
+            referencedRelation: "simulado_edicoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscribers: {
         Row: {

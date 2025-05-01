@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -146,7 +147,7 @@ const SimuladoCategoria = () => {
   return (
     <JuridicalBackground variant="scales" opacity={0.03}>
       <div className="container mx-auto py-6 space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-md bg-primary/10">
               <IconComponent className="h-6 w-6 text-primary" />

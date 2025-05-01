@@ -3,19 +3,10 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { SimuladoCategoria } from "@/types/simulados";
+import { SimuladoCategoria, SimuladoEdicao } from "@/types/simulados";
 import { supabase } from "@/integrations/supabase/client";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
-interface SimuladoEdicao {
-  id: string;
-  categoria: SimuladoCategoria;
-  nome: string;
-  ano: number;
-  numero: number;
-  total_questoes: number;
-}
 
 interface SimuladoSetupProps {
   onStart: (config: { categoria: SimuladoCategoria; edicaoId: string }) => void;
