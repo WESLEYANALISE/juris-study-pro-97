@@ -85,16 +85,17 @@ namespace YT {
   }
 }
 
-// Add YouTubeVideo interface to match what's used in the codebase
+// Update YouTubeVideo interface to include videoId property
 interface YouTubeVideo {
   id: string;
-  videoId: string;  // Added videoId property
+  videoId: string;  // Explicitly included videoId property
   title: string;
   description: string;
   thumbnail: string;
   publishedAt?: string;
   channelId?: string;
   channelTitle?: string;
+  duration?: string;  // Added duration property as it's used in the codebase
 }
 
 // Add YouTubePlaylist interface to match what's used in the codebase

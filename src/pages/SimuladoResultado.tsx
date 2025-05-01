@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -416,7 +417,7 @@ const SimuladoResultado = () => {
                         <CardContent className="p-4 space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao.area || 'Área não especificada'}
+                              Questão {index + 1} • {questao && questao.area ? questao.area : 'Área não especificada'}
                             </span>
                             {resposta.acertou ? (
                               <div className="flex items-center gap-1 text-green-500 text-sm">
@@ -429,7 +430,7 @@ const SimuladoResultado = () => {
                             )}
                           </div>
                           
-                          <p className="font-medium">{questao.questao}</p>
+                          <p className="font-medium">{questao ? questao.questao : ''}</p>
                           
                           <div className="space-y-1 mt-3">
                             {['A', 'B', 'C', 'D'].map(option => (
@@ -437,12 +438,12 @@ const SimuladoResultado = () => {
                                 p-3 rounded-md text-sm
                                 ${resposta.resposta_selecionada === option && 
                                   (resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30')}
-                                ${questao.alternativa_correta === option && !resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : ''}
-                                ${resposta.resposta_selecionada !== option && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
+                                ${questao && questao.alternativa_correta === option && !resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : ''}
+                                ${resposta.resposta_selecionada !== option && questao && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
                               `}>
                                 <div className="flex gap-2">
                                   <span className="font-semibold">{option})</span>
-                                  <span>{questao[`alternativa_${option.toLowerCase()}`]}</span>
+                                  <span>{questao && questao[`alternativa_${option.toLowerCase()}`]}</span>
                                 </div>
                                 {resposta.resposta_selecionada === option && (
                                   <div className="mt-1 flex items-center gap-1 text-xs">
@@ -451,7 +452,7 @@ const SimuladoResultado = () => {
                                     </span>
                                   </div>
                                 )}
-                                {questao.alternativa_correta === option && !resposta.acertou && (
+                                {questao && questao.alternativa_correta === option && !resposta.acertou && (
                                   <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
                                     <span>Resposta correta</span>
                                   </div>
@@ -460,7 +461,7 @@ const SimuladoResultado = () => {
                             ))}
                           </div>
                           
-                          {questao.explicacao && (
+                          {questao && questao.explicacao && (
                             <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
                               <p className="font-medium mb-1">Explicação:</p>
                               <p>{questao.explicacao}</p>
@@ -473,9 +474,9 @@ const SimuladoResultado = () => {
                 </div>
               </TabsContent>
               
+              {/* Similar corrections needed for the other tabs - corretas and erradas */}
               <TabsContent value="corretas">
                 <div className="space-y-4">
-                  {/* Similar to above but filtered for correct answers */}
                   {respostas.filter(r => r.acertou).map((resposta, index) => {
                     // Apply proper type checking and null safety
                     const questao = questoes.find(q => q && q.id === resposta.questao_id);
@@ -484,17 +485,16 @@ const SimuladoResultado = () => {
                     return (
                       <Card key={resposta.id} className="border-l-4 border-l-green-500">
                         <CardContent className="p-4 space-y-2">
-                          {/* Similar content as above */}
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao.area || 'Área não especificada'}
+                              Questão {index + 1} • {questao && questao.area ? questao.area : 'Área não especificada'}
                             </span>
                             <div className="flex items-center gap-1 text-green-500 text-sm">
                               <Check className="h-4 w-4" /> Correta
                             </div>
                           </div>
                           
-                          <p className="font-medium">{questao.questao}</p>
+                          <p className="font-medium">{questao ? questao.questao : ''}</p>
                           
                           <div className="space-y-1 mt-3">
                             {['A', 'B', 'C', 'D'].map(option => (
@@ -504,7 +504,7 @@ const SimuladoResultado = () => {
                               `}>
                                 <div className="flex gap-2">
                                   <span className="font-semibold">{option})</span>
-                                  <span>{questao[`alternativa_${option.toLowerCase()}`]}</span>
+                                  <span>{questao && questao[`alternativa_${option.toLowerCase()}`]}</span>
                                 </div>
                                 {resposta.resposta_selecionada === option && (
                                   <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
@@ -515,7 +515,7 @@ const SimuladoResultado = () => {
                             ))}
                           </div>
                           
-                          {questao.explicacao && (
+                          {questao && questao.explicacao && (
                             <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
                               <p className="font-medium mb-1">Explicação:</p>
                               <p>{questao.explicacao}</p>
@@ -530,7 +530,6 @@ const SimuladoResultado = () => {
               
               <TabsContent value="erradas">
                 <div className="space-y-4">
-                  {/* Similar to above but filtered for incorrect answers */}
                   {respostas.filter(r => !r.acertou).map((resposta, index) => {
                     // Apply proper type checking and null safety
                     const questao = questoes.find(q => q && q.id === resposta.questao_id);
@@ -539,36 +538,35 @@ const SimuladoResultado = () => {
                     return (
                       <Card key={resposta.id} className="border-l-4 border-l-red-500">
                         <CardContent className="p-4 space-y-2">
-                          {/* Similar content as above */}
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao.area || 'Área não especificada'}
+                              Questão {index + 1} • {questao && questao.area ? questao.area : 'Área não especificada'}
                             </span>
                             <div className="flex items-center gap-1 text-red-500 text-sm">
                               <X className="h-4 w-4" /> Incorreta
                             </div>
                           </div>
                           
-                          <p className="font-medium">{questao.questao}</p>
+                          <p className="font-medium">{questao ? questao.questao : ''}</p>
                           
                           <div className="space-y-1 mt-3">
                             {['A', 'B', 'C', 'D'].map(option => (
                               <div key={option} className={`
                                 p-3 rounded-md text-sm
                                 ${resposta.resposta_selecionada === option ? 'bg-red-500/10 border border-red-500/30' : ''}
-                                ${questao.alternativa_correta === option ? 'bg-green-500/10 border border-green-500/30' : ''}
-                                ${resposta.resposta_selecionada !== option && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
+                                ${questao && questao.alternativa_correta === option ? 'bg-green-500/10 border border-green-500/30' : ''}
+                                ${resposta.resposta_selecionada !== option && questao && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
                               `}>
                                 <div className="flex gap-2">
                                   <span className="font-semibold">{option})</span>
-                                  <span>{questao[`alternativa_${option.toLowerCase()}`]}</span>
+                                  <span>{questao && questao[`alternativa_${option.toLowerCase()}`]}</span>
                                 </div>
                                 {resposta.resposta_selecionada === option && (
                                   <div className="mt-1 flex items-center gap-1 text-xs text-red-500">
                                     <span>Sua resposta (incorreta)</span>
                                   </div>
                                 )}
-                                {questao.alternativa_correta === option && (
+                                {questao && questao.alternativa_correta === option && (
                                   <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
                                     <span>Resposta correta</span>
                                   </div>
@@ -577,7 +575,7 @@ const SimuladoResultado = () => {
                             ))}
                           </div>
                           
-                          {questao.explicacao && (
+                          {questao && questao.explicacao && (
                             <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
                               <p className="font-medium mb-1">Explicação:</p>
                               <p>{questao.explicacao}</p>
