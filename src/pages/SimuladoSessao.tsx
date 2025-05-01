@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,21 @@ import type { SimuladoCategoria, Questao } from "@/types/simulados";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+
+// Type guard to check if an object is a valid question
+const isValidQuestion = (item: any): item is Questao => {
+  return (
+    item &&
+    typeof item === 'object' &&
+    'id' in item &&
+    'questao' in item &&
+    'alternativa_a' in item &&
+    'alternativa_b' in item &&
+    'alternativa_c' in item &&
+    'alternativa_d' in item &&
+    'alternativa_correta' in item
+  );
+};
 
 const SimuladoSessao = () => {
   const { categoria, sessaoId } = useParams();
@@ -98,9 +112,9 @@ const SimuladoSessao = () => {
         if (questoesError) throw questoesError;
         
         if (questoesData && Array.isArray(questoesData)) {
-          // Safe type casting after array validation
-          const typedQuestoes = questoesData
-            .filter(q => q && typeof q === 'object')
+          // Filter and map valid questions
+          const validQuestoes = questoesData
+            .filter(q => isValidQuestion(q))
             .map(q => ({
               id: q.id || '', 
               ano: q.ano || '',
@@ -117,7 +131,7 @@ const SimuladoSessao = () => {
               explicacao: q.explicacao
             })) as Questao[];
           
-          setQuestoes(typedQuestoes);
+          setQuestoes(validQuestoes);
         } else {
           setQuestoes([]);
         }

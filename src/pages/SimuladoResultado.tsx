@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -100,7 +99,7 @@ const SimuladoResultado = () => {
             respostasData?.forEach(resposta => {
               const questao = questoesData?.find(q => q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id);
               if (questao && typeof questao === 'object' && 'area' in questao) {
-                const area = questao.area || 'Não categorizada';
+                const area = questao.area ?? 'Não categorizada';
                 const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
                 
                 areaMap.set(area, {
@@ -583,18 +582,6 @@ const SimuladoResultado = () => {
       </div>
     </JuridicalBackground>
   );
-};
-
-// Add the missing formatTime and calcularPercentual functions
-const formatTime = (seconds: number) => {
-  if (!seconds) return '00:00';
-  const mins = Math.floor(seconds / 60);
-  const secs = seconds % 60;
-  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-};
-
-const calcularPercentual = (valor: number, total: number) => {
-  return total > 0 ? Math.round((valor / total) * 100) : 0;
 };
 
 export default SimuladoResultado;

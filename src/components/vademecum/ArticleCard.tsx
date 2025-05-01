@@ -89,7 +89,7 @@ export const ArticleCard = ({
               lawName={lawName}
               articleNumber={articleNumber}
               isLoading={isLoading}
-              isVisible={isHovered || isMobile ? true : false} // Explicitly convert to boolean
+              isVisible={isHovered || isMobile}
             />
           )}
         </div>
@@ -110,7 +110,7 @@ export const ArticleCard = ({
                 }, 1000);
               });
             }}
-            isVisible={isHovered || isMobile ? true : false} // Explicitly convert to boolean
+            isVisible={isHovered || isMobile}
             lawName={lawName}
           />
         )}
