@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen } from "lucide-react";
+import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen, Video } from "lucide-react";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';

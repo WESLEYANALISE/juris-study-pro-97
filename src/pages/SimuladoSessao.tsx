@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -69,7 +68,12 @@ const SimuladoSessao = () => {
           return;
         }
         
-        setSessionInfo(sessionData);
+        // Type assertion to ensure data conforms to expected type
+        setSessionInfo({
+          id: sessionData.id,
+          categoria: sessionData.categoria as SimuladoCategoria,
+          total_questoes: sessionData.total_questoes
+        });
         
         // Now fetch questions from the appropriate table based on categoria
         let tableName;
@@ -91,7 +95,23 @@ const SimuladoSessao = () => {
           .limit(sessionData.total_questoes);
         
         if (questoesError) throw questoesError;
-        setQuestoes(questoesData);
+        
+        // Type assertion to ensure data conforms to Questao[]
+        const typedQuestoes = questoesData?.map(q => ({
+          ...q,
+          id: q.id || '', // Ensure id is a string
+          ano: q.ano || '', // Make sure ano exists
+          banca: q.banca || '',
+          numero_questao: q.numero_questao || '',
+          questao: q.questao || '',
+          alternativa_a: q.alternativa_a || '',
+          alternativa_b: q.alternativa_b || '',
+          alternativa_c: q.alternativa_c || '',
+          alternativa_d: q.alternativa_d || '',
+          alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
+        })) as Questao[];
+        
+        setQuestoes(typedQuestoes);
         
         // Fetch existing answers
         const { data: respostasData, error: respostasError } = await supabase

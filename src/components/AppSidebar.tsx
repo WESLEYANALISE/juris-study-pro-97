@@ -1,4 +1,3 @@
-
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
 import {
   Sidebar,
@@ -164,7 +163,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
                               NOVO
                             </Badge>
                           )}
-                          {item.isPremium && (
+                          {'isPremium' in item && item.isPremium && (
                             <Badge variant="outline" className="ml-auto text-[10px] py-0 bg-amber-500/20 text-amber-500 border-amber-500/30">
                               PRO
                             </Badge>
