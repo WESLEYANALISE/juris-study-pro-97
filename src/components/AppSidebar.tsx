@@ -1,4 +1,5 @@
-import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones, CreditCard } from "lucide-react";
+
+import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,25 +18,13 @@ import { useLocation } from "react-router-dom";
 import { type ProfileType } from "@/components/WelcomeModal";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useSubscription } from "@/hooks/useSubscription";
 
 interface AppSidebarProps {
   userProfile: ProfileType;
 }
 
-// Complete interface for menu items with all possible properties
-interface MenuItem {
-  title: string;
-  url: string;
-  icon: React.ComponentType<{ className?: string }>;
-  profiles: string[];
-  isNew?: boolean;
-  isPremium?: boolean;
-}
-
 export function AppSidebar({ userProfile }: AppSidebarProps) {
   const location = useLocation();
-  const { subscribed } = useSubscription();
   
   const menuCategories = [
     {
@@ -44,7 +33,6 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
         { title: "Início", url: "/", icon: Home, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Iniciando no Direito", url: "/inicie", icon: Lightbulb, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Cursos", url: "/cursos", icon: BookOpenText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-        { title: "Assinatura", url: "/assinatura", icon: CreditCard, profiles: ["concurseiro", "universitario", "advogado", "tudo"], isPremium: subscribed },
       ]
     },
     {
@@ -164,11 +152,6 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
                           {item.isNew && (
                             <Badge variant="secondary" className="ml-auto text-[10px] py-0">
                               NOVO
-                            </Badge>
-                          )}
-                          {item.isPremium && (
-                            <Badge variant="default" className="ml-auto text-[10px] py-0 bg-green-600 hover:bg-green-700">
-                              PREMIUM
                             </Badge>
                           )}
                         </a>

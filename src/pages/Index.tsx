@@ -1,18 +1,16 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor, Headphones, CreditCard } from "lucide-react";
+import { Scale, Video, BookOpen, Brain, FileText, GraduationCap, FilePlus, Gavel, PenTool, Newspaper, MessageSquare, Monitor, Headphones } from "lucide-react";
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import FeaturedCategories from "@/components/home/FeaturedCategories";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { JuridicalCard } from "@/components/ui/juridical-card";
-import { useSubscription } from "@/hooks/useSubscription";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { subscribed } = useSubscription();
 
   // Define categories for the main content
   const featuredCategories = [{
@@ -148,28 +146,6 @@ const Index = () => {
               Plataforma completa para estudos jurídicos
             </p>
           </div>
-          
-          {/* Subscription CTA */}
-          {!subscribed && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-8"
-            >
-              <Button 
-                onClick={() => navigate("/assinatura")} 
-                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700"
-                size="lg"
-              >
-                <CreditCard className="mr-2 h-4 w-4" />
-                Assine o plano Premium
-              </Button>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Desbloqueie acesso completo a todo o conteúdo premium
-              </p>
-            </motion.div>
-          )}
         </motion.div>
 
         {/* Featured Categories at the top */}
