@@ -85,10 +85,10 @@ namespace YT {
   }
 }
 
-// Atualização da interface YouTubeVideo para incluir a propriedade videoId
+// Define YouTubeVideo interface
 interface YouTubeVideo {
   id: string;
-  videoId: string;  // Propriedade explicitamente definida
+  videoId: string;  // Explicitly defined and required property
   title: string;
   description: string;
   thumbnail: string;

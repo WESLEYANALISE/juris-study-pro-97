@@ -13,7 +13,20 @@ import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen, Vi
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Questao } from "@/types/simulados"; // Utilizando o tipo de Questao do arquivo de definições
+
+// Define the Questao type that was missing
+interface Questao {
+  id: string;
+  questao: string;
+  alternativa_a: string;
+  alternativa_b: string;
+  alternativa_c: string;
+  alternativa_d: string;
+  alternativa_correta: string;
+  area?: string;
+  explicacao?: string;
+  [key: string]: any; // Allow for additional properties
+}
 
 const SimuladoResultado = () => {
   const { sessaoId } = useParams();
@@ -24,7 +37,7 @@ const SimuladoResultado = () => {
   const [loading, setLoading] = useState(true);
   const [sessao, setSessao] = useState<any>(null);
   const [respostas, setRespostas] = useState<any[]>([]);
-  const [questoes, setQuestoes] = useState<any[]>([]);
+  const [questoes, setQuestoes] = useState<Questao[]>([]);
   const [areaStats, setAreaStats] = useState<{area: string, acertos: number, total: number}[]>([]);
 
   // Type guard to check if an object is a valid question
@@ -117,13 +130,14 @@ const SimuladoResultado = () => {
             respostasData?.forEach(resposta => {
               // Find the corresponding question with proper type safety and null checks
               const questao = questoesData.find(q => {
+                // Add null check before accessing q.id
                 return q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id;
               });
               
               // Safely check if question has area property with null safety
               if (questao && typeof questao === 'object' && 'area' in questao) {
                 // Use nullish coalescing to default if area is null/undefined
-                const area = questao?.area ?? 'Não categorizada';
+                const area = questao.area ?? 'Não categorizada';
                 const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
                 
                 areaMap.set(area, {
@@ -423,12 +437,11 @@ const SimuladoResultado = () => {
                   {respostas.map((resposta, index) => {
                     // Aplicar verificação de tipo adequada e segurança contra nulos
                     const questao = questoes.find(q => 
-                      q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id
+                      q != null && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id
                     );
                     
                     if (!questao) return null;
                     
-                    // Agora sabemos que questao não é nulo
                     return (
                       <Card key={resposta.id} className={`
                         border-l-4 ${resposta.acertou ? 'border-l-green-500' : 'border-l-red-500'}
