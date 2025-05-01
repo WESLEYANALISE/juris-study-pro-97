@@ -91,32 +91,39 @@ const SimuladoResultado = () => {
             .in('id', questaoIds);
             
           if (questoesError) throw questoesError;
-          setQuestoes(questoesData || []);
           
-          // Calculate stats per area
-          const areaMap = new Map<string, {acertos: number, total: number}>();
-          
-          respostasData?.forEach(resposta => {
-            const questao = questoesData?.find(q => q.id === resposta.questao_id);
-            if (questao) {
-              const area = questao.area || 'Não categorizada';
-              const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
-              
-              areaMap.set(area, {
-                acertos: currentStats.acertos + (resposta.acertou ? 1 : 0),
-                total: currentStats.total + 1
-              });
-            }
-          });
-          
-          // Convert map to array for chart data
-          const areaStatsArray = Array.from(areaMap.entries()).map(([area, stats]) => ({
-            area,
-            acertos: stats.acertos,
-            total: stats.total
-          }));
-          
-          setAreaStats(areaStatsArray);
+          // Check if data is available before processing
+          if (questoesData) {
+            setQuestoes(questoesData || []);
+            
+            // Calculate stats per area
+            const areaMap = new Map<string, {acertos: number, total: number}>();
+            
+            respostasData?.forEach(resposta => {
+              const questao = questoesData?.find(q => q.id === resposta.questao_id);
+              if (questao) {
+                const area = questao.area || 'Não categorizada';
+                const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
+                
+                areaMap.set(area, {
+                  acertos: currentStats.acertos + (resposta.acertou ? 1 : 0),
+                  total: currentStats.total + 1
+                });
+              }
+            });
+            
+            // Convert map to array for chart data
+            const areaStatsArray = Array.from(areaMap.entries()).map(([area, stats]) => ({
+              area,
+              acertos: stats.acertos,
+              total: stats.total
+            }));
+            
+            setAreaStats(areaStatsArray);
+          } else {
+            setQuestoes([]);
+            setAreaStats([]);
+          }
         }
       } catch (error) {
         console.error('Erro ao carregar resultados:', error);

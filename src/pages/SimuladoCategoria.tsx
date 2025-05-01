@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -94,13 +95,17 @@ const SimuladoCategoria = () => {
 
         if (error) throw error;
         
-        // Type assertion to ensure the data conforms to SimuladoSessao[]
-        const typedData = data?.map(item => ({
-          ...item,
-          categoria: item.categoria as SimuladoCategoria
-        })) as SimuladoSessao[] || [];
-        
-        setSessoes(typedData);
+        if (data) {
+          // Type assertion to ensure the data conforms to SimuladoSessao[]
+          const typedData = data.map(item => ({
+            ...item,
+            categoria: item.categoria as CategoriaType
+          })) as SimuladoSessao[];
+          
+          setSessoes(typedData);
+        } else {
+          setSessoes([]);
+        }
       } catch (error) {
         console.error('Erro ao buscar sessões:', error);
         toast({

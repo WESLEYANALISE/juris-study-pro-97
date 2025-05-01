@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -96,22 +97,28 @@ const SimuladoSessao = () => {
         
         if (questoesError) throw questoesError;
         
-        // Type assertion to ensure data conforms to Questao[]
-        const typedQuestoes = questoesData?.map(q => ({
-          ...q,
-          id: q.id || '', // Ensure id is a string
-          ano: q.ano || '', // Make sure ano exists
-          banca: q.banca || '',
-          numero_questao: q.numero_questao || '',
-          questao: q.questao || '',
-          alternativa_a: q.alternativa_a || '',
-          alternativa_b: q.alternativa_b || '',
-          alternativa_c: q.alternativa_c || '',
-          alternativa_d: q.alternativa_d || '',
-          alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
-        })) as Questao[];
-        
-        setQuestoes(typedQuestoes);
+        if (questoesData) {
+          // Type assertion to ensure data conforms to Questao[]
+          const typedQuestoes = questoesData.map(q => ({
+            id: q.id || '', 
+            ano: q.ano || '',
+            banca: q.banca || '',
+            numero_questao: q.numero_questao || '',
+            questao: q.questao || '',
+            alternativa_a: q.alternativa_a || '',
+            alternativa_b: q.alternativa_b || '',
+            alternativa_c: q.alternativa_c || '',
+            alternativa_d: q.alternativa_d || '',
+            alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
+            imagem_url: q.imagem_url,
+            area: q.area,
+            explicacao: q.explicacao
+          })) as Questao[];
+          
+          setQuestoes(typedQuestoes);
+        } else {
+          setQuestoes([]);
+        }
         
         // Fetch existing answers
         const { data: respostasData, error: respostasError } = await supabase
