@@ -77,7 +77,8 @@ export const SimuladoSetup = ({
 
   const selectedEdicao = edicoes.find(e => e.id === edicaoId);
   
-  const categoriaDisponivel = (cat: SimuladoCategoria) => {
+  // Corrigido: Este era o erro TS2367
+  const categoriaDisponivel = (cat: SimuladoCategoria): boolean => {
     return cat === "OAB"; // Apenas OAB está disponível por enquanto
   };
 

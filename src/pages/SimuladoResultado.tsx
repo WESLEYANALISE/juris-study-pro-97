@@ -13,6 +13,7 @@ import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen, Vi
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
+import { Questao } from "@/types/simulados"; // Utilizando o tipo de Questao do arquivo de definições
 
 const SimuladoResultado = () => {
   const { sessaoId } = useParams();
@@ -25,7 +26,7 @@ const SimuladoResultado = () => {
   const [respostas, setRespostas] = useState<any[]>([]);
   const [questoes, setQuestoes] = useState<any[]>([]);
   const [areaStats, setAreaStats] = useState<{area: string, acertos: number, total: number}[]>([]);
-  
+
   // Type guard to check if an object is a valid question
   const isValidQuestion = (item: any): item is Questao => {
     return (
@@ -420,12 +421,14 @@ const SimuladoResultado = () => {
               <TabsContent value="all">
                 <div className="space-y-4">
                   {respostas.map((resposta, index) => {
-                    // Apply proper type checking and null safety
+                    // Aplicar verificação de tipo adequada e segurança contra nulos
                     const questao = questoes.find(q => 
                       q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id
                     );
+                    
                     if (!questao) return null;
                     
+                    // Agora sabemos que questao não é nulo
                     return (
                       <Card key={resposta.id} className={`
                         border-l-4 ${resposta.acertou ? 'border-l-green-500' : 'border-l-red-500'}
@@ -446,38 +449,46 @@ const SimuladoResultado = () => {
                             )}
                           </div>
                           
-                          <p className="font-medium">{questao ? questao.questao : ''}</p>
+                          <p className="font-medium">{questao.questao || ''}</p>
                           
                           <div className="space-y-1 mt-3">
-                            {['A', 'B', 'C', 'D'].map(option => (
-                              <div key={option} className={`
-                                p-3 rounded-md text-sm
-                                ${resposta.resposta_selecionada === option && 
-                                  (resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30')}
-                                ${questao && questao.alternativa_correta === option && !resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : ''}
-                                ${resposta.resposta_selecionada !== option && questao && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
-                              `}>
-                                <div className="flex gap-2">
-                                  <span className="font-semibold">{option})</span>
-                                  <span>{questao && questao[`alternativa_${option.toLowerCase()}`]}</span>
+                            {['A', 'B', 'C', 'D'].map(option => {
+                              // Segurança para acessar propriedades de questao
+                              const alternativaKey = `alternativa_${option.toLowerCase()}`;
+                              const alternativaValue = questao && alternativaKey in questao 
+                                ? questao[alternativaKey as keyof typeof questao] 
+                                : '';
+                              
+                              return (
+                                <div key={option} className={`
+                                  p-3 rounded-md text-sm
+                                  ${resposta.resposta_selecionada === option && 
+                                    (resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : 'bg-red-500/10 border border-red-500/30')}
+                                  ${questao.alternativa_correta === option && !resposta.acertou ? 'bg-green-500/10 border border-green-500/30' : ''}
+                                  ${resposta.resposta_selecionada !== option && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
+                                `}>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold">{option})</span>
+                                    <span>{alternativaValue}</span>
+                                  </div>
+                                  {resposta.resposta_selecionada === option && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs">
+                                      <span className={resposta.acertou ? 'text-green-500' : 'text-red-500'}>
+                                        Sua resposta
+                                      </span>
+                                    </div>
+                                  )}
+                                  {questao.alternativa_correta === option && !resposta.acertou && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
+                                      <span>Resposta correta</span>
+                                    </div>
+                                  )}
                                 </div>
-                                {resposta.resposta_selecionada === option && (
-                                  <div className="mt-1 flex items-center gap-1 text-xs">
-                                    <span className={resposta.acertou ? 'text-green-500' : 'text-red-500'}>
-                                      Sua resposta
-                                    </span>
-                                  </div>
-                                )}
-                                {questao && questao.alternativa_correta === option && !resposta.acertou && (
-                                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
-                                    <span>Resposta correta</span>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                           
-                          {questao && questao.explicacao && (
+                          {questao.explicacao && (
                             <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
                               <p className="font-medium mb-1">Explicação:</p>
                               <p>{questao.explicacao}</p>
@@ -493,10 +504,12 @@ const SimuladoResultado = () => {
               <TabsContent value="corretas">
                 <div className="space-y-4">
                   {respostas.filter(r => r.acertou).map((resposta, index) => {
-                    // Apply proper type checking and null safety
+                    // Aplicar verificação de tipo adequada e segurança contra nulos
                     const questao = questoes.find(q => q && q.id === resposta.questao_id);
+                    
                     if (!questao) return null;
                     
+                    // Agora sabemos que questao não é nulo
                     return (
                       <Card key={resposta.id} className="border-l-4 border-l-green-500">
                         <CardContent className="p-4 space-y-2">
@@ -512,25 +525,33 @@ const SimuladoResultado = () => {
                           <p className="font-medium">{questao ? questao.questao : ''}</p>
                           
                           <div className="space-y-1 mt-3">
-                            {['A', 'B', 'C', 'D'].map(option => (
-                              <div key={option} className={`
-                                p-3 rounded-md text-sm
-                                ${resposta.resposta_selecionada === option ? 'bg-green-500/10 border border-green-500/30' : 'bg-card/50 border'}
-                              `}>
-                                <div className="flex gap-2">
-                                  <span className="font-semibold">{option})</span>
-                                  <span>{questao && questao[`alternativa_${option.toLowerCase()}`]}</span>
-                                </div>
-                                {resposta.resposta_selecionada === option && (
-                                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
-                                    <span>Sua resposta (correta)</span>
+                            {['A', 'B', 'C', 'D'].map(option => {
+                              // Segurança para acessar propriedades de questao
+                              const alternativaKey = `alternativa_${option.toLowerCase()}`;
+                              const alternativaValue = questao && alternativaKey in questao 
+                                ? questao[alternativaKey as keyof typeof questao] 
+                                : '';
+                              
+                              return (
+                                <div key={option} className={`
+                                  p-3 rounded-md text-sm
+                                  ${resposta.resposta_selecionada === option ? 'bg-green-500/10 border border-green-500/30' : 'bg-card/50 border'}
+                                `}>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold">{option})</span>
+                                    <span>{alternativaValue}</span>
                                   </div>
-                                )}
-                              </div>
-                            ))}
+                                  {resposta.resposta_selecionada === option && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
+                                      <span>Sua resposta (correta)</span>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                           
-                          {questao && questao.explicacao && (
+                          {questao.explicacao && (
                             <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
                               <p className="font-medium mb-1">Explicação:</p>
                               <p>{questao.explicacao}</p>
@@ -546,10 +567,12 @@ const SimuladoResultado = () => {
               <TabsContent value="erradas">
                 <div className="space-y-4">
                   {respostas.filter(r => !r.acertou).map((resposta, index) => {
-                    // Apply proper type checking and null safety
+                    // Aplicar verificação de tipo adequada e segurança contra nulos
                     const questao = questoes.find(q => q && q.id === resposta.questao_id);
+                    
                     if (!questao) return null;
                     
+                    // Agora sabemos que questao não é nulo
                     return (
                       <Card key={resposta.id} className="border-l-4 border-l-red-500">
                         <CardContent className="p-4 space-y-2">
@@ -565,32 +588,40 @@ const SimuladoResultado = () => {
                           <p className="font-medium">{questao ? questao.questao : ''}</p>
                           
                           <div className="space-y-1 mt-3">
-                            {['A', 'B', 'C', 'D'].map(option => (
-                              <div key={option} className={`
-                                p-3 rounded-md text-sm
-                                ${resposta.resposta_selecionada === option ? 'bg-red-500/10 border border-red-500/30' : ''}
-                                ${questao && questao.alternativa_correta === option ? 'bg-green-500/10 border border-green-500/30' : ''}
-                                ${resposta.resposta_selecionada !== option && questao && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
-                              `}>
-                                <div className="flex gap-2">
-                                  <span className="font-semibold">{option})</span>
-                                  <span>{questao && questao[`alternativa_${option.toLowerCase()}`]}</span>
+                            {['A', 'B', 'C', 'D'].map(option => {
+                              // Segurança para acessar propriedades de questao
+                              const alternativaKey = `alternativa_${option.toLowerCase()}`;
+                              const alternativaValue = questao && alternativaKey in questao 
+                                ? questao[alternativaKey as keyof typeof questao] 
+                                : '';
+                              
+                              return (
+                                <div key={option} className={`
+                                  p-3 rounded-md text-sm
+                                  ${resposta.resposta_selecionada === option ? 'bg-red-500/10 border border-red-500/30' : ''}
+                                  ${questao.alternativa_correta === option ? 'bg-green-500/10 border border-green-500/30' : ''}
+                                  ${resposta.resposta_selecionada !== option && questao.alternativa_correta !== option ? 'bg-card/50 border' : ''}
+                                `}>
+                                  <div className="flex gap-2">
+                                    <span className="font-semibold">{option})</span>
+                                    <span>{alternativaValue}</span>
+                                  </div>
+                                  {resposta.resposta_selecionada === option && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs text-red-500">
+                                      <span>Sua resposta (incorreta)</span>
+                                    </div>
+                                  )}
+                                  {questao.alternativa_correta === option && (
+                                    <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
+                                      <span>Resposta correta</span>
+                                    </div>
+                                  )}
                                 </div>
-                                {resposta.resposta_selecionada === option && (
-                                  <div className="mt-1 flex items-center gap-1 text-xs text-red-500">
-                                    <span>Sua resposta (incorreta)</span>
-                                  </div>
-                                )}
-                                {questao && questao.alternativa_correta === option && (
-                                  <div className="mt-1 flex items-center gap-1 text-xs text-green-500">
-                                    <span>Resposta correta</span>
-                                  </div>
-                                )}
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
                           
-                          {questao && questao.explicacao && (
+                          {questao.explicacao && (
                             <div className="bg-muted/50 p-3 rounded-md mt-2 text-sm">
                               <p className="font-medium mb-1">Explicação:</p>
                               <p>{questao.explicacao}</p>
