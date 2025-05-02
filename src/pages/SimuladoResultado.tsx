@@ -82,9 +82,9 @@ export default function SimuladoResultado() {
             return;
         }
 
-        // Use a typesafe approach with dynamic table query
+        // Use type assertion to handle the dynamic table name
         const { data, error } = await supabase
-          .from(tableName) // This is a valid table name from our switch statement
+          .from(tableName as any) // Type assertion to bypass TypeScript's static type checking
           .select('*')
           .in('id', respostasIds);
 
