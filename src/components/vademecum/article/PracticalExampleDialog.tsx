@@ -29,8 +29,10 @@ export function PracticalExampleDialog({
     if (!text) return '';
     
     return text
-      // Add paragraph breaks
-      .replace(/(\n\s*\n)/g, '\n\n')
+      // Add paragraph breaks after each sentence
+      .replace(/\.(\s+|$)/g, '.\n\n')
+      // Clean up consecutive line breaks
+      .replace(/\n{3,}/g, '\n\n')
       // Format case titles
       .replace(/(Caso \d+|Exemplo \d+|Situação \d+):\s*([^\n]+)/gi, '## $1: $2')
       // Add emphasis to important terms
@@ -49,8 +51,8 @@ export function PracticalExampleDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4 p-3 bg-primary/5 rounded-lg">
-          <ReactMarkdown className="prose dark:prose-invert max-w-none">
+        <div className="mt-4 p-3 bg-muted/30 rounded-lg">
+          <ReactMarkdown className="prose dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-4">
             {formattedExample}
           </ReactMarkdown>
         </div>

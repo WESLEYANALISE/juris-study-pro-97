@@ -2,7 +2,6 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, ZoomIn, ZoomOut, Type } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 
 interface FloatingControlsProps {
   fontSize: number;
@@ -21,30 +20,27 @@ export const FloatingControls = ({
 }: FloatingControlsProps) => {
   return (
     <>
-      {/* Font size controls (bottom left) */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ delay: 0.2 }}
-        className="fixed left-4 bottom-20 z-50"
+      {/* Font size controls (bottom left) - more discrete design */}
+      <div 
+        className="fixed left-4 bottom-16 z-50 opacity-80 hover:opacity-100 transition-opacity"
       >
-        <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-purple-100 dark:border-purple-900/40 flex flex-col items-center p-1.5 gap-2">
-          <div className="text-xs font-medium text-center text-purple-700 dark:text-purple-300 mb-1">
-            <Type size={14} className="inline mr-1" />
-            <span>Tamanho</span>
+        <div className="bg-card/70 backdrop-blur-sm rounded-lg shadow-sm border border-border flex flex-col items-center p-1 gap-1">
+          <div className="text-xs font-medium text-center text-muted-foreground mb-0.5">
+            <Type size={12} className="inline mr-1" />
+            <span>Fonte</span>
           </div>
           
           <Button 
             variant="ghost" 
             size="sm" 
             onClick={increaseFontSize} 
-            className="h-8 w-8 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40" 
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" 
             title="Aumentar fonte"
           >
-            <ZoomIn size={16} />
+            <ZoomIn size={14} />
           </Button>
           
-          <div className="text-center py-1 text-xs font-medium min-w-[24px]">
+          <div className="text-center py-0.5 text-xs font-medium min-w-[20px]">
             {fontSize}
           </div>
           
@@ -52,36 +48,30 @@ export const FloatingControls = ({
             variant="ghost" 
             size="sm" 
             onClick={decreaseFontSize} 
-            className="h-8 w-8 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40" 
+            className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground" 
             title="Diminuir fonte"
           >
-            <ZoomOut size={16} />
+            <ZoomOut size={14} />
           </Button>
         </div>
-      </motion.div>
+      </div>
       
-      {/* Back to top button (right side) */}
-      <AnimatePresence>
-        {showBackToTop && (
-          <motion.div 
-            className="fixed right-4 bottom-20 z-50" 
-            initial={{ opacity: 0, scale: 0.8 }} 
-            animate={{ opacity: 1, scale: 1 }} 
-            exit={{ opacity: 0, scale: 0.8 }} 
-            transition={{ duration: 0.2 }}
+      {/* Back to top button (right side) - more discrete */}
+      {showBackToTop && (
+        <div 
+          className="fixed right-4 bottom-16 z-50 opacity-80 hover:opacity-100 transition-opacity" 
+        >
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={scrollToTop} 
+            title="Voltar ao topo" 
+            className="rounded-full h-8 w-8 shadow-sm"
           >
-            <Button 
-              variant="purple" 
-              size="icon" 
-              onClick={scrollToTop} 
-              title="Voltar ao topo" 
-              className="rounded-full h-10 w-10 shadow-lg"
-            >
-              <ArrowUp size={18} />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <ArrowUp size={16} />
+          </Button>
+        </div>
+      )}
     </>
   );
 };

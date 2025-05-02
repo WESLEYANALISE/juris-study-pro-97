@@ -14,13 +14,17 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const { text, voice } = await req.json();
     
     if (!text) {
       throw new Error('O texto é obrigatório');
     }
 
-    const googleTTSApiKey = "AIzaSyBCPCIV9jUxa4sD6TrlR74q3KTKqDZjoT8";
+    // Ensure voice is correct
+    const voiceId = voice || 'pt-BR-Wavenet-D';
+    
+    // Use Google TTS API
+    const googleTTSApiKey = Deno.env.get("GOOGLE_TTS_API_KEY") || "AIzaSyBCPCIV9jUxa4sD6TrlR74q3KTKqDZjoT8";
     
     const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTTSApiKey}`, {
       method: 'POST',
@@ -33,17 +37,21 @@ serve(async (req) => {
         },
         voice: {
           languageCode: 'pt-BR',
-          name: 'pt-BR-Standard-A',
+          name: voiceId,
           ssmlGender: 'FEMALE'
         },
         audioConfig: {
-          audioEncoding: 'MP3'
+          audioEncoding: 'MP3',
+          speakingRate: 0.95, // Slightly slower for better clarity
+          pitch: 0.0,         // Default pitch
+          volumeGainDb: 0.0   // Default volume
         }
       })
     });
 
     if (!response.ok) {
       const error = await response.json();
+      console.error("Google TTS API Error:", error);
       throw new Error(error.error?.message || 'Falha ao gerar áudio');
     }
 
@@ -56,6 +64,7 @@ serve(async (req) => {
       },
     );
   } catch (error) {
+    console.error("Text-to-speech error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {

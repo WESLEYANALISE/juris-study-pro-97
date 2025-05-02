@@ -14,6 +14,7 @@ import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
 import VadeMecumViewer from "@/pages/VadeMecumViewer";
+import VadeMecumFavorites from "@/pages/VadeMecumFavorites"; // We'll create this
 import Simulados from "@/pages/Simulados";
 import SimuladoCategoria from "@/pages/SimuladoCategoria";
 import SimuladoSessao from "@/pages/SimuladoSessao";
@@ -56,6 +57,7 @@ function App() {
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
               <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
+              <Route path="/vademecum/favoritos" element={<Layout><VadeMecumFavorites /></Layout>} />
               <Route path="/vademecum/:lawId/:articleId" element={<Layout><VadeMecumViewer /></Layout>} />
               <Route path="/simulados" element={<Layout><Simulados /></Layout>} />
               <Route path="/simulados/:categoria" element={<Layout><SimuladoCategoria /></Layout>} />

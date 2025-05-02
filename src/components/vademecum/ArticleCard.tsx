@@ -31,7 +31,6 @@ export const ArticleCard = ({
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const [isNarrating, setIsNarrating] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   
   const { isFavorite, isLoading, checkIsFavorite, toggleFavorite } = useArticleFavorite({
     lawName,
@@ -60,68 +59,57 @@ export const ArticleCard = ({
   );
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: isMobile ? 0.2 : 0.3 }}
-      className="will-change-transform"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -5, transition: { duration: 0.2 } }}
-    >
-      <Card className={`
-        p-4 md:p-6 space-y-4 
-        transition-all duration-300 
-        shadow-sm hover:shadow-md
-        bg-gradient-to-br from-card/90 to-card/70 backdrop-blur-sm 
-        border-primary/5 hover:border-primary/10
-        ${isHeading ? 'border-l-0' : 'border-l-4 border-l-primary/30'}
-      `}>
-        <div className="flex justify-between items-start">
-          <ArticleContent 
-            articleNumber={articleNumber}
-            articleText={formattedArticleText || articleText}
-            fontSize={fontSize}
-            isHeading={isHeading}
-          />
+    <Card className={`
+      p-4 md:p-5 space-y-4 
+      shadow-sm
+      bg-card
+      border border-border hover:border-primary/20
+      ${isHeading ? 'border-l-0' : 'border-l-4 border-l-primary/30'}
+    `}>
+      <div className="flex justify-between items-start">
+        <ArticleContent 
+          articleNumber={articleNumber}
+          articleText={formattedArticleText || articleText}
+          fontSize={fontSize}
+          isHeading={isHeading}
+        />
 
-          {!isHeading && user && (
-            <ArticleControls
-              articleText={articleText}
-              isNarrating={isNarrating}
-              setIsNarrating={setIsNarrating}
-              isFavorite={!!isFavorite} // Convert to boolean with double negation
-              setIsFavorite={() => toggleFavorite(articleText)}
-              lawName={lawName}
-              articleNumber={articleNumber}
-              isLoading={isLoading}
-              isVisible={isHovered || isMobile}
-            />
-          )}
-        </div>
-
-        {!isHeading && (
-          <ArticleActions
+        {!isHeading && user && (
+          <ArticleControls
             articleText={articleText}
-            articleNumber={articleNumber}
-            technicalExplanation={technicalExplanation}
-            formalExplanation={formalExplanation}
-            practicalExample={practicalExample}
-            handleNarration={(text) => {
-              setIsNarrating(true);
-              return new Promise((resolve) => {
-                setTimeout(() => {
-                  setIsNarrating(false);
-                  resolve();
-                }, 1000);
-              });
-            }}
-            isVisible={isHovered || isMobile}
+            isNarrating={isNarrating}
+            setIsNarrating={setIsNarrating}
+            isFavorite={Boolean(isFavorite)}
+            setIsFavorite={() => toggleFavorite(articleText)}
             lawName={lawName}
+            articleNumber={articleNumber}
+            isLoading={isLoading}
+            isVisible={true} // Always visible on desktop
           />
         )}
-      </Card>
-    </motion.div>
+      </div>
+
+      {!isHeading && (
+        <ArticleActions
+          articleText={articleText}
+          articleNumber={articleNumber}
+          technicalExplanation={technicalExplanation}
+          formalExplanation={formalExplanation}
+          practicalExample={practicalExample}
+          handleNarration={(text) => {
+            setIsNarrating(true);
+            return new Promise((resolve) => {
+              setTimeout(() => {
+                setIsNarrating(false);
+                resolve();
+              }, 1000);
+            });
+          }}
+          isVisible={true} // Always visible
+          lawName={lawName}
+        />
+      )}
+    </Card>
   );
 };
 

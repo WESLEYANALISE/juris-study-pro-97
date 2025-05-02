@@ -1,12 +1,13 @@
 
 // Singleton service for handling text-to-speech functionality
 let currentAudio: HTMLAudioElement | null = null;
+let audioContext: AudioContext | null = null;
 
 export const TextToSpeechService = {
   /**
    * Convert text to speech using the Google Cloud Text-to-Speech API via Supabase Edge Function
    * @param text The text to convert to speech
-   * @param voice The voice to use (default: 'pt-BR-Standard-A')
+   * @param voice The voice to use (default: 'pt-BR-Wavenet-D')
    */
   speak: async (text: string, voiceId: string = 'pt-BR-Wavenet-D'): Promise<void> => {
     try {
@@ -16,7 +17,7 @@ export const TextToSpeechService = {
       }
 
       // Truncate text if too long (API limits)
-      const maxLength = 5000;
+      const maxLength = 3000;
       const truncatedText = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 
       // Call the Edge Function
@@ -33,7 +34,7 @@ export const TextToSpeechService = {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erro desconhecido');
+        throw new Error(error.error || 'Erro ao gerar áudio');
       }
 
       const data = await response.json();
@@ -41,8 +42,11 @@ export const TextToSpeechService = {
       // Convert base64 audio content to playable audio
       const audioContent = data.audioContent;
       if (!audioContent) {
-        throw new Error('Áudio não recebido');
+        throw new Error('Áudio não recebido do servidor');
       }
+
+      // Clean up any existing audio
+      TextToSpeechService.cleanup();
 
       const audioBlob = new Blob(
         [Uint8Array.from(atob(audioContent), c => c.charCodeAt(0))], 
@@ -52,8 +56,21 @@ export const TextToSpeechService = {
       const audioUrl = URL.createObjectURL(audioBlob);
       currentAudio = new Audio(audioUrl);
       
+      // Set up audio context to provide better control (volume, playbackRate)
+      // This is optional but improves the quality of the playback
+      try {
+        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        const source = audioContext.createMediaElementSource(currentAudio);
+        const gainNode = audioContext.createGain();
+        gainNode.gain.value = 1.0; // Default volume
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+      } catch (err) {
+        console.warn('AudioContext not supported, falling back to basic audio playback', err);
+      }
+      
       // Play the audio
-      await currentAudio.play();
+      currentAudio.play();
       
       // Clean up when audio is done
       currentAudio.onended = () => {
@@ -95,8 +112,16 @@ export const TextToSpeechService = {
   cleanup: (): void => {
     if (currentAudio) {
       const url = currentAudio.src;
+      currentAudio.onended = null;
+      currentAudio.onerror = null;
+      currentAudio.pause();
       currentAudio = null;
       URL.revokeObjectURL(url);
+    }
+    
+    if (audioContext) {
+      audioContext.close().catch(console.error);
+      audioContext = null;
     }
   }
 };

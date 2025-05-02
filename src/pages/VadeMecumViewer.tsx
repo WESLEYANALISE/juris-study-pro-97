@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInView } from "react-intersection-observer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -14,9 +14,12 @@ import { VadeMecumHeader } from "@/components/vademecum/VadeMecumHeader";
 import { VadeMecumError } from "@/components/vademecum/VadeMecumError";
 import { useVadeMecumArticles } from "@/hooks/useVadeMecumArticles";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
+import { useParams, useNavigate } from "react-router-dom";
 
 const VadeMecumViewer = () => {
-  // Initial batch size increased from 10 to 30
+  const navigate = useNavigate();
+  const { lawId } = useParams<{ lawId: string }>();
+  // Initial batch size increased for better initial load
   const [visibleBatch, setVisibleBatch] = useState(30);
   const [recentHistory, setRecentHistory] = useState<any[]>([]);
   
@@ -33,6 +36,9 @@ const VadeMecumViewer = () => {
     decreaseFontSize
   } = useVadeMecumDisplay();
 
+  // Cache for the articles to improve performance
+  const [articlesCache, setArticlesCache] = useState<Record<string, any[]>>({});
+
   // Use react-intersection-observer para detecção de "infinite scroll"
   const { ref: loadMoreRef, inView } = useInView({
     threshold: 0.1,
@@ -48,6 +54,21 @@ const VadeMecumViewer = () => {
     tableName
   } = useVadeMecumArticles(searchQuery);
 
+  // Memorize the filtered articles to avoid unnecessary re-renders
+  const cachedArticles = useMemo(() => {
+    if (!filteredArticles.length || !tableName) return filteredArticles;
+    
+    // Store in cache for future use
+    if (filteredArticles.length > 0 && tableName) {
+      setArticlesCache(prev => ({
+        ...prev,
+        [tableName]: filteredArticles
+      }));
+    }
+    
+    return filteredArticles;
+  }, [filteredArticles, tableName]);
+
   // Load view history
   useEffect(() => {
     if (user) {
@@ -56,19 +77,30 @@ const VadeMecumViewer = () => {
   }, [user, loadHistory]);
 
   // Calculate articles visible based on current batch
-  const visibleArticles = filteredArticles.slice(0, visibleBatch);
+  const visibleArticles = useMemo(() => 
+    cachedArticles.slice(0, visibleBatch)
+  , [cachedArticles, visibleBatch]);
+
+  // Try loading from cache first, then fetch from API
+  useEffect(() => {
+    if (lawId && articlesCache[lawId]?.length > 0) {
+      // No need to fetch, already cached
+      return;
+    }
+    loadArticles();
+  }, [lawId, loadArticles]);
 
   // Effect for loading more articles when user scrolls to bottom
   useEffect(() => {
-    if (inView && filteredArticles.length > visibleBatch) {
+    if (inView && cachedArticles.length > visibleBatch) {
       // Improved batch size - load more articles at once
-      const batchSize = isMobile ? 10 : 20;
+      const batchSize = isMobile ? 20 : 40;
       setVisibleBatch(prev => prev + batchSize);
     }
-  }, [inView, filteredArticles.length, visibleBatch, isMobile]);
+  }, [inView, cachedArticles.length, visibleBatch, isMobile]);
 
   // Select the appropriate background based on law type
-  const getBgVariant = () => {
+  const getBgVariant = useMemo(() => {
     if (!tableName) return "books";
     
     const lawNameLower = tableName.toLowerCase();
@@ -78,7 +110,12 @@ const VadeMecumViewer = () => {
     if (lawNameLower.includes('lei')) return "scales";
     
     return "books";
-  };
+  }, [tableName]);
+
+  // Navigate to favorites page
+  const goToFavorites = useCallback(() => {
+    navigate('/vademecum/favoritos');
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -96,7 +133,7 @@ const VadeMecumViewer = () => {
   }
 
   return (
-    <JuridicalBackground variant={getBgVariant()} opacity={0.03}>
+    <JuridicalBackground variant={getBgVariant} opacity={0.03}>
       <div className="container mx-auto p-4 px-0">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* For mobile, display sidebar at top when on smaller screens */}
@@ -114,7 +151,7 @@ const VadeMecumViewer = () => {
               onReload={() => loadArticles()} 
             />
 
-            {filteredArticles.length === 0 && !loading ? (
+            {cachedArticles.length === 0 && !loading ? (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
               </div>
@@ -122,7 +159,7 @@ const VadeMecumViewer = () => {
               <VadeMecumArticleList 
                 isLoading={loading} 
                 visibleArticles={visibleArticles} 
-                filteredArticles={filteredArticles} 
+                filteredArticles={cachedArticles} 
                 visibleBatch={visibleBatch} 
                 tableName={tableName} 
                 fontSize={fontSize} 

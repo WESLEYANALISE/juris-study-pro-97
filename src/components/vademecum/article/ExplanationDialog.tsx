@@ -31,9 +31,12 @@ export function ExplanationDialog({
   const formatText = (text: string = ''): string => {
     if (!text) return '';
     
+    // Convert sentences to paragraphs
     return text
-      // Add paragraph breaks
-      .replace(/(\n\s*\n)/g, '\n\n')
+      // Add paragraph breaks after each sentence
+      .replace(/\.(\s+|$)/g, '.\n\n')
+      // Remove extra newlines (consecutive empty lines)
+      .replace(/\n{3,}/g, '\n\n')
       // Add emphasis to important terms
       .replace(/("[^"]+"|'[^']+')/g, '**$1**');
   };
@@ -69,8 +72,8 @@ export function ExplanationDialog({
           
           {technicalExplanation && (
             <TabsContent value="technical" className="mt-4 space-y-4">
-              <div className="p-2 bg-primary/5 rounded-md">
-                <ReactMarkdown className="prose dark:prose-invert max-w-none">
+              <div className="p-3 bg-muted/30 rounded-md">
+                <ReactMarkdown className="prose dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-4">
                   {formattedTechnical}
                 </ReactMarkdown>
               </div>
@@ -79,8 +82,8 @@ export function ExplanationDialog({
           
           {formalExplanation && (
             <TabsContent value="formal" className="mt-4 space-y-4">
-              <div className="p-2 bg-primary/5 rounded-md">
-                <ReactMarkdown className="prose dark:prose-invert max-w-none">
+              <div className="p-3 bg-muted/30 rounded-md">
+                <ReactMarkdown className="prose dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-4">
                   {formattedFormal}
                 </ReactMarkdown>
               </div>

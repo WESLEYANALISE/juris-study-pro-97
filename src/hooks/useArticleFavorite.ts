@@ -34,7 +34,9 @@ export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavorit
         return;
       }
       
-      setIsFavorite(!!data); // Ensure it's always a boolean
+      // Ensure we're always setting a boolean here
+      setIsFavorite(Boolean(data));
+      
     } catch (err) {
       console.error("Exceção ao verificar favorito:", err);
     } finally {
@@ -50,7 +52,6 @@ export const useArticleFavorite = ({ lawName, articleNumber }: UseArticleFavorit
 
     try {
       setIsLoading(true);
-      console.log(`Alternando favorito: ${isFavorite ? 'remover' : 'adicionar'}, lei: ${lawName}, artigo: ${articleNumber}`);
       
       if (isFavorite) {
         // Remove from favorites

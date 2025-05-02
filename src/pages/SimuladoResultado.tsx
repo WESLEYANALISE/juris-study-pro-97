@@ -67,8 +67,8 @@ export default function SimuladoResultado() {
         const categoria = resultado.categoria;
         if (!categoria) return;
         
-        // Use the correct table name based on the categoria
-        let tableName: string;
+        // Map category to the correct table name
+        let tableName = '';
         switch(categoria) {
           case 'OAB': tableName = 'simulados_oab'; break;
           case 'PRF': tableName = 'simulados_prf'; break;
@@ -81,8 +81,8 @@ export default function SimuladoResultado() {
             console.error('Invalid category:', categoria);
             return;
         }
-        
-        // Use the table name directly, not as a string parameter
+
+        // Use a typesafe approach to query the database
         const { data, error } = await supabase
           .from(tableName)
           .select('*')
@@ -94,8 +94,8 @@ export default function SimuladoResultado() {
         }
 
         if (data) {
-          // Map the data to match the Questao interface
-          const formattedQuestoes = data.map(q => ({
+          // Map the data to match the Questao interface explicitly
+          const formattedQuestoes: Questao[] = data.map(q => ({
             id: q.id || '',
             questao: q.questao || '',
             alternativa_a: q.alternativa_a || '',
@@ -104,12 +104,12 @@ export default function SimuladoResultado() {
             alternativa_d: q.alternativa_d || '',
             alternativa_e: q.alternativa_e || '',
             resposta_correta: q.alternativa_correta || '',
-            ano: q.ano || '',
+            ano: q.ano?.toString() || '',
             banca: q.banca || '',
-            numero_questao: q.numero_questao || '',
+            numero_questao: q.numero_questao?.toString() || '',
             explicacao: q.explicacao || '',
             area: q.area || '',
-          })) as Questao[];
+          }));
           
           setQuestoes(formattedQuestoes);
         }
@@ -123,19 +123,19 @@ export default function SimuladoResultado() {
     }
   }, [respostasIds, resultado]);
 
-  // Add null checks for q and questao
+  // Helper function to get questao by ID with null check
   const getQuestaoById = (id: string): Questao | null => {
     return questoes.find(q => q && q.id === id) || null;
   };
 
-  // Render alternatives with null checks
+  // Render alternatives with null check
   const renderAlternativas = (questaoId: string) => {
     const questao = getQuestaoById(questaoId);
     if (!questao) return null; // Null check
 
     return (
       <div className="mt-4">
-        {/* ... */}
+        {/* Alternative display code here */}
       </div>
     );
   };
