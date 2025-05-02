@@ -62,18 +62,22 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
 
         // Get total pages
         epubBook.locations.generate(1024).then(() => {
-          const totalPages = epubBook.locations.total;
-          setTotalPages(totalPages);
+          const totalLoc = epubBook.locations.length();
+          if (totalLoc) {
+            setTotalPages(totalLoc);
+          }
         });
 
         // Track location changes
         rendition.on('locationChanged', (location) => {
-          const currentLocation = location.start.cfi;
-          setCurrentLocation(currentLocation);
+          const currentLoc = location.start.cfi;
+          setCurrentLocation(currentLoc);
           
-          if (book && book.locations.total) {
-            const currentPage = book.locations.locationFromCfi(currentLocation);
-            setCurrentPage(currentPage);
+          if (book && book.locations.length() > 0) {
+            const locationIndex = book.locations.locationFromCfi(currentLoc);
+            if (typeof locationIndex === 'number') {
+              setCurrentPage(locationIndex);
+            }
           }
         });
       }).catch(err => {

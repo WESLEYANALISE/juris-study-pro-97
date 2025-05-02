@@ -158,15 +158,22 @@ export default function Biblioteca() {
             </div> : state.mode === "reading" ? <div className="fixed inset-0 bg-background z-50">
               {state.viewerType === "epub" ? (
                 <EPUBViewer 
-                  livro={state.livro} 
+                  livro={{
+                    id: state.livro.id,
+                    nome: state.livro.livro, // Using livro as nome
+                    link: state.livro.link || '',
+                    capa_url: state.livro.imagem
+                  }}
                   onClose={() => setState({mode: "carousel"})} 
                 />
               ) : (
                 state.livro.link ? (
                   <PDFViewer 
                     livro={{
-                      ...state.livro,
+                      id: state.livro.id,
+                      nome: state.livro.livro, // Using livro as nome
                       pdf: state.livro.link || '',
+                      capa_url: state.livro.imagem
                     }}
                     onClose={() => setState({mode: "carousel"})}
                   />

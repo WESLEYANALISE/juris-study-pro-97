@@ -50,7 +50,6 @@ export const ArticleActions = ({
       
       {(technicalExplanation || formalExplanation) && (
         <ArticleExplanation
-          articleNumber={articleNumber}
           technicalExplanation={technicalExplanation}
           formalExplanation={formalExplanation}
           lawName={lawName}
@@ -59,7 +58,6 @@ export const ArticleActions = ({
 
       {practicalExample && (
         <PracticalExample
-          articleNumber={articleNumber}
           practicalExample={practicalExample}
           lawName={lawName}
         />

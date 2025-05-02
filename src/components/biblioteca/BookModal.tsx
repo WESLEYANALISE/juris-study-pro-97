@@ -21,7 +21,7 @@ type Livro = {
 type BookModalProps = {
   livro: Livro;
   onClose: () => void;
-  onRead: () => void;
+  onRead: (viewerType?: 'pdf' | 'epub') => void; // Updated to accept an optional parameter
 };
 
 export function BookModal({ livro, onClose, onRead }: BookModalProps) {
@@ -79,7 +79,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           setIsChecking(false);
         }
       } else {
-        onRead(fileExtension === 'epub' ? 'epub' : 'pdf'); // Not checking, just open it
+        onRead(fileExtension === 'epub' ? 'epub' : 'pdf'); // Now passing the argument correctly
       }
     } else {
       toast({
