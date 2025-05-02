@@ -84,7 +84,7 @@ export const ArticleCard = ({
             lawName={lawName}
             articleNumber={articleNumber}
             isLoading={isLoading}
-            isVisible={true} // Fixed boolean value instead of string
+            isVisible={true}
           />
         )}
       </div>
@@ -105,7 +105,7 @@ export const ArticleCard = ({
               }, 1000);
             });
           }}
-          isVisible={true} // Always visible
+          isVisible={true}
           lawName={lawName}
         />
       )}

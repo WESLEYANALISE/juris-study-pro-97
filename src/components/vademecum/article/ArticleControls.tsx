@@ -1,15 +1,14 @@
 
 import React from 'react';
-import { NarrationControls } from './NarrationControls';
 import { BookmarkButton } from './BookmarkButton';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnnotationButton } from './AnnotationButton';
 
 interface ArticleControlsProps {
   articleText: string;
-  isNarrating: boolean;
-  setIsNarrating: (isNarrating: boolean) => void;
   isFavorite: boolean;
-  setIsFavorite: (isFavorite: boolean) => void;
+  setIsFavorite: (value: boolean) => void;
+  isNarrating: boolean;
+  setIsNarrating: (narrating: boolean) => void;
   lawName: string;
   articleNumber: string;
   isLoading: boolean;
@@ -18,41 +17,32 @@ interface ArticleControlsProps {
 
 export const ArticleControls = ({
   articleText,
-  isNarrating,
-  setIsNarrating,
   isFavorite,
   setIsFavorite,
+  isNarrating,
+  setIsNarrating,
   lawName,
   articleNumber,
   isLoading,
   isVisible
 }: ArticleControlsProps) => {
+  // Don't render if not visible
+  if (!isVisible) return null;
+
   return (
-    <AnimatePresence>
-      {isVisible && (
-        <motion.div 
-          className="flex flex-col gap-2"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ duration: 0.2 }}
-        >
-          <NarrationControls 
-            text={articleText} 
-            isNarrating={isNarrating} 
-            setIsNarrating={setIsNarrating} 
-          />
-          <BookmarkButton 
-            isFavorite={isFavorite} 
-            setIsFavorite={setIsFavorite}
-            lawName={lawName} 
-            articleNumber={articleNumber} 
-            articleText={articleText}
-            isLoading={isLoading}
-            showLabel={true}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className="flex items-center space-x-1">
+      <BookmarkButton 
+        isFavorite={isFavorite} 
+        onClick={() => setIsFavorite(!isFavorite)} 
+        isLoading={isLoading}
+      />
+      <AnnotationButton 
+        articleText={articleText}
+        articleNumber={articleNumber}
+        lawName={lawName}
+      />
+    </div>
   );
 };
+
+export default ArticleControls;

@@ -1,0 +1,34 @@
+
+.epub-container {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.epub-container iframe {
+  border: none;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Style for epubjs pagination */
+.epub-container .epub-view {
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+}
+
+/* Maintain font contrast in dark mode */
+.dark .epub-container .epub-view {
+  color: #1a1a1a !important;
+}
+
+/* Fix for drag handle */
+.epub-container .epub-view * {
+  pointer-events: none;
+}

@@ -46,8 +46,11 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
 
   const handleRead = async () => {
     if (livro.link) {
-      // Check if the PDF link is valid before opening
-      if (!isChecking && livro.link.toLowerCase().endsWith('.pdf')) {
+      // Check file type to determine appropriate viewer
+      const fileExtension = livro.link.split('.').pop()?.toLowerCase();
+      
+      // Check if the link is valid before opening
+      if (!isChecking) {
         setIsChecking(true);
         try {
           const response = await fetch(livro.link, { 
@@ -57,26 +60,26 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           });
           
           if (response.ok) {
-            onRead();
+            onRead(fileExtension === 'epub' ? 'epub' : 'pdf');
           } else {
             toast({
-              title: "Erro ao acessar PDF",
-              description: "Não foi possível acessar o arquivo PDF. Por favor, tente novamente mais tarde.",
+              title: "Erro ao acessar arquivo",
+              description: "Não foi possível acessar o arquivo. Por favor, tente novamente mais tarde.",
               variant: "destructive",
             });
           }
         } catch (error) {
-          console.error("Error checking PDF:", error);
+          console.error("Error checking file:", error);
           toast({
-            title: "Erro ao verificar PDF",
-            description: "Não foi possível verificar o arquivo PDF. Por favor, tente novamente mais tarde.",
+            title: "Erro ao verificar arquivo",
+            description: "Não foi possível verificar o arquivo. Por favor, tente novamente mais tarde.",
             variant: "destructive",
           });
         } finally {
           setIsChecking(false);
         }
       } else {
-        onRead(); // Not a PDF or not checking, just open it
+        onRead(fileExtension === 'epub' ? 'epub' : 'pdf'); // Not checking, just open it
       }
     } else {
       toast({
