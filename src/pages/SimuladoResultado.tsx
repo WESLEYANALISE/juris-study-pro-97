@@ -13,20 +13,7 @@ import { Check, X, Clock, ArrowRight, FilePlus, Share2, TrendingUp, BookOpen, Vi
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-
-// Define the Questao type that was missing
-interface Questao {
-  id: string;
-  questao: string;
-  alternativa_a: string;
-  alternativa_b: string;
-  alternativa_c: string;
-  alternativa_d: string;
-  alternativa_correta: string;
-  area?: string;
-  explicacao?: string;
-  [key: string]: any; // Allow for additional properties
-}
+import type { Questao } from "@/types/simulados";
 
 const SimuladoResultado = () => {
   const { sessaoId } = useParams();
@@ -120,23 +107,21 @@ const SimuladoResultado = () => {
             
           if (questoesError) throw questoesError;
           
-          // Check if data is available before processing
+          // Check if data is available and validate before processing
           if (questoesData && Array.isArray(questoesData)) {
-            setQuestoes(questoesData);
+            // Filter out any invalid data before setting state
+            const validQuestoes = questoesData.filter(isValidQuestion);
+            setQuestoes(validQuestoes);
             
             // Calculate stats per area
             const areaMap = new Map<string, {acertos: number, total: number}>();
             
             respostasData?.forEach(resposta => {
-              // Find the corresponding question with proper type safety and null checks
-              const questao = questoesData.find(q => {
-                // Add null check before accessing q.id
-                return q && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id;
-              });
+              // Find the corresponding question with proper type safety
+              const questao = validQuestoes.find(q => q.id === resposta.questao_id);
               
-              // Safely check if question has area property with null safety
-              if (questao && typeof questao === 'object' && 'area' in questao) {
-                // Use nullish coalescing to default if area is null/undefined
+              // Safely check if question has area property
+              if (questao) {
                 const area = questao.area ?? 'Não categorizada';
                 const currentStats = areaMap.get(area) || {acertos: 0, total: 0};
                 
@@ -435,10 +420,8 @@ const SimuladoResultado = () => {
               <TabsContent value="all">
                 <div className="space-y-4">
                   {respostas.map((resposta, index) => {
-                    // Aplicar verificação de tipo adequada e segurança contra nulos
-                    const questao = questoes.find(q => 
-                      q != null && typeof q === 'object' && 'id' in q && q.id === resposta.questao_id
-                    );
+                    // Find the question and apply safety checks
+                    const questao = questoes.find(q => q && q.id === resposta.questao_id);
                     
                     if (!questao) return null;
                     
@@ -449,7 +432,7 @@ const SimuladoResultado = () => {
                         <CardContent className="p-4 space-y-2">
                           <div className="flex justify-between">
                             <span className="text-sm font-medium text-muted-foreground">
-                              Questão {index + 1} • {questao && 'area' in questao ? questao.area : 'Área não especificada'}
+                              Questão {index + 1} • {questao.area || 'Área não especificada'}
                             </span>
                             {resposta.acertou ? (
                               <div className="flex items-center gap-1 text-green-500 text-sm">
@@ -462,15 +445,13 @@ const SimuladoResultado = () => {
                             )}
                           </div>
                           
-                          <p className="font-medium">{questao.questao || ''}</p>
+                          <p className="font-medium">{questao.questao}</p>
                           
                           <div className="space-y-1 mt-3">
                             {['A', 'B', 'C', 'D'].map(option => {
-                              // Segurança para acessar propriedades de questao
-                              const alternativaKey = `alternativa_${option.toLowerCase()}`;
-                              const alternativaValue = questao && alternativaKey in questao 
-                                ? questao[alternativaKey as keyof typeof questao] 
-                                : '';
+                              // Safely access properties
+                              const alternativaKey = `alternativa_${option.toLowerCase()}` as keyof typeof questao;
+                              const alternativaValue = questao[alternativaKey] as string;
                               
                               return (
                                 <div key={option} className={`

@@ -88,7 +88,7 @@ namespace YT {
 // Define YouTubeVideo interface
 interface YouTubeVideo {
   id: string;
-  videoId: string;  // Explicitly defined and required property
+  videoId: string;  // Required property for use with YouTube Player API
   title: string;
   description: string;
   thumbnail: string;

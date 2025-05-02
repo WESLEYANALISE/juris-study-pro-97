@@ -226,7 +226,7 @@ export type Database = {
           artigo?: string | null
           exemplo?: string | null
           formal?: string | null
-          id: number
+          id?: number
           numero?: string | null
           tecnica?: string | null
         }
@@ -388,7 +388,7 @@ export type Database = {
           artigo?: string | null
           exemplo?: string | null
           formal?: string | null
-          id: number
+          id?: number
           numero?: string | null
           tecnica?: string | null
         }
@@ -415,7 +415,34 @@ export type Database = {
           artigo?: string | null
           exemplo?: string | null
           formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Update: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
+          numero?: string | null
+          tecnica?: string | null
+        }
+        Relationships: []
+      }
+      Constituicao_Federal: {
+        Row: {
+          artigo: string | null
+          exemplo: string | null
+          formal: string | null
           id: number
+          numero: string | null
+          tecnica: string | null
+        }
+        Insert: {
+          artigo?: string | null
+          exemplo?: string | null
+          formal?: string | null
+          id?: number
           numero?: string | null
           tecnica?: string | null
         }
