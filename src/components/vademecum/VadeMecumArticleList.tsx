@@ -36,48 +36,55 @@ export function VadeMecumArticleList({
     };
   };
 
-  return (
-    <div className="space-y-4 md:space-y-5 px-[5px]">
-      {isLoading ? (
-        // Loading skeletons
-        Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
+  if (isLoading) {
+    return (
+      <div className="space-y-4 md:space-y-5 px-[5px]">
+        {Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
           <Skeleton key={`skeleton-${i}`} className="h-32" />
-        ))
-      ) : filteredArticles.length === 0 ? (
-        // No results message
+        ))}
+      </div>
+    );
+  }
+
+  if (filteredArticles.length === 0) {
+    return (
+      <div className="space-y-4 md:space-y-5 px-[5px]">
         <div className="text-center py-12">
           <p className="text-muted-foreground">
             Nenhum artigo encontrado com os critérios de busca.
           </p>
         </div>
-      ) : (
-        // Article cards
-        visibleArticles.map((article, index) => {
-          const {
-            articleNumber,
-            articleText,
-            technicalExplanation,
-            formalExplanation,
-            practicalExample
-          } = getArticleProps(article);
-          
-          return (
-            <div key={article.id || `article-${index}`}>
-              <ArticleCard 
-                lawName={tableName || ''} 
-                articleNumber={articleNumber} 
-                articleText={articleText} 
-                technicalExplanation={technicalExplanation} 
-                formalExplanation={formalExplanation} 
-                practicalExample={practicalExample} 
-                fontSize={fontSize} 
-              />
-            </div>
-          );
-        })
-      )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 md:space-y-5 px-[5px]">
+      {visibleArticles.map((article, index) => {
+        const {
+          articleNumber,
+          articleText,
+          technicalExplanation,
+          formalExplanation,
+          practicalExample
+        } = getArticleProps(article);
+        
+        return (
+          <div key={article.id || `article-${index}`}>
+            <ArticleCard 
+              lawName={tableName || ''} 
+              articleNumber={articleNumber} 
+              articleText={articleText} 
+              technicalExplanation={technicalExplanation} 
+              formalExplanation={formalExplanation} 
+              practicalExample={practicalExample} 
+              fontSize={fontSize} 
+            />
+          </div>
+        );
+      })}
       
-      {!isLoading && filteredArticles.length > visibleBatch && (
+      {filteredArticles.length > visibleBatch && (
         <div ref={loadMoreRef} className="py-4 flex justify-center">
           <Skeleton className="h-8 w-32" />
         </div>

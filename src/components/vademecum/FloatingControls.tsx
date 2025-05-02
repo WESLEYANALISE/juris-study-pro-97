@@ -22,9 +22,9 @@ export const FloatingControls = ({
     <>
       {/* Font size controls (bottom left) - more discrete design */}
       <div 
-        className="fixed left-4 bottom-16 z-50 opacity-80 hover:opacity-100 transition-opacity"
+        className="fixed left-4 bottom-16 z-50 opacity-60 hover:opacity-90 transition-opacity"
       >
-        <div className="bg-card/70 backdrop-blur-sm rounded-lg shadow-sm border border-border flex flex-col items-center p-1 gap-1">
+        <div className="bg-card/50 backdrop-blur-sm rounded-lg shadow-sm border border-border/50 flex flex-col items-center p-1 gap-1">
           <div className="text-xs font-medium text-center text-muted-foreground mb-0.5">
             <Type size={12} className="inline mr-1" />
             <span>Fonte</span>
@@ -59,7 +59,7 @@ export const FloatingControls = ({
       {/* Back to top button (right side) - more discrete */}
       {showBackToTop && (
         <div 
-          className="fixed right-4 bottom-16 z-50 opacity-80 hover:opacity-100 transition-opacity" 
+          className="fixed right-4 bottom-16 z-50 opacity-60 hover:opacity-90 transition-opacity" 
         >
           <Button 
             variant="outline" 
