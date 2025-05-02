@@ -79,7 +79,7 @@ export const ArticleCard = ({
             articleText={articleText}
             isNarrating={isNarrating}
             setIsNarrating={setIsNarrating}
-            isFavorite={Boolean(isFavorite)} // Fix: Convert to boolean explicitly
+            isFavorite={isFavorite === true} // Fix: Ensure we pass a boolean value
             setIsFavorite={() => toggleFavorite(articleText)}
             lawName={lawName}
             articleNumber={articleNumber}
