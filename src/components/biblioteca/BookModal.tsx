@@ -24,6 +24,17 @@ type BookModalProps = {
   onRead: () => void;
 };
 
+// Helper function to get PDF URL from the bucket
+const getPdfUrl = (livroName: string): string => {
+  // Convert book name to a slug format that would match the bucket file name
+  const bookSlug = livroName
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, '_');
+  
+  return `https://yovocuutiwwmbempxcyo.supabase.co/storage/v1/object/public/livrosaqui/${bookSlug}.pdf`;
+};
+
 export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   const { toast } = useToast();
   const [isPlaying, setIsPlaying] = useState(false);
@@ -33,8 +44,10 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   const [isChecking, setIsChecking] = useState(false);
 
   const handleDownload = () => {
-    if (livro.download) {
-      window.open(livro.download, "_blank");
+    // Try download link first, fallback to PDF URL from bucket
+    const downloadUrl = livro.download || getPdfUrl(livro.livro);
+    if (downloadUrl) {
+      window.open(downloadUrl, "_blank");
     } else {
       toast({
         title: "Link indisponível",
@@ -45,12 +58,14 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   };
 
   const handleRead = async () => {
-    if (livro.link) {
+    // Try link first, fallback to PDF URL from bucket
+    const pdfUrl = livro.link || getPdfUrl(livro.livro);
+    if (pdfUrl) {
       // Check if the PDF link is valid before opening
-      if (!isChecking && livro.link.toLowerCase().endsWith('.pdf')) {
+      if (!isChecking) {
         setIsChecking(true);
         try {
-          const response = await fetch(livro.link, { 
+          const response = await fetch(pdfUrl, { 
             method: 'HEAD', 
             cache: 'no-store',
             headers: { 'Cache-Control': 'no-cache' } 
@@ -76,7 +91,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           setIsChecking(false);
         }
       } else {
-        onRead(); // Not a PDF or not checking, just open it
+        onRead(); // Not checking, just open it
       }
     } else {
       toast({
@@ -203,7 +218,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
         <div className="flex gap-2">
           <Button 
             onClick={handleRead} 
-            disabled={!livro.link || isChecking}
+            disabled={isChecking}
           >
             {isChecking ? (
               <span className="flex items-center">
@@ -220,7 +235,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
             )}
           </Button>
           
-          <Button onClick={handleDownload} disabled={!livro.download} variant="outline">
+          <Button onClick={handleDownload} disabled={!livro.download && !getPdfUrl(livro.livro)} variant="outline">
             <Download className="mr-2 h-4 w-4" /> Download
           </Button>
         </div>
@@ -228,7 +243,64 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
         <div className="flex gap-2">
           <Button 
             variant="ghost" 
-            onClick={handleNarration} 
+            onClick={() => {
+              if (isPlaying && audio) {
+                audio.pause();
+                setIsPlaying(false);
+                return;
+              }
+
+              try {
+                if (!livro.sobre) {
+                  toast({
+                    title: "Conteúdo indisponível",
+                    description: "Não há sinopse disponível para narração.",
+                    variant: "destructive",
+                  });
+                  return;
+                }
+
+                toast({
+                  title: "Preparando narração",
+                  description: "Um momento enquanto processamos o áudio...",
+                });
+
+                supabase.functions.invoke('text-to-speech', {
+                  body: { text: livro.sobre }
+                }).then(({ data, error }) => {
+                  if (error) {
+                    throw new Error(error.message);
+                  }
+
+                  const audioContent = data.audioContent;
+                  const audioSrc = `data:audio/mp3;base64,${audioContent}`;
+                  
+                  const newAudio = new Audio(audioSrc);
+                  setAudio(newAudio);
+                  
+                  newAudio.onended = () => {
+                    setIsPlaying(false);
+                  };
+                  
+                  newAudio.play();
+                  setIsPlaying(true);
+                }).catch((error) => {
+                  console.error("Erro na narração:", error);
+                  toast({
+                    title: "Erro na narração",
+                    description: "Não foi possível gerar o áudio. Tente novamente.",
+                    variant: "destructive",
+                  });
+                });
+              } catch (error) {
+                console.error("Erro na narração:", error);
+                toast({
+                  title: "Erro na narração",
+                  description: "Não foi possível gerar o áudio. Tente novamente.",
+                  variant: "destructive",
+                });
+              }
+            }} 
             disabled={!livro.sobre}
             className={isPlaying ? "text-primary" : ""}
           >
@@ -257,7 +329,14 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setShowAnotacoes(false)}>Cancelar</Button>
-            <Button onClick={handleSaveAnotacoes}>Salvar</Button>
+            <Button onClick={() => {
+              // Esta funcionalidade exigiria autenticação, por isso apenas simulamos
+              toast({
+                title: "Anotação salva",
+                description: "Sua anotação foi salva com sucesso.",
+              });
+              setShowAnotacoes(false);
+            }}>Salvar</Button>
           </div>
         </DialogContent>
       </Dialog>

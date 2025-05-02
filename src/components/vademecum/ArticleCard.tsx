@@ -79,12 +79,12 @@ export const ArticleCard = ({
             articleText={articleText}
             isNarrating={isNarrating}
             setIsNarrating={setIsNarrating}
-            isFavorite={isFavorite}
+            isFavorite={isFavorite === true} // Fix: Convert to boolean explicitly
             setIsFavorite={() => toggleFavorite(articleText)}
             lawName={lawName}
             articleNumber={articleNumber}
             isLoading={isLoading}
-            isVisible={true} // Fixed boolean value instead of string
+            isVisible={true}
           />
         )}
       </div>
