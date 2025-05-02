@@ -244,7 +244,15 @@ export function BibliotecaPDFViewer({
         })
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding bookmark:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível adicionar o marcador.",
+          variant: "destructive"
+        });
+        return;
+      }
       
       setBookmarks([...bookmarks, data[0]]);
       setIsAddingBookmark(false);
@@ -288,7 +296,15 @@ export function BibliotecaPDFViewer({
         })
         .select();
         
-      if (error) throw error;
+      if (error) {
+        console.error('Error adding annotation:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível adicionar a anotação.",
+          variant: "destructive"
+        });
+        return;
+      }
       
       setAnnotations([...annotations, data[0]]);
       setIsAddingAnnotation(false);
@@ -333,7 +349,15 @@ export function BibliotecaPDFViewer({
           .update({ favorito: !progressData.favorito })
           .eq('id', progressData.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error updating favorite status:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível atualizar os favoritos.",
+            variant: "destructive"
+          });
+          return;
+        }
         
         toast({
           title: progressData.favorito ? "Removido dos favoritos" : "Adicionado aos favoritos",
@@ -352,7 +376,15 @@ export function BibliotecaPDFViewer({
             pagina_atual: pageNumber
           });
           
-        if (error) throw error;
+        if (error) {
+          console.error('Error adding to favorites:', error);
+          toast({
+            title: "Erro",
+            description: "Não foi possível adicionar aos favoritos.",
+            variant: "destructive"
+          });
+          return;
+        }
         
         toast({
           title: "Adicionado aos favoritos",

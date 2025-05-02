@@ -4230,6 +4230,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      populate_biblioteca_from_bucket: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       track_book_view: {
         Args: { p_livro_id: string }
         Returns: undefined

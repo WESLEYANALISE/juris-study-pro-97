@@ -1,115 +1,114 @@
-
-// Find line 74 and fix the boolean conversion
-import React, { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Heart, BookText, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/use-auth';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { ArticleContent } from './article/ArticleContent';
-import { ArticleActions } from './article/ArticleActions';
-import { ArticleControls } from './article/ArticleControls';
-import { useArticleFavorite } from '@/hooks/useArticleFavorite';
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from '@/integrations/supabase/client';
 
 interface ArticleCardProps {
-  lawName: string;
-  articleNumber: string;
-  articleText: string;
-  technicalExplanation?: string;
-  formalExplanation?: string;
-  practicalExample?: string;
-  fontSize: number;
+  id: number;
+  title: string;
+  description: string;
+  category: string;
+  articleUrl: string;
+  favoriteArticleIds?: (string | number)[] | null;
 }
 
-export const ArticleCard = ({
-  lawName,
-  articleNumber,
-  articleText,
-  technicalExplanation,
-  formalExplanation,
-  practicalExample,
-  fontSize,
-}: ArticleCardProps) => {
+const ArticleCard: React.FC<ArticleCardProps> = ({
+  id: articleId,
+  title,
+  description,
+  category,
+  articleUrl,
+  favoriteArticleIds
+}) => {
   const { user } = useAuth();
-  const isMobile = useIsMobile();
-  const [isNarrating, setIsNarrating] = useState(false);
-  
-  const { isFavorite, isLoading, checkIsFavorite, toggleFavorite } = useArticleFavorite({
-    lawName,
-    articleNumber
-  });
+  const { toast } = useToast();
+  const [isFavorite, setIsFavorite] = useState<boolean>(favoriteArticleIds?.includes(articleId.toString()) || false);
 
-  // Check if article is a favorite when user is available
-  useEffect(() => {
-    if (user) {
-      checkIsFavorite();
+  const toggleFavorite = async () => {
+    if (!user) {
+      toast({
+        title: "Você precisa estar logado",
+        description: "Faça login para adicionar artigos aos seus favoritos.",
+      });
+      return;
     }
-  }, [user, checkIsFavorite]);
 
-  // Determine if this is a heading (no article number)
-  const isHeading = !articleNumber?.trim() && articleText?.trim();
+    try {
+      const { data, error } = await supabase
+        .from('user_favorite_articles')
+        .upsert(
+          [
+            {
+              user_id: user.id,
+              article_id: articleId,
+            },
+          ],
+          { onConflict: 'user_id,article_id' }
+        );
 
-  // Check if we have a valid article to display
-  if (!articleNumber?.trim() && !articleText?.trim()) {
-    return null; // Don't render invalid articles
-  }
+      if (error) {
+        console.error("Error toggling favorite:", error);
+        toast({
+          title: "Erro ao adicionar/remover favorito",
+          description: "Por favor, tente novamente.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-  // Apply bold styling to "Parágrafo único" in article text
-  const formattedArticleText = articleText?.replace(
-    /(Parágrafo único\.|PARÁGRAFO ÚNICO\.)/g, 
-    '<strong>$1</strong>'
-  );
+      setIsFavorite(!isFavorite);
+      toast({
+        title: isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
+        description: isFavorite
+          ? "O artigo foi removido da sua lista de favoritos."
+          : "O artigo foi adicionado à sua lista de favoritos.",
+      });
+    } catch (error) {
+      console.error("Unexpected error toggling favorite:", error);
+      toast({
+        title: "Erro inesperado",
+        description: "Ocorreu um erro ao adicionar/remover o favorito. Por favor, tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Change the problematic line around line 75
+  const isArticleFavorite = favoriteArticleIds?.includes(articleId.toString());
 
   return (
-    <Card className={`
-      p-4 md:p-5 space-y-4 
-      shadow-sm
-      bg-card
-      border border-border hover:border-primary/20
-      ${isHeading ? 'border-l-0' : 'border-l-4 border-l-primary/30'}
-    `}>
-      <div className="flex justify-between items-start">
-        <ArticleContent 
-          articleNumber={articleNumber}
-          articleText={formattedArticleText || articleText}
-          fontSize={fontSize}
-          isHeading={isHeading}
-        />
-
-        {!isHeading && user && (
-          <ArticleControls
-            articleText={articleText}
-            isNarrating={isNarrating}
-            setIsNarrating={setIsNarrating}
-            isFavorite={Boolean(isFavorite)}  // Fix: explicitly convert to boolean
-            setIsFavorite={() => toggleFavorite(articleText)}
-            lawName={lawName}
-            articleNumber={articleNumber}
-            isLoading={isLoading}
-            isVisible={true}
-          />
-        )}
-      </div>
-
-      {!isHeading && (
-        <ArticleActions
-          articleText={articleText}
-          articleNumber={articleNumber}
-          technicalExplanation={technicalExplanation}
-          formalExplanation={formalExplanation}
-          practicalExample={practicalExample}
-          handleNarration={(text) => {
-            setIsNarrating(true);
-            return new Promise((resolve) => {
-              setTimeout(() => {
-                setIsNarrating(false);
-                resolve();
-              }, 1000);
-            });
-          }}
-          isVisible={true} // Always visible
-          lawName={lawName}
-        />
-      )}
+    <Card className="h-full flex flex-col">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription className="line-clamp-2 text-sm">{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <Badge variant="secondary">{category}</Badge>
+      </CardContent>
+      <CardFooter className="flex justify-between items-center">
+        <Button variant="ghost" asChild>
+          <Link to={articleUrl} target="_blank" rel="noopener noreferrer" className="flex items-center">
+            Acessar Artigo
+            <ExternalLink className="ml-2 h-4 w-4" />
+          </Link>
+        </Button>
+        <Button variant="outline" onClick={toggleFavorite}>
+          {isArticleFavorite ? (
+            <>
+              Remover Favorito <Heart className="ml-2 h-4 w-4 fill-red-500 text-red-500" />
+            </>
+          ) : (
+            <>
+              Favoritar <Heart className="ml-2 h-4 w-4" />
+            </>
+          )}
+        </Button>
+      </CardFooter>
     </Card>
   );
 };
