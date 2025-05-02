@@ -11,11 +11,10 @@ import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
 import Biblioteca from "@/pages/Biblioteca";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
-import EpubReaderPage from "@/pages/EpubReaderPage";
 import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
 import VadeMecumViewer from "@/pages/VadeMecumViewer";
-import VadeMecumFavorites from "@/pages/VadeMecumFavorites"; 
+import VadeMecumFavorites from "@/pages/VadeMecumFavorites"; // We'll create this
 import Simulados from "@/pages/Simulados";
 import SimuladoCategoria from "@/pages/SimuladoCategoria";
 import SimuladoSessao from "@/pages/SimuladoSessao";
@@ -55,7 +54,6 @@ function App() {
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               <Route path="/biblioteca" element={<Layout><Biblioteca /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
-              <Route path="/epub-reader" element={<Layout><EpubReaderPage /></Layout>} />
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
               <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />

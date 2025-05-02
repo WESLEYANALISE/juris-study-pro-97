@@ -79,12 +79,12 @@ export const ArticleCard = ({
             articleText={articleText}
             isNarrating={isNarrating}
             setIsNarrating={setIsNarrating}
-            isFavorite={isFavorite === true} // Fix: Ensure we pass a boolean value
+            isFavorite={isFavorite}
             setIsFavorite={() => toggleFavorite(articleText)}
             lawName={lawName}
             articleNumber={articleNumber}
             isLoading={isLoading}
-            isVisible={true}
+            isVisible={true} // Fixed boolean value instead of string
           />
         )}
       </div>
@@ -105,7 +105,7 @@ export const ArticleCard = ({
               }, 1000);
             });
           }}
-          isVisible={true}
+          isVisible={true} // Always visible
           lawName={lawName}
         />
       )}

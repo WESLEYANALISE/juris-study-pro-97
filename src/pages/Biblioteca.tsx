@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,13 +8,8 @@ import { SearchBar } from "@/components/biblioteca/SearchBar";
 import { AIHelperDialog } from "@/components/biblioteca/AIHelperDialog";
 import { BookCard } from "@/components/biblioteca/BookCard";
 import { BookModal } from "@/components/biblioteca/BookModal";
-import { PDFViewer } from "@/components/biblioteca/PDFViewer";
-import { EPUBViewer } from "@/components/biblioteca/EPUBViewer";
 import { BibliotecaRecomendacoes } from "@/components/biblioteca/BibliotecaRecomendacoes";
 import type { Livro } from "@/types/biblioteca";
-
-type ViewerType = "pdf" | "epub";
-
 type State = {
   mode: "carousel";
 } | {
@@ -23,12 +17,10 @@ type State = {
 } | {
   mode: "reading";
   livro: Livro;
-  viewerType: ViewerType;
 } | {
   mode: "modal";
   livro: Livro;
 };
-
 export default function Biblioteca() {
   const [state, setState] = useState<State>({
     mode: "carousel"
@@ -38,7 +30,6 @@ export default function Biblioteca() {
   const [aiResult, setAiResult] = useState<Livro[] | null>(null);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"acervo" | "recomendacoes">("acervo");
-  
   const {
     data: livros,
     isLoading
@@ -54,12 +45,10 @@ export default function Biblioteca() {
       })) as Livro[];
     }
   });
-  
   const areas = useMemo(() => {
     if (!livros) return [];
     return Array.from(new Set(livros.map(l => l.area).filter(Boolean)));
   }, [livros]);
-  
   const filteredLivros = useMemo(() => {
     if (!livros) return [];
     let filtered = livros;
@@ -72,7 +61,6 @@ export default function Biblioteca() {
     }
     return filtered;
   }, [searchTerm, selectedArea, livros]);
-  
   const livrosPorArea = useMemo(() => {
     if (!filteredLivros) return new Map<string, Livro[]>();
     const grouped = new Map<string, Livro[]>();
@@ -85,38 +73,12 @@ export default function Biblioteca() {
     });
     return grouped;
   }, [filteredLivros]);
-  
   async function handleAIHelp() {
     if (!livros) return;
     setAiResult(["buscando"] as any);
     const res = livros.filter(l => (l.area ?? "").toLowerCase().includes(searchTerm.toLowerCase()) || (l.livro ?? "").toLowerCase().includes(searchTerm.toLowerCase()) || (l.sobre ?? "").toLowerCase().includes(searchTerm.toLowerCase()));
     setAiResult(res);
   }
-
-  // Determine file type for reading mode
-  const getFileType = (link: string | null): ViewerType => {
-    if (!link) return "pdf";
-    
-    // Try to extract extension from URL
-    try {
-      const urlObj = new URL(link);
-      const pathParts = urlObj.pathname.split('.');
-      if (pathParts.length > 1) {
-        const extension = pathParts[pathParts.length - 1].toLowerCase();
-        if (extension === 'epub') return 'epub';
-        return 'pdf';
-      }
-    } catch (e) {
-      console.error('Error parsing URL:', e);
-    }
-    
-    // Check for common content indicators in the URL
-    const urlLower = (link || '').toLowerCase();
-    if (urlLower.includes('epub')) return 'epub';
-    
-    return 'pdf'; // Default to PDF
-  };
-  
   return <div className="max-w-6xl mx-auto px-4 py-6">
       <Tabs value={activeTab} onValueChange={val => setActiveTab(val as "acervo" | "recomendacoes")} className="w-full space-y-6">
         <div className="overflow-x-auto pb-2 -mx-4 px-4">
@@ -173,50 +135,19 @@ export default function Biblioteca() {
                   </div>
                 </div>)}
             </div> : state.mode === "reading" ? <div className="fixed inset-0 bg-background z-50">
-              {state.viewerType === "epub" ? (
-                <EPUBViewer 
-                  livro={{
-                    id: state.livro.id,
-                    nome: state.livro.livro, // Using livro as nome
-                    link: state.livro.link || '',
-                    capa_url: state.livro.imagem
-                  }}
-                  onClose={() => setState({mode: "carousel"})} 
-                />
-              ) : (
-                state.livro.link ? (
-                  <PDFViewer 
-                    livro={{
-                      id: state.livro.id,
-                      nome: state.livro.livro, // Using livro as nome
-                      pdf: state.livro.link || '',
-                      capa_url: state.livro.imagem
-                    }}
-                    onClose={() => setState({mode: "carousel"})}
-                  />
-                ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <div className="text-center p-6 bg-red-50 dark:bg-red-900/20 rounded-lg max-w-md">
-                      <h3 className="text-lg font-bold mb-2">Arquivo não disponível</h3>
-                      <p>O link para este livro não está disponível.</p>
-                      <Button 
-                        className="mt-4" 
-                        onClick={() => setState({mode: "carousel"})}
-                      >
-                        Voltar
-                      </Button>
-                    </div>
-                  </div>
-                )
-              )}
+              <iframe src={state.livro.link ?? ""} className="w-full h-full" title={state.livro.livro || "Leitura"} allowFullScreen />
+              <Button variant="secondary" className="fixed top-4 left-4 z-60 shadow-lg" onClick={() => setState({
+            mode: "carousel"
+          })}>
+                Voltar
+              </Button>
             </div> : null}
 
           {state.mode === "modal" && <BookModal livro={state.livro} onClose={() => setState({
           mode: "carousel"
-        })} onRead={(viewerType = "pdf") => setState({
+        })} onRead={() => setState({
           mode: "reading",
-          livro: state.livro,
-          viewerType
+          livro: state.livro
         })} />}
 
           <AIHelperDialog open={aiDialog} onOpenChange={setAiDialog} onSearch={handleAIHelp} results={aiResult} onSelectBook={livro => {

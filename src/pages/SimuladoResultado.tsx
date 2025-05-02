@@ -82,10 +82,9 @@ export default function SimuladoResultado() {
             return;
         }
 
-        // Use a type-safe approach to query the database
-        // Correctly use a string literal type for the table name
+        // Use a typesafe approach to query the database
         const { data, error } = await supabase
-          .from(tableName as any) // Cast to any to avoid TS errors with dynamic table names
+          .from(tableName)
           .select('*')
           .in('id', respostasIds);
 
@@ -96,7 +95,7 @@ export default function SimuladoResultado() {
 
         if (data) {
           // Map the data to match the Questao interface explicitly
-          const formattedQuestoes: Questao[] = data.map((q: any) => ({
+          const formattedQuestoes: Questao[] = data.map(q => ({
             id: q.id || '',
             questao: q.questao || '',
             alternativa_a: q.alternativa_a || '',

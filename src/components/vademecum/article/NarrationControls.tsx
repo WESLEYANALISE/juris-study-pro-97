@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Volume2, Loader2 } from 'lucide-react';
+import { Volume2, Pause, Loader2 } from 'lucide-react';
 import { TextToSpeechService } from '@/services/textToSpeechService';
 import { toast } from 'sonner';
 
