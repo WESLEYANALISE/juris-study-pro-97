@@ -47,11 +47,12 @@ export function BibliotecaRecentes({
         const booksById = (booksData || []).reduce((acc, book) => {
           acc[book.id] = book;
           return acc;
-        }, {} as Record<string, LivroJuridico>);
+        }, {} as Record<string, any>);
         
+        // Convert to LivroJuridico type
         return progressData
           .map(item => booksById[item.livro_id])
-          .filter(Boolean);
+          .filter(Boolean) as unknown as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching recent books:', err);
         return [];

@@ -9,9 +9,9 @@ export interface LivroJuridico {
   subcategoria?: string;
   pdf_url: string;
   total_paginas?: number;
-  data_publicacao?: Date;
-  created_at?: Date;
-  updated_at?: Date;
+  data_publicacao?: string | Date;
+  created_at?: string | Date;
+  updated_at?: string | Date;
 }
 
 export interface ProgressoLeitura {
@@ -19,7 +19,7 @@ export interface ProgressoLeitura {
   user_id: string;
   livro_id: string;
   pagina_atual: number;
-  ultima_leitura: Date;
+  ultima_leitura: string | Date;
   favorito: boolean;
 }
 

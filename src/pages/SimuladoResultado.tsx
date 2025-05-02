@@ -95,7 +95,7 @@ export default function SimuladoResultado() {
 
         if (data) {
           // Map the data to match the Questao interface with null checks
-          const formattedQuestoes: Questao[] = data.map(q => ({
+          const formattedQuestoes: Questao[] = data.map((q: any) => ({
             id: q?.id || '',
             questao: q?.questao || '',
             alternativa_a: q?.alternativa_a || '',

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { supabase } from '@/integrations/supabase/client';
@@ -201,15 +200,23 @@ export function BibliotecaPDFViewer({
         const { error } = await supabase
           .from('biblioteca_marcadores')
           .delete()
-          .eq('id', existingBookmark.id);
-          
-        if (error) throw error;
-        
-        setBookmarks(bookmarks.filter(b => b.id !== existingBookmark.id));
-        toast({
-          title: "Marcador removido",
-          description: "O marcador foi removido com sucesso."
-        });
+          .eq('id', existingBookmark.id)
+          .then(({ error }) => {
+            if (error) {
+              console.error('Error removing bookmark:', error);
+              toast({
+                title: "Erro",
+                description: "Não foi possível remover o marcador.",
+                variant: "destructive"
+              });
+            } else {
+              setBookmarks(bookmarks.filter(b => b.id !== existingBookmark.id));
+              toast({
+                title: "Marcador removido",
+                description: "O marcador foi removido com sucesso."
+              });
+            }
+          });
       } catch (err) {
         console.error('Error removing bookmark:', err);
         toast({
@@ -623,20 +630,21 @@ export function BibliotecaPDFViewer({
                           .from('biblioteca_marcadores')
                           .delete()
                           .eq('id', bookmark.id)
-                          .then(() => {
-                            setBookmarks(bookmarks.filter(b => b.id !== bookmark.id));
-                            toast({
-                              title: "Marcador removido",
-                              description: "O marcador foi removido com sucesso."
-                            });
-                          })
-                          .catch(err => {
-                            console.error('Error removing bookmark:', err);
-                            toast({
-                              title: "Erro",
-                              description: "Não foi possível remover o marcador.",
-                              variant: "destructive"
-                            });
+                          .then(({ error }) => {
+                            if (error) {
+                              console.error('Error removing bookmark:', error);
+                              toast({
+                                title: "Erro",
+                                description: "Não foi possível remover o marcador.",
+                                variant: "destructive"
+                              });
+                            } else {
+                              setBookmarks(bookmarks.filter(b => b.id !== bookmark.id));
+                              toast({
+                                title: "Marcador removido",
+                                description: "O marcador foi removido com sucesso."
+                              });
+                            }
                           });
                       }}
                     >
@@ -709,20 +717,21 @@ export function BibliotecaPDFViewer({
                                 .from('biblioteca_anotacoes')
                                 .delete()
                                 .eq('id', annotation.id)
-                                .then(() => {
-                                  setAnnotations(annotations.filter(a => a.id !== annotation.id));
-                                  toast({
-                                    title: "Anotação removida",
-                                    description: "A anotação foi removida com sucesso."
-                                  });
-                                })
-                                .catch(err => {
-                                  console.error('Error removing annotation:', err);
-                                  toast({
-                                    title: "Erro",
-                                    description: "Não foi possível remover a anotação.",
-                                    variant: "destructive"
-                                  });
+                                .then(({ error }) => {
+                                  if (error) {
+                                    console.error('Error removing annotation:', error);
+                                    toast({
+                                      title: "Erro",
+                                      description: "Não foi possível remover a anotação.",
+                                      variant: "destructive"
+                                    });
+                                  } else {
+                                    setAnnotations(annotations.filter(a => a.id !== annotation.id));
+                                    toast({
+                                      title: "Anotação removida",
+                                      description: "A anotação foi removida com sucesso."
+                                    });
+                                  }
                                 });
                             }}
                           >
@@ -771,20 +780,21 @@ export function BibliotecaPDFViewer({
                                     .from('biblioteca_anotacoes')
                                     .delete()
                                     .eq('id', annotation.id)
-                                    .then(() => {
-                                      setAnnotations(annotations.filter(a => a.id !== annotation.id));
-                                      toast({
-                                        title: "Anotação removida",
-                                        description: "A anotação foi removida com sucesso."
-                                      });
-                                    })
-                                    .catch(err => {
-                                      console.error('Error removing annotation:', err);
-                                      toast({
-                                        title: "Erro",
-                                        description: "Não foi possível remover a anotação.",
-                                        variant: "destructive"
-                                      });
+                                    .then(({ error }) => {
+                                      if (error) {
+                                        console.error('Error removing annotation:', error);
+                                        toast({
+                                          title: "Erro",
+                                          description: "Não foi possível remover a anotação.",
+                                          variant: "destructive"
+                                        });
+                                      } else {
+                                        setAnnotations(annotations.filter(a => a.id !== annotation.id));
+                                        toast({
+                                          title: "Anotação removida",
+                                          description: "A anotação foi removida com sucesso."
+                                        });
+                                      }
                                     });
                                 }}
                               >

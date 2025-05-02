@@ -34,7 +34,7 @@ export default function BibliotecaJuridica() {
           .select('*');
         
         if (error) throw error;
-        return data as LivroJuridico[];
+        return data as unknown as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching books:', err);
         toast({
@@ -83,7 +83,7 @@ export default function BibliotecaJuridica() {
 
   // Handle file URL construction
   const getBucketFileUrl = (fileName: string) => {
-    return `${supabase.supabaseUrl}/storage/v1/object/public/agoravai/${fileName}`;
+    return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
   if (selectedBook) {

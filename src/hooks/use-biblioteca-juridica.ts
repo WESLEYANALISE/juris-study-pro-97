@@ -21,7 +21,7 @@ export function useBibliotecaProgresso() {
           .eq('user_id', user.id);
           
         if (error) throw error;
-        return data as ProgressoLeitura[];
+        return data as unknown as ProgressoLeitura[];
       } catch (err) {
         console.error('Error fetching reading progress:', err);
         return [];
@@ -111,7 +111,7 @@ export function useSugestoes() {
           .select('*');
           
         if (error) throw error;
-        return data as LivroJuridico[];
+        return data as unknown as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching books:', err);
         return [];
@@ -132,7 +132,7 @@ export function useSugestoes() {
           .eq('user_id', user.id);
           
         if (error) throw error;
-        return data as ProgressoLeitura[];
+        return data as unknown as ProgressoLeitura[];
       } catch (err) {
         console.error('Error fetching reading history:', err);
         return [];

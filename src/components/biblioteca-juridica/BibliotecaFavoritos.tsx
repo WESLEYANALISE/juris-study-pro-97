@@ -41,7 +41,7 @@ export function BibliotecaFavoritos({
           .in('id', favoriteIds);
         
         if (booksError) throw booksError;
-        return booksData as LivroJuridico[];
+        return booksData as unknown as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching favorites:', err);
         return [];

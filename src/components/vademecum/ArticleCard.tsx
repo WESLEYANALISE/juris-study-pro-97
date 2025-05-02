@@ -1,4 +1,5 @@
 
+// Find line 74 and fix the boolean conversion
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { motion } from 'framer-motion';
@@ -79,7 +80,7 @@ export const ArticleCard = ({
             articleText={articleText}
             isNarrating={isNarrating}
             setIsNarrating={setIsNarrating}
-            isFavorite={isFavorite === true} // Explicitly convert to boolean
+            isFavorite={Boolean(isFavorite)}  // Fix: explicitly convert to boolean
             setIsFavorite={() => toggleFavorite(articleText)}
             lawName={lawName}
             articleNumber={articleNumber}
