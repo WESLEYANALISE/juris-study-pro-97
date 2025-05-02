@@ -62,13 +62,14 @@ export default function SimuladoResultado() {
   useEffect(() => {
     async function loadQuestoesDetails() {
       try {
-        if (!respostasIds.length) return;
+        if (!respostasIds.length || !resultado) return;
+
+        const categoria = resultado.categoria;
+        if (!categoria) return;
         
-        // Instead of using questoes_simulados, get the correct table based on the category
-        if (!resultado || !resultado.categoria) return;
-        
+        // Use the correct table name based on the categoria
         let tableName: string;
-        switch(resultado.categoria) {
+        switch(categoria) {
           case 'OAB': tableName = 'simulados_oab'; break;
           case 'PRF': tableName = 'simulados_prf'; break;
           case 'PF': tableName = 'simulados_pf'; break;
@@ -76,9 +77,12 @@ export default function SimuladoResultado() {
           case 'JUIZ': tableName = 'simulados_juiz'; break;
           case 'PROMOTOR': tableName = 'simulados_promotor'; break;
           case 'DELEGADO': tableName = 'simulados_delegado'; break;
-          default: tableName = 'simulados_oab';
+          default: 
+            console.error('Invalid category:', categoria);
+            return;
         }
         
+        // Use the table name directly, not as a string parameter
         const { data, error } = await supabase
           .from(tableName)
           .select('*')
@@ -124,7 +128,7 @@ export default function SimuladoResultado() {
     return questoes.find(q => q && q.id === id) || null;
   };
 
-  // other code that needs null checks ...
+  // Render alternatives with null checks
   const renderAlternativas = (questaoId: string) => {
     const questao = getQuestaoById(questaoId);
     if (!questao) return null; // Null check
