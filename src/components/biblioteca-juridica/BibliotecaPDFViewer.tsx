@@ -9,15 +9,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { 
-  ChevronLeft, ChevronRight, X, Search, ZoomIn, ZoomOut, 
-  Bookmark, BookmarkPlus, BookmarkMinus, Layers, Download,
-  MessageSquare, Edit, Settings
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, Search, ZoomIn, ZoomOut, Bookmark, BookmarkPlus, BookmarkMinus, Layers, Download, MessageSquare, Edit, Settings } from 'lucide-react';
 
 // Set worker source for PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-
 interface BibliotecaPDFViewerProps {
   livro: {
     id: string;
@@ -27,7 +22,6 @@ interface BibliotecaPDFViewerProps {
   };
   onClose: () => void;
 }
-
 export function BibliotecaPDFViewer({
   livro,
   onClose
@@ -49,53 +43,48 @@ export function BibliotecaPDFViewer({
   const [newBookmarkTitle, setNewBookmarkTitle] = useState<string>('');
   const [isAddingBookmark, setIsAddingBookmark] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(true);
-  
+
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Hooks
-  const { user } = useAuth();
-  const { toast } = useToast();
+  const {
+    user
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
 
   // Load user's reading progress when component mounts
   useEffect(() => {
     async function loadUserProgress() {
       if (!user) return;
-      
       try {
         // Load reading progress
-        const { data: progressData } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('livro_id', livro.id)
-          .single();
-        
+        const {
+          data: progressData
+        } = await supabase.from('biblioteca_leitura_progresso').select('*').eq('user_id', user.id).eq('livro_id', livro.id).single();
         if (progressData && progressData.pagina_atual) {
           setPageNumber(progressData.pagina_atual);
         }
-        
+
         // Load bookmarks
-        const { data: bookmarksData } = await supabase
-          .from('biblioteca_marcadores')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('livro_id', livro.id)
-          .order('pagina', { ascending: true });
-          
+        const {
+          data: bookmarksData
+        } = await supabase.from('biblioteca_marcadores').select('*').eq('user_id', user.id).eq('livro_id', livro.id).order('pagina', {
+          ascending: true
+        });
         if (bookmarksData) {
           setBookmarks(bookmarksData);
         }
-        
+
         // Load annotations
-        const { data: annotationsData } = await supabase
-          .from('biblioteca_anotacoes')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('livro_id', livro.id)
-          .order('pagina', { ascending: true });
-          
+        const {
+          data: annotationsData
+        } = await supabase.from('biblioteca_anotacoes').select('*').eq('user_id', user.id).eq('livro_id', livro.id).order('pagina', {
+          ascending: true
+        });
         if (annotationsData) {
           setAnnotations(annotationsData);
         }
@@ -103,29 +92,25 @@ export function BibliotecaPDFViewer({
         console.error('Error loading user progress:', err);
       }
     }
-    
     loadUserProgress();
   }, [user, livro.id]);
 
   // Save reading progress when page changes
   useEffect(() => {
     if (!user || !pageNumber) return;
-    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    
     timeoutRef.current = setTimeout(async () => {
       try {
-        const { error } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .upsert({
-            user_id: user.id,
-            livro_id: livro.id,
-            pagina_atual: pageNumber,
-            ultima_leitura: new Date().toISOString()
-          });
-          
+        const {
+          error
+        } = await supabase.from('biblioteca_leitura_progresso').upsert({
+          user_id: user.id,
+          livro_id: livro.id,
+          pagina_atual: pageNumber,
+          ultima_leitura: new Date().toISOString()
+        });
         if (error) {
           console.error('Error saving progress:', error);
         }
@@ -133,7 +118,7 @@ export function BibliotecaPDFViewer({
         console.error('Error saving reading progress:', err);
       }
     }, 1000); // Debounce saving progress
-    
+
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
@@ -142,11 +127,14 @@ export function BibliotecaPDFViewer({
   }, [pageNumber, user, livro.id]);
 
   // Document load handlers
-  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+  function onDocumentLoadSuccess({
+    numPages
+  }: {
+    numPages: number;
+  }) {
     setNumPages(numPages);
     setIsLoading(false);
   }
-
   function onDocumentLoadError(error: Error) {
     console.error('Error loading PDF:', error);
     setError('Erro ao carregar o PDF. Por favor, tente novamente mais tarde.');
@@ -157,7 +145,6 @@ export function BibliotecaPDFViewer({
   const goToPreviousPage = () => {
     setPageNumber(prev => Math.max(prev - 1, 1));
   };
-
   const goToNextPage = () => {
     if (numPages) {
       setPageNumber(prev => Math.min(prev + 1, numPages));
@@ -168,7 +155,6 @@ export function BibliotecaPDFViewer({
   const zoomIn = () => {
     setScale(prev => Math.min(prev + 0.2, 3));
   };
-
   const zoomOut = () => {
     setScale(prev => Math.max(prev - 0.2, 0.5));
   };
@@ -191,32 +177,30 @@ export function BibliotecaPDFViewer({
       });
       return;
     }
-
     const existingBookmark = bookmarks.find(b => b.pagina === pageNumber);
-    
     if (existingBookmark) {
       // Remove bookmark
       try {
-        const { error } = await supabase
-          .from('biblioteca_marcadores')
-          .delete()
-          .eq('id', existingBookmark.id)
-          .then(({ error }) => {
-            if (error) {
-              console.error('Error removing bookmark:', error);
-              toast({
-                title: "Erro",
-                description: "Não foi possível remover o marcador.",
-                variant: "destructive"
-              });
-            } else {
-              setBookmarks(bookmarks.filter(b => b.id !== existingBookmark.id));
-              toast({
-                title: "Marcador removido",
-                description: "O marcador foi removido com sucesso."
-              });
-            }
-          });
+        const {
+          error
+        } = await supabase.from('biblioteca_marcadores').delete().eq('id', existingBookmark.id).then(({
+          error
+        }) => {
+          if (error) {
+            console.error('Error removing bookmark:', error);
+            toast({
+              title: "Erro",
+              description: "Não foi possível remover o marcador.",
+              variant: "destructive"
+            });
+          } else {
+            setBookmarks(bookmarks.filter(b => b.id !== existingBookmark.id));
+            toast({
+              title: "Marcador removido",
+              description: "O marcador foi removido com sucesso."
+            });
+          }
+        });
       } catch (err) {
         console.error('Error removing bookmark:', err);
         toast({
@@ -231,19 +215,17 @@ export function BibliotecaPDFViewer({
       setIsAddingBookmark(true);
     }
   };
-
   const saveBookmark = async () => {
     try {
-      const { data, error } = await supabase
-        .from('biblioteca_marcadores')
-        .insert({
-          user_id: user?.id,
-          livro_id: livro.id,
-          pagina: pageNumber,
-          titulo: newBookmarkTitle || `Página ${pageNumber}`
-        })
-        .select();
-        
+      const {
+        data,
+        error
+      } = await supabase.from('biblioteca_marcadores').insert({
+        user_id: user?.id,
+        livro_id: livro.id,
+        pagina: pageNumber,
+        titulo: newBookmarkTitle || `Página ${pageNumber}`
+      }).select();
       if (error) {
         console.error('Error adding bookmark:', error);
         toast({
@@ -253,7 +235,6 @@ export function BibliotecaPDFViewer({
         });
         return;
       }
-      
       setBookmarks([...bookmarks, data[0]]);
       setIsAddingBookmark(false);
       setNewBookmarkTitle('');
@@ -282,20 +263,21 @@ export function BibliotecaPDFViewer({
     }
     setIsAddingAnnotation(true);
   };
-
   const saveAnnotation = async () => {
     try {
-      const { data, error } = await supabase
-        .from('biblioteca_anotacoes')
-        .insert({
-          user_id: user?.id,
-          livro_id: livro.id,
-          pagina: pageNumber,
-          texto: newAnnotation,
-          posicao: { x: 0, y: 0 } // Default position
-        })
-        .select();
-        
+      const {
+        data,
+        error
+      } = await supabase.from('biblioteca_anotacoes').insert({
+        user_id: user?.id,
+        livro_id: livro.id,
+        pagina: pageNumber,
+        texto: newAnnotation,
+        posicao: {
+          x: 0,
+          y: 0
+        } // Default position
+      }).select();
       if (error) {
         console.error('Error adding annotation:', error);
         toast({
@@ -305,7 +287,6 @@ export function BibliotecaPDFViewer({
         });
         return;
       }
-      
       setAnnotations([...annotations, data[0]]);
       setIsAddingAnnotation(false);
       setNewAnnotation('');
@@ -332,23 +313,18 @@ export function BibliotecaPDFViewer({
       });
       return;
     }
-
     try {
       // Check if user has a progress record for this book
-      const { data: progressData } = await supabase
-        .from('biblioteca_leitura_progresso')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('livro_id', livro.id)
-        .single();
-        
+      const {
+        data: progressData
+      } = await supabase.from('biblioteca_leitura_progresso').select('*').eq('user_id', user.id).eq('livro_id', livro.id).single();
       if (progressData) {
         // Toggle favorite status
-        const { error } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .update({ favorito: !progressData.favorito })
-          .eq('id', progressData.id);
-          
+        const {
+          error
+        } = await supabase.from('biblioteca_leitura_progresso').update({
+          favorito: !progressData.favorito
+        }).eq('id', progressData.id);
         if (error) {
           console.error('Error updating favorite status:', error);
           toast({
@@ -358,24 +334,20 @@ export function BibliotecaPDFViewer({
           });
           return;
         }
-        
         toast({
           title: progressData.favorito ? "Removido dos favoritos" : "Adicionado aos favoritos",
-          description: progressData.favorito 
-            ? "O livro foi removido dos seus favoritos." 
-            : "O livro foi adicionado aos seus favoritos."
+          description: progressData.favorito ? "O livro foi removido dos seus favoritos." : "O livro foi adicionado aos seus favoritos."
         });
       } else {
         // Create new progress record with favorite=true
-        const { error } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .insert({
-            user_id: user.id,
-            livro_id: livro.id,
-            favorito: true,
-            pagina_atual: pageNumber
-          });
-          
+        const {
+          error
+        } = await supabase.from('biblioteca_leitura_progresso').insert({
+          user_id: user.id,
+          livro_id: livro.id,
+          favorito: true,
+          pagina_atual: pageNumber
+        });
         if (error) {
           console.error('Error adding to favorites:', error);
           toast({
@@ -385,7 +357,6 @@ export function BibliotecaPDFViewer({
           });
           return;
         }
-        
         toast({
           title: "Adicionado aos favoritos",
           description: "O livro foi adicionado aos seus favoritos."
@@ -410,31 +381,25 @@ export function BibliotecaPDFViewer({
       });
       return;
     }
-    
     window.open(livro.pdf, '_blank');
   };
 
   // Auto-hide controls after inactivity
   useEffect(() => {
     let timeout: NodeJS.Timeout;
-    
     const handleActivity = () => {
       setShowControls(true);
-      
       clearTimeout(timeout);
-      
       timeout = setTimeout(() => {
         setShowControls(false);
       }, 3000);
     };
-    
     window.addEventListener('mousemove', handleActivity);
     window.addEventListener('click', handleActivity);
     window.addEventListener('keydown', handleActivity);
-    
+
     // Initialize timeout
     handleActivity();
-    
     return () => {
       window.removeEventListener('mousemove', handleActivity);
       window.removeEventListener('click', handleActivity);
@@ -444,11 +409,10 @@ export function BibliotecaPDFViewer({
   }, []);
 
   // Main render
-  return (
-    <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
-      <div className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300"
-          style={{ opacity: showControls ? 1 : 0 }}
-      >
+  return <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
+      <div className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300" style={{
+      opacity: showControls ? 1 : 0
+    }}>
         <h2 className="text-xl font-medium truncate max-w-[60%]">{livro.nome}</h2>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={toggleFavorite} title="Favoritar">
@@ -469,22 +433,15 @@ export function BibliotecaPDFViewer({
         </div>
       </div>
 
-      <div className="flex items-center justify-between p-2 bg-card/50 border-b transition-opacity duration-300"
-          style={{ opacity: showControls ? 1 : 0 }}
-      >
+      <div className="flex items-center justify-between p-2 bg-card/50 border-b transition-opacity duration-300" style={{
+      opacity: showControls ? 1 : 0
+    }}>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={pageNumber <= 1}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <div className="text-sm">
-            <Input
-              type="number"
-              min={1}
-              max={numPages || 1}
-              value={pageNumber}
-              onChange={(e) => setPageNumber(Number(e.target.value))}
-              className="w-16 h-8 text-center inline-block"
-            /> 
+            <Input type="number" min={1} max={numPages || 1} value={pageNumber} onChange={e => setPageNumber(Number(e.target.value))} className="w-16 h-8 text-center inline-block" /> 
             <span className="mx-1">de</span> {numPages || '--'}
           </div>
           <Button variant="outline" size="sm" onClick={goToNextPage} disabled={!numPages || pageNumber >= numPages}>
@@ -503,43 +460,22 @@ export function BibliotecaPDFViewer({
             <ZoomIn className="h-4 w-4" />
           </Button>
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="ml-2"
-            onClick={() => setIsSearchOpen(true)}
-          >
-            <Search className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Buscar</span>
-          </Button>
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={addAnnotation}
-          >
+          
+          <Button variant="outline" size="sm" onClick={addAnnotation}>
             <Edit className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Anotar</span>
           </Button>
           
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={toggleBookmark}
-          >
-            {bookmarks.some(b => b.pagina === pageNumber) ? (
-              <BookmarkMinus className="h-4 w-4 mr-1" />
-            ) : (
-              <BookmarkPlus className="h-4 w-4 mr-1" />
-            )}
+          <Button variant="outline" size="sm" onClick={toggleBookmark}>
+            {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="h-4 w-4 mr-1" /> : <BookmarkPlus className="h-4 w-4 mr-1" />}
             <span className="hidden sm:inline">Marcar</span>
           </Button>
         </div>
       </div>
 
       <div ref={containerRef} className="flex-grow overflow-auto p-4 flex justify-center px-0">
-        {error ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
+        {error ? <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg">
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
               <p>{error}</p>
@@ -547,45 +483,20 @@ export function BibliotecaPDFViewer({
                 Voltar
               </Button>
             </div>
-          </div>
-        ) : (
-          <Document 
-            file={livro.pdf} 
-            onLoadSuccess={onDocumentLoadSuccess} 
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div className="flex flex-col items-center justify-center h-full">
+          </div> : <Document file={livro.pdf} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} loading={<div className="flex flex-col items-center justify-center h-full">
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
-              </div>
-            }
-            className="pdf-container"
-          >
-            <Page 
-              pageNumber={pageNumber} 
-              scale={scale} 
-              renderTextLayer={true}
-              renderAnnotationLayer={true} 
-              className="pdf-page shadow-lg"
-            />
-          </Document>
-        )}
+              </div>} className="pdf-container">
+            <Page pageNumber={pageNumber} scale={scale} renderTextLayer={true} renderAnnotationLayer={true} className="pdf-page shadow-lg" />
+          </Document>}
         
         {/* Page annotations for current page */}
-        <div className="absolute top-[20%] right-4 space-y-2 transition-opacity duration-300"
-            style={{ opacity: showControls ? 1 : 0 }}
-        >
-          {annotations
-            .filter(anno => anno.pagina === pageNumber)
-            .map(anno => (
-              <div 
-                key={anno.id}
-                className="bg-yellow-100 p-3 rounded shadow-md border border-yellow-200 max-w-xs"
-              >
+        <div className="absolute top-[20%] right-4 space-y-2 transition-opacity duration-300" style={{
+        opacity: showControls ? 1 : 0
+      }}>
+          {annotations.filter(anno => anno.pagina === pageNumber).map(anno => <div key={anno.id} className="bg-yellow-100 p-3 rounded shadow-md border border-yellow-200 max-w-xs">
                 <p className="text-sm text-gray-800">{anno.texto}</p>
-              </div>
-            ))
-          }
+              </div>)}
         </div>
       </div>
 
@@ -600,12 +511,7 @@ export function BibliotecaPDFViewer({
           </DialogHeader>
           <div className="flex items-center space-x-2">
             <div className="grid flex-1 gap-2">
-              <Input
-                placeholder="Digite o texto para buscar..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
+              <Input placeholder="Digite o texto para buscar..." value={searchText} onChange={e => setSearchText(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSearch()} />
             </div>
             <Button onClick={handleSearch} type="submit">Buscar</Button>
           </div>
@@ -622,80 +528,56 @@ export function BibliotecaPDFViewer({
             <SheetTitle>Marcadores</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
-            {bookmarks.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
+            {bookmarks.length === 0 ? <div className="text-center py-6 text-muted-foreground">
                 <BookmarkPlus className="mx-auto h-10 w-10 opacity-30 mb-2" />
                 <p>Você não tem marcadores neste livro</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4" 
-                  onClick={() => {
-                    setIsAddingBookmark(true);
-                    setShowBookmarks(false);
-                  }}
-                >
+                <Button variant="outline" className="mt-4" onClick={() => {
+              setIsAddingBookmark(true);
+              setShowBookmarks(false);
+            }}>
                   Adicionar marcador
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {bookmarks.map(bookmark => (
-                  <div 
-                    key={bookmark.id}
-                    className="flex items-center justify-between p-3 rounded hover:bg-accent cursor-pointer"
-                    onClick={() => {
-                      setPageNumber(bookmark.pagina);
-                      setShowBookmarks(false);
-                    }}
-                  >
+              </div> : <div className="space-y-2">
+                {bookmarks.map(bookmark => <div key={bookmark.id} className="flex items-center justify-between p-3 rounded hover:bg-accent cursor-pointer" onClick={() => {
+              setPageNumber(bookmark.pagina);
+              setShowBookmarks(false);
+            }}>
                     <div>
                       <h4 className="font-medium">{bookmark.titulo || `Página ${bookmark.pagina}`}</h4>
                       <p className="text-xs text-muted-foreground">Página {bookmark.pagina}</p>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // Delete bookmark
-                        supabase
-                          .from('biblioteca_marcadores')
-                          .delete()
-                          .eq('id', bookmark.id)
-                          .then(({ error }) => {
-                            if (error) {
-                              console.error('Error removing bookmark:', error);
-                              toast({
-                                title: "Erro",
-                                description: "Não foi possível remover o marcador.",
-                                variant: "destructive"
-                              });
-                            } else {
-                              setBookmarks(bookmarks.filter(b => b.id !== bookmark.id));
-                              toast({
-                                title: "Marcador removido",
-                                description: "O marcador foi removido com sucesso."
-                              });
-                            }
-                          });
-                      }}
-                    >
+                    <Button variant="ghost" size="icon" onClick={e => {
+                e.stopPropagation();
+                // Delete bookmark
+                supabase.from('biblioteca_marcadores').delete().eq('id', bookmark.id).then(({
+                  error
+                }) => {
+                  if (error) {
+                    console.error('Error removing bookmark:', error);
+                    toast({
+                      title: "Erro",
+                      description: "Não foi possível remover o marcador.",
+                      variant: "destructive"
+                    });
+                  } else {
+                    setBookmarks(bookmarks.filter(b => b.id !== bookmark.id));
+                    toast({
+                      title: "Marcador removido",
+                      description: "O marcador foi removido com sucesso."
+                    });
+                  }
+                });
+              }}>
                       <X className="h-4 w-4" />
                     </Button>
-                  </div>
-                ))}
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4" 
-                  onClick={() => {
-                    setIsAddingBookmark(true);
-                    setShowBookmarks(false);
-                  }}
-                >
+                  </div>)}
+                <Button variant="outline" className="w-full mt-4" onClick={() => {
+              setIsAddingBookmark(true);
+              setShowBookmarks(false);
+            }}>
                   Adicionar marcador
                 </Button>
-              </div>
-            )}
+              </div>}
           </div>
         </SheetContent>
       </Sheet>
@@ -707,150 +589,103 @@ export function BibliotecaPDFViewer({
             <SheetTitle>Anotações</SheetTitle>
           </SheetHeader>
           <div className="mt-6">
-            {annotations.length === 0 ? (
-              <div className="text-center py-6 text-muted-foreground">
+            {annotations.length === 0 ? <div className="text-center py-6 text-muted-foreground">
                 <MessageSquare className="mx-auto h-10 w-10 opacity-30 mb-2" />
                 <p>Você não tem anotações neste livro</p>
-                <Button 
-                  variant="outline" 
-                  className="mt-4" 
-                  onClick={() => {
-                    setIsAddingAnnotation(true);
-                    setShowAnnotations(false);
-                  }}
-                >
+                <Button variant="outline" className="mt-4" onClick={() => {
+              setIsAddingAnnotation(true);
+              setShowAnnotations(false);
+            }}>
                   Adicionar anotação
                 </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
+              </div> : <div className="space-y-4">
                 <Tabs defaultValue="all">
                   <TabsList className="w-full">
                     <TabsTrigger value="all" className="flex-1">Todas</TabsTrigger>
                     <TabsTrigger value="current" className="flex-1">Página atual</TabsTrigger>
                   </TabsList>
                   <TabsContent value="all" className="mt-4 space-y-3">
-                    {annotations.map(annotation => (
-                      <div 
-                        key={annotation.id}
-                        className="bg-yellow-50 border border-yellow-100 p-3 rounded"
-                      >
+                    {annotations.map(annotation => <div key={annotation.id} className="bg-yellow-50 border border-yellow-100 p-3 rounded">
                         <div className="flex justify-between items-start">
                           <span className="text-xs bg-yellow-100 px-2 py-1 rounded">
                             Página {annotation.pagina}
                           </span>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6"
-                            onClick={() => {
-                              // Delete annotation
-                              supabase
-                                .from('biblioteca_anotacoes')
-                                .delete()
-                                .eq('id', annotation.id)
-                                .then(({ error }) => {
-                                  if (error) {
-                                    console.error('Error removing annotation:', error);
-                                    toast({
-                                      title: "Erro",
-                                      description: "Não foi possível remover a anotação.",
-                                      variant: "destructive"
-                                    });
-                                  } else {
-                                    setAnnotations(annotations.filter(a => a.id !== annotation.id));
-                                    toast({
-                                      title: "Anotação removida",
-                                      description: "A anotação foi removida com sucesso."
-                                    });
-                                  }
-                                });
-                            }}
-                          >
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                      // Delete annotation
+                      supabase.from('biblioteca_anotacoes').delete().eq('id', annotation.id).then(({
+                        error
+                      }) => {
+                        if (error) {
+                          console.error('Error removing annotation:', error);
+                          toast({
+                            title: "Erro",
+                            description: "Não foi possível remover a anotação.",
+                            variant: "destructive"
+                          });
+                        } else {
+                          setAnnotations(annotations.filter(a => a.id !== annotation.id));
+                          toast({
+                            title: "Anotação removida",
+                            description: "A anotação foi removida com sucesso."
+                          });
+                        }
+                      });
+                    }}>
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
                         <p className="mt-2 text-sm">{annotation.texto}</p>
-                        <Button
-                          variant="link" 
-                          size="sm" 
-                          className="p-0 h-auto mt-1"
-                          onClick={() => {
-                            setPageNumber(annotation.pagina);
-                            setShowAnnotations(false);
-                          }}
-                        >
+                        <Button variant="link" size="sm" className="p-0 h-auto mt-1" onClick={() => {
+                    setPageNumber(annotation.pagina);
+                    setShowAnnotations(false);
+                  }}>
                           Ir para página
                         </Button>
-                      </div>
-                    ))}
+                      </div>)}
                   </TabsContent>
                   <TabsContent value="current" className="mt-4 space-y-3">
-                    {annotations.filter(a => a.pagina === pageNumber).length === 0 ? (
-                      <p className="text-center text-muted-foreground py-4">
+                    {annotations.filter(a => a.pagina === pageNumber).length === 0 ? <p className="text-center text-muted-foreground py-4">
                         Nenhuma anotação na página atual
-                      </p>
-                    ) : (
-                      annotations
-                        .filter(a => a.pagina === pageNumber)
-                        .map(annotation => (
-                          <div 
-                            key={annotation.id}
-                            className="bg-yellow-50 border border-yellow-100 p-3 rounded"
-                          >
+                      </p> : annotations.filter(a => a.pagina === pageNumber).map(annotation => <div key={annotation.id} className="bg-yellow-50 border border-yellow-100 p-3 rounded">
                             <div className="flex justify-between items-start">
                               <span className="text-xs bg-yellow-100 px-2 py-1 rounded">
                                 Página {annotation.pagina}
                               </span>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-6 w-6"
-                                onClick={() => {
-                                  // Delete annotation
-                                  supabase
-                                    .from('biblioteca_anotacoes')
-                                    .delete()
-                                    .eq('id', annotation.id)
-                                    .then(({ error }) => {
-                                      if (error) {
-                                        console.error('Error removing annotation:', error);
-                                        toast({
-                                          title: "Erro",
-                                          description: "Não foi possível remover a anotação.",
-                                          variant: "destructive"
-                                        });
-                                      } else {
-                                        setAnnotations(annotations.filter(a => a.id !== annotation.id));
-                                        toast({
-                                          title: "Anotação removida",
-                                          description: "A anotação foi removida com sucesso."
-                                        });
-                                      }
-                                    });
-                                }}
-                              >
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
+                      // Delete annotation
+                      supabase.from('biblioteca_anotacoes').delete().eq('id', annotation.id).then(({
+                        error
+                      }) => {
+                        if (error) {
+                          console.error('Error removing annotation:', error);
+                          toast({
+                            title: "Erro",
+                            description: "Não foi possível remover a anotação.",
+                            variant: "destructive"
+                          });
+                        } else {
+                          setAnnotations(annotations.filter(a => a.id !== annotation.id));
+                          toast({
+                            title: "Anotação removida",
+                            description: "A anotação foi removida com sucesso."
+                          });
+                        }
+                      });
+                    }}>
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
                             <p className="mt-2 text-sm">{annotation.texto}</p>
-                          </div>
-                        ))
-                    )}
+                          </div>)}
                   </TabsContent>
                 </Tabs>
-                <Button 
-                  variant="outline" 
-                  className="w-full mt-4" 
-                  onClick={() => {
-                    setIsAddingAnnotation(true);
-                    setShowAnnotations(false);
-                  }}
-                >
+                <Button variant="outline" className="w-full mt-4" onClick={() => {
+              setIsAddingAnnotation(true);
+              setShowAnnotations(false);
+            }}>
                   Adicionar anotação
                 </Button>
-              </div>
-            )}
+              </div>}
           </div>
         </SheetContent>
       </Sheet>
@@ -867,12 +702,7 @@ export function BibliotecaPDFViewer({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="title" className="text-sm font-medium">Título do Marcador</label>
-              <Input
-                id="title"
-                placeholder="Ex: Capítulo 1 - Introdução"
-                value={newBookmarkTitle}
-                onChange={(e) => setNewBookmarkTitle(e.target.value)}
-              />
+              <Input id="title" placeholder="Ex: Capítulo 1 - Introdução" value={newBookmarkTitle} onChange={e => setNewBookmarkTitle(e.target.value)} />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
@@ -894,13 +724,7 @@ export function BibliotecaPDFViewer({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="annotation" className="text-sm font-medium">Texto da Anotação</label>
-              <Textarea
-                id="annotation"
-                placeholder="Digite sua anotação aqui..."
-                value={newAnnotation}
-                onChange={(e) => setNewAnnotation(e.target.value)}
-                rows={5}
-              />
+              <Textarea id="annotation" placeholder="Digite sua anotação aqui..." value={newAnnotation} onChange={e => setNewAnnotation(e.target.value)} rows={5} />
             </div>
           </div>
           <div className="flex justify-end space-x-2">
@@ -909,6 +733,5 @@ export function BibliotecaPDFViewer({
           </div>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
