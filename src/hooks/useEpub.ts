@@ -66,7 +66,9 @@ export const useEpub = ({ url, file, containerRef }: UseEpubProps): UseEpubRetur
         // Get total pages for progress calculation
         newBook.ready.then(() => {
           if (newBook.spine) {
-            setTotalPages(newBook.spine.length);
+            // Fix: Use spine.items.length instead of spine.length
+            const spineLength = newBook.spine.items ? newBook.spine.items.length : 0;
+            setTotalPages(spineLength);
           }
         });
 
@@ -101,6 +103,7 @@ export const useEpub = ({ url, file, containerRef }: UseEpubProps): UseEpubRetur
           
           if (spineItem) {
             setCurrentPage(loc.start.index + 1);
+            // Fix: Use the stored totalPages value instead of accessing spine.length
             setProgress(((loc.start.index + 1) / totalPages) * 100);
           }
           
