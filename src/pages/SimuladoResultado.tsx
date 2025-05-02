@@ -82,9 +82,9 @@ export default function SimuladoResultado() {
             return;
         }
 
-        // Use a typesafe approach to query the database
+        // Use a typesafe approach with dynamic table query
         const { data, error } = await supabase
-          .from(tableName)
+          .from(tableName) // This is a valid table name from our switch statement
           .select('*')
           .in('id', respostasIds);
 
