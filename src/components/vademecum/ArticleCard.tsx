@@ -84,7 +84,7 @@ export const ArticleCard = ({
             lawName={lawName}
             articleNumber={articleNumber}
             isLoading={isLoading}
-            isVisible={true} // Always visible on desktop
+            isVisible={true} // Fixed boolean value instead of string
           />
         )}
       </div>
