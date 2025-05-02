@@ -1,7 +1,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import type { SimuladoCategoria, Questao, SimuladoSessao, SimuladoResposta, SimuladoEdicao } from "@/types/simulados";
+import { SimuladoCategoria, Questao, SimuladoSessao, SimuladoResposta, SimuladoEdicao } from "@/types/simulados";
 import { useAuth } from "@/hooks/use-auth";
 
 export function useSimulado(categoria: SimuladoCategoria) {
@@ -173,7 +173,13 @@ export function useSimulado(categoria: SimuladoCategoria) {
   // Submit an answer
   const useSubmitResposta = () => {
     return useMutation({
-      mutationFn: async (data: Omit<SimuladoResposta, 'id'>) => {
+      mutationFn: async (data: {
+        sessao_id: string;
+        questao_id: string;
+        resposta_selecionada?: string;
+        acertou?: boolean;
+        tempo_resposta?: number;
+      }) => {
         const { data: resposta, error } = await supabase
           .from('simulado_respostas')
           .insert(data)

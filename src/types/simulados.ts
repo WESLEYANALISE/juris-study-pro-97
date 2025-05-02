@@ -1,5 +1,7 @@
 
-// Types for simulados (should be added to an appropriate types file)
+// Types for simulados
+
+export type SimuladoCategoria = 'OAB' | 'PRF' | 'PF' | 'TJSP' | 'JUIZ' | 'PROMOTOR' | 'DELEGADO';
 
 export interface Questao {
   id: string;
@@ -17,6 +19,10 @@ export interface Questao {
   area?: string;
   subarea?: string;
   nivel?: string;
+  // Add missing properties that are used in components
+  alternativa_correta?: string;
+  imagem_url?: string;
+  edicao_id?: string;
 }
 
 export interface RespostaUsuario {
@@ -36,4 +42,42 @@ export interface ResultadoSimulado {
   createdAt: string;
   categoriaId?: string;
   categoriaName?: string;
+}
+
+export interface SimuladoEdicao {
+  id: string;
+  categoria: SimuladoCategoria;
+  nome: string;
+  ano: number;
+  numero: number;
+  total_questoes: number;
+  data_prova?: string;
+  descricao?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SimuladoSessao {
+  id: string;
+  categoria: SimuladoCategoria;
+  edicao_id?: string;
+  user_id: string;
+  data_inicio: string;
+  data_fim?: string;
+  total_questoes: number;
+  acertos: number;
+  completo: boolean;
+  tempo_total: number;
+  pontuacao?: number;
+  created_at?: string;
+}
+
+export interface SimuladoResposta {
+  id?: string;
+  sessao_id: string;
+  questao_id: string;
+  resposta_selecionada?: string;
+  acertou?: boolean;
+  tempo_resposta?: number;
+  created_at?: string;
 }

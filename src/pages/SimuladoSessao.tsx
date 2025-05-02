@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { Progress } from "@/components/ui/progress";
 import { useSimulado } from "@/hooks/use-simulado";
 import { Clock, AlertCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { SimuladoCategoria, Questao } from "@/types/simulados";
+import { Questao, SimuladoCategoria } from "@/types/simulados";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -23,8 +24,7 @@ const isValidQuestion = (item: any): item is Questao => {
     'alternativa_a' in item &&
     'alternativa_b' in item &&
     'alternativa_c' in item &&
-    'alternativa_d' in item &&
-    'alternativa_correta' in item
+    'alternativa_d' in item
   );
 };
 
@@ -127,14 +127,14 @@ const SimuladoSessao = () => {
               alternativa_b: q.alternativa_b || '',
               alternativa_c: q.alternativa_c || '',
               alternativa_d: q.alternativa_d || '',
-              alternativa_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
-              imagem_url: q.imagem_url,
-              area: q.area,
-              explicacao: q.explicacao,
-              edicao_id: q.edicao_id
-            })) as Questao[];
+              resposta_correta: (q.alternativa_correta as 'A' | 'B' | 'C' | 'D') || 'A',
+              imagem_url: q.imagem_url || '',
+              area: q.area || '',
+              explicacao: q.explicacao || '',
+              edicao_id: q.edicao_id || ''
+            }));
           
-          setQuestoes(validQuestoes);
+          setQuestoes(validQuestoes as Questao[]);
         } else {
           setQuestoes([]);
         }
@@ -237,7 +237,7 @@ const SimuladoSessao = () => {
       sessao_id: sessaoId!,
       questao_id: currentQuestionData.id,
       resposta_selecionada: answers[currentQuestionData.id],
-      acertou: answers[currentQuestionData.id] === currentQuestionData.alternativa_correta,
+      acertou: answers[currentQuestionData.id] === currentQuestionData.resposta_correta,
       tempo_resposta: questionTimer
     });
 
@@ -359,7 +359,7 @@ const SimuladoSessao = () => {
                       <RadioGroupItem value={option} id={`option-${option}`} className="mt-1" />
                       <Label htmlFor={`option-${option}`} className="flex-grow cursor-pointer">
                         <span className="font-semibold mr-2">{option})</span>
-                        {currentQuestionData[`alternativa_${option.toLowerCase()}`]}
+                        {currentQuestionData[`alternativa_${option.toLowerCase()}` as keyof Questao] as string}
                       </Label>
                     </motion.div>
                   ))}

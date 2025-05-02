@@ -3,18 +3,84 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Questao } from '@/types/simulados';
 
-// Minimum patch to fix the type errors
-// This assumes SimuladoResultado.tsx has a section like this:
 export default function SimuladoResultado() {
-  // ... other code ...
+  const { sessaoId } = useParams();
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [resultado, setResultado] = useState<any>(null);
+  const [respostas, setRespostas] = useState<any[]>([]);
   const [questoes, setQuestoes] = useState<Questao[]>([]);
+  const [respostasIds, setRespostasIds] = useState<string[]>([]);
 
-  // Fix the type error by using proper type casting
+  useEffect(() => {
+    async function loadResultado() {
+      try {
+        if (!sessaoId) return;
+
+        // Fetch simulado session
+        const { data: sessao, error: sessaoError } = await supabase
+          .from('simulado_sessoes')
+          .select('*')
+          .eq('id', sessaoId)
+          .single();
+
+        if (sessaoError) {
+          console.error('Error fetching simulado session:', sessaoError);
+          return;
+        }
+
+        // Fetch user responses
+        const { data: respostasData, error: respostasError } = await supabase
+          .from('simulado_respostas')
+          .select('*')
+          .eq('sessao_id', sessaoId);
+
+        if (respostasError) {
+          console.error('Error fetching respostas:', respostasError);
+          return;
+        }
+
+        if (respostasData) {
+          setRespostas(respostasData);
+          // Extract question IDs from responses
+          const ids = respostasData.map(r => r.questao_id);
+          setRespostasIds(ids);
+        }
+
+        setResultado(sessao);
+      } catch (err) {
+        console.error('Error loading resultado:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadResultado();
+  }, [sessaoId, navigate]);
+
+  // Load the questions details
   useEffect(() => {
     async function loadQuestoesDetails() {
       try {
+        if (!respostasIds.length) return;
+        
+        // Instead of using questoes_simulados, get the correct table based on the category
+        if (!resultado || !resultado.categoria) return;
+        
+        let tableName: string;
+        switch(resultado.categoria) {
+          case 'OAB': tableName = 'simulados_oab'; break;
+          case 'PRF': tableName = 'simulados_prf'; break;
+          case 'PF': tableName = 'simulados_pf'; break;
+          case 'TJSP': tableName = 'simulados_tjsp'; break;
+          case 'JUIZ': tableName = 'simulados_juiz'; break;
+          case 'PROMOTOR': tableName = 'simulados_promotor'; break;
+          case 'DELEGADO': tableName = 'simulados_delegado'; break;
+          default: tableName = 'simulados_oab';
+        }
+        
         const { data, error } = await supabase
-          .from('questoes_simulados')
+          .from(tableName)
           .select('*')
           .in('id', respostasIds);
 
@@ -23,25 +89,42 @@ export default function SimuladoResultado() {
           return;
         }
 
-        // Cast the data to the correct type
-        setQuestoes(data as unknown as Questao[]);
-        
+        if (data) {
+          // Map the data to match the Questao interface
+          const formattedQuestoes = data.map(q => ({
+            id: q.id || '',
+            questao: q.questao || '',
+            alternativa_a: q.alternativa_a || '',
+            alternativa_b: q.alternativa_b || '',
+            alternativa_c: q.alternativa_c || '',
+            alternativa_d: q.alternativa_d || '',
+            alternativa_e: q.alternativa_e || '',
+            resposta_correta: q.alternativa_correta || '',
+            ano: q.ano || '',
+            banca: q.banca || '',
+            numero_questao: q.numero_questao || '',
+            explicacao: q.explicacao || '',
+            area: q.area || '',
+          })) as Questao[];
+          
+          setQuestoes(formattedQuestoes);
+        }
       } catch (err) {
         console.error('Error in loadQuestoesDetails:', err);
       }
     }
 
-    if (respostasIds.length > 0) {
+    if (respostasIds.length > 0 && resultado) {
       loadQuestoesDetails();
     }
-  }, [respostasIds]);
+  }, [respostasIds, resultado]);
 
   // Add null checks for q and questao
-  const getQuestaoById = (id: string) => {
-    return questoes.find(q => q?.id === id) || null;
+  const getQuestaoById = (id: string): Questao | null => {
+    return questoes.find(q => q && q.id === id) || null;
   };
 
-  // ... other code that needs null checks ...
+  // other code that needs null checks ...
   const renderAlternativas = (questaoId: string) => {
     const questao = getQuestaoById(questaoId);
     if (!questao) return null; // Null check
@@ -53,5 +136,12 @@ export default function SimuladoResultado() {
     );
   };
 
-  // ... rest of the component ...
+  // rest of the component ...
+  return (
+    <div>
+      {/* Render your simulado results here */}
+      <h1>Resultado do Simulado</h1>
+      {/* Rest of your JSX */}
+    </div>
+  );
 }
