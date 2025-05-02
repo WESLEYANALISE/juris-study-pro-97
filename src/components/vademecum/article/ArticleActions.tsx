@@ -50,16 +50,14 @@ export const ArticleActions = ({
       
       {(technicalExplanation || formalExplanation) && (
         <ArticleExplanation
-          technicalExplanation={technicalExplanation}
-          formalExplanation={formalExplanation}
-          lawName={lawName}
+          technicalExplanation={technicalExplanation || ""}
+          formalExplanation={formalExplanation || ""}
         />
       )}
 
       {practicalExample && (
         <PracticalExample
-          practicalExample={practicalExample}
-          lawName={lawName}
+          example={practicalExample}
         />
       )}
     </div>

@@ -33,7 +33,10 @@ export const ArticleControls = ({
     <div className="flex items-center space-x-1">
       <BookmarkButton 
         isFavorite={isFavorite} 
-        onToggle={() => setIsFavorite(!isFavorite)} 
+        setIsFavorite={setIsFavorite}
+        lawName={lawName}
+        articleNumber={articleNumber}
+        articleText={articleText}
         isLoading={isLoading}
       />
       <AnnotationButton 
