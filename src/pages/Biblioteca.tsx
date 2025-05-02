@@ -96,8 +96,25 @@ export default function Biblioteca() {
   // Determine file type for reading mode
   const getFileType = (link: string | null): ViewerType => {
     if (!link) return "pdf";
-    const extension = link.split('.').pop()?.toLowerCase();
-    return extension === 'epub' ? 'epub' : 'pdf';
+    
+    // Try to extract extension from URL
+    try {
+      const urlObj = new URL(link);
+      const pathParts = urlObj.pathname.split('.');
+      if (pathParts.length > 1) {
+        const extension = pathParts[pathParts.length - 1].toLowerCase();
+        if (extension === 'epub') return 'epub';
+        return 'pdf';
+      }
+    } catch (e) {
+      console.error('Error parsing URL:', e);
+    }
+    
+    // Check for common content indicators in the URL
+    const urlLower = (link || '').toLowerCase();
+    if (urlLower.includes('epub')) return 'epub';
+    
+    return 'pdf'; // Default to PDF
   };
   
   return <div className="max-w-6xl mx-auto px-4 py-6">

@@ -27,10 +27,10 @@ export const ArticleActions = ({
 }: ArticleActionsProps) => {
   const [isNarrating, setIsNarrating] = useState(false);
 
-  const handleNarrationClick = async () => {
+  const handleNarrationClick = async (text: string) => {
     setIsNarrating(true);
     try {
-      await handleNarration(articleText);
+      await handleNarration(text);
     } finally {
       setIsNarrating(false);
     }
@@ -52,12 +52,14 @@ export const ArticleActions = ({
         <ArticleExplanation
           technicalExplanation={technicalExplanation || ""}
           formalExplanation={formalExplanation || ""}
+          onNarration={handleNarrationClick}
         />
       )}
 
       {practicalExample && (
         <PracticalExample
           example={practicalExample}
+          onNarration={handleNarrationClick}
         />
       )}
     </div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { BookOpen, Download, FileText, Volume2, ArrowRight, X, MessageSquare, AlertTriangle } from "lucide-react";
+import { BookOpen, Download, FileText, Volume2, ArrowRight, X, MessageSquare, AlertTriangle, BookType } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -32,6 +32,29 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   const [anotacao, setAnotacao] = useState("");
   const [isChecking, setIsChecking] = useState(false);
 
+  // Determine the file type from the link
+  const getFileExtension = (url: string | null): string => {
+    if (!url) return '';
+    try {
+      // Try to extract extension from URL
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('.');
+      if (pathParts.length > 1) {
+        return pathParts[pathParts.length - 1].toLowerCase();
+      }
+      
+      // Check for common content indicators in the URL
+      const urlLower = url.toLowerCase();
+      if (urlLower.includes('epub')) return 'epub';
+      if (urlLower.includes('pdf')) return 'pdf';
+      
+      return '';
+    } catch (e) {
+      console.error('Error parsing URL:', e);
+      return '';
+    }
+  };
+
   const handleDownload = () => {
     if (livro.download) {
       window.open(livro.download, "_blank");
@@ -47,7 +70,8 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
   const handleRead = async () => {
     if (livro.link) {
       // Check file type to determine appropriate viewer
-      const fileExtension = livro.link.split('.').pop()?.toLowerCase();
+      const fileExtension = getFileExtension(livro.link);
+      console.log("Detected file extension:", fileExtension);
       
       // Check if the link is valid before opening
       if (!isChecking) {
@@ -60,11 +84,12 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           });
           
           if (response.ok) {
+            console.log("File check OK, opening with viewer type:", fileExtension === 'epub' ? 'epub' : 'pdf');
             onRead(fileExtension === 'epub' ? 'epub' : 'pdf');
           } else {
             toast({
               title: "Erro ao acessar arquivo",
-              description: "Não foi possível acessar o arquivo. Por favor, tente novamente mais tarde.",
+              description: `Não foi possível acessar o arquivo (status ${response.status}). Por favor, tente novamente mais tarde.`,
               variant: "destructive",
             });
           }
@@ -72,14 +97,14 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
           console.error("Error checking file:", error);
           toast({
             title: "Erro ao verificar arquivo",
-            description: "Não foi possível verificar o arquivo. Por favor, tente novamente mais tarde.",
+            description: "Não foi possível verificar o arquivo. Pode haver um problema de CORS ou de acesso. Por favor, tente novamente mais tarde.",
             variant: "destructive",
           });
         } finally {
           setIsChecking(false);
         }
       } else {
-        onRead(fileExtension === 'epub' ? 'epub' : 'pdf'); // Now passing the argument correctly
+        onRead(fileExtension === 'epub' ? 'epub' : 'pdf');
       }
     } else {
       toast({
@@ -88,6 +113,15 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
         variant: "destructive",
       });
     }
+  };
+
+  // Display appropriate button label based on file type
+  const getReadButtonLabel = () => {
+    if (!livro.link) return "Ler Agora";
+    
+    const fileType = getFileExtension(livro.link);
+    if (fileType === 'epub') return "Ler como EPUB";
+    return "Ler Agora";
   };
 
   const handleNarration = async () => {
@@ -176,6 +210,11 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
             <div className="max-w-[80%]">
               <h2 className="text-2xl font-bold text-primary">{livro.livro}</h2>
               <p className="text-muted-foreground">{livro.area}</p>
+              {livro.link && getFileExtension(livro.link) === 'epub' && (
+                <Badge variant="secondary" className="mt-2">
+                  <BookType className="w-3 h-3 mr-1" /> EPUB
+                </Badge>
+              )}
             </div>
             
             <div className="flex gap-2">
@@ -218,7 +257,7 @@ export function BookModal({ livro, onClose, onRead }: BookModalProps) {
               </span>
             ) : (
               <>
-                <BookOpen className="mr-2 h-4 w-4" /> Ler Agora
+                <BookOpen className="mr-2 h-4 w-4" /> {getReadButtonLabel()}
               </>
             )}
           </Button>

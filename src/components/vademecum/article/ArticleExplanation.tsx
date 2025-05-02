@@ -8,13 +8,13 @@ import { toast } from 'sonner';
 interface ArticleExplanationProps {
   technicalExplanation?: string;
   formalExplanation?: string;
-  onNarration: (text: string) => Promise<void>;
+  onNarration?: (text: string) => Promise<void>;
 }
 
 export const ArticleExplanation = ({ 
   technicalExplanation, 
   formalExplanation,
-  onNarration 
+  onNarration = async () => {} // Default no-op function to make it optional
 }: ArticleExplanationProps) => {
   const handleCopy = async (text: string) => {
     if (!text) return;
@@ -57,7 +57,7 @@ export const ArticleExplanation = ({
                 variant="purple" 
                 size="sm" 
                 className="gap-1"
-                onClick={() => onNarration(technicalExplanation)}
+                onClick={() => onNarration?.(technicalExplanation)}
                 title="Narrar explicação técnica"
               >
                 <Volume2 size={14} />
@@ -90,7 +90,7 @@ export const ArticleExplanation = ({
                 variant="purple" 
                 size="sm" 
                 className="gap-1"
-                onClick={() => onNarration(formalExplanation)}
+                onClick={() => onNarration?.(formalExplanation)}
                 title="Narrar explicação formal"
               >
                 <Volume2 size={14} />

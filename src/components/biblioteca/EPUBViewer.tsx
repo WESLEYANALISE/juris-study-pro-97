@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Moon, Sun, Bookmark } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Moon, Sun, Bookmark, AlertTriangle } from 'lucide-react';
 import { Slider } from '@/components/ui/slider';
 import { toast } from 'sonner';
 import ePub from 'epubjs';
@@ -28,8 +28,16 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
   const [fontSize, setFontSize] = useState<number>(100);
   const [nightMode, setNightMode] = useState<boolean>(false);
   const [bookmarks, setBookmarks] = useState<{ cfi: string; page: number }[]>([]);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState<boolean>(false);
   
   const viewerRef = useRef<HTMLDivElement>(null);
+
+  // Add a debug log function
+  const addDebugLog = useCallback((message: string) => {
+    console.log(`[EPUBViewer] ${message}`);
+    setDebugLog(prev => [...prev, `${new Date().toISOString().split('T')[1].split('.')[0]} - ${message}`].slice(-20));
+  }, []);
 
   // Load the EPUB book
   useEffect(() => {
@@ -41,76 +49,137 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
 
     try {
       setIsLoading(true);
+      addDebugLog(`Tentando carregar EPUB de: ${livro.link}`);
       
       // Validate URL
+      let url;
       try {
-        new URL(livro.link);
+        url = new URL(livro.link);
+        addDebugLog(`URL validada: ${url.toString()}`);
       } catch (e) {
         setError('URL inválida para o ebook');
+        addDebugLog(`URL inválida: ${e}`);
         setIsLoading(false);
         return;
       }
       
-      const epubBook = ePub(livro.link);
-      setBook(epubBook);
-
-      // Set up rendition once the book is loaded
-      epubBook.loaded.navigation.then(() => {
-        if (!viewerRef.current) return;
-        
-        const rendition = epubBook.renderTo(viewerRef.current, {
-          width: '100%',
-          height: '100%',
-          flow: 'paginated',
-          spread: 'auto',
-          minSpreadWidth: 900
-        });
-
-        rendition.display();
-        setRendition(rendition);
-        setIsLoading(false);
-
-        // Apply initial theme
-        updateTheme(rendition, nightMode);
-
-        // Get locations for pagination
-        epubBook.locations.generate(1024).then(() => {
-          const totalLoc = epubBook.locations.length();
-          setTotalPages(totalLoc || 0);
-        }).catch(err => {
-          console.error('Error generating locations:', err);
-          // Continue with the book even if locations fail
-        });
-
-        // Track location changes
-        rendition.on('locationChanged', (location: any) => {
-          const cfi = location.start.cfi;
-          setCurrentCfi(cfi);
-          
-          if (epubBook.locations.length()) {
-            const pageNumber = epubBook.locations.locationFromCfi(cfi);
-            if (typeof pageNumber === 'number') {
-              setCurrentPage(pageNumber + 1); // Add 1 for human-readable page numbers
-            }
+      // Pre-check URL availability
+      fetch(livro.link, { method: 'HEAD' })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro ao acessar o arquivo: ${response.status}`);
           }
+          
+          addDebugLog(`Arquivo acessível (status ${response.status}), iniciando carregamento`);
+          
+          // Initialize EPUB.js with the validated URL
+          const epubBook = ePub(livro.link);
+          setBook(epubBook);
+          
+          // Listen for errors during opening
+          epubBook.on('openFailed', function(e: any) {
+            addDebugLog(`Falha ao abrir EPUB: ${e}`);
+            setError(`Falha ao abrir o EPUB: ${e.message || 'Erro desconhecido'}`);
+            setIsLoading(false);
+          });
+
+          // Set up rendition once the book is loaded
+          epubBook.loaded.navigation
+            .then(() => {
+              if (!viewerRef.current) {
+                addDebugLog('Elemento viewerRef não está disponível');
+                return;
+              }
+              
+              addDebugLog('Renderizando EPUB no contêiner');
+              
+              const rendition = epubBook.renderTo(viewerRef.current, {
+                width: '100%',
+                height: '100%',
+                flow: 'paginated',
+                spread: 'auto',
+                minSpreadWidth: 900
+              });
+
+              addDebugLog('Inicializando exibição do EPUB');
+              rendition.display().then(() => {
+                addDebugLog('Exibição do EPUB inicializada com sucesso');
+              });
+              
+              setRendition(rendition);
+              setIsLoading(false);
+
+              // Apply initial theme
+              updateTheme(rendition, nightMode);
+
+              // Get locations for pagination - force simplified location creation
+              addDebugLog('Gerando localizações para paginação');
+              epubBook.locations.generate(1024)
+                .then(() => {
+                  const totalLoc = epubBook.locations.length();
+                  setTotalPages(totalLoc || 0);
+                  addDebugLog(`Geradas ${totalLoc} localizações`);
+                })
+                .catch(err => {
+                  addDebugLog(`Erro ao gerar localizações: ${err}`);
+                  // Continue with the book even if locations fail
+                });
+
+              // Track location changes
+              rendition.on('locationChanged', (location: any) => {
+                if (!location || !location.start) {
+                  addDebugLog('locationChanged: Evento recebido sem dados válidos de localização');
+                  return;
+                }
+                
+                const cfi = location.start.cfi;
+                setCurrentCfi(cfi);
+                addDebugLog(`Localização alterada para: ${cfi}`);
+                
+                if (epubBook.locations.length()) {
+                  try {
+                    const pageNumber = epubBook.locations.locationFromCfi(cfi);
+                    if (typeof pageNumber === 'number') {
+                      setCurrentPage(pageNumber + 1); // Add 1 for human-readable page numbers
+                      addDebugLog(`Página atual: ${pageNumber + 1}`);
+                    }
+                  } catch (e) {
+                    addDebugLog(`Erro ao converter CFI para localização: ${e}`);
+                  }
+                }
+              });
+              
+              // Listen for rendition display errors
+              rendition.on('displayError', (error: any) => {
+                addDebugLog(`Erro ao renderizar conteúdo: ${error}`);
+              });
+
+            })
+            .catch(err => {
+              addDebugLog(`Erro ao carregar a navegação do EPUB: ${err}`);
+              setError('Erro ao carregar a navegação do EPUB. O arquivo pode estar corrompido.');
+              setIsLoading(false);
+            });
+        })
+        .catch(err => {
+          addDebugLog(`Erro ao verificar acesso ao arquivo: ${err}`);
+          setError(`Não foi possível acessar o arquivo EPUB. Erro: ${err.message}`);
+          setIsLoading(false);
         });
-      }).catch(err => {
-        console.error('Error loading EPUB navigation:', err);
-        setError('Erro ao carregar a navegação do EPUB. O arquivo pode estar corrompido.');
-        setIsLoading(false);
-      });
 
       return () => {
-        if (epubBook) {
-          epubBook.destroy();
+        if (book) {
+          addDebugLog('Limpando recursos do EPUB');
+          book.destroy();
         }
       };
     } catch (err) {
       console.error('Error setting up EPUB:', err);
+      addDebugLog(`Erro ao configurar o leitor EPUB: ${err}`);
       setError('Erro ao configurar o leitor EPUB.');
       setIsLoading(false);
     }
-  }, [livro.link]);
+  }, [livro.link, addDebugLog]);
 
   // Update theme when night mode changes
   const updateTheme = useCallback((rendition: any, isDarkMode: boolean) => {
@@ -177,6 +246,9 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
         goToPrevious();
       } else if (e.key === 'ArrowRight') {
         goToNext();
+      } else if (e.key === 'D' && e.altKey) {
+        // Alt+D to toggle debug panel
+        setShowDebug(prev => !prev);
       }
     };
 
@@ -346,6 +418,17 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
           >
             <Bookmark className="h-4 w-4" />
           </Button>
+          
+          {/* Debug button - only for development */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowDebug(prev => !prev)}
+            className="opacity-50 hover:opacity-100"
+            title="Debug"
+          >
+            <AlertTriangle className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -358,6 +441,14 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
               <div className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg">
                 <h3 className="text-lg font-semibold mb-2">Erro ao carregar EPUB</h3>
                 <p>{error}</p>
+                <div className="mt-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Informações técnicas para debug:
+                  </p>
+                  <pre className="text-xs bg-black/10 p-2 rounded overflow-auto max-h-24">
+                    URL: {livro.link}
+                  </pre>
+                </div>
                 <Button className="mt-4" onClick={onClose}>
                   Voltar
                 </Button>
@@ -405,6 +496,16 @@ export function EPUBViewer({ livro, onClose }: EPUBViewerProps) {
           Próxima <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
       </div>
+      
+      {/* Debug panel - normally hidden */}
+      {showDebug && (
+        <div className="epub-debug">
+          <p>Debug Log:</p>
+          {debugLog.map((log, idx) => (
+            <div key={idx}>{log}</div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

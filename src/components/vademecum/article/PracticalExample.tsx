@@ -6,10 +6,13 @@ import { toast } from 'sonner';
 
 interface PracticalExampleProps {
   example: string;
-  onNarration: (text: string) => Promise<void>;
+  onNarration?: (text: string) => Promise<void>;
 }
 
-export const PracticalExample = ({ example, onNarration }: PracticalExampleProps) => {
+export const PracticalExample = ({ 
+  example, 
+  onNarration = async () => {} // Default no-op function to make it optional
+}: PracticalExampleProps) => {
   const handleCopy = async (text: string) => {
     if (!text) return;
     
@@ -49,7 +52,7 @@ export const PracticalExample = ({ example, onNarration }: PracticalExampleProps
             variant="purple" 
             size="sm" 
             className="gap-1"
-            onClick={() => onNarration(example)}
+            onClick={() => onNarration?.(example)}
             title="Narrar exemplo"
           >
             <Volume2 size={14} />
