@@ -59,7 +59,7 @@ export function VadeMecumArticleList({
       }
     }
   };
-  return <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4 md:space-y-6 px-[6px]">
+  return <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4 md:space-y-6 px-[5px]">
       <AnimatePresence>
         {isLoading ? Array.from({
         length: isMobile ? 2 : 3
