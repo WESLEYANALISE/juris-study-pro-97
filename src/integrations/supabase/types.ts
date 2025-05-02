@@ -45,6 +45,50 @@ export type Database = {
         }
         Relationships: []
       }
+      biblioteca_anotacoes: {
+        Row: {
+          cor: string | null
+          created_at: string | null
+          id: string
+          livro_id: string
+          pagina: number
+          posicao: Json | null
+          texto: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          livro_id: string
+          pagina: number
+          posicao?: Json | null
+          texto: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          livro_id?: string
+          pagina?: number
+          posicao?: Json | null
+          texto?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_anotacoes_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_juridica10"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biblioteca_juridica: {
         Row: {
           area: string | null
@@ -134,6 +178,133 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      biblioteca_juridica10: {
+        Row: {
+          autor: string | null
+          capa_url: string | null
+          categoria: string
+          created_at: string | null
+          data_publicacao: string | null
+          descricao: string | null
+          id: string
+          pdf_url: string
+          subcategoria: string | null
+          titulo: string
+          total_paginas: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          autor?: string | null
+          capa_url?: string | null
+          categoria: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          descricao?: string | null
+          id?: string
+          pdf_url: string
+          subcategoria?: string | null
+          titulo: string
+          total_paginas?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          autor?: string | null
+          capa_url?: string | null
+          categoria?: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          descricao?: string | null
+          id?: string
+          pdf_url?: string
+          subcategoria?: string | null
+          titulo?: string
+          total_paginas?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      biblioteca_leitura_progresso: {
+        Row: {
+          created_at: string | null
+          favorito: boolean | null
+          id: string
+          livro_id: string
+          pagina_atual: number | null
+          ultima_leitura: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          favorito?: boolean | null
+          id?: string
+          livro_id: string
+          pagina_atual?: number | null
+          ultima_leitura?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          favorito?: boolean | null
+          id?: string
+          livro_id?: string
+          pagina_atual?: number | null
+          ultima_leitura?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_leitura_progresso_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_juridica10"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biblioteca_marcadores: {
+        Row: {
+          cor: string | null
+          created_at: string | null
+          id: string
+          livro_id: string
+          pagina: number
+          titulo: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          livro_id: string
+          pagina: number
+          titulo?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string | null
+          id?: string
+          livro_id?: string
+          pagina?: number
+          titulo?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_marcadores_livro_id_fkey"
+            columns: ["livro_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_juridica10"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       categorias: {
         Row: {
@@ -4033,6 +4204,17 @@ export type Database = {
       increment_user_statistic: {
         Args: { p_user_id: string; p_field: string; p_amount?: number }
         Returns: undefined
+      }
+      list_bucket_files: {
+        Args: { bucket_name: string }
+        Returns: {
+          name: string
+          id: string
+          updated_at: string
+          created_at: string
+          last_accessed_at: string
+          metadata: Json
+        }[]
       }
       list_tables: {
         Args: { prefix: string }

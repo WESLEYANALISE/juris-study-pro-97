@@ -82,9 +82,9 @@ export default function SimuladoResultado() {
             return;
         }
 
-        // Use type assertion to handle the dynamic table name
+        // Fix for TypeScript error by using type assertion for dynamic table name
         const { data, error } = await supabase
-          .from(tableName as any) // Type assertion to bypass TypeScript's static type checking
+          .from(tableName as any) // Type assertion for dynamic table name
           .select('*')
           .in('id', respostasIds);
 
@@ -94,21 +94,21 @@ export default function SimuladoResultado() {
         }
 
         if (data) {
-          // Map the data to match the Questao interface explicitly
+          // Map the data to match the Questao interface with null checks
           const formattedQuestoes: Questao[] = data.map(q => ({
-            id: q.id || '',
-            questao: q.questao || '',
-            alternativa_a: q.alternativa_a || '',
-            alternativa_b: q.alternativa_b || '',
-            alternativa_c: q.alternativa_c || '',
-            alternativa_d: q.alternativa_d || '',
-            alternativa_e: q.alternativa_e || '',
-            resposta_correta: q.alternativa_correta || '',
-            ano: q.ano?.toString() || '',
-            banca: q.banca || '',
-            numero_questao: q.numero_questao?.toString() || '',
-            explicacao: q.explicacao || '',
-            area: q.area || '',
+            id: q?.id || '',
+            questao: q?.questao || '',
+            alternativa_a: q?.alternativa_a || '',
+            alternativa_b: q?.alternativa_b || '',
+            alternativa_c: q?.alternativa_c || '',
+            alternativa_d: q?.alternativa_d || '',
+            alternativa_e: q?.alternativa_e || '',
+            resposta_correta: q?.alternativa_correta || '',
+            ano: q?.ano?.toString() || '',
+            banca: q?.banca || '',
+            numero_questao: q?.numero_questao?.toString() || '',
+            explicacao: q?.explicacao || '',
+            area: q?.area || '',
           }));
           
           setQuestoes(formattedQuestoes);

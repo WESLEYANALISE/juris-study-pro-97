@@ -10,11 +10,12 @@ import Auth from "@/pages/Auth";
 import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
 import Biblioteca from "@/pages/Biblioteca";
+import BibliotecaJuridica from "@/pages/BibliotecaJuridica";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
 import VadeMecumViewer from "@/pages/VadeMecumViewer";
-import VadeMecumFavorites from "@/pages/VadeMecumFavorites"; // We'll create this
+import VadeMecumFavorites from "@/pages/VadeMecumFavorites"; 
 import Simulados from "@/pages/Simulados";
 import SimuladoCategoria from "@/pages/SimuladoCategoria";
 import SimuladoSessao from "@/pages/SimuladoSessao";
@@ -53,6 +54,7 @@ function App() {
               <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               <Route path="/biblioteca" element={<Layout><Biblioteca /></Layout>} />
+              <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
