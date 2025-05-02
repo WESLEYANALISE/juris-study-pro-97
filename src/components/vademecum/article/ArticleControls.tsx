@@ -49,6 +49,7 @@ export const ArticleControls = ({
             articleNumber={articleNumber} 
             articleText={articleText}
             isLoading={isLoading}
+            showLabel={true}
           />
         </motion.div>
       )}

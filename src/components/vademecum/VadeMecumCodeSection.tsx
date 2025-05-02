@@ -1,7 +1,7 @@
 
 import React, { useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Scale, GavelIcon, LandmarkIcon, FileText, ScrollText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -11,6 +11,8 @@ interface VadeMecumCodeSectionProps {
 }
 
 const codeDisplayNames: Record<string, string> = {
+  "Constituicao_Federal": "Constituição Federal",
+  "Constituição_Federal": "Constituição Federal",
   "Código_Civil": "Código Civil",
   "Código_Penal": "Código Penal",
   "Código_de_Processo_Civil": "Código de Processo Civil",
@@ -23,7 +25,30 @@ const codeDisplayNames: Record<string, string> = {
   "Código_Brasileiro_de_Telecomunicações": "Código Brasileiro de Telecomunicações",
 };
 
+const codeIcons: Record<string, React.ElementType> = {
+  "Constituicao_Federal": LandmarkIcon,
+  "Constituição_Federal": LandmarkIcon,
+  "Código_Civil": BookOpen,
+  "Código_Penal": GavelIcon,
+  "Código_de_Processo_Civil": Scale,
+  "Código_de_Processo_Penal": GavelIcon,
+  "Código_de_Defesa_do_Consumidor": ScrollText,
+  "Código_Tributário_Nacional": Scale,
+  "Código_de_Trânsito_Brasileiro": FileText,
+  "Código_Eleitoral": ScrollText,
+  "Código_Comercial": Scale,
+  "Código_Brasileiro_de_Telecomunicações": FileText,
+};
+
 const codeInfo: Record<string, { description: string; color: string }> = {
+  "Constituicao_Federal": {
+    description: "Lei fundamental e suprema do Brasil, todos os outros diplomas jurídicos devem estar em conformidade com suas regras",
+    color: "bg-amber-500"
+  },
+  "Constituição_Federal": {
+    description: "Lei fundamental e suprema do Brasil, todos os outros diplomas jurídicos devem estar em conformidade com suas regras",
+    color: "bg-amber-500"
+  },
   "Código_Civil": { 
     description: "Regula os direitos e obrigações de ordem privada das pessoas", 
     color: "bg-blue-500" 
@@ -66,16 +91,20 @@ const codeInfo: Record<string, { description: string; color: string }> = {
   },
 };
 
-const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({ 
-  tableNames, 
-  searchQuery 
-}) => {
+const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({ tableNames, searchQuery }) => {
   const navigate = useNavigate();
 
   console.log("CodeSection received tableNames:", tableNames);
 
   const filteredCodes = useMemo(() => {
-    return tableNames.filter((codeName) => {
+    // List the Constituição Federal first, followed by other codes
+    const sortedCodes = [...tableNames].sort((a, b) => {
+      if (a === 'Constituicao_Federal' || a === 'Constituição_Federal') return -1;
+      if (b === 'Constituicao_Federal' || b === 'Constituição_Federal') return 1;
+      return a.localeCompare(b);
+    });
+    
+    return sortedCodes.filter((codeName) => {
       const displayName = codeDisplayNames[codeName] || codeName.replace(/_/g, " ");
       return displayName.toLowerCase().includes(searchQuery.toLowerCase());
     });
@@ -116,6 +145,7 @@ const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({
             description: "Conjunto de leis e normas jurídicas", 
             color: "bg-primary" 
           };
+          const IconComponent = codeIcons[codeName] || BookOpen;
           
           return (
             <motion.div key={codeName} variants={item}>
@@ -128,7 +158,7 @@ const VadeMecumCodeSection: React.FC<VadeMecumCodeSectionProps> = ({
                     <div className={`${info.color} h-full w-2 rounded-l-lg`}></div>
                     <div className="p-5 flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <BookOpen className="h-4 w-4 text-muted-foreground" />
+                        <IconComponent className="h-4 w-4 text-muted-foreground" />
                         <h3 className="font-semibold">{displayName}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground">{info.description}</p>

@@ -53,6 +53,12 @@ export const ArticleCard = ({
     return null; // Don't render invalid articles
   }
 
+  // Apply bold styling to "Parágrafo único" in article text
+  const formattedArticleText = articleText?.replace(
+    /(Parágrafo único\.|PARÁGRAFO ÚNICO\.)/g, 
+    '<strong>$1</strong>'
+  );
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }} 
@@ -74,7 +80,7 @@ export const ArticleCard = ({
         <div className="flex justify-between items-start">
           <ArticleContent 
             articleNumber={articleNumber}
-            articleText={articleText}
+            articleText={formattedArticleText || articleText}
             fontSize={fontSize}
             isHeading={isHeading}
           />
@@ -84,7 +90,7 @@ export const ArticleCard = ({
               articleText={articleText}
               isNarrating={isNarrating}
               setIsNarrating={setIsNarrating}
-              isFavorite={isFavorite ?? false}
+              isFavorite={!!isFavorite}
               setIsFavorite={() => toggleFavorite(articleText)}
               lawName={lawName}
               articleNumber={articleNumber}

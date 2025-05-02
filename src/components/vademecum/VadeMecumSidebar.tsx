@@ -3,8 +3,10 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Bookmark, History } from "lucide-react";
+import { Bookmark, History, BookmarkIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { VadeMecumFavorites } from "./VadeMecumFavorites";
+import { useVadeMecumFavorites } from "@/hooks/useVadeMecumFavorites";
 
 interface VadeMecumSidebarProps {
   favorites: any[];
@@ -13,6 +15,11 @@ interface VadeMecumSidebarProps {
 
 export function VadeMecumSidebar({ favorites, recentHistory }: VadeMecumSidebarProps) {
   const navigate = useNavigate();
+  const { removeFavorite } = useVadeMecumFavorites();
+
+  const handleRemoveFavorite = async (lawName: string, articleNumber: string) => {
+    return await removeFavorite(articleNumber, lawName);
+  };
 
   return (
     <motion.div 
@@ -28,44 +35,20 @@ export function VadeMecumSidebar({ favorites, recentHistory }: VadeMecumSidebarP
         <Tabs defaultValue="favorites" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="favorites" className="gap-2">
-              <Bookmark className="h-4 w-4" />
-              Favoritos
+              <BookmarkIcon className="h-4 w-4" />
+              <span className="sm:inline">Favoritos</span>
             </TabsTrigger>
             <TabsTrigger value="history" className="gap-2">
               <History className="h-4 w-4" />
-              Recentes
+              <span className="sm:inline">Recentes</span>
             </TabsTrigger>
           </TabsList>
           <TabsContent value="favorites">
             <div className="space-y-2 max-h-[400px] overflow-auto p-1">
-              <AnimatePresence>
-                {favorites.length === 0 ? (
-                  <div className="text-center py-4 text-sm text-muted-foreground">
-                    Nenhum artigo favorito.
-                  </div>
-                ) : (
-                  favorites.map((favorite, index) => (
-                    <motion.div
-                      key={favorite.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ delay: index * 0.05, duration: 0.2 }}
-                    >
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-left hover:bg-accent"
-                        onClick={() => navigate(`/vademecum/${favorite.law_name}`)}
-                      >
-                        <div className="truncate">
-                          <div className="font-medium">{favorite.law_name.replace(/_/g, ' ')}</div>
-                          <div className="text-sm text-muted-foreground">Art. {favorite.article_number}</div>
-                        </div>
-                      </Button>
-                    </motion.div>
-                  ))
-                )}
-              </AnimatePresence>
+              <VadeMecumFavorites 
+                favorites={favorites} 
+                onRemove={handleRemoveFavorite}
+              />
             </div>
           </TabsContent>
           <TabsContent value="history">
@@ -104,4 +87,6 @@ export function VadeMecumSidebar({ favorites, recentHistory }: VadeMecumSidebarP
       </motion.div>
     </motion.div>
   );
-}
+};
+
+export default VadeMecumSidebar;

@@ -8,7 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { SearchIcon, BookOpenIcon, ScrollTextIcon } from "lucide-react";
+import { 
+  SearchIcon, BookOpenIcon, ScrollTextIcon, 
+  BookIcon, ScaleIcon, LandmarkIcon, ScrollText, 
+  GavelIcon, FileTextIcon
+} from "lucide-react";
 import VadeMecumCodeSection from "@/components/vademecum/VadeMecumCodeSection";
 import VadeMecumStatuteSection from "@/components/vademecum/VadeMecumStatuteSection";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
@@ -52,15 +56,19 @@ const VadeMecum = () => {
     ? tablesData.map((item: TableNameResponse) => item.table_name) 
     : [];
 
-  // Filter tables to separate codes and statutes
-  const codes = tables.filter(table => table.startsWith('Código_'));
-  const statutes = tables.filter(table => table.startsWith('Estatuto_'));
-  const laws = tables.filter(table => 
-    !table.startsWith('Código_') && 
-    !table.startsWith('Estatuto_') && 
-    !table.includes('_favoritos') && 
-    !table.includes('_visualizacoes')
+  // Check if Constituição Federal exists in tables, if not, add it
+  const hasConstituicao = tables.some(table => 
+    table === 'Constituicao_Federal' || table === 'Constituição_Federal'
   );
+
+  // Filter tables to separate codes and statutes
+  const codes = tables.filter(table => 
+    table.startsWith('Código_') || 
+    table === 'Constituicao_Federal' || 
+    table === 'Constituição_Federal'
+  );
+  
+  const statutes = tables.filter(table => table.startsWith('Estatuto_'));
 
   return (
     <JuridicalBackground variant="books" opacity={0.04}>
@@ -119,18 +127,14 @@ const VadeMecum = () => {
           </div>
         ) : (
           <Tabs defaultValue="codigos" className="w-full" value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-8">
+            <TabsList className="grid w-full max-w-lg mx-auto grid-cols-2 mb-8">
               <TabsTrigger value="codigos" className="gap-2">
-                <ScrollTextIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Códigos</span>
+                <BookIcon className="h-4 w-4" />
+                <span className="sm:inline">Códigos e Constituição</span>
               </TabsTrigger>
               <TabsTrigger value="estatutos" className="gap-2">
-                <BookOpenIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Estatutos</span>
-              </TabsTrigger>
-              <TabsTrigger value="leis" className="gap-2">
-                <SearchIcon className="h-4 w-4" />
-                <span className="hidden sm:inline">Outras Leis</span>
+                <ScrollTextIcon className="h-4 w-4" />
+                <span className="sm:inline">Estatutos</span>
               </TabsTrigger>
             </TabsList>
 
@@ -167,52 +171,6 @@ const VadeMecum = () => {
                 </div>
               ) : (
                 <VadeMecumStatuteSection tableNames={statutes} searchQuery={search} />
-              )}
-            </TabsContent>
-
-            <TabsContent value="leis" className="py-4">
-              {isLoading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {[1, 2, 3, 4].map((i) => (
-                    <motion.div 
-                      key={i}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.5 }}
-                      transition={{ duration: 0.3, delay: i * 0.05 }}
-                      className="h-32 bg-muted/20 rounded-lg animate-pulse"
-                    />
-                  ))}
-                </div>
-              ) : laws.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {laws
-                    .filter(law => law.toLowerCase().includes(search.toLowerCase()))
-                    .map(law => (
-                      <motion.div 
-                        key={law}
-                        whileHover={{ y: -5 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Card 
-                          className="cursor-pointer hover:shadow-md transition-all h-full"
-                          onClick={() => navigate(`/vademecum/${law}`)}
-                        >
-                          <div className="p-6">
-                            <h3 className="font-semibold">{law.replace(/_/g, ' ')}</h3>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              Lei ordinária do ordenamento jurídico brasileiro
-                            </p>
-                          </div>
-                        </Card>
-                      </motion.div>
-                    ))}
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <p className="text-muted-foreground">
-                    Nenhuma outra lei encontrada no momento.
-                  </p>
-                </div>
               )}
             </TabsContent>
           </Tabs>

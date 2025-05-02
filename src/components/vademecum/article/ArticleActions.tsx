@@ -91,7 +91,7 @@ export const ArticleActions = ({
               disabled={!technicalExplanation && !formalExplanation}
             >
               <Info size={16} />
-              <span className="hidden sm:inline">Explicação</span>
+              <span>Explicação</span>
             </Button>
 
             {practicalExample && (
@@ -102,7 +102,7 @@ export const ArticleActions = ({
                 onClick={() => setIsPracticalExampleDialogOpen(true)}
               >
                 <FileText size={16} />
-                <span className="hidden sm:inline">Exemplo Prático</span>
+                <span>Exemplo Prático</span>
               </Button>
             )}
 
@@ -114,7 +114,7 @@ export const ArticleActions = ({
               disabled={isCopying}
             >
               <Copy size={16} />
-              <span className="hidden sm:inline">Copiar</span>
+              <span>Copiar</span>
             </Button>
             
             {/* New annotation button, only shown for logged-in users */}
@@ -136,7 +136,7 @@ export const ArticleActions = ({
         articleNumber={articleNumber}
         technicalExplanation={technicalExplanation}
         formalExplanation={formalExplanation}
-        onNarration={handleNarration}
+        onNarration={null} // Disabling narration for explanations
       />
 
       {/* Practical Example Dialog */}
@@ -145,7 +145,7 @@ export const ArticleActions = ({
         onClose={() => setIsPracticalExampleDialogOpen(false)}
         articleNumber={articleNumber}
         example={practicalExample}
-        onNarration={handleNarration}
+        onNarration={null} // Disabling narration for examples
       />
     </>
   );

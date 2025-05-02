@@ -15,6 +15,13 @@ export const ArticleContent = ({
   fontSize,
   isHeading
 }: ArticleContentProps) => {
+  // Format paragraphs and bold "Parágrafo único"
+  const formattedText = articleText
+    ? articleText
+        .replace(/(Parágrafo único\.|PARÁGRAFO ÚNICO\.)/g, '**$1**')
+        .replace(/(\n\s*\n)/g, '\n\n')
+    : '';
+
   return (
     <div className={`flex flex-col ${isHeading ? "w-full" : ""}`}>
       {articleNumber?.trim() ? (
@@ -32,9 +39,9 @@ export const ArticleContent = ({
         `}
       >
         <ReactMarkdown 
-          className="prose dark:prose-invert max-w-none"
+          className="prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4"
         >
-          {articleText || ''}
+          {formattedText}
         </ReactMarkdown>
       </div>
     </div>

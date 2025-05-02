@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
+import { ArrowUp, ZoomIn, ZoomOut, Type } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FloatingControlsProps {
@@ -19,23 +19,29 @@ export const FloatingControls = ({
   showBackToTop,
   scrollToTop
 }: FloatingControlsProps) => {
-  return <>
+  return (
+    <>
       {/* Font size controls (bottom left) */}
       <motion.div 
         initial={{ opacity: 0, y: 20 }} 
         animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.2 }}
-        className="fixed left-4 bottom-6 z-50"
+        className="fixed left-4 bottom-20 z-50"
       >
-        <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-purple-100 dark:border-purple-900/40 flex items-center p-1.5 gap-2">
+        <div className="bg-card/95 backdrop-blur-sm rounded-lg shadow-lg border border-purple-100 dark:border-purple-900/40 flex flex-col items-center p-1.5 gap-2">
+          <div className="text-xs font-medium text-center text-purple-700 dark:text-purple-300 mb-1">
+            <Type size={14} className="inline mr-1" />
+            <span>Tamanho</span>
+          </div>
+          
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={decreaseFontSize} 
+            onClick={increaseFontSize} 
             className="h-8 w-8 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40" 
-            title="Diminuir zoom"
+            title="Aumentar fonte"
           >
-            <ZoomOut size={16} />
+            <ZoomIn size={16} />
           </Button>
           
           <div className="text-center py-1 text-xs font-medium min-w-[24px]">
@@ -45,11 +51,11 @@ export const FloatingControls = ({
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={increaseFontSize} 
+            onClick={decreaseFontSize} 
             className="h-8 w-8 text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40" 
-            title="Aumentar zoom"
+            title="Diminuir fonte"
           >
-            <ZoomIn size={16} />
+            <ZoomOut size={16} />
           </Button>
         </div>
       </motion.div>
@@ -76,7 +82,8 @@ export const FloatingControls = ({
           </motion.div>
         )}
       </AnimatePresence>
-    </>;
+    </>
+  );
 };
 
 export default FloatingControls;

@@ -8,12 +8,13 @@ import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 
 interface BookmarkButtonProps {
-  isFavorite: boolean;  // Ensure this is boolean, not string
+  isFavorite: boolean;
   setIsFavorite: (isFavorite: boolean) => void;
   lawName: string;
   articleNumber: string;
   articleText: string;
   isLoading?: boolean;
+  showLabel?: boolean;
 }
 
 export const BookmarkButton = ({
@@ -22,7 +23,8 @@ export const BookmarkButton = ({
   lawName,
   articleNumber,
   articleText,
-  isLoading = false
+  isLoading = false,
+  showLabel = false
 }: BookmarkButtonProps) => {
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = React.useState(false);
@@ -89,15 +91,16 @@ export const BookmarkButton = ({
 
   return (
     <motion.div
-      whileHover={{ scale: 1.1 }}
+      whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.9 }}
     >
       <Button
         variant="outline"
-        size="icon"
+        size={showLabel ? "sm" : "icon"}
         onClick={toggleFavorite}
         disabled={loading}
         title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        className={showLabel ? "flex gap-2" : ""}
       >
         {loading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -105,6 +108,12 @@ export const BookmarkButton = ({
           <BookmarkCheck className="h-4 w-4 text-primary" />
         ) : (
           <Bookmark className="h-4 w-4" />
+        )}
+        
+        {showLabel && (
+          <span className="hidden sm:inline">
+            {isFavorite ? "Remover" : "Favoritar"}
+          </span>
         )}
       </Button>
     </motion.div>

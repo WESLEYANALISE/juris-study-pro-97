@@ -1,7 +1,10 @@
 
 import React from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { ScrollText } from "lucide-react";
+import { 
+  ScrollText, Users, UserRound, FileSpreadsheet, Shield, 
+  Building, Scale, MapPin, UserCog, UsersRound
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -21,6 +24,20 @@ const statuteDisplayNames: Record<string, string> = {
   "Estatuto_da_Terra": "Estatuto da Terra",
   "Estatuto_da_Cidade": "Estatuto da Cidade",
   "Estatuto_do_Torcedor": "Estatuto do Torcedor"
+};
+
+// Icons for each statute
+const statuteIcons: Record<string, React.ElementType> = {
+  "Estatuto_da_Criança_e_do_Adolescente": Users,
+  "Estatuto_do_Idoso": UserRound,
+  "Estatuto_da_Igualdade_Racial": UsersRound,
+  "Estatuto_da_Pessoa_com_Deficiência": UserRound,
+  "Estatuto_do_Desarmamento": Shield,
+  "Estatuto_da_Advocacia_e_da_OAB": Scale,
+  "Estatuto_dos_Servidores_Públicos_Civis_da_União": UserCog,
+  "Estatuto_da_Terra": MapPin,
+  "Estatuto_da_Cidade": Building,
+  "Estatuto_do_Torcedor": UsersRound
 };
 
 // Information about each statute
@@ -115,6 +132,7 @@ const VadeMecumStatuteSection: React.FC<VadeMecumStatuteSectionProps> = ({ table
             description: "Conjunto de normas que regulam direitos específicos", 
             color: "bg-secondary" 
           };
+          const IconComponent = statuteIcons[statuteName] || ScrollText;
           
           return (
             <motion.div key={statuteName} variants={item}>
@@ -127,7 +145,7 @@ const VadeMecumStatuteSection: React.FC<VadeMecumStatuteSectionProps> = ({ table
                     <div className={`${info.color} h-full w-2 rounded-l-lg`}></div>
                     <div className="p-5 flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <ScrollText className="h-4 w-4 text-muted-foreground" />
+                        <IconComponent className="h-4 w-4 text-muted-foreground" />
                         <h3 className="font-semibold">{displayName}</h3>
                       </div>
                       <p className="text-sm text-muted-foreground">{info.description}</p>
