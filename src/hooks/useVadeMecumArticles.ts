@@ -144,19 +144,21 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Use custom RPC function to query the table securely
-      const { data, error } = await supabase
-        .rpc('query_vademecum_table', { table_name: tableName });
+      // Use a direct function call with parameters instead of RPC
+      const { data, error: rpcError } = await supabase
+        .functions.invoke("query-vademecum-table", {
+          body: { table_name: tableName }
+        });
       
-      if (error) {
-        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, error);
+      if (rpcError) {
+        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, rpcError);
 
         // Retry automático para erros temporários, até 3 tentativas
         if (retryCount < 3) {
           setTimeout(() => loadArticles(retryCount + 1), 1000 * (retryCount + 1));
           return;
         }
-        setError(`Erro ao carregar artigos: ${error.message}`);
+        setError(`Erro ao carregar artigos: ${rpcError.message}`);
         setLoading(false);
         return;
       }
