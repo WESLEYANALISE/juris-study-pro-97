@@ -168,10 +168,10 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       if (!data || (Array.isArray(data) && data.length === 0)) {
         console.log("Edge function returned no data, trying direct query as fallback");
         
-        // Use a type assertion to tell TypeScript that we know what we're doing
-        // This avoids the type error while still maintaining some safety with our ALLOWED_TABLES list
+        // Use direct table query as a fallback, since we've validated tableName against ALLOWED_TABLES
         const { data: directData, error: directError } = await supabase
-          .rpc('query_vademecum_table', { table_name: tableName });
+          .from(tableName)
+          .select('*');
         
         if (directError) {
           console.error("Direct query fallback failed:", directError);
@@ -180,7 +180,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
           return;
         }
         
-        if (directData && directData.length > 0) {
+        if (directData && Array.isArray(directData) && directData.length > 0) {
           console.log(`Dados recebidos via consulta direta: ${directData.length} registros`);
           const processedArticles = processRawData(directData);
           setArticles(processedArticles);
@@ -190,10 +190,10 @@ export const useVadeMecumArticles = (searchQuery: string) => {
         }
       }
       
-      console.log(`Dados recebidos da tabela ${tableName}:`, data ? (data as any[]).length : 'nenhum');
+      console.log(`Dados recebidos da tabela ${tableName}:`, data ? (Array.isArray(data) ? data.length : 'não-array') : 'nenhum');
 
       // Processar e validar os dados recebidos
-      const processedArticles = processRawData(data as any[] || []);
+      const processedArticles = processRawData(Array.isArray(data) ? data : []);
       setArticles(processedArticles);
       setFilteredArticles(processedArticles);
 
