@@ -39,10 +39,7 @@ const VadeMecumViewer = () => {
   // Cache for the articles to improve performance
   const [articlesCache, setArticlesCache] = useState<Record<string, any[]>>({});
 
-  // Create a ref for the loadMore element
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-
-  // Use react-intersection-observer para detecção de "infinite scroll"
+  // Use react-intersection-observer for "infinite scroll" detection
   const { ref, inView } = useInView({
     threshold: 0.1,
     triggerOnce: false
@@ -51,11 +48,6 @@ const VadeMecumViewer = () => {
   // Connect the intersection observer ref with our React ref
   const setRefs = useCallback(
     (node: HTMLDivElement | null) => {
-      // Update the loadMoreRef
-      if (node) {
-        loadMoreRef.current = node;
-      }
-      
       // Call the ref function from useInView
       ref(node);
     },
@@ -70,6 +62,12 @@ const VadeMecumViewer = () => {
     decodedLawName,
     tableName
   } = useVadeMecumArticles(searchQuery);
+
+  // Add debugging logs
+  useEffect(() => {
+    console.log("Current page:", { lawId, tableName });
+    console.log("Articles found:", filteredArticles.length);
+  }, [lawId, tableName, filteredArticles]);
 
   // Memorize the filtered articles to avoid unnecessary re-renders
   const cachedArticles = useMemo(() => {
@@ -94,22 +92,27 @@ const VadeMecumViewer = () => {
   }, [user, loadHistory]);
 
   // Calculate articles visible based on current batch
-  const visibleArticles = useMemo(() => 
-    cachedArticles.slice(0, visibleBatch)
-  , [cachedArticles, visibleBatch]);
+  const visibleArticles = useMemo(() => {
+    const articles = cachedArticles.slice(0, visibleBatch);
+    console.log(`Showing ${articles.length} of ${cachedArticles.length} articles`);
+    return articles;
+  }, [cachedArticles, visibleBatch]);
 
   // Try loading from cache first, then fetch from API
   useEffect(() => {
     if (lawId && articlesCache[lawId]?.length > 0) {
       // No need to fetch, already cached
+      console.log("Using cached articles");
       return;
     }
+    console.log("Loading articles from API");
     loadArticles();
-  }, [lawId, loadArticles]);
+  }, [lawId, loadArticles, articlesCache]);
 
   // Effect for loading more articles when user scrolls to bottom
   useEffect(() => {
     if (inView && cachedArticles.length > visibleBatch) {
+      console.log("Loading more articles due to scroll");
       // Improved batch size - load more articles at once
       const batchSize = isMobile ? 20 : 40;
       setVisibleBatch(prev => prev + batchSize);

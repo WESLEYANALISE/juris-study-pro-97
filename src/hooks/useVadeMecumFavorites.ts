@@ -39,8 +39,95 @@ export const useVadeMecumFavorites = () => {
   
   // Load favorites on initial render when user is authenticated
   useEffect(() => {
-    loadFavorites();
+    if (user) {
+      loadFavorites();
+    }
   }, [user, loadFavorites]);
+  
+  // Check if an article is favorited
+  const isFavorite = useCallback((lawName: string, articleId: string, articleNumber: string, articleText: string) => {
+    return favorites.some(fav => 
+      (fav.article_id === articleId && fav.law_name === lawName) || 
+      (fav.article_number === articleNumber && fav.law_name === lawName && fav.article_text === articleText)
+    );
+  }, [favorites]);
+
+  // Add article to favorites
+  const addFavorite = useCallback(async (article: {
+    law_name: string;
+    article_id: string;
+    article_number: string;
+    article_text: string;
+  }) => {
+    if (!user) {
+      toast.error('Você precisa estar logado para adicionar favoritos');
+      return false;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('vademecum_favorites')
+        .insert({
+          user_id: user.id,
+          law_name: article.law_name,
+          article_id: article.article_id,
+          article_number: article.article_number,
+          article_text: article.article_text
+        });
+
+      if (error) throw error;
+      
+      await loadFavorites();
+      toast.success('Artigo adicionado aos favoritos');
+      return true;
+    } catch (error) {
+      console.error('Error adding favorite:', error);
+      toast.error('Erro ao adicionar favorito');
+      return false;
+    }
+  }, [user, loadFavorites]);
+
+  // Remove article from favorites
+  const removeFavorite = useCallback(async (articleNumber: string, lawName: string) => {
+    if (!user) return false;
+    
+    try {
+      const { error } = await supabase
+        .from('vademecum_favorites')
+        .delete()
+        .match({ 
+          user_id: user.id,
+          article_number: articleNumber,
+          law_name: lawName
+        });
+
+      if (error) throw error;
+      
+      await loadFavorites();
+      toast.success('Artigo removido dos favoritos');
+      return true;
+    } catch (error) {
+      console.error('Error removing favorite:', error);
+      toast.error('Erro ao remover favorito');
+      return false;
+    }
+  }, [user, loadFavorites]);
+
+  // Toggle favorite status
+  const toggleFavorite = useCallback((lawName: string, articleId: string, articleNumber: string, articleText: string) => {
+    const isFav = isFavorite(lawName, articleId, articleNumber, articleText);
+    
+    if (isFav) {
+      removeFavorite(articleNumber, lawName);
+    } else {
+      addFavorite({
+        law_name: lawName,
+        article_id: articleId,
+        article_number: articleNumber,
+        article_text: articleText
+      });
+    }
+  }, [isFavorite, removeFavorite, addFavorite]);
   
   // Load history
   const loadHistory = useCallback(async () => {
@@ -52,147 +139,26 @@ export const useVadeMecumFavorites = () => {
         .select('*')
         .eq('user_id', user.id)
         .order('viewed_at', { ascending: false })
-        .limit(10);
-      
-      if (error) {
-        console.error('Error loading history:', error);
-        throw error;
-      }
+        .limit(20);
+        
+      if (error) throw error;
       
       return data || [];
     } catch (error) {
       console.error('Error loading history:', error);
-      toast.error('Erro ao carregar histórico');
       return [];
     }
   }, [user]);
-  
-  // Check if an article is favorited
-  const isFavorite = useCallback((lawName: string, articleId: string, articleNumber: string, articleText: string) => {
-    return favorites.some(fav => 
-      (fav.article_id === articleId || fav.article_number === articleNumber) && 
-      fav.law_name === lawName
-    );
-  }, [favorites]);
-  
-  // Toggle favorite status
-  const toggleFavorite = useCallback(async (lawName: string, articleId: string, articleNumber: string, articleText: string) => {
-    if (!user) {
-      toast.error('É necessário estar logado para favoritar artigos');
-      return;
-    }
 
-    const alreadyFavorite = isFavorite(lawName, articleId, articleNumber, articleText);
-    
-    if (alreadyFavorite) {
-      return removeFavorite(articleNumber, lawName);
-    } else {
-      return addFavorite({
-        law_name: lawName,
-        article_number: articleNumber,
-        article_text: articleText
-      });
-    }
-  }, [user, isFavorite]);
-  
-  // Remove a favorite
-  const removeFavorite = useCallback(async (articleNumber: string, lawName: string) => {
-    if (!user) return false;
-    
-    try {
-      setIsLoading(true);
-      
-      const { error } = await supabase
-        .from('vademecum_favorites')
-        .delete()
-        .eq('user_id', user.id)
-        .eq('law_name', lawName)
-        .eq('article_number', articleNumber);
-        
-      if (error) {
-        console.error('Error removing favorite:', error);
-        toast.error('Erro ao remover favorito');
-        return false;
-      }
-      
-      // Update local state after removing
-      setFavorites(prev => 
-        prev.filter(fav => !(fav.article_number === articleNumber && fav.law_name === lawName))
-      );
-      
-      toast.success('Artigo removido dos favoritos');
-      return true;
-    } catch (error) {
-      console.error('Error removing favorite:', error);
-      toast.error('Erro ao remover favorito');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user]);
-
-  // Add a favorite
-  const addFavorite = useCallback(async (article: {
-    law_name: string;
-    article_number: string;
-    article_text: string;
-  }) => {
-    if (!user) {
-      toast.error('Você precisa estar logado para adicionar favoritos');
-      return false;
-    }
-    
-    try {
-      setIsLoading(true);
-      
-      // Generate a unique article ID
-      const article_id = `${article.law_name}-${article.article_number}`;
-      
-      const { error } = await supabase
-        .from('vademecum_favorites')
-        .insert({
-          user_id: user.id,
-          law_name: article.law_name,
-          article_id,
-          article_number: article.article_number,
-          article_text: article.article_text
-        });
-        
-      if (error) {
-        // Check if it's a unique violation (already favorited)
-        if (error.code === '23505') {
-          toast.info('Este artigo já está em seus favoritos');
-          return true;
-        }
-        
-        console.error('Error adding favorite:', error);
-        toast.error('Erro ao adicionar favorito');
-        return false;
-      }
-      
-      // Refresh favorites
-      loadFavorites();
-      
-      toast.success('Artigo adicionado aos favoritos');
-      return true;
-    } catch (error) {
-      console.error('Error adding favorite:', error);
-      toast.error('Erro ao adicionar favorito');
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, loadFavorites]);
-  
   return {
     favorites,
     isLoading,
     loadFavorites,
     addFavorite,
     removeFavorite,
-    loadHistory,
     toggleFavorite,
-    isFavorite
+    isFavorite,
+    loadHistory
   };
 };
 

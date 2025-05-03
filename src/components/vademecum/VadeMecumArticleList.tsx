@@ -2,7 +2,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArticleCard } from './article/ArticleCard';
-import { EmptyState } from './EmptyState';
+import EmptyState from './EmptyState';
 import { LoadingArticleCard } from './LoadingArticleCard';
 import { BookmarkPlus } from 'lucide-react';
 import { useVadeMecumFavorites } from '@/hooks/useVadeMecumFavorites';
@@ -85,6 +85,9 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
       animate="visible"
     >
       {visibleArticles.map(article => {
+        // Debug log to see article data
+        console.log("Rendering article:", article);
+        
         // Ensure all required properties exist for display
         const articleNumber = article.numero || '';
         const articleText = article.artigo || '';
@@ -92,6 +95,7 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
         const isFavorited = isFavorite(tableName, articleId, articleNumber, articleText);
         
         if (!articleText && !articleNumber) {
+          console.warn("Skipping article without text or number:", article);
           return null; // Skip articles without text or number
         }
         
@@ -123,3 +127,5 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
     </motion.div>
   );
 };
+
+export default VadeMecumArticleList;

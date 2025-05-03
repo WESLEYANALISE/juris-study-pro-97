@@ -10,18 +10,21 @@ interface ArticleContentProps {
   isHeading: boolean;
 }
 
-export const ArticleContent = ({
+export const ArticleContent: React.FC<ArticleContentProps> = ({
   articleNumber,
   articleText,
   fontSize,
   isHeading
-}: ArticleContentProps) => {
+}) => {
   // Format paragraphs and bold "Parágrafo único"
   const formattedText = articleText
     ? articleText
         .replace(/(Parágrafo único\.|PARÁGRAFO ÚNICO\.)/g, '**$1**')
         .replace(/(\n\s*\n)/g, '\n\n')
     : '';
+
+  // Log article text to debug
+  console.log("Article content:", { number: articleNumber, text: articleText, formatted: formattedText });
 
   return (
     <motion.div 
@@ -44,12 +47,18 @@ export const ArticleContent = ({
             : "border-l-0 pl-3"}
         `}
       >
-        <ReactMarkdown 
-          className="prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4"
-        >
-          {formattedText}
-        </ReactMarkdown>
+        {formattedText ? (
+          <ReactMarkdown 
+            className="prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4"
+          >
+            {formattedText}
+          </ReactMarkdown>
+        ) : (
+          <p className="text-muted-foreground italic">Texto do artigo não disponível</p>
+        )}
       </div>
     </motion.div>
   );
 };
+
+export default ArticleContent;

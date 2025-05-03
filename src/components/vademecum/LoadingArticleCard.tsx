@@ -26,3 +26,4 @@ export const LoadingArticleCard: React.FC = () => {
   );
 };
 
+export default LoadingArticleCard;

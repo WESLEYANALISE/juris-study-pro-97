@@ -69,25 +69,8 @@ serve(async (req) => {
 
     console.log(`Querying table: ${table_name}`);
     
-    // Try using the RPC function first (safer approach)
-    try {
-      const { data: rpcData, error: rpcError } = await supabase
-        .rpc('query_vademecum_table', { table_name });
-
-      if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
-        console.log(`Successfully retrieved ${rpcData.length} records from ${table_name} using RPC`);
-        return new Response(
-          JSON.stringify(rpcData),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-    } catch (rpcErr) {
-      console.error("RPC function error:", rpcErr);
-      // Continue to fallback method
-    }
-    
-    // Fallback to direct query if RPC fails or returns no data
-    console.log(`RPC failed or returned no results, falling back to direct query for ${table_name}`);
+    // Fallback to direct query
+    console.log(`Executing direct query for ${table_name}`);
     
     // Use a parameterized query to prevent SQL injection
     // Note: This is safe because we've already validated table_name against ALLOWED_TABLES
@@ -97,14 +80,33 @@ serve(async (req) => {
     try {
       const result = await supabase
         .from(table_name)
-        .select('*');
+        .select('*')
+        .order('id');
       
       data = result.data;
       error = result.error;
+      
+      // Log results for debugging
+      if (data) {
+        console.log(`Query result: ${data.length} rows retrieved`);
+        
+        // Log sample data
+        if (data.length > 0) {
+          const sample = data[0];
+          console.log("Sample data structure:", Object.keys(sample));
+          
+          // Check if articles have content
+          const hasArticleContent = data.filter(d => d.artigo && d.artigo.trim().length > 0).length;
+          const hasNumberContent = data.filter(d => d.numero && d.numero.trim().length > 0).length;
+          
+          console.log(`Articles with text content: ${hasArticleContent}/${data.length}`);
+          console.log(`Articles with number content: ${hasNumberContent}/${data.length}`);
+        }
+      }
     } catch (queryErr) {
       console.error("Direct query error:", queryErr);
       return new Response(
-        JSON.stringify({ error: 'Erro na consulta SQL' }),
+        JSON.stringify({ error: 'Erro na consulta SQL', details: String(queryErr) }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -135,7 +137,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Unexpected error:', error);
     return new Response(
-      JSON.stringify({ error: 'Erro interno no servidor' }),
+      JSON.stringify({ error: 'Erro interno no servidor', details: String(error) }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }

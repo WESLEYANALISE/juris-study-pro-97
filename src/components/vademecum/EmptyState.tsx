@@ -37,3 +37,4 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ filter }) => {
   );
 };
 
+export default EmptyState;

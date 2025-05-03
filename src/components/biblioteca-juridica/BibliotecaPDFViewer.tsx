@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
@@ -8,6 +9,7 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import './BibliotecaPDFViewer.css';
 
+// Set PDF.js worker source
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface BibliotecaPDFViewerProps {
@@ -24,6 +26,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
@@ -33,28 +36,53 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
+    
+    // Log PDF URL for debugging
+    console.log("Loading PDF from URL:", pdfUrl);
+    
     return () => {
       document.body.classList.remove('pdf-viewer-open');
     };
-  }, []);
+  }, [pdfUrl]);
   
   useEffect(() => {
-    if (book && pageNumber > 0) {
+    if (book && pageNumber > 0 && isLoaded) {
       updateProgress(book.id, pageNumber);
     }
-  }, [pageNumber, book, updateProgress]);
+  }, [pageNumber, book, updateProgress, isLoaded]);
+
+  const verifyPdfUrl = () => {
+    // Check if URL is valid
+    try {
+      new URL(pdfUrl);
+      return true;
+    } catch (e) {
+      console.error("Invalid PDF URL:", e);
+      setErrorMessage("URL do PDF inválida ou mal formatada");
+      setIsError(true);
+      setIsLoading(false);
+      return false;
+    }
+  };
+  
+  useEffect(() => {
+    verifyPdfUrl();
+  }, [pdfUrl]);
   
   function onDocumentLoadSuccess({ numPages: totalPages }) {
+    console.log("PDF loaded successfully. Total pages:", totalPages);
     setNumPages(totalPages);
     setIsLoading(false);
     setIsLoaded(true);
+    toast.success(`PDF carregado: ${totalPages} páginas`);
   }
   
   function onDocumentLoadError(error: any) {
     console.error('Error loading PDF:', error);
     setIsLoading(false);
     setIsError(true);
-    toast("Houve um problema ao carregar o livro. Por favor, tente novamente.");
+    setErrorMessage(`Erro ao carregar PDF: ${error.message || "Verifique se o arquivo existe"}`);
+    toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
   }
   
   function changePage(amount: number) {
@@ -127,15 +155,20 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   
   if (isError) {
     return (
-      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center">
-        <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
-        <p className="text-muted-foreground">
-          Houve um problema ao carregar o arquivo PDF.
-          Por favor, tente novamente mais tarde.
-        </p>
-        <Button onClick={onClose} className="mt-4">
-          Fechar
-        </Button>
+      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
+          <AlertCircle className="h-16 w-16 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
+          <p className="text-muted-foreground mb-6">
+            {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
+          </p>
+          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+            <code className="break-all whitespace-pre-wrap">{pdfUrl}</code>
+          </div>
+          <Button onClick={onClose} className="mt-4">
+            Fechar
+          </Button>
+        </div>
       </div>
     );
   }
@@ -155,28 +188,52 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
         
         {/* Loading indicator */}
         {isLoading && (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
             <p className="text-lg text-muted-foreground">Carregando livro... {progress}%</p>
+            <p className="text-xs text-muted-foreground mt-2 max-w-md text-center">
+              Se o livro não carregar, verifique se o PDF está disponível no servidor.
+            </p>
           </div>
         )}
         
         {/* PDF Viewer Content */}
         <div className="pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
-          <div className="flex justify-center">
-            <Document
-              file={pdfUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              onProgress={({ loaded, total }) => {
-                if (total) {
-                  setProgress(Math.round((loaded / total) * 100));
+          <Document
+            file={pdfUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            onProgress={({ loaded, total }) => {
+              if (total) {
+                setProgress(Math.round((loaded / total) * 100));
+              }
+            }}
+            loading={
+              <div className="flex flex-col items-center justify-center">
+                <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span className="mt-2 text-sm">Carregando...</span>
+              </div>
+            }
+            error={
+              <div className="text-center text-red-500">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                <p>Erro ao carregar PDF</p>
+              </div>
+            }
+          >
+            {isLoaded && (
+              <Page 
+                pageNumber={pageNumber} 
+                scale={scale} 
+                rotate={rotation} 
+                error={
+                  <div className="text-center text-red-500 p-4">
+                    <p>Erro ao renderizar página {pageNumber}</p>
+                  </div>
                 }
-              }}
-              loading={<span>Carregando...</span>}
-            >
-              <Page pageNumber={pageNumber} scale={scale} rotate={rotation} />
-            </Document>
-          </div>
+              />
+            )}
+          </Document>
         </div>
         
         {/* Mobile Controls */}
@@ -204,7 +261,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
               <RotateCw className="h-4 w-4" />
             </Button>
             <Button variant="secondary" size="icon" onClick={toggleFullScreen} aria-label="Tela cheia">
-              {isFullScreen ? <Share2 className="h-4 w-4" /> : <Share2 className="h-4 w-4" />}
+              <Share2 className="h-4 w-4" />
             </Button>
           </div>
         </div>
@@ -212,3 +269,5 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     </div>
   );
 }
+
+export default BibliotecaPDFViewer;

@@ -67,3 +67,4 @@ export const ArticleDetails: React.FC<ArticleDetailsProps> = ({
   );
 };
 
+export default ArticleDetails;
