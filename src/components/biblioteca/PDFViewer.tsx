@@ -9,6 +9,7 @@ import './PDFViewer.css';
 
 // Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+
 interface PDFViewerProps {
   livro: {
     id: string | number;
@@ -18,6 +19,7 @@ interface PDFViewerProps {
   };
   onClose: () => void;
 }
+
 export function PDFViewer({
   livro,
   onClose
@@ -31,6 +33,20 @@ export function PDFViewer({
   const [showControls, setShowControls] = useState<boolean>(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debugging PDF URL
+  useEffect(() => {
+    console.log("PDF URL:", livro.pdf);
+    // Validate if URL is properly formatted
+    if (livro.pdf) {
+      try {
+        new URL(livro.pdf);
+      } catch (err) {
+        console.error("PDF URL is not valid:", err);
+        setError('URL do PDF inválida ou mal formatada');
+      }
+    }
+  }, [livro.pdf]);
 
   // Set up touch gestures for mobile
   const touchGestures = useTouchGestures({
@@ -109,6 +125,7 @@ export function PDFViewer({
     setNumPages(numPages);
     setIsLoading(false);
   }
+
   function onDocumentLoadError(error: Error): void {
     console.error('Error loading PDF:', error);
     setError('Erro ao carregar o PDF. Por favor, tente novamente mais tarde.');
@@ -119,6 +136,7 @@ export function PDFViewer({
   const goToPreviousPage = () => {
     setPageNumber(prev => Math.max(prev - 1, 1));
   };
+  
   const goToNextPage = () => {
     if (numPages) {
       setPageNumber(prev => Math.min(prev + 1, numPages));
@@ -129,6 +147,7 @@ export function PDFViewer({
   const zoomIn = () => {
     setScale(prev => Math.min(prev + 0.2, 3));
   };
+  
   const zoomOut = () => {
     setScale(prev => Math.max(prev - 0.2, 0.5));
   };
@@ -136,11 +155,12 @@ export function PDFViewer({
   // Search function
   const handleSearch = () => {
     // This is a placeholder for PDF search functionality
-    // Implementing actual text search within PDFs requires more complex logic
     console.log('Search for:', searchText);
     alert(`Funcionalidade de busca para "${searchText}" será implementada em breve.`);
   };
-  return <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
+
+  return (
+    <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
       <div 
         className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300" 
         style={{ opacity: showControls ? 1 : 0 }}
@@ -152,7 +172,8 @@ export function PDFViewer({
       </div>
 
       <div ref={containerRef} className="flex-grow overflow-auto p-4 flex justify-center px-0">
-        {error ? <div className="flex flex-col items-center justify-center h-full text-center">
+        {error ? (
+          <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg">
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
               <p>{error}</p>
@@ -160,24 +181,35 @@ export function PDFViewer({
                 Voltar
               </Button>
             </div>
-          </div> : <Document 
-                file={livro.pdf} 
-                onLoadSuccess={onDocumentLoadSuccess} 
-                onLoadError={onDocumentLoadError} 
-                loading={<div className="flex flex-col items-center justify-center h-full">
-                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                  <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
-                </div>} 
-                className="pdf-container"
-              >
+          </div>
+        ) : (
+          <Document 
+            file={livro.pdf} 
+            onLoadSuccess={onDocumentLoadSuccess} 
+            onLoadError={onDocumentLoadError} 
+            loading={
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
+              </div>
+            } 
+            className="pdf-container"
+            options={{
+              cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+              cMapPacked: true,
+              standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
+            }}
+          >
             <Page 
+              key={`page_${pageNumber}`}
               pageNumber={pageNumber} 
               scale={scale} 
-              renderTextLayer={false} 
-              renderAnnotationLayer={false} 
+              renderTextLayer={true} 
+              renderAnnotationLayer={true} 
               className="pdf-page"
             />
-          </Document>}
+          </Document>
+        )}
       </div>
 
       {/* Bottom controls that show/hide based on activity */}
@@ -217,5 +249,6 @@ export function PDFViewer({
           </Button>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }

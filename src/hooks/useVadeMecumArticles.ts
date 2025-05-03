@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
@@ -143,11 +144,9 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Fix: Use raw SQL queries instead of relying on type checking
-      // This allows us to query tables with special characters in their names
+      // Use custom RPC function to query the table securely
       const { data, error } = await supabase
-        .rpc('query_vademecum_table', { table_name: tableName })
-        .order('id', { ascending: true });
+        .rpc('query_vademecum_table', { table_name: tableName });
       
       if (error) {
         console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, error);
@@ -162,10 +161,10 @@ export const useVadeMecumArticles = (searchQuery: string) => {
         return;
       }
       
-      console.log(`Dados recebidos da tabela ${tableName}:`, data ? data.length : 'nenhum');
+      console.log(`Dados recebidos da tabela ${tableName}:`, data ? (data as any[]).length : 'nenhum');
 
       // Processar e validar os dados recebidos
-      const processedArticles = processRawData(data || []);
+      const processedArticles = processRawData(data as any[] || []);
       setArticles(processedArticles);
       setFilteredArticles(processedArticles);
 

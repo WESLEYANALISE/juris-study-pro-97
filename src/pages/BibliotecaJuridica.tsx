@@ -4,8 +4,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { PageTransition } from '@/components/PageTransition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BibliotecaHeader } from '@/components/biblioteca-juridica/BibliotecaHeader';
-import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
 import { BibliotecaGridView } from '@/components/biblioteca-juridica/BibliotecaGridView';
+import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
 import { BibliotecaFavoritos } from '@/components/biblioteca-juridica/BibliotecaFavoritos';
 import { BibliotecaRecentes } from '@/components/biblioteca-juridica/BibliotecaRecentes';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
@@ -15,7 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog } from '@/components/ui/dialog';
 import { BibliotecaBookModal } from '@/components/biblioteca-juridica/BibliotecaBookModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Loader2, BookOpen, BookPlus } from 'lucide-react';
+import { Loader2, BookOpen, Book } from 'lucide-react';
 
 // Mock data for development
 const mockLivros: LivroJuridico[] = [
@@ -89,13 +89,13 @@ export default function BibliotecaJuridica() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Fetch books from biblioteca_juridica10 table
+  // Fetch books from bibliotecatop table instead of biblioteca_juridica10
   const { data: livros, isLoading, error } = useQuery({
-    queryKey: ['biblioteca-juridica'],
+    queryKey: ['biblioteca-juridica-top'],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from('biblioteca_juridica10')
+          .from('bibliotecatop')
           .select('*');
         
         if (error) {
@@ -103,16 +103,13 @@ export default function BibliotecaJuridica() {
         }
         
         return data.map(item => ({
-          id: item.id,
+          id: item.id.toString(),
           titulo: item.titulo,
           categoria: item.categoria,
-          subcategoria: item.subcategoria,
-          autor: item.autor,
           pdf_url: item.pdf_url,
           capa_url: item.capa_url,
           descricao: item.descricao,
-          total_paginas: item.total_paginas,
-          data_publicacao: item.data_publicacao
+          total_paginas: typeof item.total_paginas === 'string' ? parseInt(item.total_paginas, 10) : item.total_paginas
         })) as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching books:', err);
@@ -132,8 +129,8 @@ export default function BibliotecaJuridica() {
     
     return livros.filter(book => {
       const matchesSearch = !searchTerm || 
-        book.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (book.autor && book.autor.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (book.titulo && book.titulo.toLowerCase().includes(searchTerm.toLowerCase())) ||
+        (book.categoria && book.categoria.toLowerCase().includes(searchTerm.toLowerCase())) ||
         (book.descricao && book.descricao.toLowerCase().includes(searchTerm.toLowerCase()));
       
       const matchesCategory = !selectedCategory || book.categoria === selectedCategory;
@@ -146,7 +143,9 @@ export default function BibliotecaJuridica() {
   const categories = React.useMemo(() => {
     if (!livros) return [];
     
-    const uniqueCategories = new Set(livros.map(book => book.categoria));
+    const uniqueCategories = new Set(livros
+      .filter(book => book.categoria)
+      .map(book => book.categoria));
     return Array.from(uniqueCategories);
   }, [livros]);
 
@@ -168,24 +167,42 @@ export default function BibliotecaJuridica() {
     // We'll keep the selected book state for the PDF viewer
   };
 
-  // Handle file URL construction
+  // Handle file URL construction - specifically using the agoravai bucket
   const getBucketFileUrl = (fileName: string) => {
-    return `${import.meta.env.VITE_SUPABASE_URL || "https://phzcazcyjhlmdchcjagy.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
+    if (!fileName) return '';
+    if (fileName.startsWith('http')) return fileName;
+    
+    return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
+  // Display the PDF viewer when a book is selected
   if (selectedBook && !showBookModal) {
     return (
       <BibliotecaPDFViewer 
         livro={{
           id: selectedBook.id,
           nome: selectedBook.titulo,
-          pdf: selectedBook.pdf_url.startsWith('http') ? selectedBook.pdf_url : getBucketFileUrl(selectedBook.pdf_url),
-          capa_url: selectedBook.capa_url || undefined
+          pdf: getBucketFileUrl(selectedBook.pdf_url),
+          capa_url: selectedBook.capa_url ? getBucketFileUrl(selectedBook.capa_url) : undefined
         }} 
         onClose={() => setSelectedBook(null)} 
       />
     );
   }
+
+  // Organize books by sections (like in the reference image)
+  const sections = React.useMemo(() => {
+    if (!livros || livros.length === 0) return [];
+
+    // Create sections based on categories or other criteria
+    const areas = Array.from(new Set(livros.filter(book => book.categoria).map(book => book.categoria)));
+    
+    return areas.map(area => ({
+      title: area,
+      description: `Livros da área de ${area}`,
+      books: livros.filter(book => book.categoria === area).slice(0, 6)
+    }));
+  }, [livros]);
 
   return (
     <PageTransition>
@@ -200,86 +217,139 @@ export default function BibliotecaJuridica() {
           categoriesCount={categories.length}
         />
 
-        <Tabs defaultValue="todos" className="mt-6">
-          <div className="relative overflow-auto pb-1">
-            <TabsList className="mb-6 flex-wrap inline-flex w-auto max-w-full">
-              <TabsTrigger value="todos" onClick={() => setSelectedCategory(null)}>
-                Todos
-              </TabsTrigger>
-              {categories.map(category => (
-                <TabsTrigger 
-                  key={category} 
-                  value={category}
-                  onClick={() => setSelectedCategory(category)}
-                >
-                  {category}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
+        {/* Hero section with stats */}
+        <div className="mt-8 mb-10">
+          <h1 className="text-3xl font-bold text-amber-400">ÁREAS DO DIREITO</h1>
+          <p className="text-xl mt-2">
+            Mais de <span className="font-bold">{livros?.length || 0} livros de Direito</span> atualizados para aprimorar seus estudos!
+          </p>
+        </div>
 
-          <TabsContent value="todos" className="mt-4">
-            {isLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <BookOpen className="h-16 w-16 text-destructive opacity-30 mb-4" />
+            <h3 className="text-xl font-semibold">Erro ao carregar livros</h3>
+            <p className="text-muted-foreground max-w-md mt-2">
+              Ocorreu um erro ao tentar carregar os livros. Por favor, tente novamente mais tarde.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Categories horizontal scroll like in the image */}
+            <div className="overflow-x-auto pb-4 hide-scrollbar">
+              <div className="flex gap-4">
+                {categories.map(category => (
+                  <div 
+                    key={category}
+                    className="min-w-[280px] h-[180px] rounded-lg overflow-hidden relative cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setSelectedCategory(category === selectedCategory ? null : category)}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
+                    <div className="absolute bottom-4 left-4 right-4 text-white z-20">
+                      <h3 className="text-2xl font-bold uppercase">{category}</h3>
+                    </div>
+                    <img 
+                      src={livros?.find(book => book.categoria === category)?.capa_url || "/placeholder-book-cover.png"} 
+                      alt={category}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder-book-cover.png";
+                      }}
+                    />
+                  </div>
+                ))}
               </div>
-            ) : filteredBooks.length > 0 ? (
-              viewMode === 'grid' ? (
+            </div>
+
+            {/* Dynamic section for each category */}
+            {sections.map((section, index) => (
+              <div key={section.title} className="mt-12">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold text-amber-400">{section.title.toUpperCase()}</h2>
+                  <button
+                    className="text-amber-400 hover:underline"
+                    onClick={() => setSelectedCategory(section.title)}
+                  >
+                    VER TODOS
+                  </button>
+                </div>
+                
                 <BibliotecaGridView 
-                  books={filteredBooks} 
+                  books={section.books} 
                   onSelectBook={handleSelectBook}
+                  showBadge={index === 0} // Show badges only for the first section
                 />
-              ) : (
-                <BibliotecaListView 
-                  books={filteredBooks} 
-                  onSelectBook={handleSelectBook}
-                />
-              )
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <BookOpen className="h-16 w-16 text-muted-foreground opacity-30 mb-4" />
-                <h3 className="text-xl font-semibold">Nenhum livro encontrado</h3>
-                <p className="text-muted-foreground max-w-md mt-2">
-                  Não encontramos livros correspondentes à sua busca. Tente ajustar os critérios de pesquisa.
-                </p>
+              </div>
+            ))}
+
+            {/* Show all books when a category is selected */}
+            {selectedCategory && (
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold mb-6">{selectedCategory.toUpperCase()}</h2>
+                {viewMode === 'grid' ? (
+                  <BibliotecaGridView 
+                    books={filteredBooks} 
+                    onSelectBook={handleSelectBook}
+                  />
+                ) : (
+                  <BibliotecaListView 
+                    books={filteredBooks} 
+                    onSelectBook={handleSelectBook}
+                  />
+                )}
               </div>
             )}
-          </TabsContent>
-
-          {categories.map(category => (
-            <TabsContent key={category} value={category}>
-              {viewMode === 'grid' ? (
-                <BibliotecaGridView 
-                  books={filteredBooks} 
-                  onSelectBook={handleSelectBook}
-                />
-              ) : (
-                <BibliotecaListView 
-                  books={filteredBooks} 
-                  onSelectBook={handleSelectBook}
-                />
-              )}
-            </TabsContent>
-          ))}
-        </Tabs>
-
-        {user && (
-          <>
-            <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
-              Seus Favoritos
-              <span className="ml-2 text-sm text-muted-foreground font-normal">
-                (Livros que você marcou como favoritos)
-              </span>
-            </h2>
-            <BibliotecaFavoritos onSelectBook={handleSelectBook} />
             
-            <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
-              Recentemente Visualizados
-              <span className="ml-2 text-sm text-muted-foreground font-normal">
-                (Últimos livros que você acessou)
-              </span>
-            </h2>
-            <BibliotecaRecentes onSelectBook={handleSelectBook} />
+            {/* Special section: ADVOGADO DE ELITE */}
+            <div className="mt-16 mb-10">
+              <h2 className="text-3xl font-bold text-amber-400">ADVOGADO DE ELITE</h2>
+              <p className="text-xl mt-2">
+                Torne-se um advogado de elite com livros essenciais para sua carreira!
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                {livros?.slice(0, 3).map(book => (
+                  <div 
+                    key={book.id}
+                    className="relative aspect-video rounded-lg overflow-hidden cursor-pointer"
+                    onClick={() => handleSelectBook(book)}
+                  >
+                    <img 
+                      src={book.capa_url || "/placeholder-book-cover.png"} 
+                      alt={book.titulo}
+                      className="object-cover w-full h-full"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder-book-cover.png";
+                      }}
+                    />
+                    <div className="absolute top-2 left-2">
+                      <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                        <span className="text-xs">OAB</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* User-specific content: favorites and recent */}
+            {user && (
+              <>
+                <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center text-amber-400">
+                  Seus Favoritos
+                </h2>
+                <BibliotecaFavoritos onSelectBook={handleSelectBook} />
+                
+                <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center text-amber-400">
+                  Recentemente Visualizados
+                </h2>
+                <BibliotecaRecentes onSelectBook={handleSelectBook} />
+              </>
+            )}
           </>
         )}
 
