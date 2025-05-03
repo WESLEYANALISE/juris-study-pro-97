@@ -51,8 +51,8 @@ export function PodcastCard({
   return (
     <Card 
       className={cn(
-        "overflow-hidden border border-purple-500/20 hover:border-purple-500/50 relative group cursor-pointer hover:shadow-lg transition-all duration-300",
-        "bg-gradient-to-br from-background/90 to-purple-950/10 backdrop-blur-sm hover:-translate-y-1"
+        "overflow-hidden border border-purple-500/30 hover:border-purple-500/80 relative group cursor-pointer hover:shadow-xl transition-all duration-300",
+        "bg-gradient-to-br from-background/95 to-purple-950/20 backdrop-blur-sm hover:-translate-y-1"
       )}
       onClick={onClick}
     >
@@ -62,7 +62,7 @@ export function PodcastCard({
           <img
             src={thumbnail}
             alt={title}
-            className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+            className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = `https://avatar.vercel.sh/podcast-${id}?size=256`;
@@ -70,7 +70,7 @@ export function PodcastCard({
           />
         ) : (
           <div 
-            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/30 to-blue-900/30 text-foreground/40"
+            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-blue-900/40 text-foreground/40"
             style={{ 
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` 
             }}
@@ -80,13 +80,13 @@ export function PodcastCard({
         )}
         
         {/* Overlay gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-70 group-hover:opacity-80 transition-opacity" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent opacity-80 group-hover:opacity-90 transition-opacity" />
         
         {/* Main category badge */}
         {categories && categories[0] && (
           <Badge 
             variant="secondary" 
-            className="absolute top-2 left-2 bg-purple-600/80 text-white hover:bg-purple-700 backdrop-blur-sm"
+            className="absolute top-2 left-2 bg-purple-600/90 text-white hover:bg-purple-700 backdrop-blur-sm"
           >
             {categories[0].name}
           </Badge>
@@ -94,17 +94,17 @@ export function PodcastCard({
       </div>
       
       {/* Content overlay */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/95 to-transparent">
         <h3 className="font-semibold text-base line-clamp-2 text-white mb-1 group-hover:text-purple-200 transition-colors">
           {title}
         </h3>
         
-        <p className="text-xs text-white/80 line-clamp-1 mb-2">
+        <p className="text-xs text-white/90 line-clamp-1 mb-2">
           {area || 'Podcast jurídico'}
         </p>
         
         {/* Stats and date */}
-        <div className="flex justify-between items-center text-xs text-white/60">
+        <div className="flex justify-between items-center text-xs text-white/70">
           <div className="flex space-x-2">
             <span className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" /> {commentCount}
@@ -116,6 +116,9 @@ export function PodcastCard({
           <span>{formattedDate}</span>
         </div>
       </div>
+
+      {/* Animated overlay for hover effect */}
+      <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
     </Card>
   );
 }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from "react";
 import { PageTransition } from "@/components/PageTransition";
 import { AtheneumBackground, AtheneumTitle } from "@/components/ui/atheneum-theme";
@@ -16,6 +17,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { BookOpen, BookMarked, Search, Grid3X3, List as ListIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { Dialog } from "@/components/ui/dialog";
+import { BibliotecaBookModal } from "@/components/biblioteca-juridica/BibliotecaBookModal";
 import "../styles/biblioteca-juridica.css";
 
 const BibliotecaJuridica = () => {
@@ -24,6 +27,7 @@ const BibliotecaJuridica = () => {
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [viewMode, setViewMode] = useSessionStorage<"grid" | "list">("biblioteca-view-mode", "grid");
   const [activeTab, setActiveTab] = useState<string>("categorias");
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const isMobile = useMediaQuery("(max-width: 768px)");
   const navigate = useNavigate();
@@ -58,7 +62,7 @@ const BibliotecaJuridica = () => {
           subcategoria: null,
           pdf_url: item.pdf_url || '',
           capa_url: item.capa_url || null,
-          total_paginas: item.total_paginas ? parseInt(item.total_paginas) : null
+          total_paginas: item.total_paginas ? parseInt(item.total_paginas) : 100
         })) as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching books:', err);
@@ -123,11 +127,21 @@ const BibliotecaJuridica = () => {
   // Handle book selection
   const handleBookSelect = (book: LivroJuridico) => {
     setSelectedBook(book);
+    setIsModalOpen(true); // Open modal first
   };
   
   // Handle book reader close
   const handleReaderClose = () => {
     setSelectedBook(null);
+  };
+
+  // Handle reading the book after viewing details
+  const handleReadBook = () => {
+    setIsModalOpen(false); // Close the modal
+    // Delay a bit to allow modal to close before opening reader
+    setTimeout(() => {
+      console.log("Opening book reader for:", selectedBook?.titulo);
+    }, 300);
   };
 
   // Handle category selection
@@ -248,9 +262,18 @@ const BibliotecaJuridica = () => {
           </div>
         </div>
         
-        {/* Book reader modal */}
+        {/* Book details modal */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <BibliotecaBookModal
+            book={selectedBook}
+            onClose={() => setIsModalOpen(false)}
+            onReadBook={handleReadBook}
+          />
+        </Dialog>
+        
+        {/* Book reader (full screen) */}
         <AnimatePresence>
-          {selectedBook && (
+          {selectedBook && !isModalOpen && (
             <BookReader
               book={selectedBook}
               onClose={handleReaderClose}

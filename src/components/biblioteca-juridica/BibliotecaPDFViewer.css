@@ -1,87 +1,129 @@
 
-/* General viewer styling */
+/* PDF Viewer Styles */
+.pdf-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.pdf-page {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+  margin: 1rem auto;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.pdf-page canvas {
+  max-width: 100%;
+  height: auto !important;
+  border-radius: 4px;
+}
+
+/* Dark mode PDF styles */
+.pdf-page-dark {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  background-color: #121212;
+}
+
+.pdf-page-light {
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+  background-color: #ffffff;
+}
+
+/* When dark PDF mode is active */
+.dark-pdf-mode .react-pdf__Page__textContent {
+  opacity: 0.8;
+}
+
+.dark-pdf-mode .react-pdf__Page__annotations {
+  opacity: 0.8;
+}
+
+/* PDF viewer open body styles */
 .pdf-viewer-open {
   overflow: hidden;
 }
 
-/* PDF page styles */
-.react-pdf__Page {
-  margin: 1rem auto;
-  padding: 0;
+/* PDF Loading and Error States */
+.pdf-loading {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  border-radius: 8px;
-  overflow: hidden;
-  transition: all 0.3s;
+  height: 70vh;
+  width: 100%;
 }
 
-.react-pdf__Page__canvas {
-  display: block;
-  border-radius: 8px;
+.pdf-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 0.5rem;
+  padding: 2rem;
+  text-align: center;
+  max-width: 500px;
+  margin: 4rem auto;
+  animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
 }
 
-/* Loading styles */
-.react-pdf__message {
-  padding: 20px;
-  color: white;
-}
-
-/* Dark mode styles */
-.dark-pdf-mode .react-pdf__Page {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-.pdf-page-dark canvas {
-  filter: invert(0.85) hue-rotate(180deg) !important;
-}
-
-.pdf-page-light canvas {
-  filter: none;
+@keyframes shake {
+  10%, 90% { transform: translate3d(-1px, 0, 0); }
+  20%, 80% { transform: translate3d(2px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+  40%, 60% { transform: translate3d(4px, 0, 0); }
 }
 
 /* Mobile controls */
 .pdf-mobile-controls {
   position: fixed;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  padding: 1rem;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(10px);
+  padding: 0.75rem;
+  z-index: 60;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
 .pdf-mobile-controls-row {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.5rem;
+  align-items: center;
+  width: 100%;
 }
 
 .pdf-mobile-button-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.5rem;
+  width: 100%;
 }
 
-@media (min-width: 768px) {
+/* PDF content styles */
+.pdf-content {
+  padding: 1rem;
+  flex-grow: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: calc(100% - 120px);
+}
+
+@media (max-width: 640px) {
   .pdf-mobile-controls {
-    display: none;
+    padding: 0.5rem;
   }
-}
-
-/* Perspective for 3D effects */
-.perspective-1000 {
-  perspective: 1000px;
-}
-
-.transform-style-3d {
-  transform-style: preserve-3d;
-}
-
-/* Text shadows for better readability */
-.text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  
+  .pdf-content {
+    height: calc(100% - 160px);
+    padding: 0.5rem;
+  }
+  
+  .pdf-page canvas {
+    max-height: calc(100vh - 180px) !important;
+  }
 }

@@ -59,28 +59,30 @@ export function PodcastFilters({
         </div>
       </div>
       
-      {/* Categories */}
+      {/* Categories - scrollable on mobile */}
       {categories && categories.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          <Badge 
-            variant={!selectedCategory ? "default" : "outline"} 
-            className="cursor-pointer hover:bg-primary/90 transition-colors"
-            onClick={() => onCategoryChange(null)}
-          >
-            Todos
-          </Badge>
-          
-          {categories.map((category) => (
+        <div className="overflow-x-auto pb-1 -mx-4 px-4 sm:mx-0 sm:px-0">
+          <div className="flex flex-nowrap gap-2 min-w-max sm:flex-wrap">
             <Badge 
-              key={category.name}
-              variant={selectedCategory === category.name ? "default" : "outline"}
-              className="cursor-pointer hover:bg-primary/90 transition-colors"
-              onClick={() => onCategoryChange(category.name)}
+              variant={!selectedCategory ? "default" : "outline"} 
+              className="cursor-pointer hover:bg-primary/90 transition-colors whitespace-nowrap"
+              onClick={() => onCategoryChange(null)}
             >
-              {category.name}
-              {category.count > 0 && <span className="ml-1 text-xs opacity-70">({category.count})</span>}
+              Todos
             </Badge>
-          ))}
+            
+            {categories.map((category) => (
+              <Badge 
+                key={category.name}
+                variant={selectedCategory === category.name ? "default" : "outline"}
+                className="cursor-pointer hover:bg-primary/90 transition-colors whitespace-nowrap"
+                onClick={() => onCategoryChange(category.name)}
+              >
+                {category.name}
+                {category.count > 0 && <span className="ml-1 text-xs opacity-70">({category.count})</span>}
+              </Badge>
+            ))}
+          </div>
         </div>
       )}
     </motion.div>

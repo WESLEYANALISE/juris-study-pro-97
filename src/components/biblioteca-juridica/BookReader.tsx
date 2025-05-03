@@ -22,6 +22,8 @@ import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
+import { BibliotecaPDFViewer } from './BibliotecaPDFViewer';
+import { CinemaPDFViewer } from './CinemaPDFViewer';
 
 interface BookReaderProps {
   book: LivroJuridico;
@@ -34,12 +36,29 @@ export function BookReader({ book, onClose }: BookReaderProps) {
   const [readingMode, setReadingMode] = useState<'light' | 'dark'>('dark');
   const [cinemaMode, setCinemaMode] = useState(false);
   const [zoom, setZoom] = useState(100);
+  const [viewMode, setViewMode] = useState<'preview' | 'pdf'>('preview');
   
   const { getReadingProgress, updateProgress, toggleFavorite, isFavorite } = useBibliotecaProgresso();
   
   const progress = getReadingProgress(book.id);
   const initialPage = progress?.pagina_atual || 1;
   const isBookmarked = isFavorite(book.id);
+
+  // Construct proper PDF URL
+  const getPdfUrl = () => {
+    if (!book.pdf_url) return '';
+    
+    // If it already has http(s)://, return as is
+    if (book.pdf_url.startsWith('http')) {
+      return book.pdf_url;
+    }
+    
+    // Otherwise, construct the full URL with Supabase storage path
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://yovocuutiwwmbempxcyo.supabase.co';
+    return `${supabaseUrl}/storage/v1/object/public/agoravai/${book.pdf_url}`;
+  };
+  
+  const pdfUrl = getPdfUrl();
   
   // Load page when component mounts
   React.useEffect(() => {
@@ -72,7 +91,40 @@ export function BookReader({ book, onClose }: BookReaderProps) {
   const toggleCinemaMode = () => {
     setCinemaMode(prev => !prev);
   };
+
+  const openPdfViewer = () => {
+    if (pdfUrl) {
+      setViewMode('pdf');
+    } else {
+      toast.error("PDF não disponível para este livro");
+    }
+  };
   
+  // When in cinema mode with PDF viewer, render CinemaPDFViewer
+  if (cinemaMode && viewMode === 'pdf') {
+    return (
+      <CinemaPDFViewer
+        pdfUrl={pdfUrl}
+        onClose={() => setCinemaMode(false)}
+        bookTitle={book.titulo}
+        book={book}
+      />
+    );
+  }
+
+  // When viewing PDF in regular mode
+  if (viewMode === 'pdf') {
+    return (
+      <BibliotecaPDFViewer
+        pdfUrl={pdfUrl}
+        onClose={() => setViewMode('preview')}
+        bookTitle={book.titulo}
+        book={book}
+      />
+    );
+  }
+  
+  // Preview mode (default)
   return (
     <AnimatePresence>
       <motion.div
@@ -144,16 +196,24 @@ export function BookReader({ book, onClose }: BookReaderProps) {
               >
                 <p className="text-xl font-medium mb-2">Página {currentPage} de {totalPages}</p>
                 <p className="text-sm text-muted-foreground mb-4">
-                  PDF não disponível na visualização atual
+                  Pré-visualização do livro
                 </p>
                 <img 
                   src={book.capa_url || '/placeholder-book-cover.png'} 
                   alt={book.titulo}
                   className="w-40 h-56 object-cover rounded shadow-md mb-6" 
                 />
-                <p className="text-center max-w-md px-4">
-                  {book.descricao || `Visualização do livro "${book.titulo}". Use os controles abaixo para navegar.`}
+                <p className="text-center max-w-md px-4 mb-8">
+                  {book.descricao || `Visualização do livro "${book.titulo}". Use os controles abaixo para navegar ou abrir o PDF completo.`}
                 </p>
+                
+                <Button 
+                  variant="default" 
+                  onClick={openPdfViewer}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  Abrir PDF Completo
+                </Button>
               </div>
               
               {/* Cinema mode exit button */}
