@@ -428,6 +428,56 @@ export function BibliotecaPDFViewer({
     };
   }, []);
 
+  // Function to handle bookmark deletion with proper error handling
+  const handleDeleteBookmark = async (bookmarkId: string) => {
+    try {
+      const { error } = await supabase
+        .from('biblioteca_marcadores')
+        .delete()
+        .eq('id', bookmarkId);
+      
+      if (error) throw error;
+      
+      setBookmarks(bookmarks.filter(b => b.id !== bookmarkId));
+      toast({
+        title: "Marcador removido",
+        description: "O marcador foi removido com sucesso."
+      });
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o marcador.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Function to handle annotation deletion with proper error handling
+  const handleDeleteAnnotation = async (annotationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('biblioteca_anotacoes')
+        .delete()
+        .eq('id', annotationId);
+      
+      if (error) throw error;
+      
+      setAnnotations(annotations.filter(a => a.id !== annotationId));
+      toast({
+        title: "Anotação removida",
+        description: "A anotação foi removida com sucesso."
+      });
+    } catch (error) {
+      console.error('Error removing annotation:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a anotação.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Main render
   return <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
       <div className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300" style={{
@@ -578,21 +628,7 @@ export function BibliotecaPDFViewer({
                     </div>
                     <Button variant="ghost" size="icon" onClick={(e) => {
                 e.stopPropagation();
-                // Delete bookmark
-                supabase.from('biblioteca_marcadores').delete().eq('id', bookmark.id).then(() => {
-                  setBookmarks(bookmarks.filter(b => b.id !== bookmark.id));
-                  toast({
-                    title: "Marcador removido",
-                    description: "O marcador foi removido com sucesso."
-                  });
-                }).catch((error) => {
-                  console.error('Error removing bookmark:', error);
-                  toast({
-                    title: "Erro",
-                    description: "Não foi possível remover o marcador.",
-                    variant: "destructive"
-                  });
-                });
+                handleDeleteBookmark(bookmark.id);
               }}>
                       <X className="h-4 w-4" />
                     </Button>
@@ -636,23 +672,9 @@ export function BibliotecaPDFViewer({
                           <span className="text-xs bg-yellow-100 px-2 py-1 rounded">
                             Página {annotation.pagina}
                           </span>
-                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                      // Delete annotation
-                      supabase.from('biblioteca_anotacoes').delete().eq('id', annotation.id).then(() => {
-                        setAnnotations(annotations.filter(a => a.id !== annotation.id));
-                        toast({
-                          title: "Anotação removida",
-                          description: "A anotação foi removida com sucesso."
-                        });
-                      }).catch((error) => {
-                        console.error('Error removing annotation:', error);
-                        toast({
-                          title: "Erro",
-                          description: "Não foi possível remover a anotação.",
-                          variant: "destructive"
-                        });
-                      });
-                    }}>
+                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => 
+                      handleDeleteAnnotation(annotation.id)
+                    }>
                             <X className="h-4 w-4" />
                           </Button>
                         </div>
@@ -673,23 +695,9 @@ export function BibliotecaPDFViewer({
                               <span className="text-xs bg-yellow-100 px-2 py-1 rounded">
                                 Página {annotation.pagina}
                               </span>
-                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => {
-                      // Delete annotation
-                      supabase.from('biblioteca_anotacoes').delete().eq('id', annotation.id).then(() => {
-                        setAnnotations(annotations.filter(a => a.id !== annotation.id));
-                        toast({
-                          title: "Anotação removida",
-                          description: "A anotação foi removida com sucesso."
-                        });
-                      }).catch((error) => {
-                        console.error('Error removing annotation:', error);
-                        toast({
-                          title: "Erro",
-                          description: "Não foi possível remover a anotação.",
-                          variant: "destructive"
-                        });
-                      });
-                    }}>
+                              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => 
+                      handleDeleteAnnotation(annotation.id)
+                    }>
                                 <X className="h-4 w-4" />
                               </Button>
                             </div>
@@ -753,4 +761,3 @@ export function BibliotecaPDFViewer({
       </Dialog>
     </div>;
 }
-
