@@ -2,7 +2,7 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Grid2x2, List, Search, SlidersHorizontal, BookSearch } from 'lucide-react';
+import { Grid2x2, List, Search, SlidersHorizontal, BookOpen } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +29,7 @@ export function BibliotecaHeader({
     <div className="space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center">
-          <BookSearch className="mr-2 h-7 w-7 text-primary" /> 
+          <BookOpen className="mr-2 h-7 w-7 text-primary" /> 
           Biblioteca Jurídica
         </h1>
         <p className="text-muted-foreground mt-1">

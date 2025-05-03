@@ -13,6 +13,7 @@ interface JuridicalCardProps {
   children?: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+  onClick?: () => void; // Added onClick prop
 }
 
 export function JuridicalCard({
@@ -22,7 +23,8 @@ export function JuridicalCard({
   variant = "default",
   children,
   footer,
-  className
+  className,
+  onClick // Destructure onClick prop
 }: JuridicalCardProps) {
   const iconMap = {
     scales: Scale,
@@ -45,6 +47,7 @@ export function JuridicalCard({
       whileHover={{ y: -3, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.2)" }}
       transition={{ duration: 0.2 }}
       className={cn("group", className)}
+      onClick={onClick} // Add onClick handler
     >
       <Card className={cn("transition-all duration-300", variantClasses[variant])}>
         <CardHeader className="pb-2">

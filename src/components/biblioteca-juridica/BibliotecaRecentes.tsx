@@ -46,7 +46,7 @@ export function BibliotecaRecentes({ onSelectBook }: BibliotecaRecentesProps) {
       const { data, error } = await supabase
         .from('bibliotecatop')
         .select('*')
-        .in('id', recentIds);
+        .in('id', recentIds as string[]);
         
       if (error) {
         console.error('Error fetching recent books:', error);
