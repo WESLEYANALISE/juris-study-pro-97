@@ -23,8 +23,8 @@ serve(async (req) => {
     // Ensure voice is correct
     const voiceId = voice || 'pt-BR-Wavenet-D';
     
-    // Use Google TTS API with the provided key
-    const googleTTSApiKey = "AIzaSyC_vdQ6MShNiZo60KK2sHO-lgMhUda1woE";
+    // Use Google TTS API
+    const googleTTSApiKey = Deno.env.get("GOOGLE_TTS_API_KEY") || "AIzaSyBCPCIV9jUxa4sD6TrlR74q3KTKqDZjoT8";
     
     const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${googleTTSApiKey}`, {
       method: 'POST',

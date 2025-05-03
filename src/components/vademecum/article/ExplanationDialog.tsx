@@ -3,11 +3,12 @@ import React from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogDescription
 } from '@/components/ui/dialog';
-import { ArticleExplanation } from './ArticleExplanation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ReactMarkdown from 'react-markdown';
 
 interface ExplanationDialogProps {
   isOpen: boolean;
@@ -15,42 +16,81 @@ interface ExplanationDialogProps {
   articleNumber: string;
   technicalExplanation?: string;
   formalExplanation?: string;
-  onNarration: ((text: string) => Promise<void>) | null;
+  onNarration?: ((text: string) => Promise<void>) | null;
 }
 
-export const ExplanationDialog: React.FC<ExplanationDialogProps> = ({
+export function ExplanationDialog({
   isOpen,
   onClose,
   articleNumber,
   technicalExplanation,
   formalExplanation,
   onNarration
-}) => {
-  const handleNarration = async (text: string) => {
-    if (onNarration) {
-      return onNarration(text);
-    }
+}: ExplanationDialogProps) {
+  // Format text to add proper markdown for better spacing
+  const formatText = (text: string = ''): string => {
+    if (!text) return '';
+    
+    // Convert sentences to paragraphs
+    return text
+      // Add paragraph breaks after each sentence
+      .replace(/\.(\s+|$)/g, '.\n\n')
+      // Remove extra newlines (consecutive empty lines)
+      .replace(/\n{3,}/g, '\n\n')
+      // Add emphasis to important terms
+      .replace(/("[^"]+"|'[^']+')/g, '**$1**');
   };
 
+  const formattedTechnical = formatText(technicalExplanation);
+  const formattedFormal = formatText(formalExplanation);
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle>Explicações do Artigo {articleNumber}</DialogTitle>
+          <DialogTitle>Explicação do Artigo {articleNumber}</DialogTitle>
           <DialogDescription>
-            Explicações técnicas e formais sobre este artigo.
+            Interpretação técnica e formal do artigo
           </DialogDescription>
         </DialogHeader>
-        <div className="py-4">
-          <ArticleExplanation 
-            technicalExplanation={technicalExplanation} 
-            formalExplanation={formalExplanation} 
-            onNarration={handleNarration} 
-          />
-        </div>
+
+        <Tabs defaultValue={technicalExplanation ? "technical" : "formal"}>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger 
+              value="technical" 
+              disabled={!technicalExplanation}
+            >
+              Técnica
+            </TabsTrigger>
+            <TabsTrigger 
+              value="formal" 
+              disabled={!formalExplanation}
+            >
+              Formal
+            </TabsTrigger>
+          </TabsList>
+          
+          {technicalExplanation && (
+            <TabsContent value="technical" className="mt-4 space-y-4">
+              <div className="p-3 bg-muted/30 rounded-md">
+                <ReactMarkdown className="prose dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-4">
+                  {formattedTechnical}
+                </ReactMarkdown>
+              </div>
+            </TabsContent>
+          )}
+          
+          {formalExplanation && (
+            <TabsContent value="formal" className="mt-4 space-y-4">
+              <div className="p-3 bg-muted/30 rounded-md">
+                <ReactMarkdown className="prose dark:prose-invert max-w-none prose-p:my-2 prose-headings:my-4">
+                  {formattedFormal}
+                </ReactMarkdown>
+              </div>
+            </TabsContent>
+          )}
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
-};
-
-export default ExplanationDialog;
+}

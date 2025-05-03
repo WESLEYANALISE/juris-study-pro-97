@@ -1,10 +1,11 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Bookmark, BookmarkCheck, Loader2 } from 'lucide-react';
-import { useVadeMecumFavorites } from '@/hooks/useVadeMecumFavorites';
-import { useToast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
+import { supabase } from '@/integrations/supabase/client';
 
 interface BookmarkButtonProps {
   isFavorite: boolean;
@@ -16,7 +17,7 @@ interface BookmarkButtonProps {
   showLabel?: boolean;
 }
 
-export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
+export const BookmarkButton = ({
   isFavorite,
   setIsFavorite,
   lawName,
@@ -24,71 +25,97 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
   articleText,
   isLoading = false,
   showLabel = false
-}) => {
-  const { toggleFavorite } = useVadeMecumFavorites();
-  const { toast } = useToast();
+}: BookmarkButtonProps) => {
   const { user } = useAuth();
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing, setIsProcessing] = React.useState(false);
 
-  const handleToggleFavorite = async () => {
+  const toggleFavorite = async () => {
     if (!user) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa estar logado para favoritar artigos.",
-        variant: "destructive"
-      });
+      toast.error('Você precisa estar logado para favoritar artigos');
       return;
     }
 
-    setIsProcessing(true);
     try {
-      await toggleFavorite({
-        law_name: lawName,
-        article_id: articleNumber,
-        article_number: articleNumber,
-        article_text: articleText
-      });
+      setIsProcessing(true);
+      console.log(`Alternando favorito: ${isFavorite ? 'remover' : 'adicionar'}, lei: ${lawName}, artigo: ${articleNumber}`);
       
+      if (isFavorite) {
+        // Remove from favorites
+        const { error } = await supabase
+          .from('vademecum_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('law_name', lawName)
+          .eq('article_number', articleNumber);
+
+        if (error) {
+          console.error("Erro ao remover dos favoritos:", error);
+          throw error;
+        }
+
+        toast.success('Artigo removido dos favoritos');
+      } else {
+        // Add to favorites
+        const { error } = await supabase
+          .from('vademecum_favorites')
+          .insert({
+            user_id: user.id,
+            law_name: lawName,
+            article_number: articleNumber,
+            article_text: articleText,
+            article_id: `${lawName}-${articleNumber}`
+          });
+
+        if (error) {
+          console.error("Erro ao adicionar aos favoritos:", error);
+          throw error;
+        }
+
+        toast.success('Artigo adicionado aos favoritos');
+      }
+
       setIsFavorite(!isFavorite);
-      
-      toast({
-        title: isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
-        description: isFavorite 
-          ? "O artigo foi removido dos seus favoritos." 
-          : "O artigo foi adicionado aos seus favoritos."
-      });
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      toast({
-        title: "Erro",
-        description: "Ocorreu um erro ao atualizar os favoritos.",
-        variant: "destructive"
-      });
+    } catch (err) {
+      console.error("Exceção ao alternar favorito:", err);
+      toast.error(`Erro ao ${isFavorite ? 'remover dos' : 'adicionar aos'} favoritos. Tente novamente.`);
     } finally {
       setIsProcessing(false);
     }
   };
 
+  if (!user) {
+    return null;
+  }
+
+  const loading = isLoading || isProcessing;
+
   return (
-    <Button
-      variant={isFavorite ? "default" : "ghost"}
-      size={showLabel ? "sm" : "icon"}
-      className={showLabel ? "gap-2" : "h-8 w-8"}
-      onClick={handleToggleFavorite}
-      disabled={isLoading || isProcessing}
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.9 }}
     >
-      {isProcessing || isLoading ? (
-        <Loader2 size={16} className="animate-spin" />
-      ) : (
-        isFavorite ? (
-          <BookmarkCheck size={16} className="text-primary" />
+      <Button
+        variant="outline"
+        size={showLabel ? "sm" : "icon"}
+        onClick={toggleFavorite}
+        disabled={loading}
+        title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+        className={showLabel ? "flex gap-2" : ""}
+      >
+        {loading ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : isFavorite ? (
+          <BookmarkCheck className="h-4 w-4 text-primary" />
         ) : (
-          <Bookmark size={16} />
-        )
-      )}
-      {showLabel && <span className="hidden sm:inline">{isFavorite ? "Salvo" : "Salvar"}</span>}
-    </Button>
+          <Bookmark className="h-4 w-4" />
+        )}
+        
+        {showLabel && (
+          <span className="hidden sm:inline">
+            {isFavorite ? "Remover" : "Favoritar"}
+          </span>
+        )}
+      </Button>
+    </motion.div>
   );
 };
-
-export default BookmarkButton;
