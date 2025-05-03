@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
 import { motion } from "framer-motion";
 
-// Define os itens do menu de navegação móvel
+// Define menu navigation items
 const navItems = [
   { name: "Início", href: "/", icon: Home },
   { name: "Cursos", href: "/cursos", icon: BookOpenText },
@@ -15,14 +15,14 @@ const navItems = [
   { name: "Perfil", href: "/perfil", icon: User }
 ];
 
-// Componente de navegação para dispositivos móveis
+// Mobile navigation component with improved PDF viewer detection
 export default function MobileNavigation() {
   const location = useLocation();
   const { state } = useSidebar();
   const [isPdfViewerOpen, setIsPdfViewerOpen] = React.useState(false);
   
   React.useEffect(() => {
-    // Check if the PDF viewer is open by looking for the body class
+    // Enhanced PDF viewer detection that checks body class
     const checkPdfViewer = () => {
       const isPdfOpen = document.body.classList.contains('pdf-viewer-open');
       setIsPdfViewerOpen(isPdfOpen);
@@ -31,9 +31,12 @@ export default function MobileNavigation() {
     // Initial check
     checkPdfViewer();
     
-    // Create a mutation observer to watch for class changes on body
+    // Watch for class changes on body element to detect PDF viewer state
     const observer = new MutationObserver(checkPdfViewer);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    observer.observe(document.body, { 
+      attributes: true, 
+      attributeFilter: ['class'] 
+    });
     
     return () => observer.disconnect();
   }, []);

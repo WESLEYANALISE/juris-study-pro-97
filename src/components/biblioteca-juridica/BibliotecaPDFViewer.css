@@ -9,8 +9,8 @@
 
 .pdf-page {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
-  margin: 1rem auto;
-  max-height: calc(100vh - 150px);
+  margin: 0.5rem auto;
+  max-height: calc(100vh - 120px);
   width: auto !important;
 }
 
@@ -79,9 +79,10 @@
   border-radius: 2rem;
   z-index: 50;
   transition: opacity 0.3s ease-in-out;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Full page mode */
+/* Full page mode - improved to take full height */
 .pdf-fullpage {
   height: calc(100vh - 60px);
   overflow-y: hidden;
@@ -117,7 +118,7 @@
   transform: translateX(-20px);
 }
 
-/* Hide mobile navigation when PDF viewer is open */
+/* Hide mobile navigation when PDF viewer is open - improved specificity */
 body.pdf-viewer-open nav[class*="fixed bottom-0"] {
   display: none !important;
 }
@@ -131,7 +132,7 @@ body.pdf-viewer-open nav[class*="fixed bottom-0"] {
   }
   
   .pdf-page {
-    margin: 0.5rem auto;
+    margin: 0 auto;
     max-height: calc(100vh - 120px);
   }
   
@@ -150,6 +151,7 @@ body.pdf-viewer-open nav[class*="fixed bottom-0"] {
     padding: 0.5rem;
     border-radius: 1rem;
     transition: opacity 0.3s ease-in-out;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   }
 
   /* Mobile swipe hint */
@@ -166,10 +168,112 @@ body.pdf-viewer-open nav[class*="fixed bottom-0"] {
     opacity: 0.8;
     z-index: 40;
     animation: fade-out 5s forwards;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   }
 
   @keyframes fade-out {
     0%, 80% { opacity: 0.8; }
     100% { opacity: 0; }
   }
+}
+
+/* Improved Scroll experience */
+.pdf-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.pdf-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.pdf-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 20px;
+}
+
+/* Fluid page transitions */
+@keyframes page-appear {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.pdf-page {
+  animation: page-appear 0.3s ease-out;
+}
+
+/* Enhanced annotation styles */
+.annotation-highlight {
+  position: absolute;
+  background-color: rgba(255, 230, 0, 0.3);
+  border-radius: 2px;
+  pointer-events: all;
+  transition: background-color 0.2s ease;
+}
+
+.annotation-highlight:hover {
+  background-color: rgba(255, 230, 0, 0.5);
+}
+
+/* Bookmark style enhancements */
+.bookmark-active {
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  from { transform: scale(1); }
+  to { transform: scale(1.1); }
+}
+
+/* Better loading indicator */
+.loading-indicator {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.loading-indicator div {
+  position: absolute;
+  top: 33px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation-timing-function: cubic-bezier(0, 1, 1, 0);
+}
+
+.loading-indicator div:nth-child(1) {
+  left: 8px;
+  animation: loading1 0.6s infinite;
+}
+
+.loading-indicator div:nth-child(2) {
+  left: 8px;
+  animation: loading2 0.6s infinite;
+}
+
+.loading-indicator div:nth-child(3) {
+  left: 32px;
+  animation: loading2 0.6s infinite;
+}
+
+.loading-indicator div:nth-child(4) {
+  left: 56px;
+  animation: loading3 0.6s infinite;
+}
+
+@keyframes loading1 {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+@keyframes loading2 {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(24px, 0); }
+}
+
+@keyframes loading3 {
+  0% { transform: scale(1); }
+  100% { transform: scale(0); }
 }

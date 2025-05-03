@@ -106,7 +106,7 @@ export default function BibliotecaJuridica() {
 
   // Handle file URL construction
   const getBucketFileUrl = (fileName: string) => {
-    return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
+    return `${import.meta.env.VITE_SUPABASE_URL || "https://phzcazcyjhlmdchcjagy.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
   if (selectedBook && !showBookModal) {
