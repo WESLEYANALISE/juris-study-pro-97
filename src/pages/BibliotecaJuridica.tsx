@@ -2,24 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageTransition } from '@/components/PageTransition';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
 import { BibliotecaBookModal } from '@/components/biblioteca-juridica/BibliotecaBookModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Search } from 'lucide-react';
 
-// Import our new components
-import { BibliotecaBookCarousel } from '@/components/biblioteca-juridica/BibliotecaBookCarousel';
-import { BibliotecaCategoryScroll } from '@/components/biblioteca-juridica/BibliotecaCategoryScroll';
-import { BibliotecaStyledHeader } from '@/components/biblioteca-juridica/BibliotecaStyledHeader';
-import { BibliotecaGridView } from '@/components/biblioteca-juridica/BibliotecaGridView';
-import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
-import { BibliotecaFavoritos } from '@/components/biblioteca-juridica/BibliotecaFavoritos';
-import { BibliotecaRecentes } from '@/components/biblioteca-juridica/BibliotecaRecentes';
+// Import our Kindle-style components
+import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
+import { KindleCategoryPills } from '@/components/biblioteca-juridica/KindleCategoryPills';
+import { KindleCategoryCards } from '@/components/biblioteca-juridica/KindleCategoryCards';
+import { KindleMobileNavigation } from '@/components/biblioteca-juridica/KindleMobileNavigation';
 
 // Import styles
 import '../styles/biblioteca-juridica.css';
@@ -87,8 +84,7 @@ const mockSugestoes: LivroJuridico[] = [
 ];
 
 export default function BibliotecaJuridica() {
-  // State declarations - make sure all hooks are called unconditionally
-  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  // State declarations
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
@@ -127,14 +123,26 @@ export default function BibliotecaJuridica() {
           description: 'Não foi possível carregar os livros. Por favor, tente novamente.',
           variant: 'destructive'
         });
-        return [];
+        return mockLivros; // Use mock data as fallback
       }
     }
   });
 
+  // Track recently viewed books (mock implementation)
+  const [recentlyViewed, setRecentlyViewed] = useState<LivroJuridico[]>([]);
+  
+  // Populate recently viewed with some random books for demo
+  useEffect(() => {
+    if (livros && livros.length) {
+      const randomBooks = [...livros]
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 4);
+      setRecentlyViewed(randomBooks);
+    }
+  }, [livros]);
+
   // Filter books based on search and category
   const filteredBooks = React.useMemo(() => {
-    // Default to empty array if livros is undefined
     const books = livros || [];
     
     if (!searchTerm && !selectedCategory) return books;
@@ -173,6 +181,20 @@ export default function BibliotecaJuridica() {
     return result;
   }, [livros, categories]);
 
+  // Recommended books (simulated based on categories)
+  const recommendedBooks = React.useMemo(() => {
+    if (!livros) return [];
+    
+    // Get books from a random category or two
+    const randomCategories = [...categories]
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 2);
+      
+    return livros.filter(book => 
+      randomCategories.includes(book.categoria!)
+    ).slice(0, 10);
+  }, [livros, categories]);
+
   // Handle opening a book modal
   const handleSelectBook = (book: LivroJuridico) => {
     setSelectedBook(book);
@@ -191,7 +213,7 @@ export default function BibliotecaJuridica() {
     // We'll keep the selected book state for the PDF viewer
   };
 
-  // Handle file URL construction - specifically using the agoravai bucket
+  // Handle file URL construction
   const getBucketFileUrl = (fileName: string) => {
     if (!fileName) return '';
     if (fileName.startsWith('http')) return fileName;
@@ -199,17 +221,21 @@ export default function BibliotecaJuridica() {
     return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
-  // Organize featured books for elite section
-  const eliteBooks = React.useMemo(() => {
-    return (livros || []).slice(0, 6);
-  }, [livros]);
-
-  // Handle tab change
+  // Handle tab change 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    if (value === 'all') {
-      setSelectedCategory(null);
+    if (value === 'search') {
+      // Focus search input when selecting search tab
+      const searchInput = document.getElementById('kindle-search-input');
+      if (searchInput) {
+        searchInput.focus();
+      }
     }
+  };
+
+  // Handle category selection
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
   };
 
   // Render the component based on conditions
@@ -229,98 +255,94 @@ export default function BibliotecaJuridica() {
 
   return (
     <PageTransition>
-      <div className="container max-w-7xl mx-auto py-4 px-4 md:px-6">
-        <BibliotecaStyledHeader
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          viewMode={viewMode}
-          onViewModeChange={setViewMode}
-          isMobile={isMobile}
-          totalBooks={livros?.length || 0}
-          activeTab={activeTab}
-          onTabChange={handleTabChange}
-        />
+      <div className="kindle-container min-h-screen pb-20 md:pb-8">
+        <div className="container max-w-7xl mx-auto py-4 px-4 md:px-6">
+          {/* Search input always visible at top */}
+          <div className="relative mb-6">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              id="kindle-search-input"
+              placeholder="Pesquisar livros..."
+              className="pl-10 bg-gray-800/50 border-gray-700 text-white"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
 
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          </div>
-        ) : error ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <h3 className="text-xl font-semibold">Erro ao carregar livros</h3>
-            <p className="text-muted-foreground max-w-md mt-2">
-              Ocorreu um erro ao tentar carregar os livros. Por favor, tente novamente mais tarde.
-            </p>
-          </div>
-        ) : (
-          <Tabs value={activeTab} className="mt-4">
-            <TabsContent value="all" className="mt-0">
-              {/* Category scroll view */}
-              <BibliotecaCategoryScroll
+          {isLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="h-12 w-12 animate-spin text-amber-400" />
+            </div>
+          ) : error ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <h3 className="text-xl font-semibold">Erro ao carregar livros</h3>
+              <p className="text-gray-400 max-w-md mt-2">
+                Ocorreu um erro ao tentar carregar os livros. Por favor, tente novamente mais tarde.
+              </p>
+            </div>
+          ) : (
+            <div className="kindle-like-carousel space-y-6">
+              {/* Category Pills at top */}
+              <KindleCategoryPills
                 categories={categories}
                 selectedCategory={selectedCategory}
-                onSelectCategory={setSelectedCategory}
-                booksByCategory={booksByCategory}
+                onSelectCategory={handleCategorySelect}
               />
 
-              {/* Show all books in a category when selected */}
-              {selectedCategory ? (
-                <div className="mt-8">
-                  <h2 className="text-2xl font-bold mb-6 text-amber-400">{selectedCategory.toUpperCase()}</h2>
-                  {viewMode === 'grid' ? (
-                    <BibliotecaGridView 
-                      books={filteredBooks} 
-                      onSelectBook={handleSelectBook}
-                    />
-                  ) : (
-                    <BibliotecaListView 
-                      books={filteredBooks} 
+              {/* Show filtered books if search or category is active */}
+              {(searchTerm || selectedCategory) ? (
+                <KindleBookCarousel 
+                  title={selectedCategory || "Resultados da pesquisa"} 
+                  books={filteredBooks}
+                  onSelectBook={handleSelectBook}
+                  label={filteredBooks.length > 0 ? 
+                    `${filteredBooks.length} livros encontrados` : 
+                    "Nenhum livro encontrado"}
+                />
+              ) : (
+                <>
+                  {/* Para Você section */}
+                  <KindleBookCarousel
+                    title="Para você"
+                    books={recommendedBooks}
+                    onSelectBook={handleSelectBook}
+                    onViewAll={() => {}}
+                  />
+                  
+                  {/* Recently viewed section */}
+                  {recentlyViewed.length > 0 && (
+                    <KindleBookCarousel
+                      title="Lidos recentemente"
+                      books={recentlyViewed}
                       onSelectBook={handleSelectBook}
                     />
                   )}
-                </div>
-              ) : (
-                // Show carousels for each category when no category is selected
-                <>
-                  {categories.map((category) => (
-                    <BibliotecaBookCarousel
-                      key={category}
-                      title={category}
-                      books={booksByCategory[category]}
-                      onSelectBook={handleSelectBook}
-                      onShowAll={() => setSelectedCategory(category)}
-                    />
-                  ))}
+                  
+                  {/* Category cards for navigation */}
+                  <KindleCategoryCards
+                    categories={categories}
+                    booksByCategory={booksByCategory}
+                    onSelectCategory={(category) => setSelectedCategory(category)}
+                  />
+                  
+                  {/* Popular books section */}
+                  <KindleBookCarousel
+                    title="Populares"
+                    books={livros?.slice(0, 10) || []}
+                    onSelectBook={handleSelectBook}
+                    onViewAll={() => {}}
+                  />
                 </>
               )}
-            </TabsContent>
-            
-            <TabsContent value="recent" className="mt-0">
-              <BibliotecaRecentes onSelectBook={handleSelectBook} />
-            </TabsContent>
-            
-            <TabsContent value="favorite" className="mt-0">
-              <BibliotecaFavoritos onSelectBook={handleSelectBook} />
-            </TabsContent>
-            
-            <TabsContent value="elite" className="mt-0">
-              <div className="mt-4 mb-10">
-                <h2 className="text-3xl font-bold text-amber-400">ADVOGADO DE ELITE</h2>
-                <p className="text-xl mt-2">
-                  Torne-se um advogado de elite com livros essenciais para sua carreira!
-                </p>
-                
-                <BibliotecaBookCarousel
-                  title="Livros Recomendados"
-                  books={eliteBooks}
-                  onSelectBook={handleSelectBook}
-                  showAll={false}
-                  accent={true}
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-        )}
+            </div>
+          )}
+          
+          {/* Mobile Navigation Bar */}
+          <KindleMobileNavigation 
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        </div>
 
         <Dialog open={showBookModal} onOpenChange={setShowBookModal}>
           <BibliotecaBookModal 

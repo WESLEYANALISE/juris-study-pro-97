@@ -20,6 +20,7 @@ export default function MobileNavigation() {
   const location = useLocation();
   const { state } = useSidebar();
   const [isPdfViewerOpen, setIsPdfViewerOpen] = React.useState(false);
+  const [isKindlePage, setIsKindlePage] = React.useState(false);
   
   React.useEffect(() => {
     // Enhanced PDF viewer detection that checks body class
@@ -27,6 +28,9 @@ export default function MobileNavigation() {
       const isPdfOpen = document.body.classList.contains('pdf-viewer-open');
       setIsPdfViewerOpen(isPdfOpen);
     };
+    
+    // Check if we're on the Biblioteca Jurídica page
+    setIsKindlePage(location.pathname === '/biblioteca-juridica');
     
     // Initial check
     checkPdfViewer();
@@ -48,8 +52,8 @@ export default function MobileNavigation() {
     return () => observer.disconnect();
   }, [location.pathname]);
   
-  // Don't render if PDF viewer is open
-  if (isPdfViewerOpen) {
+  // Don't render if PDF viewer is open or if we're on the Biblioteca page (which has its own mobile nav)
+  if (isPdfViewerOpen || isKindlePage) {
     return null;
   }
   
@@ -58,8 +62,7 @@ export default function MobileNavigation() {
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden shadow-lg",
-        isPdfViewerOpen ? "hidden" : ""
+        "fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden shadow-lg"
       )}
     >
       <ul className="flex justify-around">
