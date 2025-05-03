@@ -3,11 +3,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { PageTransition } from '@/components/PageTransition';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BibliotecaHeader } from '@/components/biblioteca-juridica/BibliotecaHeader';
-import { BibliotecaGridView } from '@/components/biblioteca-juridica/BibliotecaGridView';
-import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
-import { BibliotecaFavoritos } from '@/components/biblioteca-juridica/BibliotecaFavoritos';
-import { BibliotecaRecentes } from '@/components/biblioteca-juridica/BibliotecaRecentes';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useAuth } from '@/hooks/use-auth';
@@ -15,7 +10,19 @@ import { useToast } from '@/hooks/use-toast';
 import { Dialog } from '@/components/ui/dialog';
 import { BibliotecaBookModal } from '@/components/biblioteca-juridica/BibliotecaBookModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Loader2, BookOpen, Book } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+
+// Import our new components
+import { BibliotecaBookCarousel } from '@/components/biblioteca-juridica/BibliotecaBookCarousel';
+import { BibliotecaCategoryScroll } from '@/components/biblioteca-juridica/BibliotecaCategoryScroll';
+import { BibliotecaStyledHeader } from '@/components/biblioteca-juridica/BibliotecaStyledHeader';
+import { BibliotecaGridView } from '@/components/biblioteca-juridica/BibliotecaGridView';
+import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
+import { BibliotecaFavoritos } from '@/components/biblioteca-juridica/BibliotecaFavoritos';
+import { BibliotecaRecentes } from '@/components/biblioteca-juridica/BibliotecaRecentes';
+
+// Import styles
+import '../styles/biblioteca-juridica.css';
 
 // Mock data is kept for fallback
 const mockLivros: LivroJuridico[] = [
@@ -86,6 +93,7 @@ export default function BibliotecaJuridica() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [showBookModal, setShowBookModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('all');
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -124,7 +132,7 @@ export default function BibliotecaJuridica() {
     }
   });
 
-  // Filter books based on search and category - always call this hook
+  // Filter books based on search and category
   const filteredBooks = React.useMemo(() => {
     // Default to empty array if livros is undefined
     const books = livros || [];
@@ -143,7 +151,7 @@ export default function BibliotecaJuridica() {
     });
   }, [livros, searchTerm, selectedCategory]);
 
-  // Extract categories from books - always call this hook
+  // Extract categories from books
   const categories = React.useMemo(() => {
     const books = livros || [];
     
@@ -152,6 +160,18 @@ export default function BibliotecaJuridica() {
       .map(book => book.categoria));
     return Array.from(uniqueCategories);
   }, [livros]);
+
+  // Group books by category
+  const booksByCategory = React.useMemo(() => {
+    const books = livros || [];
+    const result: Record<string, LivroJuridico[]> = {};
+    
+    categories.forEach(category => {
+      result[category] = books.filter(book => book.categoria === category);
+    });
+    
+    return result;
+  }, [livros, categories]);
 
   // Handle opening a book modal
   const handleSelectBook = (book: LivroJuridico) => {
@@ -179,26 +199,22 @@ export default function BibliotecaJuridica() {
     return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
-  // Organize books by sections - always call this hook
-  const sections = React.useMemo(() => {
-    const books = livros || [];
-    
-    if (books.length === 0) return [];
-
-    // Create sections based on categories or other criteria
-    const areas = Array.from(new Set(books.filter(book => book.categoria).map(book => book.categoria)));
-    
-    return areas.map(area => ({
-      title: area,
-      description: `Livros da área de ${area}`,
-      books: books.filter(book => book.categoria === area).slice(0, 6)
-    }));
+  // Organize featured books for elite section
+  const eliteBooks = React.useMemo(() => {
+    return (livros || []).slice(0, 6);
   }, [livros]);
 
-  // Display the PDF viewer when a book is selected - move this logic outside the return
-  let content;
+  // Handle tab change
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === 'all') {
+      setSelectedCategory(null);
+    }
+  };
+
+  // Render the component based on conditions
   if (selectedBook && !showBookModal) {
-    content = (
+    return (
       <BibliotecaPDFViewer 
         livro={{
           id: selectedBook.id,
@@ -209,94 +225,48 @@ export default function BibliotecaJuridica() {
         onClose={() => setSelectedBook(null)} 
       />
     );
-  } else {
-    content = (
-      <PageTransition>
-        <div className="container max-w-7xl mx-auto py-6 px-4 md:px-6">
-          <BibliotecaHeader 
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            viewMode={viewMode}
-            onViewModeChange={setViewMode}
-            isMobile={isMobile}
-            totalBooks={livros?.length || 0}
-            categoriesCount={categories.length}
-          />
+  }
 
-          {/* Hero section with stats */}
-          <div className="mt-8 mb-10">
-            <h1 className="text-3xl font-bold text-amber-400">ÁREAS DO DIREITO</h1>
-            <p className="text-xl mt-2">
-              Mais de <span className="font-bold">{livros?.length || 0} livros de Direito</span> atualizados para aprimorar seus estudos!
+  return (
+    <PageTransition>
+      <div className="container max-w-7xl mx-auto py-4 px-4 md:px-6">
+        <BibliotecaStyledHeader
+          searchTerm={searchTerm}
+          onSearchChange={setSearchTerm}
+          viewMode={viewMode}
+          onViewModeChange={setViewMode}
+          isMobile={isMobile}
+          totalBooks={livros?.length || 0}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
+
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <h3 className="text-xl font-semibold">Erro ao carregar livros</h3>
+            <p className="text-muted-foreground max-w-md mt-2">
+              Ocorreu um erro ao tentar carregar os livros. Por favor, tente novamente mais tarde.
             </p>
           </div>
+        ) : (
+          <Tabs value={activeTab} className="mt-4">
+            <TabsContent value="all" className="mt-0">
+              {/* Category scroll view */}
+              <BibliotecaCategoryScroll
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+                booksByCategory={booksByCategory}
+              />
 
-          {isLoading ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="h-12 w-12 animate-spin text-primary" />
-            </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center">
-              <BookOpen className="h-16 w-16 text-destructive opacity-30 mb-4" />
-              <h3 className="text-xl font-semibold">Erro ao carregar livros</h3>
-              <p className="text-muted-foreground max-w-md mt-2">
-                Ocorreu um erro ao tentar carregar os livros. Por favor, tente novamente mais tarde.
-              </p>
-            </div>
-          ) : (
-            // ... keep existing code (the rest of the UI rendering)
-            <>
-              {/* Categories horizontal scroll like in the image */}
-              <div className="overflow-x-auto pb-4 hide-scrollbar">
-                <div className="flex gap-4">
-                  {categories.map(category => (
-                    <div 
-                      key={category}
-                      className="min-w-[280px] h-[180px] rounded-lg overflow-hidden relative cursor-pointer hover:opacity-90 transition-opacity"
-                      onClick={() => setSelectedCategory(category === selectedCategory ? null : category)}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-                      <div className="absolute bottom-4 left-4 right-4 text-white z-20">
-                        <h3 className="text-2xl font-bold uppercase">{category}</h3>
-                      </div>
-                      <img 
-                        src={livros?.find(book => book.categoria === category)?.capa_url || "/placeholder-book-cover.png"} 
-                        alt={category}
-                        className="object-cover w-full h-full"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder-book-cover.png";
-                        }}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Dynamic section for each category */}
-              {sections.map((section, index) => (
-                <div key={section.title} className="mt-12">
-                  <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-amber-400">{section.title.toUpperCase()}</h2>
-                    <button
-                      className="text-amber-400 hover:underline"
-                      onClick={() => setSelectedCategory(section.title)}
-                    >
-                      VER TODOS
-                    </button>
-                  </div>
-                  
-                  <BibliotecaGridView 
-                    books={section.books} 
-                    onSelectBook={handleSelectBook}
-                    showBadge={index === 0} // Show badges only for the first section
-                  />
-                </div>
-              ))}
-
-              {/* Show all books when a category is selected */}
-              {selectedCategory && (
-                <div className="mt-12">
-                  <h2 className="text-2xl font-bold mb-6">{selectedCategory.toUpperCase()}</h2>
+              {/* Show all books in a category when selected */}
+              {selectedCategory ? (
+                <div className="mt-8">
+                  <h2 className="text-2xl font-bold mb-6 text-amber-400">{selectedCategory.toUpperCase()}</h2>
                   {viewMode === 'grid' ? (
                     <BibliotecaGridView 
                       books={filteredBooks} 
@@ -309,69 +279,57 @@ export default function BibliotecaJuridica() {
                     />
                   )}
                 </div>
+              ) : (
+                // Show carousels for each category when no category is selected
+                <>
+                  {categories.map((category) => (
+                    <BibliotecaBookCarousel
+                      key={category}
+                      title={category}
+                      books={booksByCategory[category]}
+                      onSelectBook={handleSelectBook}
+                      onShowAll={() => setSelectedCategory(category)}
+                    />
+                  ))}
+                </>
               )}
-              
-              {/* Special section: ADVOGADO DE ELITE */}
-              <div className="mt-16 mb-10">
+            </TabsContent>
+            
+            <TabsContent value="recent" className="mt-0">
+              <BibliotecaRecentes onSelectBook={handleSelectBook} />
+            </TabsContent>
+            
+            <TabsContent value="favorite" className="mt-0">
+              <BibliotecaFavoritos onSelectBook={handleSelectBook} />
+            </TabsContent>
+            
+            <TabsContent value="elite" className="mt-0">
+              <div className="mt-4 mb-10">
                 <h2 className="text-3xl font-bold text-amber-400">ADVOGADO DE ELITE</h2>
                 <p className="text-xl mt-2">
                   Torne-se um advogado de elite com livros essenciais para sua carreira!
                 </p>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-6">
-                  {(livros || []).slice(0, 3).map(book => (
-                    <div 
-                      key={book.id}
-                      className="relative aspect-video rounded-lg overflow-hidden cursor-pointer"
-                      onClick={() => handleSelectBook(book)}
-                    >
-                      <img 
-                        src={book.capa_url || "/placeholder-book-cover.png"} 
-                        alt={book.titulo}
-                        className="object-cover w-full h-full"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = "/placeholder-book-cover.png";
-                        }}
-                      />
-                      <div className="absolute top-2 left-2">
-                        <div className="bg-blue-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
-                          <span className="text-xs">OAB</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <BibliotecaBookCarousel
+                  title="Livros Recomendados"
+                  books={eliteBooks}
+                  onSelectBook={handleSelectBook}
+                  showAll={false}
+                  accent={true}
+                />
               </div>
+            </TabsContent>
+          </Tabs>
+        )}
 
-              {/* User-specific content: favorites and recent */}
-              {user && (
-                <>
-                  <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center text-amber-400">
-                    Seus Favoritos
-                  </h2>
-                  <BibliotecaFavoritos onSelectBook={handleSelectBook} />
-                  
-                  <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center text-amber-400">
-                    Recentemente Visualizados
-                  </h2>
-                  <BibliotecaRecentes onSelectBook={handleSelectBook} />
-                </>
-              )}
-            </>
-          )}
-
-          <Dialog open={showBookModal} onOpenChange={setShowBookModal}>
-            <BibliotecaBookModal 
-              book={selectedBook}
-              onClose={handleCloseModal}
-              onReadBook={handleOpenBook}
-            />
-          </Dialog>
-        </div>
-      </PageTransition>
-    );
-  }
-
-  // Return the content determined above
-  return content;
+        <Dialog open={showBookModal} onOpenChange={setShowBookModal}>
+          <BibliotecaBookModal 
+            book={selectedBook}
+            onClose={handleCloseModal}
+            onReadBook={handleOpenBook}
+          />
+        </Dialog>
+      </div>
+    </PageTransition>
+  );
 }
