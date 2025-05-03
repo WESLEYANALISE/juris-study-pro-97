@@ -29,12 +29,14 @@ export function KindleBookCarousel({
       <div className="flex items-center justify-between mb-3">
         <h2 className="kindle-section-title">{title}</h2>
         {onViewAll && (
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={onViewAll}
             className="kindle-see-all"
           >
             Ver tudo <ChevronRight className="h-4 w-4 ml-1" />
-          </button>
+          </motion.button>
         )}
       </div>
       
@@ -48,9 +50,10 @@ export function KindleBookCarousel({
           const hasKindleUnlimited = Math.random() > 0.7; // Just for demo
           
           return (
-            <div 
+            <motion.div 
               key={book.id}
               className="kindle-book-card"
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
               onClick={() => onSelectBook(book)}
             >
               <div className="kindle-book-cover">
@@ -69,6 +72,11 @@ export function KindleBookCarousel({
                     <span className="text-xs text-gray-400">Sem capa</span>
                   </div>
                 )}
+                
+                {/* Title overlay on the cover */}
+                <div className="kindle-book-title-overlay">
+                  <span className="kindle-book-title-text">{book.titulo}</span>
+                </div>
                 
                 {/* Progress bar at bottom if there's reading progress */}
                 {progress && progress.pagina_atual > 1 && book.total_paginas && (
@@ -92,9 +100,7 @@ export function KindleBookCarousel({
                   </div>
                 )}
               </div>
-              
-              <h3 className="kindle-book-title">{book.titulo}</h3>
-            </div>
+            </motion.div>
           );
         })}
       </div>

@@ -3,8 +3,21 @@ import { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ChevronLeft, ChevronRight, X, Search, ZoomIn, ZoomOut } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  X, 
+  Search, 
+  ZoomIn, 
+  ZoomOut, 
+  Bookmark,
+  PenLine,
+  Menu,
+  Download,
+  Share2
+} from 'lucide-react';
 import { useTouchGestures } from '@/hooks/use-touch-gestures';
+import { motion, AnimatePresence } from 'framer-motion';
 import './PDFViewer.css';
 
 // Set up the PDF.js worker
@@ -31,6 +44,7 @@ export function PDFViewer({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showControls, setShowControls] = useState<boolean>(true);
+  const [showMobileTools, setShowMobileTools] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -66,6 +80,15 @@ export function PDFViewer({
     minScale: 0.5,
     maxScale: 3
   });
+
+  // Add class to body to mark PDF viewer as open
+  useEffect(() => {
+    document.body.classList.add('pdf-viewer-open');
+    
+    return () => {
+      document.body.classList.remove('pdf-viewer-open');
+    };
+  }, []);
 
   // Validate if the PDF URL is valid
   useEffect(() => {
@@ -124,6 +147,21 @@ export function PDFViewer({
   }): void {
     setNumPages(numPages);
     setIsLoading(false);
+    
+    // Show swipe hint for mobile users
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      const hintElement = document.createElement('div');
+      hintElement.className = 'swipe-hint';
+      hintElement.textContent = 'Deslize para navegar entre as páginas';
+      document.body.appendChild(hintElement);
+      
+      setTimeout(() => {
+        if (hintElement.parentElement) {
+          hintElement.parentElement.removeChild(hintElement);
+        }
+      }, 5000);
+    }
   }
 
   function onDocumentLoadError(error: Error): void {
@@ -159,28 +197,80 @@ export function PDFViewer({
     alert(`Funcionalidade de busca para "${searchText}" será implementada em breve.`);
   };
 
+  // Toggle mobile tools menu
+  const toggleMobileTools = () => {
+    setShowMobileTools(prev => !prev);
+  };
+
+  // Mock functions for PDF tools
+  const handleBookmark = () => {
+    toast("Marcador adicionado na página " + pageNumber);
+  };
+  
+  const handleAnnotate = () => {
+    toast("Modo de anotação ativado");
+  };
+  
+  const handleDownload = () => {
+    toast("Download iniciado");
+    window.open(livro.pdf, "_blank");
+  };
+  
+  const handleShare = () => {
+    toast("Opções de compartilhamento abertas");
+  };
+  
+  // Simple toast function
+  const toast = (message: string) => {
+    const toastElement = document.createElement('div');
+    toastElement.className = 'pdf-toast';
+    toastElement.textContent = message;
+    document.body.appendChild(toastElement);
+    
+    setTimeout(() => {
+      toastElement.classList.add('show');
+    }, 10);
+    
+    setTimeout(() => {
+      toastElement.classList.remove('show');
+      setTimeout(() => {
+        if (toastElement.parentElement) {
+          toastElement.parentElement.removeChild(toastElement);
+        }
+      }, 300);
+    }, 3000);
+  };
+
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
-      <div 
+      <motion.div 
         className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300" 
         style={{ opacity: showControls ? 1 : 0 }}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: showControls ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
       >
         <h2 className="text-xl font-medium truncate">{livro.nome}</h2>
         <Button variant="ghost" size="sm" onClick={onClose}>
           <X className="h-5 w-5" />
         </Button>
-      </div>
+      </motion.div>
 
       <div ref={containerRef} className="flex-grow overflow-auto p-4 flex justify-center px-0">
         {error ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg">
+            <motion.div 
+              className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
               <p>{error}</p>
               <Button className="mt-4" onClick={onClose}>
                 Voltar
               </Button>
-            </div>
+            </motion.div>
           </div>
         ) : (
           <Document 
@@ -206,16 +296,18 @@ export function PDFViewer({
               scale={scale} 
               renderTextLayer={true} 
               renderAnnotationLayer={true} 
-              className="pdf-page"
+              className="pdf-page pdf-page-turn"
             />
           </Document>
         )}
       </div>
 
       {/* Bottom controls that show/hide based on activity */}
-      <div 
-        className="pdf-controls transition-opacity duration-300" 
-        style={{ opacity: showControls ? 1 : 0 }}
+      <motion.div 
+        className="pdf-mobile-controls"
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: showControls ? 1 : 0 }}
+        transition={{ duration: 0.3 }}
       >
         <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={pageNumber <= 1}>
           <ChevronLeft className="h-4 w-4" />
@@ -248,7 +340,22 @@ export function PDFViewer({
             <ZoomIn className="h-4 w-4" />
           </Button>
         </div>
-      </div>
+        
+        <div className="ml-2 flex items-center gap-1">
+          <Button variant="outline" size="sm" onClick={handleBookmark}>
+            <Bookmark className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleAnnotate}>
+            <PenLine className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDownload}>
+            <Download className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleShare}>
+            <Share2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </motion.div>
     </div>
   );
 }

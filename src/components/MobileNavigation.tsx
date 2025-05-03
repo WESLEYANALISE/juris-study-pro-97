@@ -20,7 +20,6 @@ export default function MobileNavigation() {
   const location = useLocation();
   const { state } = useSidebar();
   const [isPdfViewerOpen, setIsPdfViewerOpen] = React.useState(false);
-  const [isKindlePage, setIsKindlePage] = React.useState(false);
   
   React.useEffect(() => {
     // Enhanced PDF viewer detection that checks body class
@@ -28,9 +27,6 @@ export default function MobileNavigation() {
       const isPdfOpen = document.body.classList.contains('pdf-viewer-open');
       setIsPdfViewerOpen(isPdfOpen);
     };
-    
-    // Check if we're on the Biblioteca Jurídica page
-    setIsKindlePage(location.pathname === '/biblioteca-juridica');
     
     // Initial check
     checkPdfViewer();
@@ -42,18 +38,11 @@ export default function MobileNavigation() {
       attributeFilter: ['class'] 
     });
     
-    // Add a manual class to body when BibliotecaPDFViewer is open
-    if (location.pathname === '/biblioteca-juridica' && document.querySelector('.biblioteca-pdf-viewer')) {
-      document.body.classList.add('pdf-viewer-open');
-    } else {
-      document.body.classList.remove('pdf-viewer-open');
-    }
-    
     return () => observer.disconnect();
   }, [location.pathname]);
   
-  // Don't render if PDF viewer is open or if we're on the Biblioteca page (which has its own mobile nav)
-  if (isPdfViewerOpen || isKindlePage) {
+  // Don't render if PDF viewer is open
+  if (isPdfViewerOpen) {
     return null;
   }
   

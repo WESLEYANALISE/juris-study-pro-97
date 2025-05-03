@@ -10,13 +10,15 @@ import { Input } from '@/components/ui/input';
 import { Dialog } from '@/components/ui/dialog';
 import { BibliotecaBookModal } from '@/components/biblioteca-juridica/BibliotecaBookModal';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Loader2, Search } from 'lucide-react';
+import { Loader2, Search, Grid2X2, List } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Import our Kindle-style components
 import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
 import { KindleCategoryPills } from '@/components/biblioteca-juridica/KindleCategoryPills';
 import { KindleCategoryCards } from '@/components/biblioteca-juridica/KindleCategoryCards';
-import { KindleMobileNavigation } from '@/components/biblioteca-juridica/KindleMobileNavigation';
+import { BibliotecaGridView } from '@/components/biblioteca-juridica/BibliotecaGridView';
+import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
 
 // Import styles
 import '../styles/biblioteca-juridica.css';
@@ -89,7 +91,7 @@ export default function BibliotecaJuridica() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [showBookModal, setShowBookModal] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
+  const [viewMode, setViewMode] = useState<'carousel' | 'list'>('carousel');
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -221,21 +223,14 @@ export default function BibliotecaJuridica() {
     return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
-  // Handle tab change 
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-    if (value === 'search') {
-      // Focus search input when selecting search tab
-      const searchInput = document.getElementById('kindle-search-input');
-      if (searchInput) {
-        searchInput.focus();
-      }
-    }
-  };
-
   // Handle category selection
   const handleCategorySelect = (category: string | null) => {
     setSelectedCategory(category);
+  };
+
+  // Toggle view mode between list and carousel
+  const handleViewModeToggle = (mode: 'carousel' | 'list') => {
+    setViewMode(mode);
   };
 
   // Render the component based on conditions
@@ -257,6 +252,39 @@ export default function BibliotecaJuridica() {
     <PageTransition>
       <div className="kindle-container min-h-screen pb-20 md:pb-8">
         <div className="container max-w-7xl mx-auto py-4 px-4 md:px-6">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-amber-400">
+                Biblioteca Jurídica
+                <span className="text-sm font-normal ml-2 text-gray-400">
+                  {livros ? `(${livros.length} livros)` : ''}
+                </span>
+              </h1>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className={`view-toggle-btn ${viewMode === 'carousel' ? 'active' : ''}`}
+                onClick={() => handleViewModeToggle('carousel')}
+                title="Visualização em carrossel"
+              >
+                <Grid2X2 size={18} />
+              </motion.button>
+              
+              <motion.button
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className={`view-toggle-btn ${viewMode === 'list' ? 'active' : ''}`}
+                onClick={() => handleViewModeToggle('list')}
+                title="Visualização em lista"
+              >
+                <List size={18} />
+              </motion.button>
+            </div>
+          </div>
+          
           {/* Search input always visible at top */}
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -281,67 +309,79 @@ export default function BibliotecaJuridica() {
               </p>
             </div>
           ) : (
-            <div className="kindle-like-carousel space-y-6">
-              {/* Category Pills at top */}
-              <KindleCategoryPills
-                categories={categories}
-                selectedCategory={selectedCategory}
-                onSelectCategory={handleCategorySelect}
-              />
-
-              {/* Show filtered books if search or category is active */}
-              {(searchTerm || selectedCategory) ? (
-                <KindleBookCarousel 
-                  title={selectedCategory || "Resultados da pesquisa"} 
-                  books={filteredBooks}
-                  onSelectBook={handleSelectBook}
-                  label={filteredBooks.length > 0 ? 
-                    `${filteredBooks.length} livros encontrados` : 
-                    "Nenhum livro encontrado"}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={viewMode}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.3 }}
+              >
+                {/* Category Pills at top */}
+                <KindleCategoryPills
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={handleCategorySelect}
                 />
-              ) : (
-                <>
-                  {/* Para Você section */}
-                  <KindleBookCarousel
-                    title="Para você"
-                    books={recommendedBooks}
-                    onSelectBook={handleSelectBook}
-                    onViewAll={() => {}}
+
+                {/* View Mode: List or Carousel */}
+                {viewMode === 'list' ? (
+                  <BibliotecaListView 
+                    books={filteredBooks} 
+                    onSelectBook={handleSelectBook} 
                   />
-                  
-                  {/* Recently viewed section */}
-                  {recentlyViewed.length > 0 && (
-                    <KindleBookCarousel
-                      title="Lidos recentemente"
-                      books={recentlyViewed}
-                      onSelectBook={handleSelectBook}
-                    />
-                  )}
-                  
-                  {/* Category cards for navigation */}
-                  <KindleCategoryCards
-                    categories={categories}
-                    booksByCategory={booksByCategory}
-                    onSelectCategory={(category) => setSelectedCategory(category)}
-                  />
-                  
-                  {/* Popular books section */}
-                  <KindleBookCarousel
-                    title="Populares"
-                    books={livros?.slice(0, 10) || []}
-                    onSelectBook={handleSelectBook}
-                    onViewAll={() => {}}
-                  />
-                </>
-              )}
-            </div>
+                ) : (
+                  <div className="kindle-like-carousel space-y-6">
+                    {/* Show filtered books if search or category is active */}
+                    {(searchTerm || selectedCategory) ? (
+                      <KindleBookCarousel 
+                        title={selectedCategory || "Resultados da pesquisa"} 
+                        books={filteredBooks}
+                        onSelectBook={handleSelectBook}
+                        label={filteredBooks.length > 0 ? 
+                          `${filteredBooks.length} livros encontrados` : 
+                          "Nenhum livro encontrado"}
+                      />
+                    ) : (
+                      <>
+                        {/* Para Você section */}
+                        <KindleBookCarousel
+                          title="Para você"
+                          books={recommendedBooks}
+                          onSelectBook={handleSelectBook}
+                          onViewAll={() => {}}
+                        />
+                        
+                        {/* Recently viewed section */}
+                        {recentlyViewed.length > 0 && (
+                          <KindleBookCarousel
+                            title="Lidos recentemente"
+                            books={recentlyViewed}
+                            onSelectBook={handleSelectBook}
+                          />
+                        )}
+                        
+                        {/* Category cards for navigation */}
+                        <KindleCategoryCards
+                          categories={categories}
+                          booksByCategory={booksByCategory}
+                          onSelectCategory={(category) => setSelectedCategory(category)}
+                        />
+                        
+                        {/* Popular books section */}
+                        <KindleBookCarousel
+                          title="Populares"
+                          books={livros?.slice(0, 10) || []}
+                          onSelectBook={handleSelectBook}
+                          onViewAll={() => {}}
+                        />
+                      </>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           )}
-          
-          {/* Mobile Navigation Bar */}
-          <KindleMobileNavigation 
-            activeTab={activeTab}
-            onTabChange={handleTabChange}
-          />
         </div>
 
         <Dialog open={showBookModal} onOpenChange={setShowBookModal}>

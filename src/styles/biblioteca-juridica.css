@@ -61,6 +61,24 @@
   animation: pageTurn 0.5s ease forwards;
 }
 
+/* Book hover animation */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+  100% { transform: translateY(0px); }
+}
+
+.book-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Card shadow animation */
+@keyframes pulseShadow {
+  0% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+  50% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35); }
+  100% { box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); }
+}
+
 /* Mobile-specific styles */
 @media (max-width: 640px) {
   .book-card-inner {
@@ -96,6 +114,7 @@
   font-weight: 600;
   margin-bottom: 1rem;
   color: #ffb74d;
+  text-shadow: 0px 1px 3px rgba(0,0,0,0.3);
 }
 
 .kindle-see-all {
@@ -104,41 +123,77 @@
   text-decoration: none;
   display: flex;
   align-items: center;
+  transition: all 0.2s ease;
+}
+
+.kindle-see-all:hover {
+  color: #ffb74d;
+  text-shadow: 0px 0px 8px rgba(255,183,77,0.3);
 }
 
 .kindle-book-card {
-  width: 110px;
+  width: calc(40% - 12px);
   margin-right: 12px;
   display: inline-block;
   vertical-align: top;
-  transition: transform 0.2s ease;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  transform: translate3d(0,0,0); /* for smoother animations */
 }
 
 .kindle-book-card:hover {
   transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.3);
 }
 
 .kindle-book-cover {
-  height: 160px;
+  height: 220px;
   width: 100%;
   border-radius: 3px;
   background-color: #2a2a2a;
   overflow: hidden;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
   position: relative;
+  transition: all 0.3s ease;
 }
 
-.kindle-unlimited-badge {
+.kindle-book-cover:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+  transform: scale(1.02);
+}
+
+.kindle-book-title-overlay {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  background: linear-gradient(to top, rgba(0,0,0,0.9), rgba(0,0,0,0.5) 60%, transparent);
+  padding: 30px 8px 8px;
+  transition: opacity 0.3s ease;
+}
+
+.kindle-book-title-text {
+  color: white;
+  font-size: 0.8rem;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kindle-unlimited-badge {
+  position: absolute;
+  bottom: 30px;
+  left: 0;
+  right: 0;
   padding: 4px;
   font-size: 0.6rem;
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 5;
 }
 
 .kindle-unlimited-badge span {
@@ -148,16 +203,8 @@
   border-radius: 2px;
   font-weight: 600;
   font-size: 0.6rem;
-}
-
-.kindle-book-title {
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
-  color: rgba(255, 255, 255, 0.8);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  animation: pulseShadow 2s infinite;
 }
 
 .kindle-category-pills {
@@ -176,15 +223,19 @@
   font-size: 0.875rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .kindle-category-pill.active {
   background-color: #ffb74d;
   color: #121212;
+  box-shadow: 0 2px 8px rgba(255, 183, 77, 0.4);
 }
 
 .kindle-category-pill:hover:not(.active) {
   background-color: rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.25);
 }
 
 .kindle-carousel {
@@ -211,12 +262,24 @@
   position: relative;
   border-radius: 8px;
   overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+  transition: all 0.3s ease;
+}
+
+.kindle-category-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.4);
 }
 
 .kindle-category-card img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.kindle-category-card:hover img {
+  transform: scale(1.1);
 }
 
 .kindle-category-overlay {
@@ -232,6 +295,7 @@
   font-size: 0.875rem;
   font-weight: 600;
   color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.8);
 }
 
 .kindle-category-count {
@@ -239,10 +303,42 @@
   color: rgba(255, 255, 255, 0.7);
 }
 
+/* View toggle buttons */
+.view-toggle-btn {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+}
+
+.view-toggle-btn:hover,
+.view-toggle-btn.active {
+  background: rgba(255, 183, 77, 0.2);
+  color: #ffb74d;
+}
+
+/* Bottom controls for PDF viewer */
+.pdf-mobile-controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.75rem;
+  background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  z-index: 50;
+  border-top: 1px solid rgba(255,255,255,0.1);
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+}
+
 /* Responsive adjustments */
 @media (min-width: 640px) {
   .kindle-book-card {
-    width: 120px;
+    width: calc(33.33% - 12px);
   }
   
   .kindle-book-cover {
@@ -252,7 +348,7 @@
 
 @media (min-width: 768px) {
   .kindle-book-card {
-    width: 130px;
+    width: calc(25% - 12px);
   }
   
   .kindle-book-cover {
@@ -262,7 +358,7 @@
 
 @media (min-width: 1024px) {
   .kindle-book-card {
-    width: 140px;
+    width: calc(20% - 12px);
   }
   
   .kindle-book-cover {
