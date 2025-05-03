@@ -40,7 +40,7 @@ export function CinemaPDFViewer({ pdfUrl, onClose, bookTitle, book }: CinemaPDFV
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<{page: number, text: string}[]>([]);
   
-  const { updateProgress, isFavorite, toggleFavorite } = useBibliotecaProgresso();
+  const { saveReadingProgress, isFavorite, toggleFavorite } = useBibliotecaProgresso();
   const { user } = useAuth();
   const containerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -85,9 +85,9 @@ export function CinemaPDFViewer({ pdfUrl, onClose, bookTitle, book }: CinemaPDFV
   
   useEffect(() => {
     if (book && pageNumber > 0) {
-      updateProgress(book.id, pageNumber);
+      saveReadingProgress(book.id, pageNumber);
     }
-  }, [pageNumber, book, updateProgress]);
+  }, [pageNumber, book, saveReadingProgress]);
   
   function onDocumentLoadSuccess({ numPages: totalPages }) {
     setNumPages(totalPages);

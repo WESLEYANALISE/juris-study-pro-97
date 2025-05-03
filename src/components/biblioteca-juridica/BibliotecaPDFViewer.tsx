@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
@@ -31,7 +30,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   
-  const { updateProgress } = useBibliotecaProgresso();
+  const { saveReadingProgress } = useBibliotecaProgresso();
   const containerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
@@ -47,9 +46,9 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   
   useEffect(() => {
     if (book && pageNumber > 0 && isLoaded) {
-      updateProgress(book.id, pageNumber);
+      saveReadingProgress(book.id, pageNumber);
     }
-  }, [pageNumber, book, updateProgress, isLoaded]);
+  }, [pageNumber, book, saveReadingProgress, isLoaded]);
 
   const verifyPdfUrl = () => {
     // Check if URL is valid

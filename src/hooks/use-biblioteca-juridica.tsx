@@ -58,8 +58,8 @@ export function useBibliotecaProgresso() {
     loadProgressos();
   }, [user, loadProgressos]);
 
-  // Update reading progress
-  const updateProgress = async (livroId: string, paginaAtual: number) => {
+  // Update reading progress - renamed from updateProgress to saveReadingProgress for consistency
+  const saveReadingProgress = async (livroId: string, paginaAtual: number) => {
     if (!user) {
       console.log('User not authenticated, progress not saved');
       return;
@@ -214,13 +214,56 @@ export function useBibliotecaProgresso() {
     await loadProgressos();
   };
 
+  // Add these methods for API compatibility with the TS version
+  const getLastReadPage = (): { bookId: string; page: number } | null => {
+    let lastRead: { bookId: string; timestamp: string; page: number } | null = null;
+    
+    progressos.forEach((progress) => {
+      if (!lastRead || new Date(progress.ultima_leitura) > new Date(lastRead.timestamp)) {
+        lastRead = {
+          bookId: progress.livro_id,
+          timestamp: progress.ultima_leitura,
+          page: progress.pagina_atual
+        };
+      }
+    });
+    
+    return lastRead ? { bookId: lastRead.bookId, page: lastRead.page } : null;
+  };
+  
+  const resetProgress = async (livroId: string) => {
+    if (!user) return;
+    
+    const existingProgress = progressos.find(p => p.livro_id === livroId);
+    if (!existingProgress) return;
+    
+    try {
+      const { error } = await supabase
+        .from('biblioteca_leitura_progresso')
+        .delete()
+        .eq('id', existingProgress.id);
+        
+      if (error) throw error;
+      
+      // Update local state
+      setProgressos(prev => prev.filter(p => p.id !== existingProgress.id));
+      setFavoritos(prev => prev.filter(id => id !== livroId));
+      
+    } catch (error) {
+      console.error('Error resetting progress:', error);
+      toast.error('Erro ao resetar progresso de leitura');
+    }
+  };
+
   return {
     isLoading,
     getReadingProgress,
     isFavorite,
-    updateProgress,
+    saveReadingProgress, // Renamed from updateProgress
     toggleFavorite,
     getFavoriteBooks,
+    getLastReadPage,
+    resetProgress,
     refetch,
   };
 }
