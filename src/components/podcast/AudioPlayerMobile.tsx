@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { 
   Play, 
@@ -241,7 +240,7 @@ export function AudioPlayerMobile({
   };
 
   return (
-    <div className="bg-card border border-primary/10 rounded-lg overflow-hidden shadow-md">
+    <div className="bg-gradient-to-b from-[#1A1A2E] to-[#121212] border border-primary/10 rounded-lg overflow-hidden shadow-md">
       {/* Error State */}
       {errorState && (
         <div className="p-3 bg-destructive/10 text-destructive text-sm">
@@ -259,6 +258,19 @@ export function AudioPlayerMobile({
 
       {/* Player Content */}
       <div className="p-3">
+        {thumbnail && (
+          <div className="w-full aspect-square mb-3 rounded-md overflow-hidden">
+            <img
+              src={thumbnail}
+              alt={title}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/placeholder.svg";
+              }}
+            />
+          </div>
+        )}
+        
         {/* Title */}
         <h3 className="font-medium text-sm line-clamp-1 mb-2">{title}</h3>
         
@@ -281,7 +293,7 @@ export function AudioPlayerMobile({
         </div>
         
         {/* Controls */}
-        <div className="flex justify-center items-center gap-2">
+        <div className="flex justify-center items-center gap-4">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -296,7 +308,7 @@ export function AudioPlayerMobile({
             <Button 
               variant={isPlaying ? "default" : "outline"} 
               size="icon" 
-              className={`h-10 w-10 rounded-full ${isPlaying ? 'bg-primary' : 'border-2 border-primary bg-primary/10'}`}
+              className={`h-12 w-12 rounded-full ${isPlaying ? 'bg-primary' : 'border-2 border-primary bg-primary/10'}`}
               onClick={() => setIsPlaying(!isPlaying)}
               disabled={!audioReady && !errorState}
             >
@@ -309,9 +321,9 @@ export function AudioPlayerMobile({
                   transition={{ duration: 0.2 }}
                 >
                   {isPlaying ? (
-                    <Pause className="h-4 w-4" />
+                    <Pause className="h-5 w-5" />
                   ) : (
-                    <Play className="h-4 w-4 ml-0.5" />
+                    <Play className="h-5 w-5 ml-0.5" />
                   )}
                 </motion.div>
               </AnimatePresence>
@@ -356,6 +368,27 @@ export function AudioPlayerMobile({
               <Volume2 className="h-4 w-4" />
             )}
           </Button>
+        </div>
+        
+        <div className="flex items-center justify-between mt-3">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="h-8 w-8 p-0 rounded-full"
+            onClick={() => setIsMuted(!isMuted)}
+            disabled={!audioReady}
+          >
+            {isMuted ? (
+              <VolumeX className="h-4 w-4" />
+            ) : (
+              <Volume2 className="h-4 w-4" />
+            )}
+          </Button>
+          
+          {/* Progress text */}
+          <p className="text-xs text-muted-foreground">
+            {Math.round((currentTime / (duration || 1)) * 100)}% completed
+          </p>
         </div>
       </div>
     </div>

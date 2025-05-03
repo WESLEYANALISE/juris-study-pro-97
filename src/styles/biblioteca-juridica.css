@@ -67,3 +67,147 @@
     touch-action: pan-y;
   }
 }
+
+/* Spotify-like styles for podcast */
+.podcast-card {
+  transition: all 0.3s ease;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.podcast-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.podcast-progress {
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.podcast-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #8B5CF6, #EC4899);
+  transition: width 0.3s ease;
+}
+
+.podcast-controls {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.playlist-item {
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.playlist-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.playlist-item.active {
+  background-color: rgba(155, 135, 245, 0.15);
+}
+
+.podcast-category-pill {
+  border-radius: 20px;
+  background: linear-gradient(90deg, rgba(155, 135, 245, 0.5), rgba(155, 135, 245, 0.2));
+  padding: 5px 12px;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.podcast-category-pill:hover {
+  background: linear-gradient(90deg, rgba(155, 135, 245, 0.7), rgba(155, 135, 245, 0.4));
+  transform: scale(1.05);
+}
+
+/* Improved audio player styles */
+.audio-player-container {
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(to bottom, rgba(25, 20, 35, 0.85), rgba(15, 10, 25, 0.95));
+}
+
+.volume-slider {
+  appearance: none;
+  width: 80px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.play-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  color: #121212;
+  transition: transform 0.2s ease;
+}
+
+.play-button:hover {
+  transform: scale(1.05);
+}
+
+/* Category cards for podcasts */
+.category-card {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-5px);
+}
+
+.category-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60%;
+  background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+  pointer-events: none;
+}
+
+.category-card-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  z-index: 1;
+}
+
+@media (max-width: 768px) {
+  .audio-controls {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .playlist-section {
+    height: calc(100vh - 300px);
+  }
+}
