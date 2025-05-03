@@ -576,7 +576,7 @@ export function BibliotecaPDFViewer({
                       <h4 className="font-medium">{bookmark.titulo || `Página ${bookmark.pagina}`}</h4>
                       <p className="text-xs text-muted-foreground">Página {bookmark.pagina}</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={e => {
+                    <Button variant="ghost" size="icon" onClick={(e) => {
                 e.stopPropagation();
                 // Delete bookmark
                 supabase.from('biblioteca_marcadores').delete().eq('id', bookmark.id).then(() => {
@@ -585,7 +585,7 @@ export function BibliotecaPDFViewer({
                     title: "Marcador removido",
                     description: "O marcador foi removido com sucesso."
                   });
-                }).catch(error => {
+                }).catch((error) => {
                   console.error('Error removing bookmark:', error);
                   toast({
                     title: "Erro",
@@ -644,7 +644,7 @@ export function BibliotecaPDFViewer({
                           title: "Anotação removida",
                           description: "A anotação foi removida com sucesso."
                         });
-                      }).catch(error => {
+                      }).catch((error) => {
                         console.error('Error removing annotation:', error);
                         toast({
                           title: "Erro",
@@ -681,7 +681,7 @@ export function BibliotecaPDFViewer({
                           title: "Anotação removida",
                           description: "A anotação foi removida com sucesso."
                         });
-                      }).catch(error => {
+                      }).catch((error) => {
                         console.error('Error removing annotation:', error);
                         toast({
                           title: "Erro",
@@ -753,3 +753,4 @@ export function BibliotecaPDFViewer({
       </Dialog>
     </div>;
 }
+

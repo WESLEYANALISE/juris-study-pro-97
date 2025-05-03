@@ -12,6 +12,11 @@ interface VadeMecumArticleListProps {
   filter: string;
   tableName: string;
   error?: any;
+  // Add these props to match the ones being passed in VadeMecumViewer.tsx
+  visibleArticles?: any[];
+  filteredArticles?: any[];
+  visibleBatch?: number;
+  loadMoreRef?: (node?: Element | null) => void;
 }
 
 export function VadeMecumArticleList({
@@ -19,13 +24,22 @@ export function VadeMecumArticleList({
   isLoading,
   filter,
   tableName,
-  error
+  error,
+  visibleArticles,
+  filteredArticles,
+  visibleBatch,
+  loadMoreRef
 }: VadeMecumArticleListProps) {
   const [filteredData, setFilteredData] = useState<any[] | null>(data);
   const { fontSize } = useVadeMecumPreferences();
 
-  // Effect to filter data when data or filter changes
+  // If visibleArticles is provided, use it directly instead of filtering
   useEffect(() => {
+    if (visibleArticles) {
+      setFilteredData(visibleArticles);
+      return;
+    }
+
     if (!data) {
       setFilteredData(null);
       return;
@@ -48,7 +62,7 @@ export function VadeMecumArticleList({
     });
 
     setFilteredData(filtered);
-  }, [data, filter]);
+  }, [data, filter, visibleArticles]);
 
   // Loading skeletons
   if (isLoading) {
@@ -99,6 +113,8 @@ export function VadeMecumArticleList({
           fontSize={fontSize}
         />
       ))}
+      {/* Reference element for infinite scrolling if loadMoreRef is provided */}
+      {loadMoreRef && <div ref={loadMoreRef} className="h-10" />}
     </div>
   );
 }

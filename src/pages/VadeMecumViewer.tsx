@@ -158,12 +158,11 @@ const VadeMecumViewer = () => {
             ) : (
               <VadeMecumArticleList 
                 isLoading={loading} 
-                visibleArticles={visibleArticles} 
-                filteredArticles={cachedArticles} 
-                visibleBatch={visibleBatch} 
-                tableName={tableName} 
-                fontSize={fontSize} 
-                loadMoreRef={loadMoreRef} 
+                data={cachedArticles}
+                filter={searchQuery}
+                tableName={tableName}
+                visibleArticles={visibleArticles}
+                loadMoreRef={loadMoreRef}
               />
             )}
           </div>
@@ -190,3 +189,4 @@ const VadeMecumViewer = () => {
 };
 
 export default VadeMecumViewer;
+
