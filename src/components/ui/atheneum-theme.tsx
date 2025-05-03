@@ -19,7 +19,7 @@ export function AtheneumCard({
       )}
       initial={hoverEffect ? { y: 10, opacity: 0 } : false}
       animate={hoverEffect ? { y: 0, opacity: 1 } : false}
-      whileHover={hoverEffect ? { scale: 1.02 } : {}}
+      // Remove the whileHover prop
       {...props}
     >
       {children}
@@ -107,16 +107,15 @@ export function AtheneumButton({
   };
 
   return (
-    <motion.button
+    <button
       className={cn(
         "inline-flex items-center justify-center rounded-md px-4 py-2 font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-amber-400 disabled:pointer-events-none disabled:opacity-50",
         variants[variant],
         className
       )}
-      whileTap={{ scale: 0.97 }}
       {...props}
     >
       {children}
-    </motion.button>
+    </button>
   );
 }

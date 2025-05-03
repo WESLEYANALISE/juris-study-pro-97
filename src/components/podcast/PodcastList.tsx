@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PodcastCard } from '@/components/podcast/PodcastCard';
-import { AdvancedPodcastPlayer } from '@/components/podcast/AdvancedPodcastPlayer';
+import { ImmersivePodcastPlayer } from '@/components/podcast/ImmersivePodcastPlayer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Music, AlertCircle } from 'lucide-react';
@@ -234,16 +234,16 @@ export function PodcastList({
         ))}
       </div>
       
-      {/* Advanced Podcast Player Dialog */}
+      {/* Immersive Podcast Player Dialog */}
       <Dialog open={showAdvancedPlayer} onOpenChange={setShowAdvancedPlayer}>
         <DialogContent className="max-w-6xl p-0 bg-transparent border-none">
           {selectedPodcast && (
-            <AdvancedPodcastPlayer
+            <ImmersivePodcastPlayer
               id={selectedPodcast.id}
               title={selectedPodcast.title}
               description={selectedPodcast.description}
               audioUrl={selectedPodcast.audio_url}
-              imageUrl={selectedPodcast.thumbnail_url} // Changed from imageUrl to match component props
+              thumbnail={selectedPodcast.thumbnail_url}
               author={selectedPodcast.area || "Autor desconhecido"}
               publishedAt={selectedPodcast.published_at}
               categories={selectedPodcast.categories}

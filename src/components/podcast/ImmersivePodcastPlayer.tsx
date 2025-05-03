@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Pause, SkipBack, SkipForward, Volume2, VolumeX,
   Bookmark, MessageSquare, Share2, X, ChevronDown, Heart,
-  Clock, Waveform
+  Clock, AudioWaveform
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -602,7 +601,7 @@ export function ImmersivePodcastPlayer({
                         onClick={() => jumpToCommentTime(comment.timestamp)}
                         className="space-x-1"
                       >
-                        <Waveform className="h-3 w-3" />
+                        <AudioWaveform className="h-3 w-3" />
                         <span>{comment.timeFormatted}</span>
                       </Button>
                     </div>

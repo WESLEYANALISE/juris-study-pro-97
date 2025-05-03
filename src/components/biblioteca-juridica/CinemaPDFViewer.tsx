@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -334,7 +333,6 @@ export function CinemaPDFViewer({ pdfUrl, onClose, bookTitle, book }: CinemaPDFV
                     "w-full max-w-md h-1", 
                     darkMode ? "bg-white/20" : "bg-black/20"
                   )}
-                  indicatorClassName={darkMode ? "bg-amber-500" : "bg-amber-600"}
                 />
               </div>
               

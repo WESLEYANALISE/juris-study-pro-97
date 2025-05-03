@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, BookOpen, Menu, X, Library, BookMarked, Clock, Heart, Plus } from 'lucide-react';
@@ -48,7 +47,7 @@ export default function BibliotecaJuridica() {
   const [favoriteBooks, setFavoriteBooks] = useState<LivroJuridico[]>([]);
   
   const { user } = useAuth();
-  const { getReadingProgress, getFavoriteBooks } = useBibliotecaProgresso();
+  const { getReadingProgress, isFavorite, toggleFavorite, getFavoriteBooks } = useBibliotecaProgresso();
   
   // Track scroll position for parallax effects
   useEffect(() => {
@@ -94,7 +93,7 @@ export default function BibliotecaJuridica() {
         const transformedBooks: LivroJuridico[] = booksData?.map(book => ({
           id: book.id.toString(),
           titulo: book.livro || 'Sem título',
-          autor: book.autor || '',
+          autor: book.area || '', // Use area as author if no author field exists
           categoria: book.area || 'Geral',
           descricao: book.sobre || '',
           capa_url: book.imagem || null,
@@ -447,7 +446,7 @@ export default function BibliotecaJuridica() {
                                 <p className="text-sm text-muted-foreground mb-4">
                                   Explore obras jurídicas relacionadas a {category.nome}
                                 </p>
-                                <AtheneumButton size="sm" variant="outline">
+                                <AtheneumButton variant="outline">
                                   Ver Obras
                                 </AtheneumButton>
                               </AtheneumCard>

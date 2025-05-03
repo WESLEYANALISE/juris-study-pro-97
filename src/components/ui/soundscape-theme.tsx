@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 
@@ -13,22 +13,18 @@ export function SoundscapeCard({
   waveColor?: string;
 }) {
   return (
-    <motion.div
+    <div
       className={cn(
         "relative rounded-lg border border-white/10 bg-black/40 backdrop-blur-lg shadow-lg overflow-hidden",
         className
       )}
-      initial={{ y: 20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      whileHover={{ y: -5 }}
-      transition={{ duration: 0.3 }}
       {...props}
     >
       {children}
       
       {/* Audio waveform decorative bottom border */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-purple-500 to-transparent" />
-    </motion.div>
+    </div>
   );
 }
 
@@ -89,20 +85,16 @@ export function SoundscapePlayerContainer({
   expanded?: boolean;
 }) {
   return (
-    <motion.div
+    <div
       className={cn(
         "rounded-xl border border-white/10 bg-gradient-to-b from-purple-950/80 to-black/80 backdrop-blur-xl shadow-xl p-4",
         expanded ? "fixed inset-0 z-50" : "relative",
         className
       )}
-      layout
-      transition={{
-        layout: { duration: 0.6, type: "spring" }
-      }}
       {...props}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }
 
