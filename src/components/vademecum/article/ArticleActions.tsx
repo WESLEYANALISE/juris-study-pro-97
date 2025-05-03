@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Info, FileText, Copy } from 'lucide-react';
+import { Info, FileText, Copy, PencilLine, Highlighter } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExplanationDialog } from './ExplanationDialog';
 import { PracticalExampleDialog } from './PracticalExampleDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnnotationButton } from './AnnotationButton';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { useAuth } from '@/hooks/use-auth';
+import { NarrationControls } from './NarrationControls';
 
 interface ArticleActionsProps {
   articleText: string;
@@ -34,6 +36,8 @@ export const ArticleActions = ({
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
   const [isPracticalExampleDialogOpen, setIsPracticalExampleDialogOpen] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
+  const [isNarrating, setIsNarrating] = useState(false);
+  const [explanationType, setExplanationType] = useState<'technical' | 'formal' | null>(null);
 
   const handleCopy = async (text: string) => {
     if (!text) return;
@@ -72,6 +76,20 @@ export const ArticleActions = ({
     }
   };
 
+  const handleOpenExplanation = (type: 'technical' | 'formal') => {
+    setExplanationType(type);
+    setIsExplanationDialogOpen(true);
+  };
+
+  const handleHighlight = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString()) {
+      toast.success('Texto destacado');
+    } else {
+      toast.info('Selecione um texto para destacar');
+    }
+  };
+
   return (
     <>
       <AnimatePresence>
@@ -83,22 +101,51 @@ export const ArticleActions = ({
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
           >
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
-              onClick={() => setIsExplanationDialogOpen(true)}
-              disabled={!technicalExplanation && !formalExplanation}
-            >
-              <Info size={16} />
-              <span>Explicação</span>
-            </Button>
+            {/* Explanation Buttons */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="gap-2 bg-[#9b87f5]/10 hover:bg-[#9b87f5]/20 border-[#9b87f5]/30"
+                  disabled={!technicalExplanation && !formalExplanation}
+                >
+                  <Info size={16} />
+                  <span>Explicação</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64">
+                <div className="space-y-2">
+                  <h4 className="font-medium">Tipo de Explicação</h4>
+                  <p className="text-sm text-muted-foreground">Escolha o tipo de explicação:</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleOpenExplanation('technical')}
+                      disabled={!technicalExplanation}
+                    >
+                      Técnica
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleOpenExplanation('formal')}
+                      disabled={!formalExplanation}
+                    >
+                      Formal
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
 
+            {/* Practical Example Button */}
             {practicalExample && (
               <Button 
                 variant="outline"
                 size="sm"
-                className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
+                className="gap-2 bg-[#9b87f5]/10 hover:bg-[#9b87f5]/20 border-[#9b87f5]/30"
                 onClick={() => setIsPracticalExampleDialogOpen(true)}
               >
                 <FileText size={16} />
@@ -106,15 +153,35 @@ export const ArticleActions = ({
               </Button>
             )}
 
+            {/* Copy Button */}
             <Button 
               variant="outline"
               size="sm"
-              className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
+              className="gap-2 bg-[#9b87f5]/10 hover:bg-[#9b87f5]/20 border-[#9b87f5]/30"
               onClick={() => handleCopy(articleText)} 
               disabled={isCopying}
             >
               <Copy size={16} />
               <span>Copiar</span>
+            </Button>
+
+            {/* Narration Button */}
+            <NarrationControls 
+              text={articleText}
+              isNarrating={isNarrating}
+              setIsNarrating={setIsNarrating}
+              showLabel={true}
+            />
+            
+            {/* New highlight button */}
+            <Button 
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-[#9b87f5]/10 hover:bg-[#9b87f5]/20 border-[#9b87f5]/30"
+              onClick={handleHighlight}
+            >
+              <Highlighter size={16} />
+              <span>Destacar</span>
             </Button>
             
             {/* New annotation button, only shown for logged-in users */}
@@ -123,20 +190,21 @@ export const ArticleActions = ({
                 lawName={lawName} 
                 articleNumber={articleNumber} 
                 articleText={articleText} 
+                showLabel={true}
               />
             )}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Explanation Dialog */}
+      {/* Explanation Dialog with conditional content */}
       <ExplanationDialog 
         isOpen={isExplanationDialogOpen} 
         onClose={() => setIsExplanationDialogOpen(false)}
         articleNumber={articleNumber}
-        technicalExplanation={technicalExplanation}
-        formalExplanation={formalExplanation}
-        onNarration={null} // Disabling narration for explanations
+        technicalExplanation={explanationType === 'technical' ? technicalExplanation : undefined}
+        formalExplanation={explanationType === 'formal' ? formalExplanation : undefined}
+        onNarration={handleNarration}
       />
 
       {/* Practical Example Dialog */}
@@ -145,8 +213,10 @@ export const ArticleActions = ({
         onClose={() => setIsPracticalExampleDialogOpen(false)}
         articleNumber={articleNumber}
         example={practicalExample}
-        onNarration={null} // Disabling narration for examples
+        onNarration={handleNarration}
       />
     </>
   );
 };
+
+export default ArticleActions;

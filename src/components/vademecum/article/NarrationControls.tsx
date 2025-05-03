@@ -44,7 +44,7 @@ export const NarrationControls = ({ text, isNarrating, setIsNarrating, showLabel
       variant="outline" 
       size={showLabel ? "sm" : "icon"} 
       onClick={handleNarration}
-      className={`${isNarrating ? 'bg-primary/10 text-primary border-primary/20' : ''} ${showLabel ? 'flex gap-2' : ''}`}
+      className={`${isNarrating ? 'bg-primary/10 text-primary border-primary/20' : 'bg-[#9b87f5]/10 hover:bg-[#9b87f5]/20 border-[#9b87f5]/30'} ${showLabel ? 'flex gap-2' : ''}`}
       disabled={isLoading}
     >
       {isNarrating || isLoading ? (
@@ -61,3 +61,5 @@ export const NarrationControls = ({ text, isNarrating, setIsNarrating, showLabel
     </Button>
   );
 };
+
+export default NarrationControls;
