@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,7 +13,6 @@ import {
   Maximize2,
   Minimize2,
   SunMoon,
-  Zoom,
   ZoomIn,
   ZoomOut,
   Fullscreen

@@ -204,7 +204,7 @@ export function useBibliotecaProgresso() {
     return progress || null;
   };
   
-  // Get favorite books
+  // Get favorite books - adding this function to resolve the error
   const getFavoriteBooks = (): string[] => {
     return favoritos;
   };
@@ -220,7 +220,7 @@ export function useBibliotecaProgresso() {
     isFavorite,
     updateProgress,
     toggleFavorite,
-    getFavoriteBooks,
+    getFavoriteBooks, // Export the new function
     refetch,
   };
 }
