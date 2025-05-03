@@ -5,438 +5,130 @@
 
 @layer base {
   :root {
-    /* Dark theme with purple accents - base colors */
-    --background: 240 20% 5%;
-    --foreground: 220 33% 98%;
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
     
-    /* Card and elements with subtle gradients */
-    --card: 240 20% 9%;
-    --card-foreground: 220 33% 98%;
-    --popover: 240 20% 9%;
-    --popover-foreground: 220 33% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
     
-    /* Primary colors - Purple tones */
-    --primary: 260 60% 60%;
-    --primary-foreground: 220 33% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
     
-    /* Secondary colors - Gold accents */
-    --secondary: 45 96% 50%;
-    --secondary-foreground: 240 20% 9%;
+    --primary: 270 70% 65%;
+    --primary-foreground: 0 0% 98%;
     
-    /* States and feedback - Enhanced colors for better visibility */
-    --success: 142 72% 45%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    
+    --radius: 0.5rem;
+    
+    --success: 142 70.6% 45.3%;
     --success-foreground: 210 40% 98%;
-    --warning: 45 93% 55%;
-    --warning-foreground: 224 71% 4%;
-    --destructive: 0 84% 55%;
-    --destructive-foreground: 210 40% 98%;
     
-    /* UI elements */
-    --muted: 240 20% 14%;
-    --muted-foreground: 220 33% 75%;
-    --accent: 260 30% 45%;
-    --accent-foreground: 220 33% 98%;
-    
-    /* Borders and inputs */
-    --border: 240 20% 18%;
-    --input: 240 20% 18%;
-    --ring: 260 60% 60%;
-
-    /* Radius for elements */
-    --radius: 0.75rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 240 5.9% 10%;
   }
 }
 
 @layer base {
   * {
-    @apply border-border selection:bg-primary/20 selection:text-primary;
+    @apply border-border;
   }
-
-  html {
-    -webkit-tap-highlight-color: transparent;
-    overscroll-behavior: none;
-  }
-
+  
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    overscroll-behavior: none;
-  }
-  
-  /* Better focus styles for accessibility */
-  :focus-visible {
-    @apply outline-2 outline-offset-2 outline-primary/70;
   }
 }
 
-@layer utilities {
-  /* Utility classes for cards */
-  .card-hover {
-    @apply transition-all duration-200 hover:shadow-hover hover:-translate-y-1;
-  }
-
-  /* Classes para inputs e controles */
-  .input-elegant {
-    @apply rounded-lg border-2 border-input bg-transparent px-3 py-2 text-sm 
-           ring-offset-background transition-colors placeholder:text-muted-foreground 
-           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring 
-           focus-visible:ring-offset-2;
-  }
-
-  /* Classes para botões */
-  .btn-elegant {
-    @apply rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 
-           active:scale-95 disabled:pointer-events-none disabled:opacity-50;
-  }
-
-  /* Efeitos de glassmorfismo */
-  .glass {
-    @apply bg-background/80 backdrop-blur-sm border border-border/50;
-  }
-
-  /* Mobile-specific utilities */
-  .safe-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0);
-  }
-  
-  .safe-top {
-    padding-top: env(safe-area-inset-top, 0);
-  }
-  
-  .touch-action-none {
-    touch-action: none;
-  }
-  
-  .mobile-tap-highlight-none {
-    -webkit-tap-highlight-color: transparent;
-  }
-  
-  /* Content spacing helpers */
-  .content-safe-area {
-    @apply pb-20 md:pb-6;
-  }
-  
-  /* Mobile navigation overlay protection */
-  .nav-offset {
-    @apply -mb-20 pb-20 md:mb-0 md:pb-6;
-  }
-  
-  /* Sticky header offset */
-  .header-offset {
-    @apply pt-16;
-  }
-
-  /* Shadow optimization */
-  .shadow-card {
-    @apply shadow-md shadow-black/20;
-  }
-  
-  .shadow-hover {
-    @apply shadow-lg shadow-black/30;
-  }
-  
-  /* New animation utilities */
-  .animate-float {
-    animation: float 3s ease-in-out infinite;
-  }
-  
-  .animate-pulse-subtle {
-    animation: pulse-subtle 2s ease-in-out infinite;
-  }
-  
-  .animate-slide-in {
-    animation: slide-in 0.3s ease-out forwards;
-  }
-  
-  /* Better touch targets for mobile */
-  @media (max-width: 640px) {
-    button, a, .interactive {
-      @apply min-h-[44px] min-w-[44px];
-    }
-  }
-  
-  /* Question highlight styles */
-  .question-highlight {
-    @apply bg-primary/5 border-l-2 border-primary/30 pl-3 py-2 rounded-r-md;
-  }
-  
-  /* Enhanced alternative styles */
-  .alternative-item {
-    @apply flex items-center space-x-3 p-4 border rounded-lg transition-all hover:bg-primary/5;
-  }
-  
-  .alternative-circle {
-    @apply flex items-center justify-center w-6 h-6 rounded-full border-2 border-primary;
-  }
-  
-  /* Enhanced success/error colors */
-  .status-success {
-    @apply bg-green-600 text-white;
-  }
-  
-  .status-error {
-    @apply bg-red-600 text-white;
-  }
-
-  /* Legal document styles */
-  .legal-document {
-    @apply bg-card/80 backdrop-blur-sm border border-primary/10 p-6 rounded-lg;
-  }
-
-  .legal-heading {
-    @apply text-xl font-semibold border-b border-primary/20 pb-2 mb-4;
-  }
-
-  .legal-section {
-    @apply border-l-2 border-primary/30 pl-4 py-2 mb-4;
-  }
-
-  .legal-paragraph {
-    @apply mb-3 leading-relaxed;
-  }
-
-  .legal-article {
-    @apply bg-primary/5 px-4 py-3 rounded-lg my-3;
-  }
-
-  .legal-article-number {
-    @apply text-lg font-semibold bg-primary/10 px-3 py-1 rounded-lg inline-block mb-2;
-  }
-
-  .legal-annotation {
-    @apply text-sm text-muted-foreground italic border-l-2 border-secondary/30 pl-3 my-2;
-  }
-
-  /* Juridical theme specific utilities */
-  .juridical-watermark {
-    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0C20 0 10 5 0 15V60h60V15C50 5 40 0 30 0zM30 5c8.3 0 16.7 3.7 25 10v35H5V15C13.3 8.7 21.7 5 30 5z' fill='%23ffffff' fill-opacity='0.03'/%3E%3C/svg%3E");
-  }
-  
-  .paper-texture {
-    background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.02'/%3E%3C/svg%3E");
-  }
-  
-  .courthouse-pattern {
-    background-image: url("data:image/svg+xml,%3Csvg width='84' height='48' viewBox='0 0 84 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h12v6H0V0zm28 8h12v6H28V8zm14-8h12v6H42V0zm14 0h12v6H56V0zm0 8h12v6H56V8zM42 8h12v6H42V8zm0 16h12v6H42v-6zm14-8h12v6H56v-6zm14 0h12v6H70v-6zm0-16h12v6H70V0zM28 32h12v6H28v-6zM14 16h12v6H14v-6zM0 24h12v6H0v-6zm0 8h12v6H0v-6zm14 0h12v6H14v-6zm14 8h12v6H28v-6zm-14 0h12v6H14v-6zm28 0h12v6H42v-6zm14-8h12v6H56v-6zm0-8h12v6H56v-6zm14 8h12v6H70v-6zm0 8h12v6H70v-6zM14 24h12v6H14v-6zm14-8h12v6H28v-6zM14 8h12v6H14V8zM0 8h12v6H0V8z' fill='%23ffffff' fill-opacity='0.02'/%3E%3C/svg%3E");
-  }
+/* Perspective and 3D styles */
+.perspective-1000 {
+  perspective: 1000px;
 }
 
-/* Glassmorphism Effects */
-.glass-card {
-  @apply bg-black/30 backdrop-blur-md border border-white/10;
+.transform-style-3d {
+  transform-style: preserve-3d;
 }
 
-.glass-purple {
-  @apply bg-primary/10 backdrop-blur-md border border-primary/20;
+/* Text shadow for better readability */
+.text-shadow {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
-/* Gradient Backgrounds */
-.gradient-purple {
-  @apply bg-gradient-to-br from-[#8B5CF6] to-[#D946EF];
+/* Gradient text */
+.text-gradient {
+  @apply bg-clip-text text-transparent;
 }
 
-.gradient-card {
-  @apply bg-gradient-to-br from-muted to-background border-primary/20;
-}
-
-.gradient-sidebar {
-  @apply bg-gradient-to-b from-background via-muted/70 to-background;
-}
-
-.gradient-button {
-  @apply bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 transition-all;
-}
-
-.gradient-header {
-  @apply bg-gradient-to-r from-background via-muted to-background border-b border-border/50;
-}
-
-.gradient-welcome {
-  @apply bg-gradient-to-r from-primary/15 to-accent/5 border border-primary/20;
-}
-
-/* Enhanced Shadow Effects */
-.shadow-purple {
-  @apply shadow-lg shadow-purple-800/30;
-}
-
-.shadow-glow {
-  @apply shadow-lg shadow-primary/40;
-}
-
-/* Hover Effects */
-.hover-lift {
-  @apply transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10;
-}
-
-.hover-glow {
-  @apply transition-all duration-300 hover:shadow-glow;
-}
-
-.hover-scale {
-  @apply transition-all duration-200 hover:scale-105;
-}
-
-/* Improved scrollbars */
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  @apply w-2;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-muted;
+  @apply bg-black/20;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-primary/40 rounded-full hover:bg-primary/60;
+  @apply bg-purple-800/50 rounded-full;
 }
 
-/* Mobile specific overrides */
-@media (max-width: 640px) {
-  html, body {
-    @apply overscroll-none;
-  }
-  
-  /* Prevent text zoom on iOS */
-  input, textarea, select, button {
-    @apply text-base;
-  }
-  
-  /* Responsive navbar */
-  .navbar-responsive {
-    @apply flex-wrap gap-y-2;
-  }
-  
-  /* Enhanced touch targets */
-  .radio-option {
-    @apply p-4;
-  }
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-purple-700/70;
 }
 
-/* Juridical theme specific styles */
-/* Scroll with golden edges */
-.scroll-document {
-  @apply relative py-8 px-6;
-  background-image: 
-    linear-gradient(to right, rgba(212, 175, 55, 0.1) 0%, transparent 5%, transparent 95%, rgba(212, 175, 55, 0.1) 100%),
-    linear-gradient(to bottom, rgba(212, 175, 55, 0.1) 0%, transparent 5%, transparent 95%, rgba(212, 175, 55, 0.1) 100%);
+/* Progress bar customization */
+.progress-bar-primary::-webkit-progress-value {
+  @apply bg-primary;
 }
 
-.scroll-document::before,
-.scroll-document::after {
-  content: "";
-  @apply absolute left-0 right-0 h-4 bg-secondary/5;
-  background-image: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3) 50%, transparent 100%);
+.progress-bar-primary::-moz-progress-bar {
+  @apply bg-primary;
 }
 
-.scroll-document::before {
-  @apply top-0;
+/* PDF reader styles */
+.pdf-page-dark canvas {
+  filter: invert(0.85) hue-rotate(180deg) !important;
 }
 
-.scroll-document::after {
-  @apply bottom-0;
+.pdf-viewer-open {
+  overflow: hidden;
 }
 
-/* Marble texture for headers */
-.marble-header {
-  background-image: linear-gradient(
-    to right,
-    rgba(255, 255, 255, 0.03) 0%,
-    rgba(255, 255, 255, 0.05) 25%,
-    rgba(255, 255, 255, 0.07) 50%,
-    rgba(255, 255, 255, 0.05) 75%,
-    rgba(255, 255, 255, 0.03) 100%
-  );
-  @apply bg-black/40 backdrop-filter backdrop-blur-sm border-b border-white/10 shadow-md;
-}
-
-/* Seal effect */
-.seal {
-  @apply w-16 h-16 mx-auto rounded-full border-2 border-secondary flex items-center justify-center relative overflow-hidden;
-}
-
-.seal::before {
-  content: "";
-  @apply absolute inset-0 bg-secondary opacity-10;
-}
-
-/* Scroll snap for TabsList */
-.snap-scroll {
-  @apply snap-x snap-mandatory;
-  scroll-behavior: smooth;
-}
-
-.snap-scroll > * {
-  @apply snap-start;
-}
-
-/* Z-index organization */
-.z-header {
-  @apply z-50;
-}
-.z-dropdown {
-  @apply z-40;
-}
-.z-sticky {
-  @apply z-30;
-}
-.z-content {
-  @apply z-0;
-}
-
-/* Removing heavy animations for better performance on mobile */
-@media (max-width: 768px) {
-  .motion-reduce {
-    @apply transform-none transition-none;
-  }
-  
-  .animate-none-mobile {
-    animation: none !important;
-  }
-}
-
-/* New keyframe animations */
+/* Book grid animations */
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-@keyframes pulse-subtle {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+.float-animation {
+  animation: float 6s ease-in-out infinite;
 }
 
-@keyframes slide-in {
-  from { transform: translateX(-10px); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+/* Atheneum theme */
+.atheneum-bg {
+  background: linear-gradient(to bottom, #121212, #1a1633);
 }
 
-/* Fade mask for scroll containers */
-.fade-mask-bottom {
-  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-}
-
-.fade-mask-right {
-  mask-image: linear-gradient(to right, black 80%, transparent 100%);
-}
-
-/* Card effects */
-.card-highlight {
-  @apply border border-primary/30 bg-primary/5;
-}
-
-/* Status indicators */
-.status-dot {
-  @apply w-2 h-2 rounded-full;
-}
-
-.status-active {
-  @apply bg-success animate-pulse;
-}
-
-.status-pending {
-  @apply bg-warning;
-}
-
-.status-inactive {
-  @apply bg-muted-foreground;
+/* Soundscape theme */
+.soundscape-bg {
+  background: linear-gradient(to bottom, #1a133d, #0c0c16);
 }
