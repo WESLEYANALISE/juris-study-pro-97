@@ -46,7 +46,17 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Parse request body
-    const { table_name } = await req.json();
+    let body;
+    try {
+      body = await req.json();
+    } catch (e) {
+      return new Response(
+        JSON.stringify({ error: 'Payload inválido: JSON esperado' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    const { table_name } = body || {};
 
     // Validate table name to prevent SQL injection
     if (!table_name || typeof table_name !== 'string' || !ALLOWED_TABLES.includes(table_name)) {
@@ -60,15 +70,20 @@ serve(async (req) => {
     console.log(`Querying table: ${table_name}`);
     
     // Try using the RPC function first (safer approach)
-    const { data: rpcData, error: rpcError } = await supabase
-      .rpc('query_vademecum_table', { table_name });
+    try {
+      const { data: rpcData, error: rpcError } = await supabase
+        .rpc('query_vademecum_table', { table_name });
 
-    if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
-      console.log(`Successfully retrieved ${rpcData.length} records from ${table_name} using RPC`);
-      return new Response(
-        JSON.stringify(rpcData),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if (!rpcError && Array.isArray(rpcData) && rpcData.length > 0) {
+        console.log(`Successfully retrieved ${rpcData.length} records from ${table_name} using RPC`);
+        return new Response(
+          JSON.stringify(rpcData),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    } catch (rpcErr) {
+      console.error("RPC function error:", rpcErr);
+      // Continue to fallback method
     }
     
     // Fallback to direct query if RPC fails or returns no data
@@ -76,9 +91,23 @@ serve(async (req) => {
     
     // Use a parameterized query to prevent SQL injection
     // Note: This is safe because we've already validated table_name against ALLOWED_TABLES
-    const { data, error } = await supabase
-      .from(table_name)
-      .select('*');
+    let data;
+    let error;
+    
+    try {
+      const result = await supabase
+        .from(table_name)
+        .select('*');
+      
+      data = result.data;
+      error = result.error;
+    } catch (queryErr) {
+      console.error("Direct query error:", queryErr);
+      return new Response(
+        JSON.stringify({ error: 'Erro na consulta SQL' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
 
     if (error) {
       console.error(`Error querying table ${table_name}:`, error);
@@ -88,7 +117,16 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Successfully retrieved ${data?.length || 0} records from ${table_name}`);
+    // Validate the structure before returning
+    if (!Array.isArray(data)) {
+      console.error("Expected array response, got:", typeof data);
+      return new Response(
+        JSON.stringify({ error: 'Formato de resposta inesperado' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
+    }
+
+    console.log(`Successfully retrieved ${data.length} records from ${table_name}`);
 
     return new Response(
       JSON.stringify(data),

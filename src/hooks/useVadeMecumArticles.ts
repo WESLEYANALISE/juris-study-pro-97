@@ -144,14 +144,14 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Direct call to edge function with the table name
-      const { data, error: fnError } = await supabase
-        .functions.invoke("query-vademecum-table", {
-          body: { table_name: tableName }
-        });
-      
-      if (fnError) {
-        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, fnError);
+      // Chamada para a edge function com o nome da tabela
+      const response = await supabase.functions.invoke("query-vademecum-table", {
+        body: { table_name: tableName }
+      });
+
+      // Verificar se há erro na chamada da função
+      if (response.error) {
+        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, response.error);
 
         // Retry automático para erros temporários, até 3 tentativas
         if (retryCount < 3) {
@@ -159,23 +159,25 @@ export const useVadeMecumArticles = (searchQuery: string) => {
           return;
         }
         
-        setError(`Erro ao carregar artigos: ${fnError.message}`);
+        setError(`Erro ao carregar artigos: ${response.error.message}`);
         setLoading(false);
         return;
       }
+
+      // Verificar se os dados são válidos
+      const responseData = response.data;
       
-      // If data is empty, try a direct query as fallback
-      if (!data || (Array.isArray(data) && data.length === 0)) {
-        console.log("Edge function returned no data, trying direct query as fallback");
+      // Se a resposta está vazia ou não é um array, tente uma consulta direta como fallback
+      if (!responseData || !Array.isArray(responseData) || responseData.length === 0) {
+        console.log("Edge function retornou dados vazios, tentando consulta direta como fallback");
         
-        // Type assertion to safely use the dynamic tableName with TypeScript
-        // We've already validated tableName against ALLOWED_TABLES
+        // Validamos o tableName acima, então podemos usar type assertion para suprimir o erro do TypeScript
         const { data: directData, error: directError } = await supabase
           .from(tableName as any)
           .select('*');
         
         if (directError) {
-          console.error("Direct query fallback failed:", directError);
+          console.error("Falha na consulta direta:", directError);
           setError(`Erro ao carregar artigos: ${directError.message}`);
           setLoading(false);
           return;
@@ -188,13 +190,20 @@ export const useVadeMecumArticles = (searchQuery: string) => {
           setFilteredArticles(processedArticles);
           setLoading(false);
           return;
+        } else {
+          console.error("Consulta direta retornou dados vazios");
+          setArticles([]);
+          setFilteredArticles([]);
+          setLoading(false);
+          return;
         }
       }
       
-      console.log(`Dados recebidos da tabela ${tableName}:`, data ? (Array.isArray(data) ? data.length : 'não-array') : 'nenhum');
+      console.log(`Dados recebidos da tabela ${tableName}:`, 
+        Array.isArray(responseData) ? responseData.length : 'não é um array');
 
       // Processar e validar os dados recebidos
-      const processedArticles = processRawData(Array.isArray(data) ? data : []);
+      const processedArticles = processRawData(Array.isArray(responseData) ? responseData : []);
       setArticles(processedArticles);
       setFilteredArticles(processedArticles);
 

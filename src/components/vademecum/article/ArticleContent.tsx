@@ -1,6 +1,7 @@
 
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { motion } from 'framer-motion';
 
 interface ArticleContentProps {
   articleNumber: string;
@@ -23,7 +24,12 @@ export const ArticleContent = ({
     : '';
 
   return (
-    <div className={`flex flex-col ${isHeading ? "w-full" : ""}`}>
+    <motion.div 
+      className={`flex flex-col ${isHeading ? "w-full" : ""}`}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {articleNumber?.trim() ? (
         <h3 className="text-lg font-semibold bg-primary/10 px-3 py-1 rounded-lg inline-block shadow-sm">
           Art. {articleNumber}
@@ -44,6 +50,6 @@ export const ArticleContent = ({
           {formattedText}
         </ReactMarkdown>
       </div>
-    </div>
+    </motion.div>
   );
 };

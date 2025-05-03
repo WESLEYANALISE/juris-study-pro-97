@@ -1,89 +1,133 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Book, ChevronRight } from 'lucide-react';
+import { Bookmark, Book, BookCopy, LibraryBig } from 'lucide-react';
+import { JuridicalCard } from '../ui/juridical-card';
+import { Badge } from '../ui/badge';
+import { LivroJuridico } from '@/types/biblioteca-juridica';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import { cn } from '@/lib/utils';
 
 interface BibliotecaCategoryScrollProps {
   categories: string[];
   selectedCategory: string | null;
   onSelectCategory: (category: string | null) => void;
-  booksByCategory: Record<string, { capa_url?: string | null }[]>;
+  booksByCategory: Record<string, LivroJuridico[]>;
 }
 
-export function BibliotecaCategoryScroll({
+export const BibliotecaCategoryScroll = ({
   categories,
   selectedCategory,
   onSelectCategory,
   booksByCategory
-}: BibliotecaCategoryScrollProps) {
-  if (!categories.length) return null;
+}: BibliotecaCategoryScrollProps) => {
+  // Animações
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+  
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { 
+      opacity: 1,
+      y: 0,
+      transition: { 
+        type: "spring",
+        stiffness: 100
+      }
+    }
+  };
 
+  // Mapeia os ícones para cada categoria (ou usa um padrão)
+  const getCategoryIcon = (category: string) => {
+    const iconMap: Record<string, React.ReactNode> = {
+      'Constitucional': <LibraryBig className="h-5 w-5" />,
+      'Civil': <Book className="h-5 w-5" />,
+      'Penal': <Bookmark className="h-5 w-5" />,
+      'Administrativo': <BookCopy className="h-5 w-5" />
+    };
+    
+    return iconMap[category] || <Book className="h-5 w-5" />;
+  };
+  
+  // Gera cores baseadas na categoria
+  const getCategoryColor = (category: string) => {
+    // Mapeia as categorias para cores específicas (ou usa um valor padrão)
+    const colorMap: Record<string, string> = {
+      'Constitucional': 'gradient-purple',
+      'Civil': 'gradient-green',
+      'Penal': 'gradient-red',
+      'Administrativo': 'gradient-blue',
+      'Trabalhista': 'gradient-yellow',
+      'Tributário': 'gradient-orange'
+    };
+    
+    return colorMap[category] || '';
+  };
+  
   return (
     <motion.div
-      className="mb-10"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: 0.2 }}
+      className="mb-8"
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
     >
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl font-bold text-amber-400 flex items-center gap-2">
-          <Book className="h-5 w-5" /> ÁREAS DO DIREITO
-        </h2>
+        <h3 className="text-lg font-medium">Explorar por Categoria</h3>
         {selectedCategory && (
-          <Badge 
-            variant="outline" 
-            className="text-amber-400 border-amber-400/30 bg-amber-400/10 px-3 py-1 cursor-pointer hover:bg-amber-400/20"
+          <button
             onClick={() => onSelectCategory(null)}
+            className="text-sm text-primary hover:underline"
           >
-            Limpar filtro <span className="ml-1 text-white/70">×</span>
-          </Badge>
+            Limpar filtro
+          </button>
         )}
       </div>
-      <ScrollArea className="w-full whitespace-nowrap pb-4 no-scrollbar">
-        <div className="flex space-x-4 pb-4">
-          {categories.map(category => {
-            const isSelected = category === selectedCategory;
-            const books = booksByCategory[category] || [];
-            const coverImage = books[0]?.capa_url || '/placeholder-book-cover.png';
-            
-            return (
-              <motion.div
-                key={category}
-                className={`
-                  min-w-[280px] h-[180px] rounded-lg overflow-hidden relative cursor-pointer
-                  transition-all duration-300 hover:opacity-90
-                  ${isSelected ? 'ring-2 ring-amber-400 shadow-lg shadow-amber-500/20' : 'border border-white/10'}
-                `}
-                onClick={() => onSelectCategory(isSelected ? null : category)}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.98 }}
-                layout
+      
+      <Swiper
+        slidesPerView="auto"
+        spaceBetween={16}
+        className="pb-4"
+      >
+        {categories.map((category) => (
+          <SwiperSlide key={category} style={{ width: 'auto' }}>
+            <motion.div 
+              variants={itemVariants}
+              whileHover={{ y: -5, transition: { duration: 0.2 } }}
+            >
+              <JuridicalCard
+                title={category}
+                icon="book"
+                className={cn(
+                  "w-[200px] cursor-pointer",
+                  selectedCategory === category ? "ring-2 ring-primary" : ""
+                )}
+                variant={selectedCategory === category ? "primary" : "default"}
+                onClick={() => onSelectCategory(selectedCategory === category ? null : category)}
               >
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent z-10" />
-                <div className="absolute inset-0 bg-violet-900/20 z-5 mix-blend-overlay" />
-                <div className="absolute bottom-4 left-4 right-4 text-white z-20 flex justify-between items-end">
-                  <div>
-                    <h3 className="text-2xl font-bold uppercase">{category}</h3>
-                    <p className="text-sm text-white/80">{books.length} {books.length === 1 ? 'livro' : 'livros'}</p>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      {getCategoryIcon(category)}
+                      <span className="text-sm font-medium">{category}</span>
+                    </div>
                   </div>
-                  {!isSelected && <ChevronRight className="h-5 w-5 text-amber-400" />}
+                  <Badge variant="outline">
+                    {booksByCategory[category]?.length || 0} livros
+                  </Badge>
                 </div>
-                <img 
-                  src={coverImage} 
-                  alt={category}
-                  className="object-cover w-full h-full transform transition-transform duration-700 hover:scale-110"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = "/placeholder-book-cover.png";
-                  }}
-                />
-              </motion.div>
-            );
-          })}
-        </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+              </JuridicalCard>
+            </motion.div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
     </motion.div>
   );
-}
+};
