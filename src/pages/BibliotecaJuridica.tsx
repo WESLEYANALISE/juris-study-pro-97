@@ -7,23 +7,22 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
-import { Search, Book, BookOpen, FileText, LibraryBig } from 'lucide-react';
+import { Book, BookOpen, FileText, LibraryBig } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { PodcastPlayer } from '@/components/podcast/PodcastPlayer';
-import { usePodcastProgress } from '@/hooks/use-podcast-progress';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
+import { LivroJuridico } from '@/types/biblioteca-juridica';
 
-// Define interface for book
+// Define interface for our application's internal book type
 interface Livro {
-  id: number;
+  id: string; // Changed from number to string to match the database
   titulo: string;
   categoria: string;
   pdf_url: string;
-  capa_url: string;
-  descricao: string;
-  total_paginas: string;
+  capa_url: string | null;
+  descricao: string | null;
+  total_paginas: number | null;
 }
 
 export default function BibliotecaJuridica() {
@@ -32,7 +31,7 @@ export default function BibliotecaJuridica() {
   const [selectedCategoria, setSelectedCategoria] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [selectedBook, setSelectedBook] = useState<Livro | null>(null);
+  const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [currentTab, setCurrentTab] = useState<string>('todos');
 
   const { user } = useAuth();
@@ -55,11 +54,23 @@ export default function BibliotecaJuridica() {
 
         if (data && Array.isArray(data)) {
           console.log('Livros carregados:', data.length);
-          setLivros(data as Livro[]);
+          
+          // Convert the data to our Livro type
+          const convertedData: Livro[] = data.map(item => ({
+            id: item.id,
+            titulo: item.titulo,
+            categoria: item.categoria,
+            pdf_url: item.pdf_url,
+            capa_url: item.capa_url,
+            descricao: item.descricao,
+            total_paginas: item.total_paginas
+          }));
+          
+          setLivros(convertedData);
           
           // Extract categories
           const allCategories = Array.from(
-            new Set(data.map((livro: Livro) => livro.categoria))
+            new Set(data.map((livro) => livro.categoria))
           ).filter(Boolean) as string[];
           
           setCategorias(allCategories);
@@ -107,7 +118,17 @@ export default function BibliotecaJuridica() {
 
   function handleOpenPDF(livro: Livro) {
     console.log("Opening PDF:", livro);
-    setSelectedBook(livro);
+    // Convert Livro to LivroJuridico when passing to PDF viewer
+    const livroJuridico: LivroJuridico = {
+      id: livro.id,
+      titulo: livro.titulo,
+      categoria: livro.categoria,
+      pdf_url: livro.pdf_url,
+      capa_url: livro.capa_url,
+      descricao: livro.descricao || undefined,
+      total_paginas: livro.total_paginas || undefined
+    };
+    setSelectedBook(livroJuridico);
   }
   
   function handleClosePDF() {
@@ -145,7 +166,9 @@ export default function BibliotecaJuridica() {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: 0.2 }}
             >
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search h-4 w-4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
               <Input 
                 placeholder="Buscar livros..." 
                 className="pl-9 w-full"
