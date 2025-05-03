@@ -83,17 +83,7 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
         </div>
         
         {/* Expandable content */}
-        {isExpanded && <CardContent className="pt-0 pb-4 px-4">
-            <AnimatePresence>
-              {showDetails ? <ArticleDetails articleNumber={articleNumber} lawName={lawName} technicalExplanation={technicalExplanation} formalExplanation={formalExplanation} practicalExample={practicalExample} onClose={() => setShowDetails(false)} /> : <>
-                  {/* Article Actions: Explanation, Example, Copy, Narrate, Highlight, Annotate */}
-                  <ArticleActions articleText={articleText} articleNumber={articleNumber} technicalExplanation={technicalExplanation} formalExplanation={formalExplanation} practicalExample={practicalExample} isVisible={true} lawName={lawName} />
-                  
-                  {/* Button to show detailed explanations */}
-                  {hasDetails}
-                </>}
-            </AnimatePresence>
-          </CardContent>}
+        {isExpanded}
       </Card>
     </motion.div>;
 };
