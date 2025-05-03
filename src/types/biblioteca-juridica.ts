@@ -2,55 +2,50 @@
 export interface LivroJuridico {
   id: string;
   titulo: string;
-  autor?: string;
-  descricao?: string;
-  capa_url?: string | null;
   categoria: string;
-  subcategoria?: string;
   pdf_url: string;
+  capa_url: string | null;
+  descricao: string | null;
+  autor?: string;
+  editora?: string;
+  ano_publicacao?: number;
+  edicao?: string;
   total_paginas?: number;
-  data_publicacao?: string | Date;
-  created_at?: string | Date;
-  updated_at?: string | Date;
+  isbn?: string;
+  tags?: string[];
 }
 
-export interface CategoriaBiblioteca {
-  id: string;
-  nome: string;
-  descricao?: string;
-  imagem_url?: string;
-  contador_livros?: number;
-}
-
-export interface ProgressoLeitura {
-  id: string;
-  user_id: string;
+export interface ReadingProgressType {
   livro_id: string;
   pagina_atual: number;
-  ultima_leitura: string | Date;
+  ultima_leitura: string;
   favorito: boolean;
-}
-
-export interface Marcador {
-  id: string;
-  user_id: string;
-  livro_id: string;
-  pagina: number;
-  titulo?: string;
-  cor: string;
+  anotacoes?: Anotacao[];
+  marcadores?: Marcador[];
 }
 
 export interface Anotacao {
   id: string;
-  user_id: string;
-  livro_id: string;
   pagina: number;
   texto: string;
-  posicao?: {
-    x: number;
-    y: number;
-    width?: number;
-    height?: number;
-  };
+  posicao_x: number;
+  posicao_y: number;
   cor: string;
+  data_criacao: string;
+}
+
+export interface Marcador {
+  id: string;
+  pagina: number;
+  titulo?: string;
+  data_criacao: string;
+}
+
+export interface BibliotecaFilters {
+  categoria?: string;
+  searchTerm?: string;
+  favorites?: boolean;
+  recent?: boolean;
+  sort?: 'title' | 'date' | 'author';
+  sortDirection?: 'asc' | 'desc';
 }
