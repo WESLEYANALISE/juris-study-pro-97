@@ -92,7 +92,8 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
         const articleNumber = article.numero || '';
         const articleText = article.artigo || '';
         const articleId = article.id?.toString() || '';
-        const isFavorited = isFavorite(tableName, articleId, articleNumber, articleText);
+        // Fix: Passing only two arguments as expected
+        const isFavorited = isFavorite(articleNumber, tableName);
         
         if (!articleText && !articleNumber) {
           console.warn("Skipping article without text or number:", article);
@@ -113,7 +114,13 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
               practicalExample={article.exemplo}
               lawName={tableName}
               isFavorite={isFavorited}
-              onToggleFavorite={() => toggleFavorite(tableName, articleId, articleNumber, articleText)}
+              // Fix: Passing only one argument with the expected object structure
+              onToggleFavorite={() => toggleFavorite({
+                law_name: tableName,
+                article_id: articleId,
+                article_number: articleNumber,
+                article_text: articleText
+              })}
               favoriteIcon={<BookmarkPlus size={18} />}
             />
           </motion.div>
