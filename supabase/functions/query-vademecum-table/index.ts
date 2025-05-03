@@ -59,7 +59,23 @@ serve(async (req) => {
 
     console.log(`Querying table: ${table_name}`);
     
-    // Direct database query instead of RPC which might not be set up
+    // Try using the RPC function first (safer approach)
+    const { data: rpcData, error: rpcError } = await supabase
+      .rpc('query_vademecum_table', { table_name });
+
+    if (!rpcError && rpcData && rpcData.length > 0) {
+      console.log(`Successfully retrieved ${rpcData.length} records from ${table_name} using RPC`);
+      return new Response(
+        JSON.stringify(rpcData),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Fallback to direct query if RPC fails or returns no data
+    console.log(`RPC failed or returned no results, falling back to direct query for ${table_name}`);
+    
+    // Use a parameterized query to prevent SQL injection
+    // Note: This is safe because we've already validated table_name against ALLOWED_TABLES
     const { data, error } = await supabase
       .from(table_name)
       .select('*');
