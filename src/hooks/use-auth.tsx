@@ -10,6 +10,7 @@ interface UserProfile {
   display_name: string | null;
   avatar_url: string | null;
   onboarding_completed: boolean;
+  created_at?: string;
 }
 
 type AuthContextType = {

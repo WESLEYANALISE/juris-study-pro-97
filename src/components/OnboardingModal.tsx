@@ -88,7 +88,8 @@ const OnboardingModal = ({ open, onOpenChange, onComplete }: OnboardingModalProp
       await supabase
         .from("profiles")
         .update({ 
-          name: values.displayName 
+          display_name: values.displayName,
+          onboarding_completed: true
         })
         .eq("id", user.id);
 

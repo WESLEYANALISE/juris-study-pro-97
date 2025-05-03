@@ -64,15 +64,15 @@ const Layout = ({
         console.log("Fetching user data for:", user.id);
         
         // Check if onboarding is completed
-        // Use profile?.name instead of profile.name to avoid type errors
-        const onboardingCompleted = profile?.name === "completed" || false;
+        // Use profile?.display_name instead of profile.name to avoid type errors
+        const onboardingCompleted = profile?.onboarding_completed || false;
         
         // Simplified data since we don't have the tables yet
         let nextTaskData = null;
         let progressData = 0;
         
         setUserData({
-          displayName: profile?.name || null,
+          displayName: profile?.display_name || null,
           onboardingCompleted: onboardingCompleted,
           progress: progressData,
           nextTask: {
