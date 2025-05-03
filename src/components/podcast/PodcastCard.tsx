@@ -51,8 +51,8 @@ export function PodcastCard({
   return (
     <Card 
       className={cn(
-        "overflow-hidden border border-purple-500/30 hover:border-purple-500/80 relative group cursor-pointer hover:shadow-xl transition-all duration-300",
-        "bg-gradient-to-br from-background/95 to-purple-950/20 backdrop-blur-sm hover:-translate-y-1"
+        "overflow-hidden border border-purple-500/30 hover:border-purple-500/80 relative group cursor-pointer hover:shadow-2xl transition-all duration-300",
+        "bg-gradient-to-br from-background/95 to-purple-950/20 backdrop-blur-sm hover:-translate-y-2"
       )}
       onClick={onClick}
     >
@@ -62,7 +62,7 @@ export function PodcastCard({
           <img
             src={thumbnail}
             alt={title}
-            className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+            className="w-full h-full object-cover transition duration-700 group-hover:scale-110"
             onError={(e) => {
               const target = e.target as HTMLImageElement;
               target.src = `https://avatar.vercel.sh/podcast-${id}?size=256`;
@@ -70,12 +70,12 @@ export function PodcastCard({
           />
         ) : (
           <div 
-            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/40 to-blue-900/40 text-foreground/40"
+            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/50 to-blue-900/50 text-foreground/40"
             style={{ 
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` 
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.2'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` 
             }}
           >
-            <span className="text-3xl font-bold opacity-20">🎙️</span>
+            <span className="text-3xl font-bold opacity-20 scale-110 group-hover:scale-125 group-hover:opacity-30 transition-all">🎙️</span>
           </div>
         )}
         
@@ -105,7 +105,7 @@ export function PodcastCard({
         
         {/* Stats and date */}
         <div className="flex justify-between items-center text-xs text-white/70">
-          <div className="flex space-x-2">
+          <div className="flex space-x-2 opacity-80 group-hover:opacity-100 transition-opacity">
             <span className="flex items-center gap-1">
               <MessageSquare className="h-3 w-3" /> {commentCount}
             </span>
@@ -113,7 +113,7 @@ export function PodcastCard({
               <Heart className="h-3 w-3" /> {likeCount}
             </span>
           </div>
-          <span>{formattedDate}</span>
+          <span className="opacity-80 group-hover:opacity-100 transition-opacity">{formattedDate}</span>
         </div>
       </div>
 

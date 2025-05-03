@@ -57,10 +57,12 @@ serve(async (req) => {
       );
     }
 
-    // Use the RPC function which is available server-side
-    const { data, error } = await supabase.rpc('query_vademecum_table', { 
-      table_name: table_name 
-    });
+    console.log(`Querying table: ${table_name}`);
+    
+    // Direct database query instead of RPC which might not be set up
+    const { data, error } = await supabase
+      .from(table_name)
+      .select('*');
 
     if (error) {
       console.error(`Error querying table ${table_name}:`, error);
@@ -69,6 +71,8 @@ serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
+
+    console.log(`Successfully retrieved ${data?.length || 0} records from ${table_name}`);
 
     return new Response(
       JSON.stringify(data),

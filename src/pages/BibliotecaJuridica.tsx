@@ -28,6 +28,7 @@ const BibliotecaJuridica = () => {
   const [viewMode, setViewMode] = useSessionStorage<"grid" | "list">("biblioteca-view-mode", "grid");
   const [activeTab, setActiveTab] = useState<string>("categorias");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPdfReader, setShowPdfReader] = useState(false);
   
   const isMobile = useMediaQuery("(max-width: 768px)");
   const navigate = useNavigate();
@@ -133,15 +134,13 @@ const BibliotecaJuridica = () => {
   // Handle book reader close
   const handleReaderClose = () => {
     setSelectedBook(null);
+    setShowPdfReader(false);
   };
 
   // Handle reading the book after viewing details
   const handleReadBook = () => {
     setIsModalOpen(false); // Close the modal
-    // Delay a bit to allow modal to close before opening reader
-    setTimeout(() => {
-      console.log("Opening book reader for:", selectedBook?.titulo);
-    }, 300);
+    setShowPdfReader(true); // Show the PDF reader
   };
 
   // Handle category selection
@@ -273,7 +272,7 @@ const BibliotecaJuridica = () => {
         
         {/* Book reader (full screen) */}
         <AnimatePresence>
-          {selectedBook && !isModalOpen && (
+          {selectedBook && showPdfReader && (
             <BookReader
               book={selectedBook}
               onClose={handleReaderClose}

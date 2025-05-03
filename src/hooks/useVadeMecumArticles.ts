@@ -110,8 +110,8 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     // Coleta estatísticas para debugging
     const stats = {
       total: mappedData.length,
-      withArticleNumber: mappedData.filter(a => !!a.article_number.trim()).length,
-      withArticleText: mappedData.filter(a => !!a.article_text.trim()).length,
+      withArticleNumber: mappedData.filter(a => !!a.article_number?.trim()).length,
+      withArticleText: mappedData.filter(a => !!a.article_text?.trim()).length,
       withTechnicalExplanation: mappedData.filter(a => !!a.technical_explanation?.trim()).length,
       withFormalExplanation: mappedData.filter(a => !!a.formal_explanation?.trim()).length,
       withPracticalExample: mappedData.filter(a => !!a.practical_example?.trim()).length
@@ -144,23 +144,49 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Use a direct function call with parameters instead of RPC
-      const { data, error: rpcError } = await supabase
+      // Direct call to edge function with the table name
+      const { data, error: fnError } = await supabase
         .functions.invoke("query-vademecum-table", {
           body: { table_name: tableName }
         });
       
-      if (rpcError) {
-        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, rpcError);
+      if (fnError) {
+        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, fnError);
 
         // Retry automático para erros temporários, até 3 tentativas
         if (retryCount < 3) {
           setTimeout(() => loadArticles(retryCount + 1), 1000 * (retryCount + 1));
           return;
         }
-        setError(`Erro ao carregar artigos: ${rpcError.message}`);
+        
+        setError(`Erro ao carregar artigos: ${fnError.message}`);
         setLoading(false);
         return;
+      }
+      
+      // If data is empty, try a direct query as fallback
+      if (!data || (Array.isArray(data) && data.length === 0)) {
+        console.log("Edge function returned no data, trying direct query as fallback");
+        
+        const { data: directData, error: directError } = await supabase
+          .from(tableName)
+          .select('*');
+        
+        if (directError) {
+          console.error("Direct query fallback failed:", directError);
+          setError(`Erro ao carregar artigos: ${directError.message}`);
+          setLoading(false);
+          return;
+        }
+        
+        if (directData && directData.length > 0) {
+          console.log(`Dados recebidos via consulta direta: ${directData.length} registros`);
+          const processedArticles = processRawData(directData);
+          setArticles(processedArticles);
+          setFilteredArticles(processedArticles);
+          setLoading(false);
+          return;
+        }
       }
       
       console.log(`Dados recebidos da tabela ${tableName}:`, data ? (data as any[]).length : 'nenhum');

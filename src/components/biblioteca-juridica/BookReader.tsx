@@ -54,8 +54,7 @@ export function BookReader({ book, onClose }: BookReaderProps) {
     }
     
     // Otherwise, construct the full URL with Supabase storage path
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://yovocuutiwwmbempxcyo.supabase.co';
-    return `${supabaseUrl}/storage/v1/object/public/agoravai/${book.pdf_url}`;
+    return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${book.pdf_url}`;
   };
   
   const pdfUrl = getPdfUrl();
