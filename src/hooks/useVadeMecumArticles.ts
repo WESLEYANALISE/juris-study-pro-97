@@ -64,7 +64,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     withPracticalExample: 0
   });
 
-  // Função para decodificar o nome da tabela de forma segura
+  // Função para validar o nome da tabela de forma segura
   const getTableName = useCallback((encodedName: string | undefined): string | null => {
     if (!encodedName) {
       console.error("Nome da tabela não fornecido");
@@ -126,8 +126,6 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     setDataStats(stats);
 
     // Manter a ordenação original do banco de dados
-    // Os itens sem número de artigo (como títulos/subtítulos) já devem estar 
-    // posicionados corretamente na sequência do banco
     return mappedData;
   };
 
@@ -141,15 +139,16 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       if (!tableName) {
         setError("Lei não encontrada ou não disponível");
         setArticles([]);
+        setLoading(false);
         return;
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Consultar a tabela específica - usar aspas duplas para nomes de tabela com caracteres especiais
-      // que deve estar correta para mostrar os cabeçalhos antes dos artigos
-      const { data, error } = await supabase.from(`"${tableName}"`).select('*').order('id', {
-        ascending: true
-      });
+      // Usar double quotes para nomes de tabela para lidar com caracteres especiais
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+        .order('id', { ascending: true });
       
       if (error) {
         console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, error);
@@ -160,6 +159,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
           return;
         }
         setError(`Erro ao carregar artigos: ${error.message}`);
+        setLoading(false);
         return;
       }
       

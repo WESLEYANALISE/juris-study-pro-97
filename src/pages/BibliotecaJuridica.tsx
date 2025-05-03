@@ -89,13 +89,31 @@ export default function BibliotecaJuridica() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Use mock data for development
+  // Fetch books from biblioteca_juridica10 table
   const { data: livros, isLoading, error } = useQuery({
     queryKey: ['biblioteca-juridica'],
     queryFn: async () => {
       try {
-        // Return mock data since we don't have the actual table
-        return mockLivros;
+        const { data, error } = await supabase
+          .from('biblioteca_juridica10')
+          .select('*');
+        
+        if (error) {
+          throw error;
+        }
+        
+        return data.map(item => ({
+          id: item.id,
+          titulo: item.titulo,
+          categoria: item.categoria,
+          subcategoria: item.subcategoria,
+          autor: item.autor,
+          pdf_url: item.pdf_url,
+          capa_url: item.capa_url,
+          descricao: item.descricao,
+          total_paginas: item.total_paginas,
+          data_publicacao: item.data_publicacao
+        })) as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching books:', err);
         toast({
@@ -178,6 +196,8 @@ export default function BibliotecaJuridica() {
           viewMode={viewMode}
           onViewModeChange={setViewMode}
           isMobile={isMobile}
+          totalBooks={livros?.length || 0}
+          categoriesCount={categories.length}
         />
 
         <Tabs defaultValue="todos" className="mt-6">
@@ -263,30 +283,14 @@ export default function BibliotecaJuridica() {
           </>
         )}
 
-        {mockSugestoes.length > 0 && (
-          <>
-            <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
-              Recomendado Para Você
-              <span className="ml-2 text-sm text-muted-foreground font-normal">
-                (Baseado em seus interesses)
-              </span>
-            </h2>
-            <BibliotecaGridView 
-              books={mockSugestoes} 
-              onSelectBook={handleSelectBook}
-              showBadge
-            />
-          </>
-        )}
+        <Dialog open={showBookModal} onOpenChange={setShowBookModal}>
+          <BibliotecaBookModal 
+            book={selectedBook}
+            onClose={handleCloseModal}
+            onReadBook={handleOpenBook}
+          />
+        </Dialog>
       </div>
-
-      <Dialog open={showBookModal} onOpenChange={setShowBookModal}>
-        <BibliotecaBookModal 
-          book={selectedBook}
-          onClose={handleCloseModal}
-          onReadBook={handleOpenBook}
-        />
-      </Dialog>
     </PageTransition>
   );
 }

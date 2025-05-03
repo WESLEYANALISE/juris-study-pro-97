@@ -87,8 +87,9 @@ export function PodcastList({
             const podcastIds = favoriteIds.map(f => f.podcast_id);
             console.log("Filtering by podcast IDs:", podcastIds);
             
-            // Use the in operator with the array
-            query = query.in('id', podcastIds);
+            // Convert all IDs to strings for the in query
+            const stringIds = podcastIds.map(id => id.toString());
+            query = query.in('id', stringIds);
           } else {
             // If no favorites and showing favorites only
             setPodcasts([]);
