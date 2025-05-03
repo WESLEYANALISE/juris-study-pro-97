@@ -220,7 +220,7 @@ export function useBibliotecaProgresso() {
     isFavorite,
     updateProgress,
     toggleFavorite,
-    getFavoriteBooks, // Export the new function
+    getFavoriteBooks, // Export the function properly
     refetch,
   };
 }

@@ -27,7 +27,15 @@ const BibliotecaJuridica = () => {
   
   const isMobile = useMediaQuery("(max-width: 768px)");
   const navigate = useNavigate();
-  const { isLoading: progressLoading, getFavoriteBooks } = useBibliotecaProgresso();
+  const { 
+    isLoading: progressLoading, 
+    getFavoriteBooks, 
+    getReadingProgress, 
+    isFavorite, 
+    updateProgress, 
+    toggleFavorite, 
+    refetch 
+  } = useBibliotecaProgresso();
 
   // Fetch books from the database
   const { data: allBooks = [], isLoading } = useQuery({
