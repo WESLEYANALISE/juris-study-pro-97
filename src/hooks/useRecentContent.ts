@@ -127,21 +127,28 @@ export function useRecentContent(limit: number = 6) {
         // Get podcast details
         let recentPodcasts: RecentContent[] = [];
         if (podcastProgress && podcastProgress.length > 0) {
-          // Convert podcast_id to string to avoid TypeScript errors
+          // Convert podcast_id to string to ensure consistent typing
           const podcastIds = podcastProgress.map(progress => String(progress.podcast_id));
           
+          // Fix the type issue by converting podcast IDs to the correct type
+          // This handles both numeric and string IDs
           const { data: podcasts } = await supabase
             .from('podcast_tabela')
-            .select('id, titulo, imagem_miniatuta')
-            .in('id', podcastIds);
-
+            .select('id, titulo, imagem_miniatuta');
+            // Remove the .in() clause and filter manually after fetching
+          
           if (podcasts) {
-            recentPodcasts = podcasts.map(podcast => {
-              // Use type casting to avoid TypeScript error when comparing string and number
+            // Filter podcasts manually to handle type conversion
+            const filteredPodcasts = podcasts.filter(podcast => 
+              podcastIds.includes(String(podcast.id))
+            );
+            
+            recentPodcasts = filteredPodcasts.map(podcast => {
+              // Use string comparison for both sides
               const progressItem = podcastProgress.find(p => String(p.podcast_id) === String(podcast.id));
               
               return {
-                id: podcast.id.toString(),
+                id: String(podcast.id),
                 title: podcast.titulo || 'Untitled Podcast',
                 type: 'podcast' as const,
                 thumbnail_url: podcast.imagem_miniatuta || null,
