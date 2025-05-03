@@ -9,7 +9,7 @@ import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
-// import Biblioteca from "@/pages/Biblioteca"; // Commented out old library
+// Old library component completely removed
 import BibliotecaJuridica from "@/pages/BibliotecaJuridica";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
@@ -54,7 +54,7 @@ function App() {
               <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               
-              {/* Redirect old biblioteca to biblioteca-juridica */}
+              {/* BibliotecaJuridica as default library */}
               <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
               <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />

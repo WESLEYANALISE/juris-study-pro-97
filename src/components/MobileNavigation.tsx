@@ -47,7 +47,10 @@ export default function MobileNavigation() {
     <motion.nav 
       initial={{ y: 50, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden shadow-lg"
+      className={cn(
+        "fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden shadow-lg",
+        isPdfViewerOpen ? "hidden" : ""
+      )}
     >
       <ul className="flex justify-around">
         {navItems.map((item) => {

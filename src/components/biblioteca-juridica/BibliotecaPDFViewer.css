@@ -4,16 +4,21 @@
   display: flex;
   justify-content: center;
   width: 100%;
+  height: 100%;
 }
 
 .pdf-page {
   box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
   margin: 1rem auto;
+  max-height: calc(100vh - 150px);
+  width: auto !important;
 }
 
 .pdf-page canvas {
   max-width: 100%;
   height: auto !important;
+  width: auto !important;
+  display: block;
 }
 
 /* PDF Loading and Error States */
@@ -73,6 +78,43 @@
   padding: 0.5rem;
   border-radius: 2rem;
   z-index: 50;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Full page mode */
+.pdf-fullpage {
+  height: calc(100vh - 60px);
+  overflow-y: hidden;
+}
+
+.pdf-fullpage .pdf-page {
+  margin: 0 auto;
+  max-height: calc(100vh - 60px);
+}
+
+/* Enhanced page turning animation */
+.pdf-page-turn {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+}
+
+.pdf-page-turn-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.pdf-page-turn-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.pdf-page-turn-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.pdf-page-turn-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
 }
 
 /* Hide mobile navigation when PDF viewer is open */
@@ -80,9 +122,54 @@ body.pdf-viewer-open nav[class*="fixed bottom-0"] {
   display: none !important;
 }
 
+/* Mobile Optimizations */
 @media (max-width: 640px) {
   .pdf-controls {
     width: 90%;
     justify-content: center;
+    bottom: 1.5rem;
+  }
+  
+  .pdf-page {
+    margin: 0.5rem auto;
+    max-height: calc(100vh - 120px);
+  }
+  
+  /* Mobile tools */
+  .pdf-mobile-tools {
+    position: fixed;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    z-index: 50;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    padding: 0.5rem;
+    border-radius: 1rem;
+    transition: opacity 0.3s ease-in-out;
+  }
+
+  /* Mobile swipe hint */
+  .swipe-hint {
+    position: fixed;
+    bottom: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 1rem;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    z-index: 40;
+    animation: fade-out 5s forwards;
+  }
+
+  @keyframes fade-out {
+    0%, 80% { opacity: 0.8; }
+    100% { opacity: 0; }
   }
 }

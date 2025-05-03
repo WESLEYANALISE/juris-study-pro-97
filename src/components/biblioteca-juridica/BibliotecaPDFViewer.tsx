@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -23,7 +24,9 @@ import {
   Download, 
   MessageSquare, 
   Edit,
-  MoreVertical 
+  MoreVertical,
+  PenLine,
+  List 
 } from 'lucide-react';
 import './BibliotecaPDFViewer.css';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -63,33 +66,40 @@ export function BibliotecaPDFViewer({
   const [newBookmarkTitle, setNewBookmarkTitle] = useState<string>('');
   const [isAddingBookmark, setIsAddingBookmark] = useState<boolean>(false);
   const [showControls, setShowControls] = useState<boolean>(true);
+  const [showSwipeHint, setShowSwipeHint] = useState<boolean>(true);
+  const [isFullPage, setIsFullPage] = useState<boolean>(true);
+  const [pageTransition, setPageTransition] = useState<'none' | 'left' | 'right'>('none');
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const pageRefs = useRef<Record<number, HTMLDivElement | null>>({});
 
   // Hooks
   const { user } = useAuth();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   
-  // Setup touch gestures
+  // Setup touch gestures with enhanced sensitivity
   const touchGestures = useTouchGestures({
     onSwipeLeft: () => {
+      setPageTransition('left');
       goToNextPage();
     },
     onSwipeRight: () => {
+      setPageTransition('right');
       goToPreviousPage();
     },
     onZoomChange: (newScale) => {
       setScale(newScale);
     },
     onDoubleTap: () => {
-      // Reset zoom on double tap
-      setScale(1.0);
+      // Toggle zoom on double tap
+      setScale(scale === 1.0 ? 1.5 : 1.0);
     },
     minScale: 0.5,
-    maxScale: 3
+    maxScale: 3,
+    swipeThreshold: 30 // More sensitive swipe detection
   });
 
   // Hide the mobile navigation
@@ -102,6 +112,28 @@ export function BibliotecaPDFViewer({
       document.body.classList.remove('pdf-viewer-open');
     };
   }, []);
+
+  // Show swipe hint on mobile only once
+  useEffect(() => {
+    if (isMobile && showSwipeHint) {
+      // Hide hint after 5 seconds
+      const timer = setTimeout(() => {
+        setShowSwipeHint(false);
+      }, 5000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isMobile, showSwipeHint]);
+
+  // Reset page transition after animation completes
+  useEffect(() => {
+    if (pageTransition !== 'none') {
+      const timer = setTimeout(() => {
+        setPageTransition('none');
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [pageTransition]);
 
   // Load user's reading progress when component mounts
   useEffect(() => {
@@ -191,29 +223,41 @@ export function BibliotecaPDFViewer({
     setNumPages(numPages);
     setIsLoading(false);
   }
+  
   function onDocumentLoadError(error: Error) {
     console.error('Error loading PDF:', error);
     setError('Erro ao carregar o PDF. Por favor, tente novamente mais tarde.');
     setIsLoading(false);
   }
 
-  // Navigation functions
-  const goToPreviousPage = () => {
-    setPageNumber(prev => Math.max(prev - 1, 1));
-  };
-  const goToNextPage = () => {
-    if (numPages) {
-      setPageNumber(prev => Math.min(prev + 1, numPages));
+  // Navigation functions with enhanced page transition effects
+  const goToPreviousPage = useCallback(() => {
+    if (pageNumber > 1) {
+      setPageTransition('right');
+      setPageNumber(prev => prev - 1);
     }
-  };
+  }, [pageNumber]);
+  
+  const goToNextPage = useCallback(() => {
+    if (numPages && pageNumber < numPages) {
+      setPageTransition('left');
+      setPageNumber(prev => prev + 1);
+    }
+  }, [pageNumber, numPages]);
 
   // Zoom functions
-  const zoomIn = () => {
+  const zoomIn = useCallback(() => {
     setScale(prev => Math.min(prev + 0.2, 3));
-  };
-  const zoomOut = () => {
+  }, []);
+  
+  const zoomOut = useCallback(() => {
     setScale(prev => Math.max(prev - 0.2, 0.5));
-  };
+  }, []);
+  
+  // Reset zoom
+  const resetZoom = useCallback(() => {
+    setScale(1.0);
+  }, []);
 
   // Search function
   const handleSearch = () => {
@@ -468,19 +512,51 @@ export function BibliotecaPDFViewer({
         setShowControls(false);
       }, 3000);
     };
-    window.addEventListener('mousemove', handleActivity);
-    window.addEventListener('click', handleActivity);
-    window.addEventListener('touchstart', handleActivity);
+    
+    const events = ['mousemove', 'click', 'touchstart', 'keydown'];
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity);
+    });
 
     // Initialize timeout
     handleActivity();
+    
     return () => {
-      window.removeEventListener('mousemove', handleActivity);
-      window.removeEventListener('click', handleActivity);
-      window.removeEventListener('touchstart', handleActivity);
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
       clearTimeout(timeout);
     };
   }, []);
+
+  // Toggle fullpage mode
+  const toggleFullPage = () => {
+    setIsFullPage(!isFullPage);
+  };
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        goToNextPage();
+      } else if (e.key === 'ArrowLeft') {
+        goToPreviousPage();
+      } else if (e.key === '+') {
+        zoomIn();
+      } else if (e.key === '-') {
+        zoomOut();
+      } else if (e.key === '0') {
+        resetZoom();
+      } else if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [goToNextPage, goToPreviousPage, zoomIn, zoomOut, resetZoom, onClose]);
 
   // Main render
   return (
@@ -500,7 +576,10 @@ export function BibliotecaPDFViewer({
               </Button>
               
               <Sheet open={showMenu} onOpenChange={setShowMenu}>
-                <SheetContent side="bottom" className="h-auto max-h-[50vh]">
+                <SheetContent side="bottom" className="h-auto max-h-[70vh]">
+                  <SheetHeader className="mb-4">
+                    <SheetTitle>Opções de Leitura</SheetTitle>
+                  </SheetHeader>
                   <div className="flex flex-col space-y-3 py-2">
                     <Button variant="ghost" className="justify-start" onClick={toggleBookmark}>
                       {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="mr-2 h-5 w-5" /> : <BookmarkPlus className="mr-2 h-5 w-5" />}
@@ -513,7 +592,7 @@ export function BibliotecaPDFViewer({
                     </Button>
                     
                     <Button variant="ghost" className="justify-start" onClick={addAnnotation}>
-                      <Edit className="mr-2 h-5 w-5" />
+                      <PenLine className="mr-2 h-5 w-5" />
                       Adicionar anotação
                     </Button>
                     
@@ -531,20 +610,35 @@ export function BibliotecaPDFViewer({
                       <Bookmark className="mr-2 h-5 w-5" />
                       Favoritar
                     </Button>
+                    
+                    <div className="grid grid-cols-2 gap-2 pt-2">
+                      <Button size="sm" variant="outline" onClick={zoomOut}>
+                        <ZoomOut className="h-4 w-4 mr-1" />
+                        Diminuir
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={zoomIn}>
+                        <ZoomIn className="h-4 w-4 mr-1" />
+                        Aumentar
+                      </Button>
+                    </div>
+                    
+                    <Button variant="default" className="w-full" onClick={resetZoom}>
+                      Redefinir Zoom ({Math.round(scale * 100)}%)
+                    </Button>
                   </div>
                 </SheetContent>
               </Sheet>
             </>
           ) : (
             <>
-              <Button variant="ghost" size="icon" onClick={toggleBookmark} title="Favoritar">
-                <Bookmark className="h-5 w-5" />
+              <Button variant="ghost" size="icon" onClick={toggleBookmark} title={bookmarks.some(b => b.pagina === pageNumber) ? "Remover marcador" : "Adicionar marcador"}>
+                {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="h-5 w-5" /> : <BookmarkPlus className="h-5 w-5" />}
               </Button>
               <Button variant="ghost" size="icon" onClick={handleDownload} title="Download">
                 <Download className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setShowBookmarks(true)} title="Marcadores">
-                <BookmarkPlus className="h-5 w-5" />
+                <List className="h-5 w-5" />
               </Button>
               <Button variant="ghost" size="icon" onClick={() => setShowAnnotations(true)} title="Anotações">
                 <MessageSquare className="h-5 w-5" />
@@ -557,7 +651,10 @@ export function BibliotecaPDFViewer({
         </div>
       </div>
 
-      <div ref={containerRef} className="flex-grow overflow-auto p-4 flex justify-center px-0">
+      <div 
+        ref={containerRef} 
+        className={`flex-grow overflow-auto p-4 flex justify-center px-0 ${isFullPage ? 'pdf-fullpage' : ''}`}
+      >
         {error ? <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="bg-destructive/10 text-destructive p-6 rounded-lg max-w-lg">
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
@@ -570,23 +667,63 @@ export function BibliotecaPDFViewer({
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
               </div>} className="pdf-container">
-            <Page 
-              pageNumber={pageNumber} 
-              scale={scale} 
-              renderTextLayer={false} 
-              renderAnnotationLayer={false} 
-              className="pdf-page"
-            />
+            <div 
+              className={`pdf-page-turn ${pageTransition === 'left' ? 'pdf-page-turn-enter' : pageTransition === 'right' ? 'pdf-page-turn-exit' : ''}`}
+              ref={(el) => {
+                pageRefs.current[pageNumber] = el;
+              }}
+            >
+              <Page 
+                key={pageNumber}
+                pageNumber={pageNumber} 
+                scale={scale} 
+                renderTextLayer={false} 
+                renderAnnotationLayer={false} 
+                className="pdf-page"
+                loading={
+                  <div className="flex items-center justify-center h-[calc(100vh-150px)] w-full">
+                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                }
+              />
+            </div>
           </Document>}
         
         {/* Page annotations for current page */}
         <div className="absolute top-[20%] right-4 space-y-2 transition-opacity duration-300" style={{
         opacity: showControls ? 1 : 0
       }}>
-          {annotations.filter(anno => anno.pagina === pageNumber).map(anno => <div key={anno.id} className="bg-yellow-100 p-3 rounded shadow-md border border-yellow-200 max-w-xs">
+          {annotations
+            .filter(anno => anno.pagina === pageNumber)
+            .map(anno => (
+              <div 
+                key={anno.id} 
+                className="bg-yellow-100 p-3 rounded shadow-md border border-yellow-200 max-w-xs"
+              >
                 <p className="text-sm text-gray-800">{anno.texto}</p>
-              </div>)}
+              </div>
+            ))
+          }
         </div>
+        
+        {/* Mobile annotation tools */}
+        {isMobile && showControls && (
+          <div className="pdf-mobile-tools">
+            <Button variant="outline" size="icon" className="rounded-full bg-background/70 backdrop-blur-sm" onClick={addAnnotation}>
+              <PenLine className="h-4 w-4" />
+            </Button>
+            <Button variant="outline" size="icon" className="rounded-full bg-background/70 backdrop-blur-sm" onClick={toggleBookmark}>
+              {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
+            </Button>
+          </div>
+        )}
+        
+        {/* Mobile swipe hint */}
+        {isMobile && showSwipeHint && (
+          <div className="swipe-hint">
+            Deslize para navegar entre páginas
+          </div>
+        )}
       </div>
 
       {/* Bottom controls - hidden on mobile if not in showControls state */}
@@ -630,7 +767,7 @@ export function BibliotecaPDFViewer({
               
               <div className="ml-2">
                 <Button variant="outline" size="sm" onClick={addAnnotation} title="Adicionar anotação">
-                  <Edit className="h-4 w-4 mr-1" />
+                  <PenLine className="h-4 w-4 mr-1" />
                   <span className="hidden sm:inline">Anotar</span>
                 </Button>
               </div>

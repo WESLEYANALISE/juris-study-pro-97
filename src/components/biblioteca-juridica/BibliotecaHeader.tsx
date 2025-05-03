@@ -16,6 +16,8 @@ interface BibliotecaHeaderProps {
   viewMode: 'list' | 'grid';
   onViewModeChange: (mode: 'list' | 'grid') => void;
   isMobile?: boolean;
+  totalBooks?: number;
+  categoriesCount?: number;
 }
 
 export function BibliotecaHeader({
@@ -23,7 +25,9 @@ export function BibliotecaHeader({
   onSearchChange,
   viewMode,
   onViewModeChange,
-  isMobile = false
+  isMobile = false,
+  totalBooks = 0,
+  categoriesCount = 0
 }: BibliotecaHeaderProps) {
   return (
     <div className="space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
@@ -31,6 +35,11 @@ export function BibliotecaHeader({
         <h1 className="text-3xl font-bold tracking-tight flex items-center">
           <BookOpen className="mr-2 h-7 w-7 text-primary" /> 
           Biblioteca Jurídica
+          {totalBooks > 0 && (
+            <span className="text-sm font-normal ml-2 text-muted-foreground">
+              ({totalBooks} obras em {categoriesCount} categorias)
+            </span>
+          )}
         </h1>
         <p className="text-muted-foreground mt-1">
           Explore nossa coleção de obras jurídicas
