@@ -1,99 +1,118 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-/**
- * Convert seconds to a formatted duration string (MM:SS)
- */
-export function formatDuration(seconds: number): string {
-  if (!seconds || isNaN(seconds)) return '00:00';
-  
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-}
-
-/**
- * Format a date to relative time (e.g. "2 hours ago")
- */
-export function formatRelativeTime(date: Date): string {
+export function formatRelativeTime(date: Date | string): string {
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSecs = Math.round(diffMs / 1000);
-  const diffMins = Math.round(diffSecs / 60);
-  const diffHours = Math.round(diffMins / 60);
-  const diffDays = Math.round(diffHours / 24);
-  const diffMonths = Math.round(diffDays / 30);
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime();
+  const diffSecs = Math.floor(diffMs / 1000);
+  const diffMins = Math.floor(diffSecs / 60);
+  const diffHours = Math.floor(diffMins / 60);
+  const diffDays = Math.floor(diffHours / 24);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
 
-  if (diffSecs < 60) return 'Agora';
-  if (diffMins < 60) return `${diffMins} min atrás`;
-  if (diffHours < 24) return `${diffHours}h atrás`;
-  if (diffDays < 30) return `${diffDays} dias atrás`;
-  return `${diffMonths} meses atrás`;
+  if (diffSecs < 60) {
+    return "agora mesmo";
+  } else if (diffMins < 60) {
+    return `há ${diffMins} ${diffMins === 1 ? "minuto" : "minutos"}`;
+  } else if (diffHours < 24) {
+    return `há ${diffHours} ${diffHours === 1 ? "hora" : "horas"}`;
+  } else if (diffDays < 7) {
+    return `há ${diffDays} ${diffDays === 1 ? "dia" : "dias"}`;
+  } else if (diffWeeks < 4) {
+    return `há ${diffWeeks} ${diffWeeks === 1 ? "semana" : "semanas"}`;
+  } else if (diffMonths < 12) {
+    return `há ${diffMonths} ${diffMonths === 1 ? "mês" : "meses"}`;
+  } else {
+    return `há ${diffYears} ${diffYears === 1 ? "ano" : "anos"}`;
+  }
+}
+
+export function formatDuration(seconds: number): string {
+  if (!seconds || isNaN(seconds)) return "00:00";
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  } else {
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
 }
 
 /**
- * Get the duration of an audio file from its URL
- * Uses an audio element to load the file and get its duration
+ * Get audio duration from URL
+ * @param audioUrl URL of the audio file
+ * @returns Duration in seconds
  */
-export function getDurationFromAudio(url: string): Promise<number> {
-  return new Promise((resolve, reject) => {
-    if (!url) {
-      resolve(0);
-      return;
-    }
-    
-    try {
-      const audio = new Audio();
-      
-      // Set up CORS handling
-      audio.crossOrigin = "anonymous";
-      
-      // Set a timeout to prevent hanging
+export async function getDurationFromAudio(audioUrl: string): Promise<number> {
+  // If we have a cached duration, return it
+  const cachedDuration = localStorage.getItem(`audio-duration-${audioUrl}`);
+  if (cachedDuration) {
+    return Number(cachedDuration);
+  }
+  
+  try {
+    return new Promise((resolve) => {
+      // For safety, set a timeout
       const timeoutId = setTimeout(() => {
-        audio.pause();
-        audio.src = '';
-        resolve(0); // Return 0 instead of rejecting to fail gracefully
-        console.warn("Audio duration fetch timed out:", url);
-      }, 8000);
+        resolve(0); // Default duration if we can't load the audio
+      }, 5000);
       
-      // Handle successful metadata load
+      const audio = new Audio();
       audio.addEventListener('loadedmetadata', () => {
         clearTimeout(timeoutId);
-        if (audio.duration === Infinity) {
-          // Some streaming formats return Infinity
-          audio.currentTime = 1e101;
-          audio.addEventListener('timeupdate', function getDuration() {
-            if (audio.duration !== Infinity) {
-              audio.removeEventListener('timeupdate', getDuration);
-              resolve(audio.duration);
-              audio.pause();
-              audio.src = '';
-            }
-          });
-        } else {
+        
+        if (audio.duration && !isNaN(audio.duration)) {
+          // Cache the duration for future use
+          localStorage.setItem(`audio-duration-${audioUrl}`, audio.duration.toString());
           resolve(audio.duration);
-          audio.pause();
-          audio.src = '';
+        } else {
+          resolve(0);
         }
       });
       
-      // Handle errors
-      audio.addEventListener('error', (e) => {
+      audio.addEventListener('error', () => {
         clearTimeout(timeoutId);
-        console.error("Error loading audio:", e);
-        resolve(0); // Return 0 instead of rejecting to fail gracefully
+        console.error('Error loading audio for duration check:', audioUrl);
+        resolve(0);
       });
       
-      // Start loading the audio
-      audio.src = url;
-      audio.load();
-    } catch (err) {
-      console.error("Exception in getDurationFromAudio:", err);
-      resolve(0); // Return 0 instead of rejecting to fail gracefully
+      // Prevent actually playing the audio
+      audio.preload = 'metadata';
+      audio.volume = 0;
+      audio.src = audioUrl;
+    });
+  } catch (err) {
+    console.error('Error getting audio duration:', err);
+    return 0;
+  }
+}
+
+/**
+ * Get audio metadata with more advanced techniques
+ */
+export async function getAudioMetadata(audioUrl: string): Promise<{ duration: number }> {
+  try {
+    // Try to use getDurationFromAudio first
+    const duration = await getDurationFromAudio(audioUrl);
+    if (duration > 0) {
+      return { duration };
     }
-  });
+    
+    // Fallback - just return a default duration
+    return { duration: 0 };
+  } catch (err) {
+    console.error('Error getting audio metadata:', err);
+    return { duration: 0 };
+  }
 }

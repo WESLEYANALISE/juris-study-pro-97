@@ -34,13 +34,15 @@ const VadeMecum = () => {
     queryKey: ["vademecum-tables"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .rpc('list_tables', { prefix: '' });
+        // Using the improved list_tables function that handles special characters
+        const { data, error } = await supabase.rpc('list_tables', { prefix: '' });
         
         if (error) {
+          console.error("Error fetching tables:", error);
           throw error;
         }
         
+        console.log("Tables fetched:", data);
         return data || [];
       } catch (err) {
         console.error("Error fetching table names:", err);
@@ -56,10 +58,7 @@ const VadeMecum = () => {
     ? tablesData.map((item: TableNameResponse) => item.table_name) 
     : [];
 
-  // Check if Constituição Federal exists in tables, if not, add it
-  const hasConstituicao = tables.some(table => 
-    table === 'Constituicao_Federal' || table === 'Constituição_Federal'
-  );
+  console.log("All available tables:", tables);
 
   // Filter tables to separate codes and statutes
   const codes = tables.filter(table => 
@@ -69,6 +68,9 @@ const VadeMecum = () => {
   );
   
   const statutes = tables.filter(table => table.startsWith('Estatuto_'));
+
+  console.log("Code tables:", codes);
+  console.log("Statute tables:", statutes);
 
   return (
     <JuridicalBackground variant="books" opacity={0.04}>

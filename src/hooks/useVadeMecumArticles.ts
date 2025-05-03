@@ -5,7 +5,30 @@ import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 
 // Lista de tabelas permitidas para prevenir SQL injection e type errors
-const ALLOWED_TABLES = ["Código_Civil", "Código_Penal", "Código_de_Processo_Civil", "Código_de_Processo_Penal", "Código_de_Defesa_do_Consumidor", "Código_Tributário_Nacional", "Código_Comercial", "Código_Eleitoral", "Código_de_Trânsito_Brasileiro", "Código_Brasileiro_de_Telecomunicações", "Estatuto_da_Criança_e_do_Adolescente", "Estatuto_do_Idoso", "Estatuto_da_Terra", "Estatuto_da_Cidade", "Estatuto_da_Advocacia_e_da_OAB", "Estatuto_do_Desarmamento", "Estatuto_do_Torcedor", "Estatuto_da_Igualdade_Racial", "Estatuto_da_Pessoa_com_Deficiência", "Estatuto_dos_Servidores_Públicos_Civis_da_União"];
+const ALLOWED_TABLES = [
+  "Código_Civil", 
+  "Código_Penal", 
+  "Código_de_Processo_Civil", 
+  "Código_de_Processo_Penal", 
+  "Código_de_Defesa_do_Consumidor", 
+  "Código_Tributário_Nacional", 
+  "Código_Comercial", 
+  "Código_Eleitoral", 
+  "Código_de_Trânsito_Brasileiro", 
+  "Código_Brasileiro_de_Telecomunicações", 
+  "Estatuto_da_Criança_e_do_Adolescente", 
+  "Estatuto_do_Idoso", 
+  "Estatuto_da_Terra", 
+  "Estatuto_da_Cidade", 
+  "Estatuto_da_Advocacia_e_da_OAB", 
+  "Estatuto_do_Desarmamento", 
+  "Estatuto_do_Torcedor", 
+  "Estatuto_da_Igualdade_Racial", 
+  "Estatuto_da_Pessoa_com_Deficiência", 
+  "Estatuto_dos_Servidores_Públicos_Civis_da_União",
+  "Constituicao_Federal",
+  "Constituição_Federal"
+];
 
 interface LawArticle {
   id: string;
@@ -89,9 +112,9 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       total: mappedData.length,
       withArticleNumber: mappedData.filter(a => !!a.article_number.trim()).length,
       withArticleText: mappedData.filter(a => !!a.article_text.trim()).length,
-      withTechnicalExplanation: mappedData.filter(a => !!a.technical_explanation.trim()).length,
-      withFormalExplanation: mappedData.filter(a => !!a.formal_explanation.trim()).length,
-      withPracticalExample: mappedData.filter(a => !!a.practical_example.trim()).length
+      withTechnicalExplanation: mappedData.filter(a => !!a.technical_explanation?.trim()).length,
+      withFormalExplanation: mappedData.filter(a => !!a.formal_explanation?.trim()).length,
+      withPracticalExample: mappedData.filter(a => !!a.practical_example?.trim()).length
     };
     
     console.log("Dados processados:", {
@@ -122,9 +145,9 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Consultar a tabela específica - respeitar a ordem do banco de dados (id)
+      // Consultar a tabela específica - usar aspas duplas para nomes de tabela com caracteres especiais
       // que deve estar correta para mostrar os cabeçalhos antes dos artigos
-      const { data, error } = await supabase.from(tableName as any).select('*').order('id', {
+      const { data, error } = await supabase.from(`"${tableName}"`).select('*').order('id', {
         ascending: true
       });
       
@@ -140,7 +163,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
         return;
       }
       
-      console.log(`Dados recebidos da tabela ${tableName}:`, data);
+      console.log(`Dados recebidos da tabela ${tableName}:`, data ? data.length : 'nenhum');
 
       // Processar e validar os dados recebidos
       const processedArticles = processRawData(data || []);

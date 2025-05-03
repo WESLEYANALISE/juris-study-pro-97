@@ -53,6 +53,14 @@ export function PodcastList({
     const fetchPodcasts = async () => {
       setLoading(true);
       try {
+        console.log("Fetching podcasts with params:", {
+          searchTerm,
+          category,
+          sortBy,
+          limit,
+          showFavoritesOnly
+        });
+        
         // New query to fetch from podcast_tabela
         let query = supabase
           .from('podcast_tabela')
@@ -72,10 +80,14 @@ export function PodcastList({
             .select('podcast_id')
             .eq('user_id', user.id);
           
+          console.log("Favorite podcast IDs:", favoriteIds);
+          
           if (favoriteIds && favoriteIds.length > 0) {
-            // Extract podcast IDs as an array and convert to numbers
-            const podcastIds = favoriteIds.map(f => Number(f.podcast_id));
-            // Use the in operator with the properly typed array
+            // Extract podcast IDs as an array
+            const podcastIds = favoriteIds.map(f => f.podcast_id);
+            console.log("Filtering by podcast IDs:", podcastIds);
+            
+            // Use the in operator with the array
             query = query.in('id', podcastIds);
           } else {
             // If no favorites and showing favorites only
@@ -98,8 +110,8 @@ export function PodcastList({
           case "alphabetical":
             query = query.order('titulo', { ascending: true });
             break;
-          case "popular": // Assuming we'll add a view count later
-            query = query.order('created_at', { ascending: false }); // Fallback to recent
+          case "popular": // Fallback to recent for now
+            query = query.order('created_at', { ascending: false });
             break;
         }
         
@@ -111,10 +123,13 @@ export function PodcastList({
         const { data, error } = await query;
         
         if (error) {
+          console.error("Error fetching podcasts:", error);
           throw error;
         }
         
-        if (!data) {
+        console.log("Raw podcast data:", data);
+        
+        if (!data || data.length === 0) {
           setPodcasts([]);
           setLoading(false);
           return;
@@ -174,6 +189,7 @@ export function PodcastList({
           })
         );
         
+        console.log("Processed podcasts:", processedPodcasts);
         setPodcasts(processedPodcasts);
         
         // Fetch user favorites and progress if logged in
@@ -188,6 +204,9 @@ export function PodcastList({
               .select('podcast_id, progress_seconds, completed')
               .eq('user_id', user.id)
           ]);
+          
+          console.log("User favorites response:", favoritesResponse);
+          console.log("User progress response:", progressResponse);
           
           if (favoritesResponse.data) {
             const favMap: Record<string, boolean> = {};
