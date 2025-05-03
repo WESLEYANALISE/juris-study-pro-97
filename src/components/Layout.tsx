@@ -64,6 +64,7 @@ const Layout = ({
         console.log("Fetching user data for:", user.id);
         
         // Check if onboarding is completed
+        // Use profile?.name instead of profile.name to avoid type errors
         const onboardingCompleted = profile?.name === "completed" || false;
         
         // Simplified data since we don't have the tables yet
@@ -103,17 +104,13 @@ const Layout = ({
     if (!user?.id) return;
     
     try {
-      // Update user profile in the database
-      const { error } = await supabase
-        .from('profiles')
-        .update({ name: "completed" })
-        .eq('id', user.id);
-      
-      if (error) throw error;
-      
-      // Update local state
+      // Instead of trying to update database tables that don't exist,
+      // let's just update our local state
       setShowOnboarding(false);
       setUserData(prev => ({...prev, onboardingCompleted: true}));
+      
+      // Store in localStorage as a fallback
+      localStorage.setItem('onboardingCompleted', 'true');
       
       console.log("Onboarding marcado como concluído com sucesso");
     } catch (error) {
@@ -140,7 +137,7 @@ const Layout = ({
             <div className="container mx-auto p-4 md:p-6 px-0">
               {/* Mostrar WelcomeCard apenas para usuários logados */}
               {user && location.pathname === '/' && <WelcomeCard 
-                userName={userData.displayName || user.email?.split('@')[0]} 
+                userName={userData.displayName || user.email?.split('@')[0] || 'Usuário'} 
                 progress={userData.progress} 
                 nextTaskTitle={userData.nextTask.title} 
                 nextTaskTime={userData.nextTask.time} 

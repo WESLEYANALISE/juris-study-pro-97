@@ -1,13 +1,11 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, Bookmark } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface BibliotecaFavoritosProps {
   onSelectBook: (book: LivroJuridico) => void;
@@ -16,11 +14,11 @@ interface BibliotecaFavoritosProps {
 export function BibliotecaFavoritos({ onSelectBook }: BibliotecaFavoritosProps) {
   const { user } = useAuth();
 
-  // Mock favorites for now since we don't have the right tables
+  // Mock favorites data
   const { data: favoriteBooks, isLoading } = useQuery({
     queryKey: ['biblioteca-favoritos', user?.id],
     queryFn: async () => {
-      // Return mock data
+      // Return mock data instead of trying to access non-existent tables
       return [
         {
           id: '1',

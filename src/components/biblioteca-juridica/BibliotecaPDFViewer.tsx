@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { useTouchGestures } from '@/hooks/use-touch-gestures';
@@ -44,6 +43,27 @@ interface BibliotecaPDFViewerProps {
   onClose: () => void;
 }
 
+// Types for our mock data
+interface Bookmark {
+  id: string;
+  user_id: string;
+  livro_id: string;
+  pagina: number;
+  titulo: string;
+}
+
+interface Annotation {
+  id: string;
+  user_id: string;
+  livro_id: string;
+  pagina: number;
+  texto: string;
+  posicao?: {
+    x: number;
+    y: number;
+  };
+}
+
 export function BibliotecaPDFViewer({
   livro,
   onClose
@@ -56,8 +76,8 @@ export function BibliotecaPDFViewer({
   const [error, setError] = useState<string | null>(null);
   const [searchText, setSearchText] = useState<string>('');
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
-  const [bookmarks, setBookmarks] = useState<any[]>([]);
-  const [annotations, setAnnotations] = useState<any[]>([]);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
+  const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [showBookmarks, setShowBookmarks] = useState<boolean>(false);
   const [showAnnotations, setShowAnnotations] = useState<boolean>(false);
   const [showMenu, setShowMenu] = useState<boolean>(false);
@@ -69,6 +89,7 @@ export function BibliotecaPDFViewer({
   const [showSwipeHint, setShowSwipeHint] = useState<boolean>(true);
   const [isFullPage, setIsFullPage] = useState<boolean>(true);
   const [pageTransition, setPageTransition] = useState<'none' | 'left' | 'right'>('none');
+  const [isFavorite, setIsFavorite] = useState<boolean>(false);
 
   // Refs
   const containerRef = useRef<HTMLDivElement>(null);
@@ -137,78 +158,78 @@ export function BibliotecaPDFViewer({
 
   // Load user's reading progress when component mounts
   useEffect(() => {
-    async function loadUserProgress() {
-      if (!user) return;
-      try {
-        // Load reading progress
-        const { data: progressData } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('livro_id', livro.id)
-          .single();
-          
-        if (progressData && progressData.pagina_atual) {
-          setPageNumber(progressData.pagina_atual);
-        }
-
-        // Load bookmarks
-        const { data: bookmarksData, error: bookmarksError } = await supabase
-          .from('biblioteca_marcadores')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('livro_id', livro.id)
-          .order('pagina', { ascending: true });
-          
-        if (bookmarksError) {
-          console.error('Error loading bookmarks:', bookmarksError);
-          return;
-        }
-        
-        if (bookmarksData) {
-          setBookmarks(bookmarksData);
-        }
-
-        // Load annotations
-        const { data: annotationsData, error: annotationsError } = await supabase
-          .from('biblioteca_anotacoes')
-          .select('*')
-          .eq('user_id', user.id)
-          .eq('livro_id', livro.id)
-          .order('pagina', { ascending: true });
-          
-        if (annotationsError) {
-          console.error('Error loading annotations:', annotationsError);
-          return;
-        }
-        
-        if (annotationsData) {
-          setAnnotations(annotationsData);
-        }
-      } catch (err) {
-        console.error('Error loading user progress:', err);
-      }
+    // Simulated loading of user progress instead of database calls
+    if (!user) return;
+    
+    // Get last page from localStorage as a fallback
+    const savedPage = localStorage.getItem(`libro-progress-${livro.id}`);
+    if (savedPage) {
+      setPageNumber(parseInt(savedPage, 10));
     }
-    loadUserProgress();
+    
+    // Load mock data for bookmarks
+    const mockBookmarks = [
+      {
+        id: '1',
+        user_id: user.id,
+        livro_id: livro.id,
+        pagina: 5,
+        titulo: 'Introdução Importante'
+      },
+      {
+        id: '2',
+        user_id: user.id,
+        livro_id: livro.id,
+        pagina: 12,
+        titulo: 'Capítulo 2'
+      }
+    ];
+    
+    // Load mock data for annotations
+    const mockAnnotations = [
+      {
+        id: '1',
+        user_id: user.id,
+        livro_id: livro.id,
+        pagina: 5,
+        texto: 'Esta é uma parte crucial que explica o conceito principal.'
+      },
+      {
+        id: '2',
+        user_id: user.id,
+        livro_id: livro.id,
+        pagina: 12,
+        texto: 'Exemplo interessante de aplicação prática.'
+      }
+    ];
+    
+    setBookmarks(mockBookmarks);
+    setAnnotations(mockAnnotations);
+    
+    // Check if this book is in favorites (mock data)
+    setIsFavorite(localStorage.getItem(`favorite-${livro.id}`) === 'true');
+    
   }, [user, livro.id]);
 
   // Save reading progress when page changes
   useEffect(() => {
     if (!user || !pageNumber) return;
+    
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    timeoutRef.current = setTimeout(async () => {
-      try {
-        await supabase.from('biblioteca_leitura_progresso').upsert({
-          user_id: user.id,
-          livro_id: livro.id,
-          pagina_atual: pageNumber,
-          ultima_leitura: new Date().toISOString()
-        });
-      } catch (err) {
-        console.error('Error saving reading progress:', err);
-      }
+    
+    timeoutRef.current = setTimeout(() => {
+      // Save to localStorage as a fallback solution
+      localStorage.setItem(`libro-progress-${livro.id}`, pageNumber.toString());
+      
+      console.log('Saving progress:', {
+        user_id: user.id,
+        livro_id: livro.id,
+        pagina_atual: pageNumber,
+        ultima_leitura: new Date().toISOString()
+      });
+      
     }, 1000); // Debounce saving progress
 
     return () => {
@@ -277,10 +298,12 @@ export function BibliotecaPDFViewer({
       });
       return;
     }
+    
     const existingBookmark = bookmarks.find(b => b.pagina === pageNumber);
+    
     if (existingBookmark) {
       // Remove bookmark
-      await handleDeleteBookmark(existingBookmark.id);
+      handleDeleteBookmark(existingBookmark.id);
     } else {
       // Add new bookmark
       setNewBookmarkTitle(`Página ${pageNumber}`);
@@ -291,14 +314,9 @@ export function BibliotecaPDFViewer({
   // Function to handle bookmark deletion with proper error handling
   const handleDeleteBookmark = async (bookmarkId: string) => {
     try {
-      const { error } = await supabase
-        .from('biblioteca_marcadores')
-        .delete()
-        .eq('id', bookmarkId);
-      
-      if (error) throw error;
-      
+      // Filter out the deleted bookmark
       setBookmarks(bookmarks.filter(b => b.id !== bookmarkId));
+      
       toast({
         title: "Marcador removido",
         description: "O marcador foi removido com sucesso."
@@ -315,23 +333,19 @@ export function BibliotecaPDFViewer({
   
   const saveBookmark = async () => {
     try {
-      const { data, error } = await supabase
-        .from('biblioteca_marcadores')
-        .insert({
-          user_id: user?.id,
-          livro_id: livro.id,
-          pagina: pageNumber,
-          titulo: newBookmarkTitle || `Página ${pageNumber}`
-        })
-        .select();
-        
-      if (error) {
-        throw error;
-      }
+      // Create a new bookmark with a generated ID
+      const newBookmark: Bookmark = {
+        id: Math.random().toString(36).substring(2, 9),
+        user_id: user?.id || '',
+        livro_id: livro.id,
+        pagina: pageNumber,
+        titulo: newBookmarkTitle || `Página ${pageNumber}`
+      };
       
-      setBookmarks([...bookmarks, data[0]]);
+      setBookmarks([...bookmarks, newBookmark]);
       setIsAddingBookmark(false);
       setNewBookmarkTitle('');
+      
       toast({
         title: "Marcador adicionado",
         description: "O marcador foi adicionado com sucesso."
@@ -360,24 +374,20 @@ export function BibliotecaPDFViewer({
   
   const saveAnnotation = async () => {
     try {
-      const { data, error } = await supabase
-        .from('biblioteca_anotacoes')
-        .insert({
-          user_id: user?.id,
-          livro_id: livro.id,
-          pagina: pageNumber,
-          texto: newAnnotation,
-          posicao: { x: 0, y: 0 } // Default position
-        })
-        .select();
-        
-      if (error) {
-        throw error;
-      }
+      // Create a new annotation with a generated ID
+      const newAnnotationItem: Annotation = {
+        id: Math.random().toString(36).substring(2, 9),
+        user_id: user?.id || '',
+        livro_id: livro.id,
+        pagina: pageNumber,
+        texto: newAnnotation,
+        posicao: { x: 0, y: 0 } // Default position
+      };
       
-      setAnnotations([...annotations, data[0]]);
+      setAnnotations([...annotations, newAnnotationItem]);
       setIsAddingAnnotation(false);
       setNewAnnotation('');
+      
       toast({
         title: "Anotação adicionada",
         description: "A anotação foi adicionada com sucesso."
@@ -395,14 +405,9 @@ export function BibliotecaPDFViewer({
   // Function to handle annotation deletion with proper error handling
   const handleDeleteAnnotation = async (annotationId: string) => {
     try {
-      const { error } = await supabase
-        .from('biblioteca_anotacoes')
-        .delete()
-        .eq('id', annotationId);
-      
-      if (error) throw error;
-      
+      // Filter out the deleted annotation
       setAnnotations(annotations.filter(a => a.id !== annotationId));
+      
       toast({
         title: "Anotação removida",
         description: "A anotação foi removida com sucesso."
@@ -426,60 +431,19 @@ export function BibliotecaPDFViewer({
       });
       return;
     }
+    
     try {
-      // Check if user has a progress record for this book
-      const { data: progressData } = await supabase
-        .from('biblioteca_leitura_progresso')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('livro_id', livro.id)
-        .single();
-        
-      if (progressData) {
-        // Toggle favorite status
-        const { error } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .update({ favorito: !progressData.favorito })
-          .eq('id', progressData.id);
-          
-        if (error) {
-          console.error('Error updating favorite status:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível atualizar os favoritos.",
-            variant: "destructive"
-          });
-          return;
-        }
-        toast({
-          title: progressData.favorito ? "Removido dos favoritos" : "Adicionado aos favoritos",
-          description: progressData.favorito ? "O livro foi removido dos seus favoritos." : "O livro foi adicionado aos seus favoritos."
-        });
-      } else {
-        // Create new progress record with favorite=true
-        const { error } = await supabase
-          .from('biblioteca_leitura_progresso')
-          .insert({
-            user_id: user.id,
-            livro_id: livro.id,
-            favorito: true,
-            pagina_atual: pageNumber
-          });
-          
-        if (error) {
-          console.error('Error adding to favorites:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível adicionar aos favoritos.",
-            variant: "destructive"
-          });
-          return;
-        }
-        toast({
-          title: "Adicionado aos favoritos",
-          description: "O livro foi adicionado aos seus favoritos."
-        });
-      }
+      // Toggle favorite status
+      const newFavoriteStatus = !isFavorite;
+      setIsFavorite(newFavoriteStatus);
+      
+      // Save to localStorage
+      localStorage.setItem(`favorite-${livro.id}`, newFavoriteStatus.toString());
+      
+      toast({
+        title: newFavoriteStatus ? "Adicionado aos favoritos" : "Removido dos favoritos",
+        description: newFavoriteStatus ? "O livro foi adicionado aos seus favoritos." : "O livro foi removido dos seus favoritos."
+      });
     } catch (err) {
       console.error('Error toggling favorite:', err);
       toast({
@@ -608,7 +572,7 @@ export function BibliotecaPDFViewer({
                     
                     <Button variant="ghost" className="justify-start" onClick={toggleFavorite}>
                       <Bookmark className="mr-2 h-5 w-5" />
-                      Favoritar
+                      {isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                     </Button>
                     
                     <div className="grid grid-cols-2 gap-2 pt-2">
