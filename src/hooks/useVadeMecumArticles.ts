@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
@@ -28,10 +27,7 @@ const ALLOWED_TABLES = [
   "Estatuto_dos_Servidores_Públicos_Civis_da_União",
   "Constituicao_Federal",
   "Constituição_Federal"
-] as const;  // Adding 'as const' to make this a readonly tuple type
-
-// Type for allowed table names
-type AllowedTableName = typeof ALLOWED_TABLES[number];
+]; 
 
 interface LawArticle {
   id: string;
@@ -68,7 +64,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
   });
 
   // Função para validar o nome da tabela de forma segura
-  const getTableName = useCallback((encodedName: string | undefined): AllowedTableName | null => {
+  const getTableName = useCallback((encodedName: string | undefined): string | null => {
     if (!encodedName) {
       console.error("Nome da tabela não fornecido");
       return null;
@@ -78,11 +74,11 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       const decodedName = decodeURIComponent(encodedName);
 
       // Verificar se a tabela está na lista de permitidas
-      if (!ALLOWED_TABLES.includes(decodedName as AllowedTableName)) {
+      if (!ALLOWED_TABLES.includes(decodedName)) {
         console.error(`Tabela "${decodedName}" não está na lista de permitidas`);
         return null;
       }
-      return decodedName as AllowedTableName;
+      return decodedName;
     } catch (err) {
       console.error("Erro ao decodificar nome da tabela:", err);
       return null;
@@ -147,10 +143,10 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Fixed: Use safeguarded table names for type checking
+      // Fix: Use raw SQL queries instead of relying on type checking
+      // This allows us to query tables with special characters in their names
       const { data, error } = await supabase
-        .from(tableName)
-        .select('*')
+        .rpc('query_vademecum_table', { table_name: tableName })
         .order('id', { ascending: true });
       
       if (error) {
