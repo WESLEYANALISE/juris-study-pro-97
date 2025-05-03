@@ -1,5 +1,5 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import Layout from "@/components/Layout";
@@ -9,7 +9,7 @@ import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
-import Biblioteca from "@/pages/Biblioteca";
+// import Biblioteca from "@/pages/Biblioteca"; // Commented out old library
 import BibliotecaJuridica from "@/pages/BibliotecaJuridica";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
@@ -53,9 +53,12 @@ function App() {
               <Route path="/inicie" element={<Layout><IniciandoNoDireito /></Layout>} />
               <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
-              <Route path="/biblioteca" element={<Layout><Biblioteca /></Layout>} />
+              
+              {/* Redirect old biblioteca to biblioteca-juridica */}
+              <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
               <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
+              
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
               <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { supabase } from '@/integrations/supabase/client';
@@ -92,6 +91,17 @@ export function BibliotecaPDFViewer({
     minScale: 0.5,
     maxScale: 3
   });
+
+  // Hide the mobile navigation
+  useEffect(() => {
+    // Add a class to the body to hide the mobile navigation
+    document.body.classList.add('pdf-viewer-open');
+    
+    // Clean up when component unmounts
+    return () => {
+      document.body.classList.remove('pdf-viewer-open');
+    };
+  }, []);
 
   // Load user's reading progress when component mounts
   useEffect(() => {
@@ -473,7 +483,8 @@ export function BibliotecaPDFViewer({
   }, []);
 
   // Main render
-  return <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
+  return (
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-[100] flex flex-col">
       <div className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300" style={{
       opacity: showControls ? 1 : 0
     }}>
@@ -814,5 +825,6 @@ export function BibliotecaPDFViewer({
           </div>
         </DialogContent>
       </Dialog>
-    </div>;
+    </div>
+  );
 }

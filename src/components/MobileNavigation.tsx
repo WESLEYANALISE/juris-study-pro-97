@@ -19,6 +19,29 @@ const navItems = [
 export default function MobileNavigation() {
   const location = useLocation();
   const { state } = useSidebar();
+  const [isPdfViewerOpen, setIsPdfViewerOpen] = React.useState(false);
+  
+  React.useEffect(() => {
+    // Check if the PDF viewer is open by looking for the body class
+    const checkPdfViewer = () => {
+      const isPdfOpen = document.body.classList.contains('pdf-viewer-open');
+      setIsPdfViewerOpen(isPdfOpen);
+    };
+    
+    // Initial check
+    checkPdfViewer();
+    
+    // Create a mutation observer to watch for class changes on body
+    const observer = new MutationObserver(checkPdfViewer);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    
+    return () => observer.disconnect();
+  }, []);
+  
+  // Don't render if PDF viewer is open
+  if (isPdfViewerOpen) {
+    return null;
+  }
   
   return (
     <motion.nav 

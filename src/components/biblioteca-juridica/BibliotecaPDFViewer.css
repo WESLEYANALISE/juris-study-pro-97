@@ -75,6 +75,11 @@
   z-index: 50;
 }
 
+/* Hide mobile navigation when PDF viewer is open */
+body.pdf-viewer-open nav[class*="fixed bottom-0"] {
+  display: none !important;
+}
+
 @media (max-width: 640px) {
   .pdf-controls {
     width: 90%;

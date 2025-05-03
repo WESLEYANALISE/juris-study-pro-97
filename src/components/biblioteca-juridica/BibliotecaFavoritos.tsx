@@ -48,7 +48,7 @@ export function BibliotecaFavoritos({ onSelectBook }: BibliotecaFavoritosProps) 
       const { data, error } = await supabase
         .from('bibliotecatop')
         .select('*')
-        .in('id', favorites as string[]);
+        .in('id', favorites as unknown as number[]);
         
       if (error) {
         console.error('Error fetching favorite books:', error);

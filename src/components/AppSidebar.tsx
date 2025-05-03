@@ -1,3 +1,4 @@
+
 import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
 import {
   Sidebar,
@@ -48,7 +49,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       label: "Conteúdo",
       items: [
         { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-        { title: "Biblioteca", url: "/biblioteca", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
+        { title: "Biblioteca Jurídica", url: "/biblioteca-juridica", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Podcasts", url: "/podcasts", icon: Headphones, profiles: ["concurseiro", "universitario", "advogado", "tudo"], isNew: true },
         { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "tudo"] },
