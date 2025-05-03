@@ -11,20 +11,17 @@ export function AtheneumCard({
   ...props
 }: React.HTMLAttributes<HTMLDivElement> & { hoverEffect?: boolean }) {
   return (
-    <motion.div
+    <div
       className={cn(
         "relative overflow-hidden rounded-lg border border-white/10 bg-black/40 backdrop-blur-lg shadow-xl",
         hoverEffect && "transition-all duration-300 hover:-translate-y-1 hover:shadow-purple-500/20 hover:shadow-xl",
         className
       )}
-      initial={hoverEffect ? { y: 10, opacity: 0 } : false}
-      animate={hoverEffect ? { y: 0, opacity: 1 } : false}
-      // Remove the whileHover prop
       {...props}
     >
       {children}
       <div className="absolute inset-0 bg-gradient-to-t from-purple-900/20 to-transparent pointer-events-none" />
-    </motion.div>
+    </div>
   );
 }
 
