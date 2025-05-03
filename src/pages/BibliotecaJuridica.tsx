@@ -17,9 +17,42 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { LivroJuridico, CategoriaBiblioteca } from '@/types/biblioteca-juridica';
+import { LivroJuridico } from '@/types/biblioteca-juridica';
 
 import '../styles/biblioteca-juridica.css';
+
+// Define the CategoryBiblioteca type since it's being used
+interface CategoriaBiblioteca {
+  id: string;
+  nome: string;
+  descricao?: string;
+  imagem_url?: string;
+  contador_livros?: number;
+}
+
+// Define props interfaces for components that are causing errors
+interface KindleCategoryPillsProps {
+  categories: string[];
+  selectedCategory: string | null;
+  onSelectCategory: (category: string | null) => void;
+}
+
+interface KindleCategoryCardsProps {
+  categories: string[];
+  booksByCategory: Record<string, LivroJuridico[]>;
+  onSelectCategory: (category: string) => void;
+}
+
+interface BibliotecaStyledHeaderProps {
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  viewMode: 'grid' | 'list';
+  onViewModeChange: (mode: 'grid' | 'list') => void;
+  isMobile: boolean;
+  totalBooks: number;
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+}
 
 export default function BibliotecaJuridica() {
   const navigate = useNavigate();
@@ -222,7 +255,7 @@ export default function BibliotecaJuridica() {
                   <KindleCategoryCards 
                     categories={categorias.map(cat => cat.nome)}
                     booksByCategory={booksByCategory}
-                    onSelectCategory={handleCategorySelect}
+                    onSelectCategory={(category) => handleCategorySelect(category)}
                   />
                 </motion.div>
               </TabsContent>
@@ -237,7 +270,6 @@ export default function BibliotecaJuridica() {
                     title="Adicionados recentemente"
                     books={recentBooks}
                     onSelectBook={handleSelectBook}
-                    description="Livros e materiais adicionados nos últimos dias"
                   />
                 </motion.div>
               </TabsContent>
@@ -252,7 +284,6 @@ export default function BibliotecaJuridica() {
                     title="Mais populares"
                     books={popularBooks}
                     onSelectBook={handleSelectBook}
-                    description="Os materiais mais acessados pelos usuários"
                   />
                 </motion.div>
               </TabsContent>

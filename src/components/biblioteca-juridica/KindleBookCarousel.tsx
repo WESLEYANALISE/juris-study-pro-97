@@ -1,109 +1,228 @@
-
-import React from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { Book, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { cn } from '@/lib/utils';
 
-interface KindleBookCarouselProps {
+interface BibliotecaBookCarouselProps {
   title: string;
+  description?: string;
   books: LivroJuridico[];
   onSelectBook: (book: LivroJuridico) => void;
-  onViewAll?: () => void;
-  label?: string;
+  accent?: boolean;
+  showAll?: boolean;
+  onShowAll?: () => void;
 }
 
-export function KindleBookCarousel({
+export function BibliotecaBookCarousel({
   title,
+  description,
   books,
   onSelectBook,
-  onViewAll,
-  label
-}: KindleBookCarouselProps) {
-  const { getReadingProgress } = useBibliotecaProgresso();
+  accent = false,
+  showAll = true,
+  onShowAll
+}: BibliotecaBookCarouselProps) {
+  const { getReadingProgress, isFavorite } = useBibliotecaProgresso();
   
   if (!books?.length) return null;
   
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="kindle-section-title font-bold text-xl">{title}</h2>
-        {onViewAll && (
-          <motion.button 
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onViewAll}
-            className="kindle-see-all flex items-center text-primary hover:text-primary/80 font-medium transition-colors"
+    <div className="mb-10">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className={cn(
+            "text-2xl font-bold",
+            accent ? "text-amber-400" : ""
+          )}>
+            {title.toUpperCase()}
+          </h2>
+          {description && (
+            <p className="text-muted-foreground mt-1">{description}</p>
+          )}
+        </div>
+        
+        {showAll && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1 text-amber-400" 
+            onClick={onShowAll}
           >
-            Ver tudo <ChevronRight className="h-4 w-4 ml-1" />
-          </motion.button>
+            VER TODOS
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         )}
       </div>
       
-      {label && (
-        <p className="text-sm text-gray-400 mb-3">{label}</p>
-      )}
-      
-      <div className="kindle-carousel grid grid-flow-col auto-cols-[calc(40%-0.75rem)] sm:auto-cols-[calc(30%-0.75rem)] md:auto-cols-[calc(25%-0.75rem)] lg:auto-cols-[calc(20%-0.75rem)] gap-3 overflow-x-auto pb-4 snap-x scrollbar-thin scrollbar-thumb-primary/20 scrollbar-track-transparent">
-        {books.map((book) => {
-          const progress = getReadingProgress(book.id);
-          const hasKindleUnlimited = Math.random() > 0.7; // Just for demo
+      <div className="relative">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: books.length > 4,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-4">
+            {books.map((book) => (
+              <BookCard 
+                key={book.id} 
+                book={book} 
+                onSelect={onSelectBook}
+                progress={getReadingProgress(book.id)}
+                isFavorited={isFavorite(book.id)}
+              />
+            ))}
+          </CarouselContent>
           
-          return (
-            <motion.div 
-              key={book.id}
-              className="kindle-book-card snap-start shadow-lg hover:shadow-xl transition-shadow duration-300"
-              whileHover={{ y: -5, scale: 1.02, transition: { duration: 0.2 } }}
-              onClick={() => onSelectBook(book)}
-            >
-              <div className="kindle-book-cover relative aspect-[2/3] rounded-md overflow-hidden">
-                {book.capa_url ? (
-                  <img 
-                    src={book.capa_url} 
-                    alt={book.titulo}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
-                    }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-800">
-                    <span className="text-xs text-gray-400">Sem capa</span>
-                  </div>
-                )}
-                
-                {/* Title overlay on the cover with gradient for better readability */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex items-end p-2">
-                  <h3 className="text-white font-medium text-sm line-clamp-2">{book.titulo}</h3>
-                </div>
-                
-                {/* Progress bar at bottom if there's reading progress */}
-                {progress && progress.pagina_atual > 1 && book.total_paginas && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/50">
-                    <div 
-                      className="h-full bg-amber-400" 
-                      style={{ 
-                        width: `${Math.min(
-                          100, 
-                          (progress.pagina_atual / book.total_paginas) * 100
-                        )}%` 
-                      }}
-                    />
-                  </div>
-                )}
-                
-                {/* Kindle Unlimited badge for some books */}
-                {hasKindleUnlimited && (
-                  <div className="absolute top-0 right-0 bg-amber-400 text-black text-xs px-1.5 py-0.5 m-1 rounded-sm font-medium shadow-md">
-                    <span>Unlimited</span>
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
+          <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 shadow-md" />
+          <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 shadow-md" />
+        </Carousel>
       </div>
     </div>
+  );
+}
+
+interface BookCardProps {
+  book: LivroJuridico;
+  onSelect: (book: LivroJuridico) => void;
+  progress?: {
+    pagina_atual: number;
+    ultima_leitura: string | Date;
+    favorito: boolean;
+  } | null;
+  isFavorited?: boolean;
+}
+
+function BookCard({ book, onSelect, progress, isFavorited }: BookCardProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  
+  return (
+    <CarouselItem className="pl-4 basis-full xs:basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+      <motion.div 
+        className="book-card h-full cursor-pointer perspective-1000"
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 300 }}
+      >
+        <motion.div 
+          className="book-card-inner relative w-full h-full transition-transform duration-500"
+          animate={{ rotateY: isFlipped ? 180 : 0 }}
+          style={{ transformStyle: "preserve-3d" }}
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          {/* Front - Cover */}
+          <div 
+            className="book-front absolute w-full h-full backface-hidden"
+            style={{ 
+              backfaceVisibility: "hidden",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)"
+            }}
+          >
+            <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted/30">
+              {book.capa_url ? (
+                <img 
+                  src={book.capa_url} 
+                  alt={book.titulo}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-muted">
+                  <BookOpen className="h-16 w-16 text-muted-foreground/30" />
+                </div>
+              )}
+              
+              {/* Progress indicator */}
+              {progress && progress.pagina_atual > 1 && book.total_paginas && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
+                  <div 
+                    className="h-full bg-primary" 
+                    style={{ 
+                      width: `${Math.min(
+                        100, 
+                        (progress.pagina_atual / book.total_paginas) * 100
+                      )}%` 
+                    }}
+                  />
+                </div>
+              )}
+              
+              {/* Badges */}
+              {isFavorited && (
+                <div className="absolute top-2 right-2">
+                  <Badge variant="outline" className="bg-background/80 backdrop-blur-sm">
+                    Favorito
+                  </Badge>
+                </div>
+              )}
+            </div>
+            
+            <div className="p-3">
+              <h3 className="font-medium text-sm line-clamp-1">{book.titulo}</h3>
+              <p className="text-xs text-muted-foreground mt-1 line-clamp-1">
+                {book.categoria || "Sem categoria"}
+              </p>
+            </div>
+          </div>
+          
+          {/* Back - Details */}
+          <div 
+            className="book-back absolute w-full h-full backface-hidden bg-background border rounded-lg p-4"
+            style={{ 
+              backfaceVisibility: "hidden",
+              transform: "rotateY(180deg)",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.3)"
+            }}
+          >
+            <h3 className="font-bold mb-2">{book.titulo}</h3>
+            {book.categoria && (
+              <Badge className="mb-2">{book.categoria}</Badge>
+            )}
+            
+            <p className="text-xs text-muted-foreground mb-2 line-clamp-3">
+              {book.descricao || "Sem descrição disponível."}
+            </p>
+            
+            {book.total_paginas && (
+              <p className="text-xs">
+                <Book className="inline-block mr-1 h-3 w-3" />
+                {book.total_paginas} páginas
+              </p>
+            )}
+            
+            {progress && progress.pagina_atual > 1 && (
+              <p className="text-xs text-primary mt-1">
+                Leitura: Página {progress.pagina_atual}
+                {book.total_paginas ? ` de ${book.total_paginas}` : ''}
+              </p>
+            )}
+            
+            <Button 
+              size="sm" 
+              className="mt-4 w-full"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(book);
+              }}
+            >
+              Abrir livro
+            </Button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </CarouselItem>
   );
 }

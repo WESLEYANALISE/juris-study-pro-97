@@ -56,7 +56,6 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     setIsLoading(false);
     setIsError(true);
     toast({
-      title: "Erro ao carregar PDF",
       description: "Houve um problema ao carregar o livro. Por favor, tente novamente.",
       variant: "destructive"
     });

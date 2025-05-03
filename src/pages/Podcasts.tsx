@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { motion } from 'framer-motion';
@@ -56,7 +55,8 @@ const Podcasts = () => {
   const [selectedPodcast, setSelectedPodcast] = useState<Podcast | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState('recent');
+  // Fix sortBy type to be one of allowed string literals
+  const [sortBy, setSortBy] = useState<"title" | "recent" | "popular">("recent");
   const [categories, setCategories] = useState<{
     name: string;
     count: number;
@@ -644,7 +644,7 @@ const Podcasts = () => {
         <PodcastFilters 
           onSearchChange={setSearchTerm}
           onCategoryChange={setSelectedCategory} 
-          onSortChange={setSortBy} 
+          onSortChange={(sort: "title" | "recent" | "popular") => setSortBy(sort)} 
           categories={categories}
           selectedCategory={selectedCategory}
         />
