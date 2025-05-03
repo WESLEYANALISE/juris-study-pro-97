@@ -4,7 +4,7 @@ import { Home, BookOpenText, Video, Brain, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/components/ui/sidebar";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 // Define menu navigation items
 const navItems = [
@@ -47,44 +47,54 @@ export default function MobileNavigation() {
   }
   
   return (
-    <motion.nav 
-      initial={{ y: 50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className={cn(
-        "fixed bottom-0 left-0 right-0 z-50 border-t bg-background p-2 md:hidden shadow-lg"
-      )}
-    >
-      <ul className="flex justify-around">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.href || 
-                          (location.pathname !== "/" && item.href !== "/" && location.pathname.startsWith(item.href));
-          
-          return (
-            <li key={item.name}>
-              <Link
-                to={item.href}
-                className={cn(
-                  "flex flex-col items-center px-2 py-1 text-xs",
-                  isActive
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                <motion.div 
-                  whileTap={{ scale: 0.9 }}
+    <AnimatePresence>
+      <motion.nav 
+        initial={{ y: 50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 50, opacity: 0 }}
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm p-2 md:hidden shadow-xl"
+        )}
+      >
+        <ul className="flex justify-around">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.href || 
+                            (location.pathname !== "/" && item.href !== "/" && location.pathname.startsWith(item.href));
+            
+            return (
+              <li key={item.name}>
+                <Link
+                  to={item.href}
                   className={cn(
-                    "flex items-center justify-center w-10 h-10 rounded-full mb-1",
-                    isActive && "bg-primary/10"
+                    "flex flex-col items-center px-2 py-1 text-xs transition-all",
+                    isActive
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
-                </motion.div>
-                <span>{item.name}</span>
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </motion.nav>
+                  <motion.div 
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    className={cn(
+                      "flex items-center justify-center w-10 h-10 rounded-full mb-1",
+                      isActive && "bg-primary/10 shadow-inner"
+                    )}
+                  >
+                    <item.icon className={cn(
+                      "h-5 w-5 transition-transform",
+                      isActive && "animate-pulse-once" // Custom animation for active icon
+                    )} />
+                  </motion.div>
+                  <span className={cn(
+                    "transition-all",
+                    isActive && "font-medium"
+                  )}>{item.name}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </motion.nav>
+    </AnimatePresence>
   );
 }
