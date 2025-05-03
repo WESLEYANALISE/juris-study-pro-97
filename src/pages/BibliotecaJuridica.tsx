@@ -26,14 +26,17 @@ export default function BibliotecaJuridica() {
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [currentBook, setCurrentBook] = useState<LivroJuridico | null>(null);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('categorias');
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
   // State for books
   const [recentBooks, setRecentBooks] = useState<LivroJuridico[]>([]);
   const [popularBooks, setPopularBooks] = useState<LivroJuridico[]>([]);
   const [categorias, setCategorias] = useState<CategoriaBiblioteca[]>([]);
   const [allBooks, setAllBooks] = useState<LivroJuridico[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
   const [filteredBooks, setFilteredBooks] = useState<LivroJuridico[]>([]);
+  const [booksByCategory, setBooksByCategory] = useState<Record<string, LivroJuridico[]>>({});
   
   // Effect to filter books based on search query
   useEffect(() => {
@@ -63,27 +66,52 @@ export default function BibliotecaJuridica() {
         
         if (booksError) throw booksError;
         
-        // Fetch categories
-        const { data: categoriasData, error: categoriasError } = await supabase
-          .from('biblioteca_categorias')
-          .select('*');
+        // Transform the data to match LivroJuridico type
+        const transformedBooks: LivroJuridico[] = booksData?.map(book => ({
+          id: book.id.toString(),
+          titulo: book.livro || 'Sem título',
+          autor: '',
+          categoria: book.area || 'Geral',
+          descricao: book.sobre || '',
+          capa_url: book.imagem || null,
+          pdf_url: book.link || '',
+          data_publicacao: book.created_at,
+          created_at: book.created_at
+        })) || [];
         
-        if (categoriasError) throw categoriasError;
-        
-        // Process books data
-        const books = booksData as LivroJuridico[];
-        setAllBooks(books);
-        setFilteredBooks(books);
+        setAllBooks(transformedBooks);
+        setFilteredBooks(transformedBooks);
         
         // Set recent books (latest 10)
-        setRecentBooks(books.slice(0, 10));
+        setRecentBooks(transformedBooks.slice(0, 10));
         
         // Set popular books (random 10 for demo)
-        const shuffled = [...books].sort(() => 0.5 - Math.random());
+        const shuffled = [...transformedBooks].sort(() => 0.5 - Math.random());
         setPopularBooks(shuffled.slice(0, 10));
         
-        // Set categories
-        setCategorias(categoriasData as CategoriaBiblioteca[]);
+        // Group books by category
+        const booksCategoryMap: Record<string, LivroJuridico[]> = {};
+        const uniqueCategories: CategoriaBiblioteca[] = [];
+        
+        transformedBooks.forEach(book => {
+          if (!booksCategoryMap[book.categoria]) {
+            booksCategoryMap[book.categoria] = [];
+            uniqueCategories.push({
+              id: book.categoria,
+              nome: book.categoria,
+              contador_livros: 1
+            });
+          } else {
+            const catIndex = uniqueCategories.findIndex(c => c.nome === book.categoria);
+            if (catIndex >= 0 && uniqueCategories[catIndex].contador_livros) {
+              uniqueCategories[catIndex].contador_livros! += 1;
+            }
+          }
+          booksCategoryMap[book.categoria].push(book);
+        });
+        
+        setCategorias(uniqueCategories);
+        setBooksByCategory(booksCategoryMap);
         
       } catch (error) {
         console.error('Error fetching biblioteca data:', error);
@@ -97,9 +125,9 @@ export default function BibliotecaJuridica() {
   }, []);
   
   function handleSelectBook(book: LivroJuridico) {
-    if (book.url_pdf) {
+    if (book.pdf_url) {
       setCurrentBook(book);
-      setPdfUrl(book.url_pdf);
+      setPdfUrl(book.pdf_url);
       // Add to body class to trigger mobile navigation hiding
       document.body.classList.add('pdf-viewer-open');
     } else {
@@ -114,18 +142,36 @@ export default function BibliotecaJuridica() {
     document.body.classList.remove('pdf-viewer-open');
   }
 
+  const handleCategorySelect = (category: string | null) => {
+    setSelectedCategory(category);
+    if (category) {
+      setFilteredBooks(allBooks.filter(book => book.categoria === category));
+    } else {
+      setFilteredBooks(allBooks);
+    }
+  };
+
   return (
     <JuridicalBackground variant="scales" opacity={0.03}>
       {pdfUrl ? (
         <BibliotecaPDFViewer 
-          url={pdfUrl} 
+          pdfUrl={pdfUrl} 
           onClose={handleClosePdf} 
-          title={currentBook?.titulo || ''} 
+          bookTitle={currentBook?.titulo || ''} 
           book={currentBook}
         />
       ) : (
         <div className="container mx-auto pb-24 md:pb-6 px-4">
-          <BibliotecaStyledHeader />
+          <BibliotecaStyledHeader 
+            searchTerm={searchQuery}
+            onSearchChange={setSearchQuery}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
+            isMobile={window.innerWidth < 768}
+            totalBooks={filteredBooks.length}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+          />
           
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
@@ -143,7 +189,7 @@ export default function BibliotecaJuridica() {
               />
             </div>
             
-            <Tabs defaultValue="categorias">
+            <Tabs defaultValue="categorias" value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="shadow-md">
                 <TabsTrigger value="categorias">Categorias</TabsTrigger>
                 <TabsTrigger value="recentes">Recentes</TabsTrigger>
@@ -157,8 +203,16 @@ export default function BibliotecaJuridica() {
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
                 >
-                  <KindleCategoryPills categories={categorias} />
-                  <KindleCategoryCards categories={categorias} />
+                  <KindleCategoryPills 
+                    categories={categorias.map(cat => cat.nome)} 
+                    selectedCategory={selectedCategory}
+                    onSelectCategory={handleCategorySelect}
+                  />
+                  <KindleCategoryCards 
+                    categories={categorias.map(cat => cat.nome)}
+                    booksByCategory={booksByCategory}
+                    onSelectCategory={handleCategorySelect}
+                  />
                 </motion.div>
               </TabsContent>
               

@@ -78,17 +78,17 @@ export function BibliotecaStyledHeader({
         
         <Tabs value={activeTab} onValueChange={onTabChange} className="w-full overflow-auto">
           <TabsList className="bg-background/50 p-1">
-            <TabsTrigger value="all" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
-              Todas as áreas
+            <TabsTrigger value="categorias" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
+              Categorias
             </TabsTrigger>
-            <TabsTrigger value="recent" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
+            <TabsTrigger value="recentes" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
               Recentes
             </TabsTrigger>
-            <TabsTrigger value="favorite" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
-              Favoritos
+            <TabsTrigger value="populares" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
+              Mais lidos
             </TabsTrigger>
-            <TabsTrigger value="elite" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
-              Advogado de Elite
+            <TabsTrigger value="todos" className="data-[state=active]:bg-amber-400/10 data-[state=active]:text-amber-400">
+              Todos
             </TabsTrigger>
           </TabsList>
         </Tabs>

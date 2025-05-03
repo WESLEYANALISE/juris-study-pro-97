@@ -14,6 +14,14 @@ export interface LivroJuridico {
   updated_at?: string | Date;
 }
 
+export interface CategoriaBiblioteca {
+  id: string;
+  nome: string;
+  descricao?: string;
+  imagem_url?: string;
+  contador_livros?: number;
+}
+
 export interface ProgressoLeitura {
   id: string;
   user_id: string;
