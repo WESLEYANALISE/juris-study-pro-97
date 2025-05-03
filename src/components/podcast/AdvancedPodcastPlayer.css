@@ -1,0 +1,229 @@
+
+/* Podcast Player Styles */
+.podcast-player-container {
+  --player-primary: hsl(var(--primary));
+  --player-bg: hsl(var(--background));
+  --player-text: hsl(var(--foreground));
+  --player-muted: hsl(var(--muted-foreground));
+  --player-highlight: hsl(var(--primary));
+  --player-border: hsl(var(--border));
+  --player-progress: hsl(var(--primary));
+  --player-progress-bg: hsl(var(--muted));
+}
+
+/* Progress Bar Animations */
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+.progress-loaded {
+  background: linear-gradient(90deg, var(--player-muted) 30%, var(--player-muted-light) 50%, var(--player-muted) 70%);
+  background-size: 200% 100%;
+  animation: progress-wave 1.5s ease-in-out infinite;
+}
+
+@keyframes progress-wave {
+  0% {
+    background-position: 200% 50%;
+  }
+  100% {
+    background-position: -100% 50%;
+  }
+}
+
+/* Timestamp marker hover animation */
+.timestamp-marker {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.timestamp-marker:hover {
+  transform: scale(1.5);
+  box-shadow: 0 0 0 2px var(--player-highlight);
+}
+
+/* Player button pulsing effect when playing */
+@keyframes button-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--player-highlight-rgb), 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--player-highlight-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--player-highlight-rgb), 0);
+  }
+}
+
+.play-button-active {
+  animation: button-pulse 1.5s infinite;
+}
+
+/* Volume slider animations */
+.volume-slider-container {
+  transition: width 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
+}
+
+.volume-slider-hidden {
+  width: 0;
+  opacity: 0;
+}
+
+.volume-slider-visible {
+  width: 80px;
+  opacity: 1;
+}
+
+/* Audio visualization */
+.visualization-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 50%;
+  box-shadow: 0 0 20px rgba(var(--player-highlight-rgb), 0.3);
+}
+
+@keyframes rotate-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.visualization-spinner {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 2px solid rgba(var(--player-highlight-rgb), 0.3);
+  border-top-color: var(--player-highlight);
+  animation: rotate-slow 8s linear infinite;
+}
+
+/* Minimized player slide-up animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.minimized-player {
+  animation: slide-up 0.3s ease forwards;
+}
+
+/* Comment animations */
+.comment-new {
+  animation: comment-highlight 2s ease-out forwards;
+}
+
+@keyframes comment-highlight {
+  0% {
+    background-color: rgba(var(--player-highlight-rgb), 0.2);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+/* Audio waveform display */
+.waveform-container {
+  position: relative;
+  width: 100%;
+  height: 40px;
+}
+
+.waveform-canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* Transcript highlight */
+.transcript-highlight {
+  background-color: rgba(var(--player-highlight-rgb), 0.2);
+  padding: 2px 0;
+  border-radius: 2px;
+}
+
+/* Mobile optimizations */
+@media (max-width: 640px) {
+  .player-controls {
+    grid-template-columns: repeat(3, auto);
+    gap: 8px;
+  }
+  
+  .player-control-secondary {
+    display: none;
+  }
+  
+  .player-control-primary {
+    display: flex;
+  }
+}
+
+/* Timestamp list styles */
+.timestamp-list {
+  transition: all 0.3s ease;
+}
+
+.timestamp-item {
+  transition: all 0.2s ease;
+}
+
+.timestamp-item:hover {
+  transform: translateX(4px);
+}
+
+.timestamp-item.active {
+  background-color: rgba(var(--player-highlight-rgb), 0.1);
+  border-left-color: var(--player-highlight);
+}
+
+/* Speed control dropdown animation */
+.speed-dropdown {
+  transition: all 0.2s ease;
+  transform-origin: top center;
+}
+
+.speed-dropdown-enter {
+  opacity: 0;
+  transform: scaleY(0.8);
+}
+
+.speed-dropdown-enter-active {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.speed-dropdown-exit {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.speed-dropdown-exit-active {
+  opacity: 0;
+  transform: scaleY(0.8);
+}
+
+/* Fullscreen mode adjustments */
+.fullscreen-player {
+  height: 100vh !important;
+  width: 100vw !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+.fullscreen-player .player-artwork {
+  max-height: 50vh;
+}

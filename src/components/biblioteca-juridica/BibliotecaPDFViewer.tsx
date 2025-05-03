@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2 } from 'lucide-react';
@@ -176,7 +177,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
                   setProgress(Math.round((loaded / total) * 100));
                 }
               }}
-              loading=""
+              loading={<span>Carregando...</span>}
             >
               <Page pageNumber={pageNumber} scale={scale} rotate={rotation} />
             </Document>

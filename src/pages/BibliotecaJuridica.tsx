@@ -5,6 +5,7 @@ import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookC
 import { KindleCategoryPills } from '@/components/biblioteca-juridica/KindleCategoryPills';
 import { KindleCategoryCards } from '@/components/biblioteca-juridica/KindleCategoryCards';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
+import { EnhancedPDFViewer } from '@/components/biblioteca-juridica/EnhancedPDFViewer';
 import { BibliotecaStyledHeader } from '@/components/biblioteca-juridica/BibliotecaStyledHeader';
 import { BibliotecaListView } from '@/components/biblioteca-juridica/BibliotecaListView';
 import { BibliotecaViewToggle } from '@/components/biblioteca-juridica/BibliotecaViewToggle';
@@ -29,6 +30,7 @@ export default function BibliotecaJuridica() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('categorias');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [useEnhancedViewer, setUseEnhancedViewer] = useState(true);
   
   // State for books
   const [recentBooks, setRecentBooks] = useState<LivroJuridico[]>([]);
@@ -154,12 +156,21 @@ export default function BibliotecaJuridica() {
   return (
     <JuridicalBackground variant="scales" opacity={0.03}>
       {pdfUrl ? (
-        <BibliotecaPDFViewer 
-          pdfUrl={pdfUrl} 
-          onClose={handleClosePdf} 
-          bookTitle={currentBook?.titulo || ''} 
-          book={currentBook}
-        />
+        useEnhancedViewer ? (
+          <EnhancedPDFViewer 
+            pdfUrl={pdfUrl} 
+            onClose={handleClosePdf} 
+            bookTitle={currentBook?.titulo || ''} 
+            book={currentBook}
+          />
+        ) : (
+          <BibliotecaPDFViewer 
+            pdfUrl={pdfUrl} 
+            onClose={handleClosePdf} 
+            bookTitle={currentBook?.titulo || ''} 
+            book={currentBook}
+          />
+        )
       ) : (
         <div className="container mx-auto pb-24 md:pb-6 px-4">
           <BibliotecaStyledHeader 
@@ -226,7 +237,7 @@ export default function BibliotecaJuridica() {
                     title="Adicionados recentemente"
                     books={recentBooks}
                     onSelectBook={handleSelectBook}
-                    label="Livros e materiais adicionados nos últimos dias"
+                    description="Livros e materiais adicionados nos últimos dias"
                   />
                 </motion.div>
               </TabsContent>
@@ -241,7 +252,7 @@ export default function BibliotecaJuridica() {
                     title="Mais populares"
                     books={popularBooks}
                     onSelectBook={handleSelectBook}
-                    label="Os materiais mais acessados pelos usuários"
+                    description="Os materiais mais acessados pelos usuários"
                   />
                 </motion.div>
               </TabsContent>
