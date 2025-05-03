@@ -38,8 +38,15 @@ export default function MobileNavigation() {
       attributeFilter: ['class'] 
     });
     
+    // Add a manual class to body when BibliotecaPDFViewer is open
+    if (location.pathname === '/biblioteca-juridica' && document.querySelector('.biblioteca-pdf-viewer')) {
+      document.body.classList.add('pdf-viewer-open');
+    } else {
+      document.body.classList.remove('pdf-viewer-open');
+    }
+    
     return () => observer.disconnect();
-  }, []);
+  }, [location.pathname]);
   
   // Don't render if PDF viewer is open
   if (isPdfViewerOpen) {

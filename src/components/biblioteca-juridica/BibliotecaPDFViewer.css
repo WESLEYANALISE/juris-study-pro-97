@@ -123,6 +123,17 @@ body.pdf-viewer-open nav[class*="fixed bottom-0"] {
   display: none !important;
 }
 
+/* Class for detecting the biblioteca PDF viewer */
+.biblioteca-pdf-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  background-color: white;
+}
+
 /* Mobile Optimizations */
 @media (max-width: 640px) {
   .pdf-controls {

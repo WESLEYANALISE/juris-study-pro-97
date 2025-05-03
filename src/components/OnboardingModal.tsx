@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -88,21 +88,21 @@ const OnboardingModal = ({ open, onOpenChange, onComplete }: OnboardingModalProp
       await supabase
         .from("profiles")
         .update({ 
-          display_name: values.displayName,
-          onboarding_completed: true 
+          name: values.displayName 
         })
         .eq("id", user.id);
 
-      // Criar o plano de estudos do usuário
-      await supabase.from("plano_estudos").insert({
-        user_id: user.id,
+      // Store preferences in localStorage instead of the plano_estudos table
+      const userPreferences = {
         area_interesse: values.areasInteresse,
         objetivo: values.objetivo,
         nivel_atual: values.nivelAtual,
         horas_estudo_semana: values.horasEstudo,
-      });
+      };
+      
+      localStorage.setItem(`user_preferences_${user.id}`, JSON.stringify(userPreferences));
 
-      toast.success("Plano de estudos criado com sucesso!");
+      toast.success("Preferências salvas com sucesso!");
       
       // Chamar o callback de conclusão se fornecido
       if (onComplete) {
@@ -112,7 +112,7 @@ const OnboardingModal = ({ open, onOpenChange, onComplete }: OnboardingModalProp
       onOpenChange(false);
     } catch (error) {
       console.error("Erro ao salvar dados:", error);
-      toast.error("Erro ao criar plano de estudos. Tente novamente.");
+      toast.error("Erro ao salvar preferências. Tente novamente.");
     } finally {
       setLoading(false);
     }

@@ -64,56 +64,19 @@ const Layout = ({
         console.log("Fetching user data for:", user.id);
         
         // Check if onboarding is completed
-        const onboardingCompleted = profile?.onboarding_completed || false;
+        const onboardingCompleted = profile?.name === "completed" || false;
         
-        // Fetch next task from schedule
+        // Simplified data since we don't have the tables yet
         let nextTaskData = null;
-        try {
-          const today = new Date();
-          const { data: taskData, error: taskError } = await supabase
-            .from('cronograma')
-            .select('titulo, data_inicio')
-            .eq('user_id', user.id)
-            .eq('concluido', false)
-            .gte('data_inicio', today.toISOString())
-            .order('data_inicio', { ascending: true })
-            .limit(1)
-            .maybeSingle();
-          
-          if (taskError) {
-            console.error("Error fetching next task:", taskError);
-          } else {
-            nextTaskData = taskData;
-            console.log("Next task data:", nextTaskData);
-          }
-        } catch (err) {
-          console.error("Exception when fetching next task:", err);
-        }
-
-        // Calculate progress
         let progressData = 0;
-        try {
-          const { data: progress, error: progressError } = await supabase.rpc('calculate_user_progress', {
-            user_uuid: user.id
-          });
-          
-          if (progressError) {
-            console.error("Error calculating progress:", progressError);
-          } else {
-            progressData = progress || 0;
-            console.log("Progress data:", progressData);
-          }
-        } catch (err) {
-          console.error("Exception when calculating progress:", err);
-        }
         
         setUserData({
-          displayName: profile?.display_name || null,
+          displayName: profile?.name || null,
           onboardingCompleted: onboardingCompleted,
           progress: progressData,
           nextTask: {
-            title: nextTaskData?.titulo || null,
-            time: nextTaskData?.data_inicio ? new Date(nextTaskData.data_inicio).toLocaleDateString() : null
+            title: null,
+            time: null
           }
         });
 
@@ -143,7 +106,7 @@ const Layout = ({
       // Update user profile in the database
       const { error } = await supabase
         .from('profiles')
-        .update({ onboarding_completed: true })
+        .update({ name: "completed" })
         .eq('id', user.id);
       
       if (error) throw error;

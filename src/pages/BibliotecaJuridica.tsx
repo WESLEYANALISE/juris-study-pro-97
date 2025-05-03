@@ -9,7 +9,6 @@ import { BibliotecaGridView } from '@/components/biblioteca-juridica/BibliotecaG
 import { BibliotecaFavoritos } from '@/components/biblioteca-juridica/BibliotecaFavoritos';
 import { BibliotecaRecentes } from '@/components/biblioteca-juridica/BibliotecaRecentes';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
-import { useSugestoes } from '@/hooks/use-biblioteca-juridica'; 
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -17,6 +16,68 @@ import { Dialog } from '@/components/ui/dialog';
 import { BibliotecaBookModal } from '@/components/biblioteca-juridica/BibliotecaBookModal';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Loader2, BookOpen, BookPlus } from 'lucide-react';
+
+// Mock data for development
+const mockLivros: LivroJuridico[] = [
+  {
+    id: '1',
+    titulo: 'Código Civil Comentado',
+    categoria: 'Direito Civil',
+    pdf_url: '/sample.pdf',
+    capa_url: '/placeholder-book-cover.png',
+    descricao: 'Comentários e análises sobre o Código Civil',
+    total_paginas: 540
+  },
+  {
+    id: '2',
+    titulo: 'Manual de Direito Penal',
+    categoria: 'Direito Penal',
+    pdf_url: '/sample.pdf',
+    capa_url: '/placeholder-book-cover.png',
+    descricao: 'Guia completo sobre direito penal',
+    total_paginas: 320
+  },
+  {
+    id: '3',
+    titulo: 'Direito Constitucional',
+    categoria: 'Direito Constitucional',
+    pdf_url: '/sample.pdf',
+    capa_url: '/placeholder-book-cover.png',
+    descricao: 'Estudo sobre direito constitucional',
+    total_paginas: 480
+  },
+  {
+    id: '4',
+    titulo: 'Direito Administrativo',
+    categoria: 'Direito Administrativo',
+    pdf_url: '/sample.pdf',
+    capa_url: '/placeholder-book-cover.png',
+    descricao: 'Compêndio de direito administrativo',
+    total_paginas: 410
+  }
+];
+
+// Mock suggestions
+const mockSugestoes: LivroJuridico[] = [
+  {
+    id: '5',
+    titulo: 'Direito Tributário',
+    categoria: 'Direito Tributário',
+    pdf_url: '/sample.pdf',
+    capa_url: '/placeholder-book-cover.png',
+    descricao: 'Guia completo de direito tributário',
+    total_paginas: 380
+  },
+  {
+    id: '6',
+    titulo: 'Direito do Trabalho',
+    categoria: 'Direito Trabalhista',
+    pdf_url: '/sample.pdf',
+    capa_url: '/placeholder-book-cover.png',
+    descricao: 'Manual de direito trabalhista',
+    total_paginas: 290
+  }
+];
 
 export default function BibliotecaJuridica() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
@@ -26,30 +87,15 @@ export default function BibliotecaJuridica() {
   const [showBookModal, setShowBookModal] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
-  const { sugestoes } = useSugestoes();
   const isMobile = useIsMobile();
 
-  // Fetch all legal books from bibliotecatop table
+  // Use mock data for development
   const { data: livros, isLoading, error } = useQuery({
-    queryKey: ['biblioteca-juridica-top'],
+    queryKey: ['biblioteca-juridica'],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('bibliotecatop')
-          .select('*');
-        
-        if (error) throw error;
-
-        // Transform to match LivroJuridico type
-        return data.map(item => ({
-          id: item.id.toString(),
-          titulo: item.titulo || 'Sem título',
-          categoria: item.categoria || 'Geral',
-          pdf_url: item.pdf_url || '',
-          capa_url: item.capa_url || null,
-          descricao: item.descricao || null,
-          total_paginas: item.total_paginas ? parseInt(item.total_paginas) : null
-        })) as LivroJuridico[];
+        // Return mock data since we don't have the actual table
+        return mockLivros;
       } catch (err) {
         console.error('Error fetching books:', err);
         toast({
@@ -217,7 +263,7 @@ export default function BibliotecaJuridica() {
           </>
         )}
 
-        {sugestoes && sugestoes.length > 0 && (
+        {mockSugestoes.length > 0 && (
           <>
             <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
               Recomendado Para Você
@@ -226,7 +272,7 @@ export default function BibliotecaJuridica() {
               </span>
             </h2>
             <BibliotecaGridView 
-              books={sugestoes} 
+              books={mockSugestoes} 
               onSelectBook={handleSelectBook}
               showBadge
             />
