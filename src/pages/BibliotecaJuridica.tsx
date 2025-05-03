@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
-import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
+import { BibliotecaBookCarousel as KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
 import { KindleCategoryPills } from '@/components/biblioteca-juridica/KindleCategoryPills';
 import { KindleCategoryCards } from '@/components/biblioteca-juridica/KindleCategoryCards';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';

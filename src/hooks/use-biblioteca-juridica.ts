@@ -274,7 +274,7 @@ export function useBookAssistant() {
   };
 }
 
-// NEW: Interface for annotations and bookmarks - Moved from .tsx to .ts file
+// Interface for annotations and bookmarks
 export function useBibliotecaAnotacoes() {
   const { user } = useAuth();
   const [marcadores, setMarcadores] = useState<Marcador[]>([]);
@@ -322,8 +322,38 @@ export function useBibliotecaAnotacoes() {
       
       if (annotationsError) throw annotationsError;
 
+      // Handle marcadores
       setMarcadores(bookmarksData || []);
-      setAnotacoes(annotationsData || []);
+      
+      // Handle anotacoes with type conversion for posicao
+      if (annotationsData) {
+        const typedAnotacoes: Anotacao[] = annotationsData.map(item => {
+          // Convert posicao from Json to the expected type structure
+          let posicaoObj = item.posicao ? 
+            (typeof item.posicao === 'string' ? 
+              JSON.parse(item.posicao) : 
+              item.posicao) : 
+            { x: 0, y: 0 };
+              
+          // Ensure the object has the required properties
+          if (!posicaoObj.x) posicaoObj.x = 0;
+          if (!posicaoObj.y) posicaoObj.y = 0;
+            
+          return {
+            id: item.id,
+            user_id: item.user_id,
+            livro_id: item.livro_id,
+            pagina: item.pagina,
+            texto: item.texto,
+            posicao: posicaoObj,
+            cor: item.cor
+          };
+        });
+        
+        setAnotacoes(typedAnotacoes);
+      } else {
+        setAnotacoes([]);
+      }
     } catch (error) {
       console.error('Error loading annotations and bookmarks:', error);
     } finally {
@@ -436,7 +466,7 @@ export function useBibliotecaAnotacoes() {
         livro_id: livroId,
         pagina,
         texto,
-        posicao,
+        posicao: posicao || { x: 0, y: 0 },
         cor
       };
       
@@ -448,7 +478,17 @@ export function useBibliotecaAnotacoes() {
       if (error) throw error;
       
       if (data && data[0]) {
-        const addedAnotacao = data[0] as Anotacao;
+        // Convert the returned data to match our Anotacao type
+        const addedAnotacao: Anotacao = {
+          id: data[0].id,
+          user_id: data[0].user_id,
+          livro_id: data[0].livro_id,
+          pagina: data[0].pagina,
+          texto: data[0].texto,
+          posicao: posicao || { x: 0, y: 0 },
+          cor: data[0].cor
+        };
+        
         setAnotacoes(prev => [...prev, addedAnotacao]);
         
         toast({

@@ -18,9 +18,12 @@ interface AdvancedPodcastPlayerProps {
   title: string;
   description?: string;
   audioUrl: string;
-  coverImage?: string;
+  imageUrl?: string; // Changed from coverImage
   author?: string;
   duration?: number;
+  publishedAt?: string | Date;
+  categories?: Array<{name: string, slug: string}>;
+  onClose?: () => void;
   onPlaybackChange?: (isPlaying: boolean) => void;
   onPlaybackComplete?: () => void;
   onPlaybackProgress?: (progress: number) => void;
@@ -33,9 +36,12 @@ export const AdvancedPodcastPlayer = ({
   title,
   description,
   audioUrl,
-  coverImage,
+  imageUrl, // Changed from coverImage
   author,
   duration = 0,
+  publishedAt,
+  categories,
+  onClose,
   onPlaybackChange,
   onPlaybackComplete,
   onPlaybackProgress,
@@ -227,13 +233,13 @@ export const AdvancedPodcastPlayer = ({
     >
       <div className={cn("flex", mini ? "h-24 items-center px-4" : "flex-col md:flex-row")}>
         {/* Cover Image */}
-        {coverImage && (
+        {imageUrl && (
           <div className={cn(
             "podcast-cover-container relative overflow-hidden rounded-lg",
             mini ? "w-16 h-16 mr-4 flex-shrink-0" : "md:w-48 md:h-48 w-full h-48 mb-4 md:mb-0 md:mr-6"
           )}>
             <img 
-              src={coverImage} 
+              src={imageUrl} 
               alt={`Cover for ${title}`}
               className="w-full h-full object-cover"
               onError={(e) => {

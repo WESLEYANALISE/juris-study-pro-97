@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2 } from 'lucide-react';
@@ -55,10 +54,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     console.error('Error loading PDF:', error);
     setIsLoading(false);
     setIsError(true);
-    toast({
-      description: "Houve um problema ao carregar o livro. Por favor, tente novamente.",
-      variant: "destructive"
-    });
+    toast("Houve um problema ao carregar o livro. Por favor, tente novamente.");
   }
   
   function changePage(amount: number) {

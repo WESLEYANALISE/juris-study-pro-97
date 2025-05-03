@@ -243,7 +243,7 @@ export function PodcastList({
               title={selectedPodcast.title}
               description={selectedPodcast.description}
               audioUrl={selectedPodcast.audio_url}
-              imageUrl={selectedPodcast.thumbnail_url}
+              imageUrl={selectedPodcast.thumbnail_url} // Changed from imageUrl to match component props
               author={selectedPodcast.area || "Autor desconhecido"}
               publishedAt={selectedPodcast.published_at}
               categories={selectedPodcast.categories}
