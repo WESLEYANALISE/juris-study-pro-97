@@ -168,9 +168,10 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       if (!data || (Array.isArray(data) && data.length === 0)) {
         console.log("Edge function returned no data, trying direct query as fallback");
         
-        // Use direct table query as a fallback, since we've validated tableName against ALLOWED_TABLES
+        // Type assertion to safely use the dynamic tableName with TypeScript
+        // We've already validated tableName against ALLOWED_TABLES
         const { data: directData, error: directError } = await supabase
-          .from(tableName)
+          .from(tableName as any)
           .select('*');
         
         if (directError) {

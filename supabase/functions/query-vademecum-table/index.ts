@@ -63,7 +63,7 @@ serve(async (req) => {
     const { data: rpcData, error: rpcError } = await supabase
       .rpc('query_vademecum_table', { table_name });
 
-    if (!rpcError && rpcData && rpcData.length > 0) {
+    if (!rpcError && rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
       console.log(`Successfully retrieved ${rpcData.length} records from ${table_name} using RPC`);
       return new Response(
         JSON.stringify(rpcData),
