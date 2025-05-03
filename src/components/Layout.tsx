@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -12,11 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import MobileNavigation from "@/components/MobileNavigation";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
 interface LayoutProps {
   children: React.ReactNode;
 }
-
 interface UserDataType {
   displayName: string | null;
   onboardingCompleted: boolean;
@@ -26,7 +23,6 @@ interface UserDataType {
     time: string | null;
   };
 }
-
 const Layout = ({
   children
 }: LayoutProps) => {
@@ -59,18 +55,16 @@ const Layout = ({
         setIsLoading(false);
         return;
       }
-      
       try {
         console.log("Fetching user data for:", user.id);
-        
+
         // Check if onboarding is completed
         // Use profile?.display_name instead of profile.name to avoid type errors
         const onboardingCompleted = profile?.onboarding_completed || false;
-        
+
         // Simplified data since we don't have the tables yet
         let nextTaskData = null;
         let progressData = 0;
-        
         setUserData({
           displayName: profile?.display_name || null,
           onboardingCompleted: onboardingCompleted,
@@ -91,27 +85,26 @@ const Layout = ({
         setIsLoading(false);
       }
     };
-    
     if (authLoading) {
       return; // Wait for auth check to complete
     }
-    
     fetchUserData();
   }, [user, profile, authLoading]);
-  
+
   // Function to handle onboarding completion
   const handleOnboardingComplete = async () => {
     if (!user?.id) return;
-    
     try {
       // Instead of trying to update database tables that don't exist,
       // let's just update our local state
       setShowOnboarding(false);
-      setUserData(prev => ({...prev, onboardingCompleted: true}));
-      
+      setUserData(prev => ({
+        ...prev,
+        onboardingCompleted: true
+      }));
+
       // Store in localStorage as a fallback
       localStorage.setItem('onboardingCompleted', 'true');
-      
       console.log("Onboarding marcado como concluído com sucesso");
     } catch (error) {
       console.error("Erro ao atualizar status do onboarding:", error);
@@ -120,28 +113,19 @@ const Layout = ({
 
   // Show a loading screen while auth and user data are being fetched
   if (authLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
+    return <div className="flex items-center justify-center h-screen">
         <LoadingSpinner />
-      </div>
-    );
+      </div>;
   }
-  
-  return (
-    <SidebarProvider defaultOpen={!isMobile}>
+  return <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
           <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
-            <div className="container mx-auto p-4 md:p-6 px-0">
+            <div className="container mx-auto p-4 md:p-6 py-[19px] px-px">
               {/* Mostrar WelcomeCard apenas para usuários logados */}
-              {user && location.pathname === '/' && <WelcomeCard 
-                userName={userData.displayName || user.email?.split('@')[0] || 'Usuário'} 
-                progress={userData.progress} 
-                nextTaskTitle={userData.nextTask.title} 
-                nextTaskTime={userData.nextTask.time} 
-              />}
+              {user && location.pathname === '/' && <WelcomeCard userName={userData.displayName || user.email?.split('@')[0] || 'Usuário'} progress={userData.progress} nextTaskTitle={userData.nextTask.title} nextTaskTime={userData.nextTask.time} />}
               {children}
             </div>
           </main>
@@ -150,14 +134,8 @@ const Layout = ({
         <Toaster />
         
         {/* Modal de onboarding para novos usuários */}
-        <OnboardingModal 
-          open={showOnboarding} 
-          onOpenChange={setShowOnboarding}
-          onComplete={handleOnboardingComplete}
-        />
+        <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} onComplete={handleOnboardingComplete} />
       </div>
-    </SidebarProvider>
-  );
+    </SidebarProvider>;
 };
-
 export default Layout;
