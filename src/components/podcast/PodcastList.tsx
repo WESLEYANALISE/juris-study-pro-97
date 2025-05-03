@@ -87,9 +87,10 @@ export function PodcastList({
             const podcastIds = favoriteIds.map(f => f.podcast_id);
             console.log("Filtering by podcast IDs:", podcastIds);
             
-            // Convert all IDs to strings for the in query
-            const stringIds = podcastIds.map(id => id.toString());
-            query = query.in('id', stringIds);
+            // Convert all IDs to numbers for the in query
+            // Fix: Convert string IDs to numbers before using the 'in' query
+            const numericIds = podcastIds.map(id => Number(id));
+            query = query.in('id', numericIds);
           } else {
             // If no favorites and showing favorites only
             setPodcasts([]);
