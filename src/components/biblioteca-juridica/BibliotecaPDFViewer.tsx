@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
@@ -36,8 +37,9 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
     
-    // Log PDF URL for debugging
-    console.log("Loading PDF from URL:", pdfUrl);
+    // Process PDF URL to ensure it's a full URL
+    const processedUrl = processUrl(pdfUrl);
+    console.log("Loading PDF from URL:", processedUrl);
     
     return () => {
       document.body.classList.remove('pdf-viewer-open');
@@ -50,10 +52,22 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     }
   }, [pageNumber, book, saveReadingProgress, isLoaded]);
 
+  // Process the URL to ensure it's a full URL
+  const processUrl = (url: string): string => {
+    if (url.startsWith('http')) {
+      return url; // Already a full URL
+    }
+    
+    // Add the Supabase storage URL prefix if it's just a path
+    const storageUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${url}`;
+    return storageUrl;
+  };
+
   const verifyPdfUrl = () => {
     // Check if URL is valid
     try {
-      new URL(pdfUrl);
+      const processedUrl = processUrl(pdfUrl);
+      new URL(processedUrl);
       return true;
     } catch (e) {
       console.error("Invalid PDF URL:", e);
@@ -162,7 +176,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
             {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
           </p>
           <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
-            <code className="break-all whitespace-pre-wrap">{pdfUrl}</code>
+            <code className="break-all whitespace-pre-wrap">{processUrl(pdfUrl)}</code>
           </div>
           <Button onClick={onClose} className="mt-4">
             Fechar
@@ -171,6 +185,9 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
       </div>
     );
   }
+  
+  // Use the processed URL for the PDF
+  const processedPdfUrl = processUrl(pdfUrl);
   
   return (
     <div className="fixed inset-0 bg-background z-50">
@@ -199,7 +216,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
         {/* PDF Viewer Content */}
         <div className="pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
           <Document
-            file={pdfUrl}
+            file={processedPdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             onProgress={({ loaded, total }) => {
