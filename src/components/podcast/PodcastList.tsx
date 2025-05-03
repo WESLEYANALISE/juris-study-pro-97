@@ -1,12 +1,16 @@
+
 import React, { useState, useEffect } from 'react';
 import { PodcastCard } from '@/components/podcast/PodcastCard';
 import { ImmersivePodcastPlayer } from '@/components/podcast/ImmersivePodcastPlayer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Music, AlertCircle } from 'lucide-react';
+import { Music, AlertCircle, Filter } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { PodcastFilters } from '@/components/podcast/PodcastFilters';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface PodcastListProps {
   searchTerm?: string;
@@ -30,8 +34,48 @@ export function PodcastList({
   const [error, setError] = useState<string | null>(null);
   const [selectedPodcast, setSelectedPodcast] = useState<any | null>(null);
   const [showAdvancedPlayer, setShowAdvancedPlayer] = useState(false);
+  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
+  const [localCategory, setLocalCategory] = useState<string | null>(category);
+  const [localSortBy, setLocalSortBy] = useState<string>(sortBy);
+  const [categories, setCategories] = useState<{name: string; count: number}[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   
+  const isMobile = useIsMobile();
   const { user } = useAuth();
+
+  // Fetch categories for filters
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        // Get all podcasts to extract categories
+        const { data, error } = await supabase.from('podcast_tabela').select('area');
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Count podcasts by category
+          const categoryCounts: Record<string, number> = {};
+          data.forEach(podcast => {
+            if (podcast.area) {
+              categoryCounts[podcast.area] = (categoryCounts[podcast.area] || 0) + 1;
+            }
+          });
+          
+          // Convert to array format needed by PodcastFilters
+          const categoryArray = Object.entries(categoryCounts).map(([name, count]) => ({
+            name,
+            count
+          }));
+          
+          setCategories(categoryArray);
+        }
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+      }
+    };
+    
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchPodcasts = async () => {
@@ -41,12 +85,12 @@ export function PodcastList({
       try {
         let query = supabase.from('podcast_tabela').select('*');
         
-        if (category) {
-          query = query.eq('area', category);
+        if (localCategory) {
+          query = query.eq('area', localCategory);
         }
         
-        if (searchTerm) {
-          query = query.or(`titulo.ilike.%${searchTerm}%,descricao.ilike.%${searchTerm}%,tag.ilike.%${searchTerm}%`);
+        if (localSearchTerm) {
+          query = query.or(`titulo.ilike.%${localSearchTerm}%,descricao.ilike.%${localSearchTerm}%,tag.ilike.%${localSearchTerm}%`);
         }
         
         if (limit) {
@@ -54,15 +98,14 @@ export function PodcastList({
         }
         
         // Sort based on the sortBy parameter
-        switch (sortBy) {
+        switch (localSortBy) {
           case 'recent':
             query = query.order('created_at', { ascending: false });
             break;
           case 'popular':
-            // For now, we don't have a real popularity metric
-            // In a real app, you might order by listens or likes
             query = query.order('id', { ascending: false });
             break;
+          case 'alphabetical':
           case 'title':
             query = query.order('titulo', { ascending: true });
             break;
@@ -128,7 +171,7 @@ export function PodcastList({
     };
     
     fetchPodcasts();
-  }, [searchTerm, category, sortBy, limit]);
+  }, [localSearchTerm, localCategory, localSortBy, limit]);
   
   // Handle podcast selection
   const handlePodcastClick = async (podcast: any) => {
@@ -167,17 +210,41 @@ export function PodcastList({
     }
   };
   
+  // Handle search and filter changes
+  const handleSearchChange = (value: string) => {
+    setLocalSearchTerm(value);
+  };
+  
+  const handleCategoryChange = (category: string | null) => {
+    setLocalCategory(category);
+  };
+  
+  const handleSortChange = (sort: string) => {
+    setLocalSortBy(sort);
+  };
+  
   // Loading state
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <div key={index} className="space-y-2">
-            <Skeleton className="w-full aspect-[4/3]" />
-            <Skeleton className="h-4 w-3/4" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-        ))}
+      <div className="space-y-4">
+        {/* Always show filter bar */}
+        <PodcastFilters
+          onSearchChange={handleSearchChange}
+          onCategoryChange={handleCategoryChange}
+          onSortChange={handleSortChange}
+          categories={categories}
+          selectedCategory={localCategory}
+        />
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="w-full aspect-[4/3]" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -185,53 +252,84 @@ export function PodcastList({
   // Error state
   if (error) {
     return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Erro</AlertTitle>
-        <AlertDescription>{error}</AlertDescription>
-      </Alert>
+      <div className="space-y-4">
+        <PodcastFilters
+          onSearchChange={handleSearchChange}
+          onCategoryChange={handleCategoryChange}
+          onSortChange={handleSortChange}
+          categories={categories}
+          selectedCategory={localCategory}
+        />
+      
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
     );
   }
   
   // Empty state
   if (podcasts.length === 0) {
     return (
-      <div className="text-center py-16">
-        <Music className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
-        <h3 className="text-xl font-medium mb-2">Nenhum podcast encontrado</h3>
-        <p className="text-muted-foreground max-w-md mx-auto">
-          {searchTerm && category 
-            ? `Não encontramos podcasts com "${searchTerm}" na categoria "${category}"`
-            : searchTerm 
-              ? `Não encontramos podcasts com "${searchTerm}"`
-              : category 
-                ? `Não há podcasts na categoria "${category}"`
-                : 'Não há podcasts disponíveis no momento'}
-        </p>
+      <div className="space-y-4">
+        <PodcastFilters
+          onSearchChange={handleSearchChange}
+          onCategoryChange={handleCategoryChange}
+          onSortChange={handleSortChange}
+          categories={categories}
+          selectedCategory={localCategory}
+        />
+      
+        <div className="text-center py-16">
+          <Music className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+          <h3 className="text-xl font-medium mb-2">Nenhum podcast encontrado</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            {localSearchTerm && localCategory 
+              ? `Não encontramos podcasts com "${localSearchTerm}" na categoria "${localCategory}"`
+              : localSearchTerm 
+                ? `Não encontramos podcasts com "${localSearchTerm}"`
+                : localCategory 
+                  ? `Não há podcasts na categoria "${localCategory}"`
+                  : 'Não há podcasts disponíveis no momento'}
+          </p>
+        </div>
       </div>
     );
   }
   
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {podcasts.map((podcast) => (
-          <PodcastCard
-            key={podcast.id}
-            id={podcast.id}
-            title={podcast.title}
-            description={podcast.description}
-            thumbnail={podcast.thumbnail_url}
-            duration={podcast.duration}
-            publishedAt={podcast.published_at}
-            categories={podcast.categories}
-            tags={podcast.tags}
-            area={podcast.area}
-            commentCount={podcast.commentCount}
-            likeCount={podcast.likeCount}
-            onClick={() => handlePodcastClick(podcast)}
-          />
-        ))}
+      <div className="space-y-4">
+        {/* Always show filters at the top for both mobile and desktop */}
+        <PodcastFilters
+          onSearchChange={handleSearchChange}
+          onCategoryChange={handleCategoryChange}
+          onSortChange={handleSortChange}
+          categories={categories}
+          selectedCategory={localCategory}
+        />
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {podcasts.map((podcast) => (
+            <PodcastCard
+              key={podcast.id}
+              id={podcast.id}
+              title={podcast.title}
+              description={podcast.description}
+              thumbnail={podcast.thumbnail_url}
+              duration={podcast.duration}
+              publishedAt={podcast.published_at}
+              categories={podcast.categories}
+              tags={podcast.tags}
+              area={podcast.area}
+              commentCount={podcast.commentCount}
+              likeCount={podcast.likeCount}
+              onClick={() => handlePodcastClick(podcast)}
+            />
+          ))}
+        </div>
       </div>
       
       {/* Immersive Podcast Player Dialog */}

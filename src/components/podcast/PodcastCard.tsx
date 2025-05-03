@@ -4,9 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { motion } from 'framer-motion';
-import { Headphones, Clock, Heart, MessageSquare } from 'lucide-react';
-import { formatDuration } from '@/lib/utils';
+import { MessageSquare, Heart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface PodcastCardProps {
@@ -16,17 +14,12 @@ interface PodcastCardProps {
   thumbnail?: string;
   duration?: number;
   publishedAt: string;
-  onClick: () => void;
-  isFavorite?: boolean;
-  progress?: number;
-  categories?: {
-    name: string;
-    slug: string;
-  }[];
+  categories?: { name: string; slug: string }[];
   tags?: string[];
   area?: string;
   commentCount?: number;
   likeCount?: number;
+  onClick?: () => void;
 }
 
 export function PodcastCard({
@@ -36,105 +29,93 @@ export function PodcastCard({
   thumbnail,
   duration,
   publishedAt,
-  onClick,
-  isFavorite,
-  progress,
   categories,
   tags,
   area,
   commentCount = 0,
-  likeCount = 0
+  likeCount = 0,
+  onClick
 }: PodcastCardProps) {
-  // Format the published date
-  const formattedDate = formatDistanceToNow(new Date(publishedAt), {
-    addSuffix: true,
-    locale: ptBR
-  });
-  
-  // Format duration if available
-  const formattedDuration = duration ? formatDuration(duration) : 'Duração desconhecida';
-  
-  // Default thumbnail if none provided
-  const defaultThumbnail = "https://via.placeholder.com/300x200?text=Podcast";
-  
-  // Calculate progress width
-  const progressWidth = progress !== undefined ? `${Math.min(100, progress * 100)}%` : '0%';
-  
+  // Format date for display
+  const formattedDate = React.useMemo(() => {
+    try {
+      return formatDistanceToNow(new Date(publishedAt), { 
+        addSuffix: true,
+        locale: ptBR
+      });
+    } catch (e) {
+      return 'Data desconhecida';
+    }
+  }, [publishedAt]);
+
   return (
-    <motion.div
-      whileHover={{ y: -5 }}
-      transition={{ duration: 0.2 }}
+    <Card 
+      className={cn(
+        "overflow-hidden border border-purple-500/20 hover:border-purple-500/50 relative group cursor-pointer hover:shadow-lg transition-all duration-300",
+        "bg-gradient-to-br from-background/90 to-purple-950/10 backdrop-blur-sm hover:-translate-y-1"
+      )}
+      onClick={onClick}
     >
-      <Card 
-        onClick={onClick}
-        className={cn(
-          "overflow-hidden cursor-pointer flex flex-col h-full border-primary/10 hover:shadow-md transition-all",
-          isFavorite ? "ring-1 ring-primary/20" : ""
+      {/* Podcast image */}
+      <div className="relative aspect-[4/3] overflow-hidden">
+        {thumbnail ? (
+          <img
+            src={thumbnail}
+            alt={title}
+            className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = `https://avatar.vercel.sh/podcast-${id}?size=256`;
+            }}
+          />
+        ) : (
+          <div 
+            className="w-full h-full flex items-center justify-center bg-gradient-to-br from-purple-900/30 to-blue-900/30 text-foreground/40"
+            style={{ 
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")` 
+            }}
+          >
+            <span className="text-3xl font-bold opacity-20">🎙️</span>
+          </div>
         )}
-      >
-        <div className="relative">
-          <div className="aspect-video w-full overflow-hidden bg-muted">
-            <img 
-              src={thumbnail || defaultThumbnail} 
-              alt={title} 
-              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-            />
-          </div>
-          
-          {/* Progress bar */}
-          {progress !== undefined && progress > 0 && (
-            <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
-              <div 
-                className="h-full bg-primary"
-                style={{ width: progressWidth }}
-              />
-            </div>
-          )}
-          
-          {/* Category badges */}
-          {categories && categories.length > 0 && (
-            <div className="absolute top-2 left-2">
-              <Badge variant="secondary" className="bg-black/60 text-white backdrop-blur-sm text-xs">
-                {categories[0].name}
-              </Badge>
-            </div>
-          )}
-          
-          {/* Duration badge */}
-          <div className="absolute top-2 right-2">
-            <Badge variant="outline" className="bg-black/60 text-white backdrop-blur-sm text-xs flex items-center">
-              <Clock className="h-3 w-3 mr-1" />
-              {formattedDuration}
-            </Badge>
-          </div>
-        </div>
         
-        <div className="p-4 flex-1 flex flex-col">
-          <h3 className="font-medium text-base line-clamp-2 mb-1">{title}</h3>
-          
-          {description && (
-            <p className="text-muted-foreground text-xs line-clamp-2 mb-2">{description}</p>
-          )}
-          
-          <div className="mt-auto pt-2 flex items-center justify-between text-xs text-muted-foreground">
-            <div className="flex items-center space-x-1">
-              <Headphones className="h-3 w-3" />
-              <span>{formattedDate}</span>
-            </div>
-            
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center">
-                <Heart className={cn("h-3 w-3 mr-1", isFavorite ? "fill-red-500 text-red-500" : "")} />
-                <span>{likeCount}</span>
-              </div>
-              <div className="flex items-center">
-                <MessageSquare className="h-3 w-3 mr-1" />
-                <span>{commentCount}</span>
-              </div>
-            </div>
+        {/* Overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent opacity-70 group-hover:opacity-80 transition-opacity" />
+        
+        {/* Main category badge */}
+        {categories && categories[0] && (
+          <Badge 
+            variant="secondary" 
+            className="absolute top-2 left-2 bg-purple-600/80 text-white hover:bg-purple-700 backdrop-blur-sm"
+          >
+            {categories[0].name}
+          </Badge>
+        )}
+      </div>
+      
+      {/* Content overlay */}
+      <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 to-transparent">
+        <h3 className="font-semibold text-base line-clamp-2 text-white mb-1 group-hover:text-purple-200 transition-colors">
+          {title}
+        </h3>
+        
+        <p className="text-xs text-white/80 line-clamp-1 mb-2">
+          {area || 'Podcast jurídico'}
+        </p>
+        
+        {/* Stats and date */}
+        <div className="flex justify-between items-center text-xs text-white/60">
+          <div className="flex space-x-2">
+            <span className="flex items-center gap-1">
+              <MessageSquare className="h-3 w-3" /> {commentCount}
+            </span>
+            <span className="flex items-center gap-1">
+              <Heart className="h-3 w-3" /> {likeCount}
+            </span>
           </div>
+          <span>{formattedDate}</span>
         </div>
-      </Card>
-    </motion.div>
+      </div>
+    </Card>
   );
 }

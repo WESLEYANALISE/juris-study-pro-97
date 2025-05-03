@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from "react";
 import { PageTransition } from "@/components/PageTransition";
 import { AtheneumBackground, AtheneumTitle } from "@/components/ui/atheneum-theme";
@@ -16,6 +15,7 @@ import { useSessionStorage } from "@/hooks/use-session-storage";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { BookOpen, BookMarked, Search, Grid3X3, List as ListIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import "../styles/biblioteca-juridica.css";
 
 const BibliotecaJuridica = () => {
@@ -37,57 +37,33 @@ const BibliotecaJuridica = () => {
     refetch 
   } = useBibliotecaProgresso();
 
-  // Fetch books from the database
+  // Fetch books from the bibliotecatop table
   const { data: allBooks = [], isLoading } = useQuery({
     queryKey: ["biblioteca-books"],
     queryFn: async () => {
-      // Mock data for now, replace with actual fetch when available
-      return [
-        {
-          id: "1", 
-          titulo: "Código Civil Comentado",
-          autor: "Maria Helena Diniz",
-          descricao: "Análise completa do Código Civil brasileiro com jurisprudências atualizadas",
-          categoria: "Direito Civil",
-          subcategoria: "Códigos",
-          pdf_url: "/sample.pdf",
-          capa_url: "https://images-na.ssl-images-amazon.com/images/I/41-0S6VnpxL._SX346_BO1,204,203,200_.jpg",
-          total_paginas: 1200
-        },
-        {
-          id: "2", 
-          titulo: "Manual de Direito Penal",
-          autor: "Guilherme Nucci",
-          descricao: "Obra fundamental sobre os princípios e aplicações do Direito Penal brasileiro",
-          categoria: "Direito Penal",
-          subcategoria: "Manuais",
-          pdf_url: "/sample.pdf",
-          capa_url: "https://m.media-amazon.com/images/I/41IxjG6GxrL._SY445_SX342_.jpg",
-          total_paginas: 850
-        },
-        {
-          id: "3", 
-          titulo: "Curso de Direito Constitucional",
-          autor: "Pedro Lenza",
-          descricao: "Análise completa da Constituição Federal com foco em concursos públicos",
-          categoria: "Direito Constitucional",
-          subcategoria: "Cursos",
-          pdf_url: "/sample.pdf",
-          capa_url: "https://m.media-amazon.com/images/I/41VRgMiDr2L._SY445_SX342_.jpg",
-          total_paginas: 1560
-        },
-        {
-          id: "4", 
-          titulo: "Direito Administrativo Descomplicado",
-          autor: "Marcelo Alexandrino",
-          descricao: "Manual prático de Direito Administrativo voltado para concursos",
-          categoria: "Direito Administrativo",
-          subcategoria: "Manuais",
-          pdf_url: "/sample.pdf",
-          capa_url: "https://m.media-amazon.com/images/I/51jt5G69g1L._SY445_SX342_.jpg",
-          total_paginas: 1100
-        }
-      ] as LivroJuridico[];
+      try {
+        const { data, error } = await supabase
+          .from('bibliotecatop')
+          .select('*');
+          
+        if (error) throw error;
+        
+        // Map the response to match the LivroJuridico type
+        return (data || []).map(item => ({
+          id: item.id.toString(),
+          titulo: item.titulo || 'Sem título',
+          autor: 'Autor não especificado', // This field may not exist in bibliotecatop
+          descricao: item.descricao || null,
+          categoria: item.categoria || 'Geral',
+          subcategoria: null,
+          pdf_url: item.pdf_url || '',
+          capa_url: item.capa_url || null,
+          total_paginas: item.total_paginas ? parseInt(item.total_paginas) : null
+        })) as LivroJuridico[];
+      } catch (err) {
+        console.error('Error fetching books:', err);
+        return [];
+      }
     }
   });
 
