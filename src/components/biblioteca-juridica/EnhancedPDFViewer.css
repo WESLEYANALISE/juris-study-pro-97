@@ -49,36 +49,9 @@
   animation: page-turn 0.3s ease forwards;
 }
 
-/* Mobile controls styling */
-.pdf-controls-mobile {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 0.5rem 1rem;
-  backdrop-filter: blur(16px);
-  z-index: 40;
+/* Fixed controls styling */
+.pdf-controls {
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  transform-origin: bottom center;
-  transition: transform 0.3s ease;
-}
-
-/* Page navigation animation */
-@keyframes fade-up {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.pdf-nav-buttons button {
-  animation: fade-up 0.3s ease forwards;
 }
 
 /* Bookmark and annotation styling */
@@ -110,22 +83,6 @@
 .pdf-annotation:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-/* Sidebar animation */
-@keyframes slide-in {
-  0% {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  100% {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-.pdf-sidebar {
-  animation: slide-in 0.3s ease forwards;
 }
 
 /* Progress bar animation */

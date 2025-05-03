@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -18,6 +17,7 @@ import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from "sonner";
+import { MobileFiltersBar } from '@/components/podcast/MobileFiltersBar';
 
 interface Podcast {
   id: string;
@@ -55,8 +55,23 @@ const Podcasts = () => {
   const [loading, setLoading] = useState(true);
   const [scrollPosition, setScrollPosition] = useState(0);
   const [activeFilter, setActiveFilter] = useState<'all' | 'progress' | 'favorites'>('all');
+  const [isMobile, setIsMobile] = useState(false);
 
   const { user } = useAuth();
+  
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => {
+      window.removeEventListener('resize', checkMobile);
+    };
+  }, []);
   
   // Track scroll position for parallax effects
   useEffect(() => {
@@ -285,7 +300,21 @@ const Podcasts = () => {
         )}
       </AnimatePresence>
       
-      <div className="container mx-auto px-4 py-6 pb-24">
+      <div className={`container mx-auto px-4 py-6 pb-24 ${isMobile ? 'pt-20' : ''}`}>
+        {/* Mobile filters bar - always visible at the top on mobile */}
+        {isMobile && (
+          <MobileFiltersBar 
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            resetFilters={resetFilters}
+          />
+        )}
+        
         {/* Hero section with parallax effect */}
         <motion.div 
           className="relative h-64 md:h-80 mb-8 rounded-xl overflow-hidden"
@@ -326,106 +355,108 @@ const Podcasts = () => {
           </div>
         </motion.div>
         
-        {/* Mobile filter sheet */}
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="fixed bottom-4 right-4 z-40 md:hidden rounded-full h-14 w-14 shadow-lg bg-purple-600 hover:bg-purple-500 border-none"
-            >
-              <Filter className="h-6 w-6" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="bg-black/90 backdrop-blur-xl border-r border-purple-900/30">
-            <div className="flex items-center mb-8 pt-4">
-              <Podcast className="h-6 w-6 text-purple-500 mr-2" />
-              <h2 className="text-xl font-bold text-purple-400">Soundscape</h2>
-            </div>
-            
-            <ScrollArea className="h-[calc(100vh-120px)]">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-sm font-medium text-purple-500/70 mb-3">Filtros</h3>
-                  <div className="space-y-1">
-                    {(['all', 'progress', 'favorites'] as const).map((filter) => (
-                      <Button
-                        key={filter}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-left",
-                          activeFilter === filter ? "bg-purple-900/20 text-purple-400" : "text-gray-300"
-                        )}
-                        onClick={() => setActiveFilter(filter)}
-                      >
-                        {{
-                          all: <Library className="mr-2 h-4 w-4" />,
-                          progress: <Clock className="mr-2 h-4 w-4" />,
-                          favorites: <Heart className="mr-2 h-4 w-4" />
-                        }[filter]}
-                        {filter === 'all' ? 'Todos' : 
-                         filter === 'progress' ? 'Em Progresso' : 'Favoritos'}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h3 className="text-sm font-medium text-purple-500/70 mb-3">Ordenação</h3>
-                  <div className="space-y-1">
-                    {(['recent', 'popular', 'title'] as const).map((sort) => (
-                      <Button
-                        key={sort}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-left",
-                          sortBy === sort ? "bg-purple-900/20 text-purple-400" : "text-gray-300"
-                        )}
-                        onClick={() => setSortBy(sort)}
-                      >
-                        {sort === 'recent' ? 'Mais Recentes' : 
-                         sort === 'popular' ? 'Mais Populares' : 'Por Título'}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <Separator className="border-purple-900/30" />
-                
-                <div>
-                  <h3 className="text-sm font-medium text-purple-500/70 mb-3">Categorias</h3>
-                  <div className="space-y-1">
-                    {categories.map((category) => (
-                      <Button
-                        key={category.name}
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start text-left",
-                          selectedCategory === category.name ? "bg-purple-900/20 text-purple-400" : "text-gray-300"
-                        )}
-                        onClick={() => setSelectedCategory(category.name)}
-                      >
-                        {category.name}
-                        <Badge className="ml-auto bg-purple-900/30 text-purple-500" variant="outline">
-                          {category.count}
-                        </Badge>
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="pt-4">
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-purple-700 text-purple-400"
-                    onClick={resetFilters}
-                  >
-                    Limpar Filtros
-                  </Button>
-                </div>
+        {/* Mobile filter sheet - now hidden since we have the top bar */}
+        {!isMobile && (
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button 
+                variant="outline" 
+                className="fixed bottom-4 right-4 z-40 md:hidden rounded-full h-14 w-14 shadow-lg bg-purple-600 hover:bg-purple-500 border-none"
+              >
+                <Filter className="h-6 w-6" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="bg-black/90 backdrop-blur-xl border-r border-purple-900/30">
+              <div className="flex items-center mb-8 pt-4">
+                <Podcast className="h-6 w-6 text-purple-500 mr-2" />
+                <h2 className="text-xl font-bold text-purple-400">Soundscape</h2>
               </div>
-            </ScrollArea>
-          </SheetContent>
-        </Sheet>
+              
+              <ScrollArea className="h-[calc(100vh-120px)]">
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-sm font-medium text-purple-500/70 mb-3">Filtros</h3>
+                    <div className="space-y-1">
+                      {(['all', 'progress', 'favorites'] as const).map((filter) => (
+                        <Button
+                          key={filter}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start text-left",
+                            activeFilter === filter ? "bg-purple-900/20 text-purple-400" : "text-gray-300"
+                          )}
+                          onClick={() => setActiveFilter(filter)}
+                        >
+                          {{
+                            all: <Library className="mr-2 h-4 w-4" />,
+                            progress: <Clock className="mr-2 h-4 w-4" />,
+                            favorites: <Heart className="mr-2 h-4 w-4" />
+                          }[filter]}
+                          {filter === 'all' ? 'Todos' : 
+                           filter === 'progress' ? 'Em Progresso' : 'Favoritos'}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-purple-500/70 mb-3">Ordenação</h3>
+                    <div className="space-y-1">
+                      {(['recent', 'popular', 'title'] as const).map((sort) => (
+                        <Button
+                          key={sort}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start text-left",
+                            sortBy === sort ? "bg-purple-900/20 text-purple-400" : "text-gray-300"
+                          )}
+                          onClick={() => setSortBy(sort)}
+                        >
+                          {sort === 'recent' ? 'Mais Recentes' : 
+                           sort === 'popular' ? 'Mais Populares' : 'Por Título'}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <Separator className="border-purple-900/30" />
+                  
+                  <div>
+                    <h3 className="text-sm font-medium text-purple-500/70 mb-3">Categorias</h3>
+                    <div className="space-y-1">
+                      {categories.map((category) => (
+                        <Button
+                          key={category.name}
+                          variant="ghost"
+                          className={cn(
+                            "w-full justify-start text-left",
+                            selectedCategory === category.name ? "bg-purple-900/20 text-purple-400" : "text-gray-300"
+                          )}
+                          onClick={() => setSelectedCategory(category.name)}
+                        >
+                          {category.name}
+                          <Badge className="ml-auto bg-purple-900/30 text-purple-500" variant="outline">
+                            {category.count}
+                          </Badge>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4">
+                    <Button 
+                      variant="outline" 
+                      className="w-full border-purple-700 text-purple-400"
+                      onClick={resetFilters}
+                    >
+                      Limpar Filtros
+                    </Button>
+                  </div>
+                </div>
+              </ScrollArea>
+            </SheetContent>
+          </Sheet>
+        )}
         
         <div className="flex flex-col md:flex-row gap-6">
           {/* Desktop sidebar */}

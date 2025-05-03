@@ -15,15 +15,8 @@ export const BookReader: React.FC<BookReaderProps> = ({ book, onClose }) => {
   useEffect(() => {
     if (!book || !book.pdf_url) return;
 
-    // Determine if the PDF URL is absolute or relative
-    const isAbsoluteUrl = book.pdf_url.startsWith('http');
-    
-    // If it's a relative path, prefix with the Supabase storage URL
-    const fullPdfUrl = isAbsoluteUrl 
-      ? book.pdf_url 
-      : `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${book.pdf_url}`;
-    
-    setPdfUrl(fullPdfUrl);
+    // Store the PDF URL directly - the EnhancedPDFViewer will handle creating the full URL
+    setPdfUrl(book.pdf_url);
     
     // Add class to body when PDF reader is open
     document.body.classList.add('pdf-viewer-open');

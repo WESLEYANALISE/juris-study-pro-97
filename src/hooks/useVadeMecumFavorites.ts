@@ -163,7 +163,7 @@ export function useVadeMecumFavorites() {
     removeFavorite,
     isFavorite,
     toggleFavorite,
-    loadHistory  // Added the missing function
+    loadHistory
   };
 }
 

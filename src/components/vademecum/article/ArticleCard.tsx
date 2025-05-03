@@ -120,6 +120,8 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
             <AnimatePresence>
               {showDetails ? (
                 <ArticleDetails 
+                  articleNumber={articleNumber}
+                  lawName={lawName}
                   technicalExplanation={technicalExplanation}
                   formalExplanation={formalExplanation}
                   practicalExample={practicalExample}

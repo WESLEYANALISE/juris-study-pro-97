@@ -10,7 +10,6 @@ interface ArticleDetailsProps {
   lawName: string;
   lawType?: string;
   isExpanded?: boolean;
-  // Add the missing properties that ArticleCard is trying to pass
   technicalExplanation?: string;
   formalExplanation?: string;
   practicalExample?: string;
