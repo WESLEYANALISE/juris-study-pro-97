@@ -67,14 +67,14 @@ export function AtheneumBackground({
   return (
     <div
       className={cn(
-        "relative min-h-screen overflow-hidden",
+        "relative min-h-screen",
         variants[variant],
         className
       )}
       {...props}
     >
       {/* Decorative elements */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-[40%] -left-[10%] w-[70%] h-[70%] rounded-full bg-purple-900/10 blur-3xl" />
         <div className="absolute -bottom-[40%] -right-[10%] w-[70%] h-[70%] rounded-full bg-purple-900/10 blur-3xl" />
       </div>
