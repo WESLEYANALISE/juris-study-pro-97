@@ -69,9 +69,6 @@ serve(async (req) => {
 
     console.log(`Querying table: ${table_name}`);
     
-    // Fallback to direct query
-    console.log(`Executing direct query for ${table_name}`);
-    
     // Use a parameterized query to prevent SQL injection
     // Note: This is safe because we've already validated table_name against ALLOWED_TABLES
     let data;
@@ -80,7 +77,7 @@ serve(async (req) => {
     try {
       const result = await supabase
         .from(table_name)
-        .select('*')
+        .select('id, numero, artigo, tecnica, formal, exemplo')
         .order('id');
       
       data = result.data;

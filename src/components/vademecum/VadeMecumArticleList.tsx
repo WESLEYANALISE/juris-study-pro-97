@@ -93,7 +93,8 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
           return null;
         }
         
-        // Ensure all required properties exist for display
+        // Map database column names directly to component props
+        // Column mapping: numero -> articleNumber, artigo -> articleText, etc.
         const articleNumber = article.numero || '';
         const articleText = article.artigo || '';
         const articleId = article.id ? article.id.toString() : '';

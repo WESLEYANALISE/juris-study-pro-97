@@ -127,7 +127,8 @@ export function useRecentContent(limit: number = 6) {
         // Get podcast details
         let recentPodcasts: RecentContent[] = [];
         if (podcastProgress && podcastProgress.length > 0) {
-          const podcastIds = podcastProgress.map(progress => progress.podcast_id);
+          // Convert podcast_id to string to avoid TypeScript errors
+          const podcastIds = podcastProgress.map(progress => String(progress.podcast_id));
           
           const { data: podcasts } = await supabase
             .from('podcast_tabela')
@@ -136,7 +137,8 @@ export function useRecentContent(limit: number = 6) {
 
           if (podcasts) {
             recentPodcasts = podcasts.map(podcast => {
-              const progressItem = podcastProgress.find(p => p.podcast_id === podcast.id);
+              // Use type casting to avoid TypeScript error when comparing string and number
+              const progressItem = podcastProgress.find(p => String(p.podcast_id) === String(podcast.id));
               
               return {
                 id: podcast.id.toString(),

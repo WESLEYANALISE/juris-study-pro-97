@@ -30,23 +30,24 @@ const ALLOWED_TABLES = [
   "Constituição_Federal"
 ]; 
 
+// Interface para representar os artigos de leis usando os nomes de colunas do banco de dados
 interface LawArticle {
   id: string;
   law_name: string;
-  article_number: string;
-  article_text: string;
-  technical_explanation?: string;
-  formal_explanation?: string;
-  practical_example?: string;
+  numero: string;       // Número do artigo (coluna 'numero')
+  artigo: string;       // Texto do artigo (coluna 'artigo')
+  tecnica?: string;     // Explicação técnica (coluna 'tecnica')
+  formal?: string;      // Explicação formal (coluna 'formal')
+  exemplo?: string;     // Exemplo prático (coluna 'exemplo')
 }
 
 interface DataStats {
   total: number;
-  withArticleNumber: number;
-  withArticleText: number;
-  withTechnicalExplanation: number;
-  withFormalExplanation: number;
-  withPracticalExample: number;
+  withNumero: number;
+  withArtigo: number;
+  withTecnica: number;
+  withFormal: number;
+  withExemplo: number;
 }
 
 export const useVadeMecumArticles = (searchQuery: string) => {
@@ -57,11 +58,11 @@ export const useVadeMecumArticles = (searchQuery: string) => {
   const [error, setError] = useState<string | null>(null);
   const [dataStats, setDataStats] = useState<DataStats>({
     total: 0,
-    withArticleNumber: 0,
-    withArticleText: 0,
-    withTechnicalExplanation: 0,
-    withFormalExplanation: 0,
-    withPracticalExample: 0
+    withNumero: 0,
+    withArtigo: 0,
+    withTecnica: 0,
+    withFormal: 0,
+    withExemplo: 0
   });
 
   // Função para validar o nome da tabela de forma segura
@@ -95,28 +96,29 @@ export const useVadeMecumArticles = (searchQuery: string) => {
 
     console.log("Raw data sample (first 2 items):", data.slice(0, 2));
 
-    // Mapear e transformar os dados
+    // Mapear e transformar os dados - mantendo os nomes originais das colunas
     const mappedData = data.map((item: any) => {
       // Garante que temos pelo menos os campos necessários
-      return {
+      const processedItem = {
         id: item.id ? item.id.toString() : '',
         law_name: getTableName(lawId) || '',
-        article_number: item.numero || '',
-        article_text: item.artigo || '',
-        technical_explanation: item.tecnica || '',
-        formal_explanation: item.formal || '',
-        practical_example: item.exemplo || ''
+        numero: item.numero || '',
+        artigo: item.artigo || '',
+        tecnica: item.tecnica || '',
+        formal: item.formal || '',
+        exemplo: item.exemplo || ''
       };
+      return processedItem;
     });
 
     // Coleta estatísticas para debugging
     const stats = {
       total: mappedData.length,
-      withArticleNumber: mappedData.filter(a => !!a.article_number?.trim()).length,
-      withArticleText: mappedData.filter(a => !!a.article_text?.trim()).length,
-      withTechnicalExplanation: mappedData.filter(a => !!a.technical_explanation?.trim()).length,
-      withFormalExplanation: mappedData.filter(a => !!a.formal_explanation?.trim()).length,
-      withPracticalExample: mappedData.filter(a => !!a.practical_example?.trim()).length
+      withNumero: mappedData.filter(a => !!a.numero?.trim()).length,
+      withArtigo: mappedData.filter(a => !!a.artigo?.trim()).length,
+      withTecnica: mappedData.filter(a => !!a.tecnica?.trim()).length,
+      withFormal: mappedData.filter(a => !!a.formal?.trim()).length,
+      withExemplo: mappedData.filter(a => !!a.exemplo?.trim()).length
     };
     
     console.log("Mapped data sample (first 2 items):", mappedData.slice(0, 2));
@@ -236,10 +238,10 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     } else {
       const lowerQuery = searchQuery.toLowerCase();
       const filtered = articles.filter(article => {
-        if (!article.article_text && !article.article_number) return false;
+        if (!article.artigo && !article.numero) return false;
         return (
-          article.article_text?.toLowerCase().includes(lowerQuery) || 
-          article.article_number?.toLowerCase().includes(lowerQuery)
+          article.artigo?.toLowerCase().includes(lowerQuery) || 
+          article.numero?.toLowerCase().includes(lowerQuery)
         );
       });
       console.log(`Filtro aplicado: ${filtered.length}/${articles.length} artigos correspondem a "${searchQuery}"`);
