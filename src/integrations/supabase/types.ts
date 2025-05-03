@@ -306,6 +306,36 @@ export type Database = {
           },
         ]
       }
+      bibliotecatop: {
+        Row: {
+          capa_url: string | null
+          categoria: string | null
+          descricao: string | null
+          id: number
+          pdf_url: string | null
+          titulo: string | null
+          total_paginas: string | null
+        }
+        Insert: {
+          capa_url?: string | null
+          categoria?: string | null
+          descricao?: string | null
+          id?: number
+          pdf_url?: string | null
+          titulo?: string | null
+          total_paginas?: string | null
+        }
+        Update: {
+          capa_url?: string | null
+          categoria?: string | null
+          descricao?: string | null
+          id?: number
+          pdf_url?: string | null
+          titulo?: string | null
+          total_paginas?: string | null
+        }
+        Relationships: []
+      }
       categorias: {
         Row: {
           created_at: string | null

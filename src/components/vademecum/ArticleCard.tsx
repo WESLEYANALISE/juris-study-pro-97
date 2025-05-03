@@ -1,116 +1,141 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Heart, BookText, ExternalLink } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from "@/hooks/use-toast";
+
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Bookmark, BookmarkCheck } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ArticleCardProps {
-  id: number;
-  title: string;
-  description: string;
-  category: string;
-  articleUrl: string;
-  favoriteArticleIds?: (string | number)[] | null;
+  id: string;
+  lawId: string;
+  articleNumber: string;
+  articleText: string;
+  technicalExplanation?: string;
+  formalExplanation?: string;
+  practicalExample?: string;
+  fontSize?: number;
 }
 
-const ArticleCard: React.FC<ArticleCardProps> = ({
-  id: articleId,
-  title,
-  description,
-  category,
-  articleUrl,
-  favoriteArticleIds
-}) => {
+export function ArticleCard({
+  id,
+  lawId,
+  articleNumber,
+  articleText,
+  technicalExplanation,
+  formalExplanation,
+  practicalExample,
+  fontSize = 16
+}: ArticleCardProps) {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [isFavorite, setIsFavorite] = useState<boolean>(favoriteArticleIds?.includes(articleId.toString()) || false);
+  const [isFavorited, setIsFavorited] = React.useState(false);
 
-  const toggleFavorite = async () => {
+  // Check if article is favorited
+  React.useEffect(() => {
+    if (!user) return;
+
+    const checkIfFavorited = async () => {
+      const { data } = await supabase
+        .from('vademecum_favorites')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('article_id', id)
+        .single();
+        
+      setIsFavorited(!!data);
+    };
+    
+    checkIfFavorited();
+  }, [user, id]);
+
+  const handleArticleClick = () => {
+    navigate(`/vademecum/${lawId}/${id}`);
+  };
+
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!user) {
       toast({
-        title: "Você precisa estar logado",
-        description: "Faça login para adicionar artigos aos seus favoritos.",
+        title: "Login necessário",
+        description: "Você precisa estar logado para favoritar artigos.",
+        variant: "destructive"
       });
       return;
     }
 
     try {
-      const { data, error } = await supabase
-        .from('user_favorite_articles')
-        .upsert(
-          [
-            {
-              user_id: user.id,
-              article_id: articleId,
-            },
-          ],
-          { onConflict: 'user_id,article_id' }
-        );
-
-      if (error) {
-        console.error("Error toggling favorite:", error);
+      if (isFavorited) {
+        await supabase
+          .from('vademecum_favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('article_id', id);
+          
+        setIsFavorited(false);
         toast({
-          title: "Erro ao adicionar/remover favorito",
-          description: "Por favor, tente novamente.",
-          variant: "destructive",
+          title: "Removido dos favoritos",
+          description: "O artigo foi removido dos seus favoritos."
         });
-        return;
+      } else {
+        await supabase
+          .from('vademecum_favorites')
+          .insert({
+            user_id: user.id,
+            article_id: id,
+            law_name: lawId,
+            article_number: articleNumber,
+            article_text: articleText
+          });
+          
+        setIsFavorited(true);
+        toast({
+          title: "Adicionado aos favoritos",
+          description: "O artigo foi adicionado aos seus favoritos."
+        });
       }
-
-      setIsFavorite(!isFavorite);
-      toast({
-        title: isFavorite ? "Removido dos favoritos" : "Adicionado aos favoritos",
-        description: isFavorite
-          ? "O artigo foi removido da sua lista de favoritos."
-          : "O artigo foi adicionado à sua lista de favoritos.",
-      });
     } catch (error) {
-      console.error("Unexpected error toggling favorite:", error);
+      console.error('Error toggling favorite:', error);
       toast({
-        title: "Erro inesperado",
-        description: "Ocorreu um erro ao adicionar/remover o favorito. Por favor, tente novamente.",
-        variant: "destructive",
+        title: "Erro",
+        description: "Ocorreu um erro ao atualizar os favoritos.",
+        variant: "destructive"
       });
     }
   };
 
-  // Change the problematic line around line 75
-  const isArticleFavorite = favoriteArticleIds?.includes(articleId.toString());
-
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription className="line-clamp-2 text-sm">{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-grow">
-        <Badge variant="secondary">{category}</Badge>
+    <Card 
+      className="mb-4 hover:shadow-md transition-all cursor-pointer border-l-4 border-l-primary" 
+      onClick={handleArticleClick}
+    >
+      <CardContent className="p-4 relative">
+        <div className="flex justify-between items-start">
+          <h3 
+            className="text-lg font-semibold mb-2" 
+            style={{ fontSize: `${fontSize}px` }}
+          >
+            Art. {articleNumber}
+          </h3>
+          <Button 
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2"
+            onClick={toggleFavorite}
+          >
+            {isFavorited ? <BookmarkCheck className="h-5 w-5" /> : <Bookmark className="h-5 w-5" />}
+          </Button>
+        </div>
+        <p 
+          className="text-gray-700 dark:text-gray-300" 
+          style={{ fontSize: `${fontSize}px` }}
+        >
+          {articleText}
+        </p>
       </CardContent>
-      <CardFooter className="flex justify-between items-center">
-        <Button variant="ghost" asChild>
-          <Link to={articleUrl} target="_blank" rel="noopener noreferrer" className="flex items-center">
-            Acessar Artigo
-            <ExternalLink className="ml-2 h-4 w-4" />
-          </Link>
-        </Button>
-        <Button variant="outline" onClick={toggleFavorite}>
-          {isArticleFavorite ? (
-            <>
-              Remover Favorito <Heart className="ml-2 h-4 w-4 fill-red-500 text-red-500" />
-            </>
-          ) : (
-            <>
-              Favoritar <Heart className="ml-2 h-4 w-4" />
-            </>
-          )}
-        </Button>
-      </CardFooter>
     </Card>
   );
-};
-
-export default ArticleCard;
+}

@@ -24,17 +24,27 @@ export default function BibliotecaJuridica() {
   const { toast } = useToast();
   const { sugestoes } = useSugestoes();
 
-  // Fetch all legal books
+  // Fetch all legal books from bibliotecatop table
   const { data: livros, isLoading, error } = useQuery({
-    queryKey: ['biblioteca-juridica'],
+    queryKey: ['biblioteca-juridica-top'],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
-          .from('biblioteca_juridica10')
+          .from('bibliotecatop')
           .select('*');
         
         if (error) throw error;
-        return data as unknown as LivroJuridico[];
+
+        // Transform to match LivroJuridico type
+        return data.map(item => ({
+          id: item.id.toString(),
+          titulo: item.titulo || 'Sem título',
+          categoria: item.categoria || 'Geral',
+          pdf_url: item.pdf_url || '',
+          capa_url: item.capa_url || null,
+          descricao: item.descricao || null,
+          total_paginas: item.total_paginas ? parseInt(item.total_paginas) : null
+        })) as LivroJuridico[];
       } catch (err) {
         console.error('Error fetching books:', err);
         toast({
@@ -92,7 +102,7 @@ export default function BibliotecaJuridica() {
         livro={{
           id: selectedBook.id,
           nome: selectedBook.titulo,
-          pdf: getBucketFileUrl(selectedBook.pdf_url),
+          pdf: selectedBook.pdf_url.startsWith('http') ? selectedBook.pdf_url : getBucketFileUrl(selectedBook.pdf_url),
           capa_url: selectedBook.capa_url || undefined
         }} 
         onClose={handleCloseBook} 

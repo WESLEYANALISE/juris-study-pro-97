@@ -1,96 +1,104 @@
 
-import React from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import ArticleCard from "@/components/vademecum/ArticleCard";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useEffect } from 'react';
+import { ArticleCard } from './ArticleCard';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useVadeMecumPreferences } from '@/hooks/useVadeMecumPreferences';
+import { Search } from 'lucide-react';
 
 interface VadeMecumArticleListProps {
+  data: any[] | null;
   isLoading: boolean;
-  visibleArticles: any[];
-  filteredArticles: any[];
-  visibleBatch: number;
+  filter: string;
   tableName: string;
-  fontSize: number;
-  loadMoreRef: (node?: Element | null) => void;
+  error?: any;
 }
 
 export function VadeMecumArticleList({
+  data,
   isLoading,
-  visibleArticles,
-  filteredArticles,
-  visibleBatch,
+  filter,
   tableName,
-  fontSize,
-  loadMoreRef
+  error
 }: VadeMecumArticleListProps) {
-  const isMobile = useIsMobile();
+  const [filteredData, setFilteredData] = useState<any[] | null>(data);
+  const { fontSize } = useVadeMecumPreferences();
 
-  // Helper function to get the correct article properties regardless of database column naming
-  const getArticleProps = (article: any) => {
-    return {
-      articleNumber: article.numero || article.article_number || '',
-      articleText: article.artigo || article.article_text || '',
-      technicalExplanation: article.tecnica || article.technical_explanation,
-      formalExplanation: article.formal || article.formal_explanation,
-      practicalExample: article.exemplo || article.practical_example
-    };
-  };
+  // Effect to filter data when data or filter changes
+  useEffect(() => {
+    if (!data) {
+      setFilteredData(null);
+      return;
+    }
 
+    if (!filter) {
+      setFilteredData(data);
+      return;
+    }
+
+    const lowerFilter = filter.toLowerCase();
+    const filtered = data.filter((item) => {
+      const articleText = item.artigo?.toLowerCase() || '';
+      const articleNumber = item.numero?.toString().toLowerCase() || '';
+
+      return (
+        articleText.includes(lowerFilter) ||
+        articleNumber.includes(lowerFilter)
+      );
+    });
+
+    setFilteredData(filtered);
+  }, [data, filter]);
+
+  // Loading skeletons
   if (isLoading) {
     return (
-      <div className="space-y-4 md:space-y-5 px-[5px]">
-        {Array.from({ length: isMobile ? 2 : 3 }).map((_, i) => (
-          <Skeleton key={`skeleton-${i}`} className="h-32" />
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <Skeleton key={i} className="h-24 w-full" />
         ))}
       </div>
     );
   }
 
-  if (filteredArticles.length === 0) {
+  // Error state
+  if (error) {
     return (
-      <div className="space-y-4 md:space-y-5 px-[5px]">
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">
-            Nenhum artigo encontrado com os critérios de busca.
-          </p>
-        </div>
+      <div className="bg-destructive/10 text-destructive p-6 rounded-lg">
+        <h3 className="font-semibold mb-2">Erro ao carregar artigos</h3>
+        <p>Ocorreu um erro ao carregar os artigos. Por favor, tente novamente.</p>
+      </div>
+    );
+  }
+
+  // Empty state
+  if (!filteredData || filteredData.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Search className="mx-auto h-12 w-12 text-muted-foreground opacity-50" />
+        <h3 className="mt-4 text-xl font-semibold">Nenhum artigo encontrado</h3>
+        <p className="text-muted-foreground">
+          Tente outro termo de busca ou selecione outra legislação.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4 md:space-y-5 px-[5px]">
-      {visibleArticles.map((article, index) => {
-        const {
-          articleNumber,
-          articleText,
-          technicalExplanation,
-          formalExplanation,
-          practicalExample
-        } = getArticleProps(article);
-        
-        return (
-          <div key={article.id || `article-${index}`}>
-            <ArticleCard 
-              lawName={tableName || ''} 
-              articleNumber={articleNumber} 
-              articleText={articleText} 
-              technicalExplanation={technicalExplanation} 
-              formalExplanation={formalExplanation} 
-              practicalExample={practicalExample} 
-              fontSize={fontSize} 
-            />
-          </div>
-        );
-      })}
-      
-      {filteredArticles.length > visibleBatch && (
-        <div ref={loadMoreRef} className="py-4 flex justify-center">
-          <Skeleton className="h-8 w-32" />
-        </div>
-      )}
+    <div className="space-y-4">
+      {filteredData.map((item, index) => (
+        <ArticleCard
+          key={index}
+          id={item.id.toString()}
+          lawId={tableName}
+          articleNumber={item.numero}
+          articleText={item.artigo}
+          technicalExplanation={item.tecnica}
+          formalExplanation={item.formal}
+          practicalExample={item.exemplo}
+          fontSize={fontSize}
+        />
+      ))}
     </div>
   );
 }
-
-export default VadeMecumArticleList;
