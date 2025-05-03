@@ -38,10 +38,10 @@ export const AnnotationButton = ({
     
     const loadAnnotation = async () => {
       const { data, error } = await supabase
-        .from('user_annotations')
+        .from('annotations')
         .select('annotation_text')
         .eq('user_id', user.id)
-        .eq('law_name', lawName)
+        .eq('law_id', lawName)
         .eq('article_number', articleNumber)
         .single();
         
@@ -74,12 +74,11 @@ export const AnnotationButton = ({
     
     try {
       const { error } = await supabase
-        .from('user_annotations')
+        .from('annotations')
         .upsert({
           user_id: user.id,
-          law_name: lawName,
+          law_id: lawName,
           article_number: articleNumber,
-          article_text: articleText.slice(0, 200) + (articleText.length > 200 ? '...' : ''),
           annotation_text: annotation,
           created_at: new Date().toISOString()
         });
