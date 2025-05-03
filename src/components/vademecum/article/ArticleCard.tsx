@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -7,7 +6,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArticleContent } from './ArticleContent';
 import { ArticleDetails } from './ArticleDetails';
 import { cn } from '@/lib/utils';
-
 interface ArticleCardProps {
   articleId: string;
   articleNumber: string;
@@ -21,7 +19,6 @@ interface ArticleCardProps {
   favoriteIcon?: React.ReactNode;
   fontSize?: number;
 }
-
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   articleId,
   articleNumber,
@@ -37,10 +34,9 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
-  
   const hasDetails = technicalExplanation || formalExplanation || practicalExample;
   const isHeading = !articleNumber && articleText?.includes('TÍTULO') || articleText?.includes('CAPÍTULO');
-  
+
   // Toggle expanded state with animation
   const toggleExpanded = () => {
     setIsExpanded(prev => !prev);
@@ -54,100 +50,52 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     e.stopPropagation();
     setShowDetails(prev => !prev);
   };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card 
-        className={cn(
-          "shadow-sm hover:shadow-md transition-all overflow-hidden border",
-          isHeading ? "bg-muted/30" : "",
-          isFavorite ? "border-primary" : ""
-        )}
-      >
-        <div 
-          className={cn(
-            "cursor-pointer",
-            isHeading ? "py-3 px-4" : "p-4"
-          )}
-          onClick={toggleExpanded}
-        >
+  return <motion.div initial={{
+    opacity: 0,
+    y: 10
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} transition={{
+    duration: 0.3
+  }}>
+      <Card className={cn("shadow-sm hover:shadow-md transition-all overflow-hidden border", isHeading ? "bg-muted/30" : "", isFavorite ? "border-primary" : "")}>
+        <div className={cn("cursor-pointer", isHeading ? "py-3 px-4" : "p-4")} onClick={toggleExpanded}>
           <div className="flex justify-between items-start">
-            <ArticleContent 
-              articleNumber={articleNumber}
-              articleText={articleText}
-              fontSize={fontSize}
-              isHeading={isHeading}
-            />
+            <ArticleContent articleNumber={articleNumber} articleText={articleText} fontSize={fontSize} isHeading={isHeading} />
             
             <div className="flex items-center gap-2">
               {/* Favorite button */}
-              {onToggleFavorite && (
-                <Button
-                  variant={isFavorite ? "default" : "ghost"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onToggleFavorite();
-                  }}
-                  title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                >
+              {onToggleFavorite && <Button variant={isFavorite ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={e => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }} title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}>
                   {favoriteIcon}
-                </Button>
-              )}
+                </Button>}
               
               {/* Expand button */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={toggleExpanded}
-                title={isExpanded ? "Recolher" : "Expandir"}
-              >
-                {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-              </Button>
+              
             </div>
           </div>
         </div>
         
         {/* Expandable content */}
-        {isExpanded && hasDetails && (
-          <CardContent className="pt-0 pb-4 px-4">
+        {isExpanded && hasDetails && <CardContent className="pt-0 pb-4 px-4">
             <AnimatePresence>
-              {showDetails ? (
-                <ArticleDetails 
-                  articleNumber={articleNumber}
-                  lawName={lawName}
-                  technicalExplanation={technicalExplanation}
-                  formalExplanation={formalExplanation}
-                  practicalExample={practicalExample}
-                  onClose={() => setShowDetails(false)}
-                />
-              ) : (
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="mt-2"
-                  onClick={toggleDetails}
-                >
+              {showDetails ? <ArticleDetails articleNumber={articleNumber} lawName={lawName} technicalExplanation={technicalExplanation} formalExplanation={formalExplanation} practicalExample={practicalExample} onClose={() => setShowDetails(false)} /> : <Button variant="outline" size="sm" className="mt-2" onClick={toggleDetails}>
                   Ver explicações e exemplos
-                </Button>
-              )}
+                </Button>}
             </AnimatePresence>
-          </CardContent>
-        )}
+          </CardContent>}
       </Card>
-    </motion.div>
-  );
+    </motion.div>;
 };
 
 // AnimatePresence component for animations
 const AnimatePresence: React.FC<{
   children: React.ReactNode;
-}> = ({ children }) => {
+}> = ({
+  children
+}) => {
   return <>{children}</>;
 };
