@@ -52,7 +52,7 @@ export function useRecentContent(limit: number = 6) {
           // Get reading progress
           const { data: progress } = await supabase
             .from('biblioteca_leitura_progresso')
-            .select('livro_id, pagina_atual, total_paginas')
+            .select('livro_id, pagina_atual')
             .eq('user_id', user.id)
             .in('livro_id', bookIds);
 
@@ -60,6 +60,9 @@ export function useRecentContent(limit: number = 6) {
             recentBooks = books.map(book => {
               const historyItem = bookHistory.find(h => h.livro_id === book.id);
               const progressItem = progress?.find(p => p.livro_id === book.id);
+              
+              // Default total pages if not available
+              const totalPages = 100;
               
               return {
                 id: book.id,
@@ -69,7 +72,7 @@ export function useRecentContent(limit: number = 6) {
                 path: `/biblioteca/view/${book.id}`,
                 last_accessed: historyItem ? new Date(historyItem.timestamp) : new Date(),
                 progress: progressItem?.pagina_atual ? 
-                  (progressItem.pagina_atual / (progressItem.total_paginas || 100)) * 100 : undefined
+                  (progressItem.pagina_atual / totalPages) * 100 : undefined
               };
             });
           }

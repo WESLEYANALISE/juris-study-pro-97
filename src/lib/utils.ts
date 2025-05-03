@@ -34,3 +34,18 @@ export function truncateString(str: string, maxLength: number): string {
   if (!str) return "";
   return str.length > maxLength ? str.substring(0, maxLength) + '...' : str;
 }
+
+// Add the formatDuration function that was missing
+export function formatDuration(seconds: number): string {
+  if (isNaN(seconds)) return '00:00';
+  
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  
+  if (hours > 0) {
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+  }
+  
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+}
