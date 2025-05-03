@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -44,6 +45,14 @@ export function useBibliotecaProgresso() {
     if (!progressData) return false;
     const progress = progressData.find(p => p.livro_id === livroId);
     return progress ? progress.favorito : false;
+  };
+
+  // Added getFavoriteBooks function
+  const getFavoriteBooks = (): string[] => {
+    if (!progressData) return [];
+    return progressData
+      .filter(p => p.favorito)
+      .map(p => p.livro_id);
   };
   
   const updateProgress = async (livroId: string, pageNumber: number) => {
@@ -125,6 +134,7 @@ export function useBibliotecaProgresso() {
     isFavorite,
     updateProgress,
     toggleFavorite,
+    getFavoriteBooks, // Explicitly include the function in the returned object
     refetch
   };
 }
