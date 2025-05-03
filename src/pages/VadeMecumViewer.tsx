@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInView } from "react-intersection-observer";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -39,11 +39,28 @@ const VadeMecumViewer = () => {
   // Cache for the articles to improve performance
   const [articlesCache, setArticlesCache] = useState<Record<string, any[]>>({});
 
+  // Create a ref for the loadMore element
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
   // Use react-intersection-observer para detecção de "infinite scroll"
-  const { ref: loadMoreRef, inView } = useInView({
+  const { ref, inView } = useInView({
     threshold: 0.1,
     triggerOnce: false
   });
+
+  // Connect the intersection observer ref with our React ref
+  const setRefs = useCallback(
+    (node: HTMLDivElement | null) => {
+      // Update the loadMoreRef
+      if (node) {
+        loadMoreRef.current = node;
+      }
+      
+      // Call the ref function from useInView
+      ref(node);
+    },
+    [ref]
+  );
   
   const {
     filteredArticles,
@@ -162,7 +179,7 @@ const VadeMecumViewer = () => {
                 filter={searchQuery}
                 tableName={tableName}
                 visibleArticles={visibleArticles}
-                loadMoreRef={loadMoreRef}
+                loadMoreRef={setRefs}
               />
             )}
           </div>
@@ -189,4 +206,3 @@ const VadeMecumViewer = () => {
 };
 
 export default VadeMecumViewer;
-

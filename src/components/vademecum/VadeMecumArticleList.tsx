@@ -13,7 +13,7 @@ interface VadeMecumArticleListProps {
   filter: string;
   tableName: string;
   visibleArticles: any[];
-  loadMoreRef: React.RefObject<HTMLDivElement>;
+  loadMoreRef: ((node: HTMLDivElement | null) => void);
 }
 
 export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({

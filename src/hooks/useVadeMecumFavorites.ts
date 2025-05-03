@@ -67,6 +67,34 @@ export const useVadeMecumFavorites = () => {
     }
   }, [user]);
   
+  // Check if an article is favorited
+  const isFavorite = useCallback((lawName: string, articleId: string, articleNumber: string, articleText: string) => {
+    return favorites.some(fav => 
+      (fav.article_id === articleId || fav.article_number === articleNumber) && 
+      fav.law_name === lawName
+    );
+  }, [favorites]);
+  
+  // Toggle favorite status
+  const toggleFavorite = useCallback(async (lawName: string, articleId: string, articleNumber: string, articleText: string) => {
+    if (!user) {
+      toast.error('É necessário estar logado para favoritar artigos');
+      return;
+    }
+
+    const alreadyFavorite = isFavorite(lawName, articleId, articleNumber, articleText);
+    
+    if (alreadyFavorite) {
+      return removeFavorite(articleNumber, lawName);
+    } else {
+      return addFavorite({
+        law_name: lawName,
+        article_number: articleNumber,
+        article_text: articleText
+      });
+    }
+  }, [user, isFavorite]);
+  
   // Remove a favorite
   const removeFavorite = useCallback(async (articleNumber: string, lawName: string) => {
     if (!user) return false;
@@ -162,7 +190,9 @@ export const useVadeMecumFavorites = () => {
     loadFavorites,
     addFavorite,
     removeFavorite,
-    loadHistory
+    loadHistory,
+    toggleFavorite,
+    isFavorite
   };
 };
 

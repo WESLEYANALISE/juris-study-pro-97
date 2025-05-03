@@ -14,12 +14,24 @@ import { useMediaQuery } from "@/hooks/use-media-query";
 import { useSessionStorage } from "@/hooks/use-session-storage";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { BookOpen, BookMarked, Bookmark, Clock, List as ListIcon, Grid3X3 } from "lucide-react";
+import { BookOpen, BookMarked, Bookmark, Clock, List as ListIcon, Grid3X3, Search } from 'lucide-react';
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog } from "@/components/ui/dialog";
 import { BibliotecaBookModal } from "@/components/biblioteca-juridica/BibliotecaBookModal";
 import { toast } from "sonner";
 import "../styles/biblioteca-juridica.css";
+
+// Define a type for the book response from Supabase
+interface BibliotecaBookResponse {
+  id: number;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  pdf_url: string;
+  capa_url: string;
+  total_paginas: string;
+  autor?: string; // Optional field
+}
 
 const BibliotecaJuridica = () => {
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -64,7 +76,7 @@ const BibliotecaJuridica = () => {
         }
 
         // Map the response to match the LivroJuridico type
-        return (data || []).map(item => ({
+        return (data || []).map((item: BibliotecaBookResponse) => ({
           id: item.id.toString(),
           titulo: item.titulo || 'Sem título',
           autor: item.autor || 'Autor não especificado',
