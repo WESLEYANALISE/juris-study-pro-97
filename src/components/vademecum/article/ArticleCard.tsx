@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
@@ -8,7 +7,6 @@ import { ArticleContent } from './ArticleContent';
 import { ArticleDetails } from './ArticleDetails';
 import { cn } from '@/lib/utils';
 import { ArticleActions } from './ArticleActions';
-
 interface ArticleCardProps {
   articleId: string;
   articleNumber: string;
@@ -22,7 +20,6 @@ interface ArticleCardProps {
   favoriteIcon?: React.ReactNode;
   fontSize?: number;
 }
-
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   articleId,
   articleNumber,
@@ -39,7 +36,6 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [isNarrating, setIsNarrating] = useState(false);
-  
   const hasDetails = technicalExplanation || formalExplanation || practicalExample;
   const isHeading = !articleNumber && (articleText?.includes('TÍTULO') || articleText?.includes('CAPÍTULO'));
 
@@ -56,79 +52,39 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
     e.stopPropagation();
     setShowDetails(prev => !prev);
   };
-  
-  return (
-    <motion.div 
-      initial={{
-        opacity: 0,
-        y: 10
-      }} 
-      animate={{
-        opacity: 1,
-        y: 0
-      }} 
-      transition={{
-        duration: 0.3
-      }}
-    >
-      <Card className={cn(
-        "shadow-sm hover:shadow-md transition-all overflow-hidden border", 
-        isHeading ? "bg-muted/30" : "", 
-        isFavorite ? "border-primary" : ""
-      )}>
+  return <motion.div initial={{
+    opacity: 0,
+    y: 10
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} transition={{
+    duration: 0.3
+  }}>
+      <Card className={cn("shadow-sm hover:shadow-md transition-all overflow-hidden border", isHeading ? "bg-muted/30" : "", isFavorite ? "border-primary" : "")}>
         <div className={cn("cursor-pointer", isHeading ? "py-3 px-4" : "p-4")} onClick={toggleExpanded}>
           <div className="flex justify-between items-start">
-            <ArticleContent 
-              articleNumber={articleNumber} 
-              articleText={articleText} 
-              fontSize={fontSize} 
-              isHeading={isHeading} 
-            />
+            <ArticleContent articleNumber={articleNumber} articleText={articleText} fontSize={fontSize} isHeading={isHeading} />
             
             <div className="flex items-center gap-2">
               {/* Favorite button */}
-              {onToggleFavorite && (
-                <Button 
-                  variant={isFavorite ? "default" : "ghost"} 
-                  size="icon" 
-                  className="h-8 w-8" 
-                  onClick={e => {
-                    e.stopPropagation();
-                    onToggleFavorite();
-                  }} 
-                  title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                >
+              {onToggleFavorite && <Button variant={isFavorite ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={e => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }} title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}>
                   {favoriteIcon}
-                </Button>
-              )}
+                </Button>}
               
               {/* Expand button */}
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8" 
-                onClick={toggleExpanded} 
-                title={isExpanded ? "Recolher" : "Expandir"}
-              >
-                {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-              </Button>
+              
             </div>
           </div>
 
           {/* Action buttons - Always visible now, regardless of expanded state */}
           <div className="mt-4">
-            <ArticleActions
-              articleText={articleText}
-              articleNumber={articleNumber}
-              technicalExplanation={technicalExplanation}
-              formalExplanation={formalExplanation}
-              practicalExample={practicalExample}
-              isVisible={true}
-              lawName={lawName}
-            />
+            <ArticleActions articleText={articleText} articleNumber={articleNumber} technicalExplanation={technicalExplanation} formalExplanation={formalExplanation} practicalExample={practicalExample} isVisible={true} lawName={lawName} />
           </div>
         </div>
       </Card>
-    </motion.div>
-  );
+    </motion.div>;
 };
