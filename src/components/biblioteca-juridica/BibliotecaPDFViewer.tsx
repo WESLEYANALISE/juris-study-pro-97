@@ -11,11 +11,27 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { ChevronLeft, ChevronRight, X, Search, ZoomIn, ZoomOut, Bookmark, BookmarkPlus, BookmarkMinus, Download, MessageSquare, Edit } from 'lucide-react';
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  X, 
+  Search, 
+  ZoomIn, 
+  ZoomOut, 
+  Bookmark, 
+  BookmarkPlus, 
+  BookmarkMinus, 
+  Download, 
+  MessageSquare, 
+  Edit,
+  MoreVertical 
+} from 'lucide-react';
 import './BibliotecaPDFViewer.css';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Set worker source for PDF.js
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 interface BibliotecaPDFViewerProps {
   livro: {
     id: string;
@@ -25,6 +41,7 @@ interface BibliotecaPDFViewerProps {
   };
   onClose: () => void;
 }
+
 export function BibliotecaPDFViewer({
   livro,
   onClose
@@ -41,6 +58,7 @@ export function BibliotecaPDFViewer({
   const [annotations, setAnnotations] = useState<any[]>([]);
   const [showBookmarks, setShowBookmarks] = useState<boolean>(false);
   const [showAnnotations, setShowAnnotations] = useState<boolean>(false);
+  const [showMenu, setShowMenu] = useState<boolean>(false);
   const [newAnnotation, setNewAnnotation] = useState<string>('');
   const [isAddingAnnotation, setIsAddingAnnotation] = useState<boolean>(false);
   const [newBookmarkTitle, setNewBookmarkTitle] = useState<string>('');
@@ -54,6 +72,7 @@ export function BibliotecaPDFViewer({
   // Hooks
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   
   // Setup touch gestures
   const touchGestures = useTouchGestures({
@@ -92,25 +111,35 @@ export function BibliotecaPDFViewer({
         }
 
         // Load bookmarks
-        const { data: bookmarksData } = await supabase
+        const { data: bookmarksData, error: bookmarksError } = await supabase
           .from('biblioteca_marcadores')
           .select('*')
           .eq('user_id', user.id)
           .eq('livro_id', livro.id)
           .order('pagina', { ascending: true });
           
+        if (bookmarksError) {
+          console.error('Error loading bookmarks:', bookmarksError);
+          return;
+        }
+        
         if (bookmarksData) {
           setBookmarks(bookmarksData);
         }
 
         // Load annotations
-        const { data: annotationsData } = await supabase
+        const { data: annotationsData, error: annotationsError } = await supabase
           .from('biblioteca_anotacoes')
           .select('*')
           .eq('user_id', user.id)
           .eq('livro_id', livro.id)
           .order('pagina', { ascending: true });
           
+        if (annotationsError) {
+          console.error('Error loading annotations:', annotationsError);
+          return;
+        }
+        
         if (annotationsData) {
           setAnnotations(annotationsData);
         }
@@ -197,40 +226,39 @@ export function BibliotecaPDFViewer({
     const existingBookmark = bookmarks.find(b => b.pagina === pageNumber);
     if (existingBookmark) {
       // Remove bookmark
-      try {
-        const { error } = await supabase
-          .from('biblioteca_marcadores')
-          .delete()
-          .eq('id', existingBookmark.id);
-          
-        if (error) {
-          console.error('Error removing bookmark:', error);
-          toast({
-            title: "Erro",
-            description: "Não foi possível remover o marcador.",
-            variant: "destructive"
-          });
-        } else {
-          setBookmarks(bookmarks.filter(b => b.id !== existingBookmark.id));
-          toast({
-            title: "Marcador removido",
-            description: "O marcador foi removido com sucesso."
-          });
-        }
-      } catch (err) {
-        console.error('Error removing bookmark:', err);
-        toast({
-          title: "Erro",
-          description: "Não foi possível remover o marcador.",
-          variant: "destructive"
-        });
-      }
+      await handleDeleteBookmark(existingBookmark.id);
     } else {
       // Add new bookmark
       setNewBookmarkTitle(`Página ${pageNumber}`);
       setIsAddingBookmark(true);
     }
   };
+
+  // Function to handle bookmark deletion with proper error handling
+  const handleDeleteBookmark = async (bookmarkId: string) => {
+    try {
+      const { error } = await supabase
+        .from('biblioteca_marcadores')
+        .delete()
+        .eq('id', bookmarkId);
+      
+      if (error) throw error;
+      
+      setBookmarks(bookmarks.filter(b => b.id !== bookmarkId));
+      toast({
+        title: "Marcador removido",
+        description: "O marcador foi removido com sucesso."
+      });
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover o marcador.",
+        variant: "destructive"
+      });
+    }
+  };
+  
   const saveBookmark = async () => {
     try {
       const { data, error } = await supabase
@@ -244,14 +272,9 @@ export function BibliotecaPDFViewer({
         .select();
         
       if (error) {
-        console.error('Error adding bookmark:', error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível adicionar o marcador.",
-          variant: "destructive"
-        });
-        return;
+        throw error;
       }
+      
       setBookmarks([...bookmarks, data[0]]);
       setIsAddingBookmark(false);
       setNewBookmarkTitle('');
@@ -259,8 +282,8 @@ export function BibliotecaPDFViewer({
         title: "Marcador adicionado",
         description: "O marcador foi adicionado com sucesso."
       });
-    } catch (err) {
-      console.error('Error adding bookmark:', err);
+    } catch (error) {
+      console.error('Error adding bookmark:', error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar o marcador.",
@@ -280,6 +303,7 @@ export function BibliotecaPDFViewer({
     }
     setIsAddingAnnotation(true);
   };
+  
   const saveAnnotation = async () => {
     try {
       const { data, error } = await supabase
@@ -294,14 +318,9 @@ export function BibliotecaPDFViewer({
         .select();
         
       if (error) {
-        console.error('Error adding annotation:', error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível adicionar a anotação.",
-          variant: "destructive"
-        });
-        return;
+        throw error;
       }
+      
       setAnnotations([...annotations, data[0]]);
       setIsAddingAnnotation(false);
       setNewAnnotation('');
@@ -309,11 +328,36 @@ export function BibliotecaPDFViewer({
         title: "Anotação adicionada",
         description: "A anotação foi adicionada com sucesso."
       });
-    } catch (err) {
-      console.error('Error adding annotation:', err);
+    } catch (error) {
+      console.error('Error adding annotation:', error);
       toast({
         title: "Erro",
         description: "Não foi possível adicionar a anotação.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Function to handle annotation deletion with proper error handling
+  const handleDeleteAnnotation = async (annotationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('biblioteca_anotacoes')
+        .delete()
+        .eq('id', annotationId);
+      
+      if (error) throw error;
+      
+      setAnnotations(annotations.filter(a => a.id !== annotationId));
+      toast({
+        title: "Anotação removida",
+        description: "A anotação foi removida com sucesso."
+      });
+    } catch (error) {
+      console.error('Error removing annotation:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível remover a anotação.",
         variant: "destructive"
       });
     }
@@ -428,56 +472,6 @@ export function BibliotecaPDFViewer({
     };
   }, []);
 
-  // Function to handle bookmark deletion with proper error handling
-  const handleDeleteBookmark = async (bookmarkId: string) => {
-    try {
-      const { error } = await supabase
-        .from('biblioteca_marcadores')
-        .delete()
-        .eq('id', bookmarkId);
-      
-      if (error) throw error;
-      
-      setBookmarks(bookmarks.filter(b => b.id !== bookmarkId));
-      toast({
-        title: "Marcador removido",
-        description: "O marcador foi removido com sucesso."
-      });
-    } catch (error) {
-      console.error('Error removing bookmark:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover o marcador.",
-        variant: "destructive"
-      });
-    }
-  };
-
-  // Function to handle annotation deletion with proper error handling
-  const handleDeleteAnnotation = async (annotationId: string) => {
-    try {
-      const { error } = await supabase
-        .from('biblioteca_anotacoes')
-        .delete()
-        .eq('id', annotationId);
-      
-      if (error) throw error;
-      
-      setAnnotations(annotations.filter(a => a.id !== annotationId));
-      toast({
-        title: "Anotação removida",
-        description: "A anotação foi removida com sucesso."
-      });
-    } catch (error) {
-      console.error('Error removing annotation:', error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível remover a anotação.",
-        variant: "destructive"
-      });
-    }
-  };
-
   // Main render
   return <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
       <div className="bg-card shadow-lg p-4 border-b flex justify-between items-center transition-opacity duration-300" style={{
@@ -485,21 +479,70 @@ export function BibliotecaPDFViewer({
     }}>
         <h2 className="text-xl font-medium truncate max-w-[60%]">{livro.nome}</h2>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={toggleFavorite} title="Favoritar">
-            <Bookmark className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleDownload} title="Download">
-            <Download className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowBookmarks(true)} title="Marcadores">
-            <BookmarkPlus className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setShowAnnotations(true)} title="Anotações">
-            <MessageSquare className="h-5 w-5" />
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
+          {isMobile ? (
+            <>
+              <Button variant="ghost" size="icon" onClick={() => setShowMenu(true)}>
+                <MoreVertical className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-5 w-5" />
+              </Button>
+              
+              <Sheet open={showMenu} onOpenChange={setShowMenu}>
+                <SheetContent side="bottom" className="h-auto max-h-[50vh]">
+                  <div className="flex flex-col space-y-3 py-2">
+                    <Button variant="ghost" className="justify-start" onClick={toggleBookmark}>
+                      {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="mr-2 h-5 w-5" /> : <BookmarkPlus className="mr-2 h-5 w-5" />}
+                      {bookmarks.some(b => b.pagina === pageNumber) ? "Remover marcador" : "Adicionar marcador"}
+                    </Button>
+                    
+                    <Button variant="ghost" className="justify-start" onClick={() => setShowBookmarks(true)}>
+                      <Bookmark className="mr-2 h-5 w-5" />
+                      Ver marcadores
+                    </Button>
+                    
+                    <Button variant="ghost" className="justify-start" onClick={addAnnotation}>
+                      <Edit className="mr-2 h-5 w-5" />
+                      Adicionar anotação
+                    </Button>
+                    
+                    <Button variant="ghost" className="justify-start" onClick={() => setShowAnnotations(true)}>
+                      <MessageSquare className="mr-2 h-5 w-5" />
+                      Ver anotações
+                    </Button>
+                    
+                    <Button variant="ghost" className="justify-start" onClick={handleDownload}>
+                      <Download className="mr-2 h-5 w-5" />
+                      Download
+                    </Button>
+                    
+                    <Button variant="ghost" className="justify-start" onClick={toggleFavorite}>
+                      <Bookmark className="mr-2 h-5 w-5" />
+                      Favoritar
+                    </Button>
+                  </div>
+                </SheetContent>
+              </Sheet>
+            </>
+          ) : (
+            <>
+              <Button variant="ghost" size="icon" onClick={toggleBookmark} title="Favoritar">
+                <Bookmark className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={handleDownload} title="Download">
+                <Download className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setShowBookmarks(true)} title="Marcadores">
+                <BookmarkPlus className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="icon" onClick={() => setShowAnnotations(true)} title="Anotações">
+                <MessageSquare className="h-5 w-5" />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={onClose}>
+                <X className="h-5 w-5" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -516,7 +559,13 @@ export function BibliotecaPDFViewer({
                 <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
                 <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
               </div>} className="pdf-container">
-            <Page pageNumber={pageNumber} scale={scale} renderTextLayer={false} renderAnnotationLayer={false} className="pdf-page" />
+            <Page 
+              pageNumber={pageNumber} 
+              scale={scale} 
+              renderTextLayer={false} 
+              renderAnnotationLayer={false} 
+              className="pdf-page"
+            />
           </Document>}
         
         {/* Page annotations for current page */}
@@ -529,56 +578,62 @@ export function BibliotecaPDFViewer({
         </div>
       </div>
 
-      {/* Bottom controls */}
-      <div className="pdf-controls transition-opacity duration-300" style={{
-      opacity: showControls ? 1 : 0
-    }}>
-        <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={pageNumber <= 1}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        
-        <div className="bg-background/80 backdrop-blur px-2 rounded flex items-center">
-          <Input 
-            type="number" 
-            min={1} 
-            max={numPages || 1} 
-            value={pageNumber} 
-            onChange={e => setPageNumber(Number(e.target.value))} 
-            className="w-12 h-8 text-center p-0 border-none"
-          />
-          <span className="text-sm mx-1">/ {numPages || '--'}</span>
-        </div>
-        
-        <Button variant="outline" size="sm" onClick={goToNextPage} disabled={!numPages || pageNumber >= numPages}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        
-        <div className="ml-2 flex items-center gap-1">
-          <Button variant="outline" size="sm" onClick={zoomOut}>
-            <ZoomOut className="h-4 w-4" />
+      {/* Bottom controls - hidden on mobile if not in showControls state */}
+      {(!isMobile || showControls) && (
+        <div className="pdf-controls transition-opacity duration-300" style={{
+          opacity: showControls ? 1 : 0
+        }}>
+          <Button variant="outline" size="sm" onClick={goToPreviousPage} disabled={pageNumber <= 1}>
+            <ChevronLeft className="h-4 w-4" />
           </Button>
-          <span className="text-sm bg-background/80 backdrop-blur px-2 rounded">
-            {Math.round(scale * 100)}%
-          </span>
-          <Button variant="outline" size="sm" onClick={zoomIn}>
-            <ZoomIn className="h-4 w-4" />
+          
+          <div className="bg-background/80 backdrop-blur px-2 rounded flex items-center">
+            <Input 
+              type="number" 
+              min={1} 
+              max={numPages || 1} 
+              value={pageNumber} 
+              onChange={e => setPageNumber(Number(e.target.value))} 
+              className="w-12 h-8 text-center p-0 border-none"
+            />
+            <span className="text-sm mx-1">/ {numPages || '--'}</span>
+          </div>
+          
+          <Button variant="outline" size="sm" onClick={goToNextPage} disabled={!numPages || pageNumber >= numPages}>
+            <ChevronRight className="h-4 w-4" />
           </Button>
+          
+          {!isMobile && (
+            <>
+              <div className="ml-2 flex items-center gap-1">
+                <Button variant="outline" size="sm" onClick={zoomOut}>
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className="text-sm bg-background/80 backdrop-blur px-2 rounded">
+                  {Math.round(scale * 100)}%
+                </span>
+                <Button variant="outline" size="sm" onClick={zoomIn}>
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="ml-2">
+                <Button variant="outline" size="sm" onClick={addAnnotation} title="Adicionar anotação">
+                  <Edit className="h-4 w-4 mr-1" />
+                  <span className="hidden sm:inline">Anotar</span>
+                </Button>
+              </div>
+              
+              <div className="ml-2">
+                <Button variant="outline" size="sm" onClick={toggleBookmark} title="Adicionar/remover marcador">
+                  {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="h-4 w-4 mr-1" /> : <BookmarkPlus className="h-4 w-4 mr-1" />}
+                  <span className="hidden sm:inline">Marcar</span>
+                </Button>
+              </div>
+            </>
+          )}
         </div>
-        
-        <div className="ml-2">
-          <Button variant="outline" size="sm" onClick={addAnnotation} title="Adicionar anotação">
-            <Edit className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Anotar</span>
-          </Button>
-        </div>
-        
-        <div className="ml-2">
-          <Button variant="outline" size="sm" onClick={toggleBookmark} title="Adicionar/remover marcador">
-            {bookmarks.some(b => b.pagina === pageNumber) ? <BookmarkMinus className="h-4 w-4 mr-1" /> : <BookmarkPlus className="h-4 w-4 mr-1" />}
-            <span className="hidden sm:inline">Marcar</span>
-          </Button>
-        </div>
-      </div>
+      )}
 
       {/* Search Dialog */}
       <Dialog open={isSearchOpen} onOpenChange={setIsSearchOpen}>
@@ -603,7 +658,7 @@ export function BibliotecaPDFViewer({
 
       {/* Bookmarks Sidebar */}
       <Sheet open={showBookmarks} onOpenChange={setShowBookmarks}>
-        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+        <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "h-[70vh]" : "w-[300px] sm:w-[400px]"}>
           <SheetHeader>
             <SheetTitle>Marcadores</SheetTitle>
           </SheetHeader>
@@ -646,7 +701,7 @@ export function BibliotecaPDFViewer({
 
       {/* Annotations Sidebar */}
       <Sheet open={showAnnotations} onOpenChange={setShowAnnotations}>
-        <SheetContent side="right" className="w-[300px] sm:w-[400px]">
+        <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "h-[70vh]" : "w-[300px] sm:w-[400px]"}>
           <SheetHeader>
             <SheetTitle>Anotações</SheetTitle>
           </SheetHeader>

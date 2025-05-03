@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -14,15 +13,21 @@ import { useSugestoes } from '@/hooks/use-biblioteca-juridica';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog } from '@/components/ui/dialog';
+import { BibliotecaBookModal } from '@/components/biblioteca-juridica/BibliotecaBookModal';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Loader2, BookOpen, BookPlus } from 'lucide-react';
 
 export default function BibliotecaJuridica() {
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
+  const [showBookModal, setShowBookModal] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const { sugestoes } = useSugestoes();
+  const isMobile = useIsMobile();
 
   // Fetch all legal books from bibliotecatop table
   const { data: livros, isLoading, error } = useQuery({
@@ -81,14 +86,22 @@ export default function BibliotecaJuridica() {
     return Array.from(uniqueCategories);
   }, [livros]);
 
-  // Handle opening a book
-  const handleOpenBook = (book: LivroJuridico) => {
+  // Handle opening a book modal
+  const handleSelectBook = (book: LivroJuridico) => {
     setSelectedBook(book);
+    setShowBookModal(true);
   };
 
-  // Handle closing a book
-  const handleCloseBook = () => {
-    setSelectedBook(null);
+  // Handle closing the book modal
+  const handleCloseModal = () => {
+    setShowBookModal(false);
+  };
+
+  // Handle opening a book for reading
+  const handleOpenBook = () => {
+    if (!selectedBook) return;
+    setShowBookModal(false);
+    // We'll keep the selected book state for the PDF viewer
   };
 
   // Handle file URL construction
@@ -96,7 +109,7 @@ export default function BibliotecaJuridica() {
     return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${fileName}`;
   };
 
-  if (selectedBook) {
+  if (selectedBook && !showBookModal) {
     return (
       <BibliotecaPDFViewer 
         livro={{
@@ -105,7 +118,7 @@ export default function BibliotecaJuridica() {
           pdf: selectedBook.pdf_url.startsWith('http') ? selectedBook.pdf_url : getBucketFileUrl(selectedBook.pdf_url),
           capa_url: selectedBook.capa_url || undefined
         }} 
-        onClose={handleCloseBook} 
+        onClose={() => setSelectedBook(null)} 
       />
     );
   }
@@ -118,39 +131,52 @@ export default function BibliotecaJuridica() {
           onSearchChange={setSearchTerm}
           viewMode={viewMode}
           onViewModeChange={setViewMode}
+          isMobile={isMobile}
         />
 
         <Tabs defaultValue="todos" className="mt-6">
-          <TabsList className="mb-6 flex-wrap">
-            <TabsTrigger value="todos" onClick={() => setSelectedCategory(null)}>
-              Todos
-            </TabsTrigger>
-            {categories.map(category => (
-              <TabsTrigger 
-                key={category} 
-                value={category}
-                onClick={() => setSelectedCategory(category)}
-              >
-                {category}
+          <div className="relative overflow-auto pb-1">
+            <TabsList className="mb-6 flex-wrap inline-flex w-auto max-w-full">
+              <TabsTrigger value="todos" onClick={() => setSelectedCategory(null)}>
+                Todos
               </TabsTrigger>
-            ))}
-          </TabsList>
+              {categories.map(category => (
+                <TabsTrigger 
+                  key={category} 
+                  value={category}
+                  onClick={() => setSelectedCategory(category)}
+                >
+                  {category}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
 
           <TabsContent value="todos" className="mt-4">
             {isLoading ? (
               <div className="flex justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
               </div>
-            ) : viewMode === 'grid' ? (
-              <BibliotecaGridView 
-                books={filteredBooks} 
-                onSelectBook={handleOpenBook}
-              />
+            ) : filteredBooks.length > 0 ? (
+              viewMode === 'grid' ? (
+                <BibliotecaGridView 
+                  books={filteredBooks} 
+                  onSelectBook={handleSelectBook}
+                />
+              ) : (
+                <BibliotecaListView 
+                  books={filteredBooks} 
+                  onSelectBook={handleSelectBook}
+                />
+              )
             ) : (
-              <BibliotecaListView 
-                books={filteredBooks} 
-                onSelectBook={handleOpenBook}
-              />
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <BookOpen className="h-16 w-16 text-muted-foreground opacity-30 mb-4" />
+                <h3 className="text-xl font-semibold">Nenhum livro encontrado</h3>
+                <p className="text-muted-foreground max-w-md mt-2">
+                  Não encontramos livros correspondentes à sua busca. Tente ajustar os critérios de pesquisa.
+                </p>
+              </div>
             )}
           </TabsContent>
 
@@ -159,12 +185,12 @@ export default function BibliotecaJuridica() {
               {viewMode === 'grid' ? (
                 <BibliotecaGridView 
                   books={filteredBooks} 
-                  onSelectBook={handleOpenBook}
+                  onSelectBook={handleSelectBook}
                 />
               ) : (
                 <BibliotecaListView 
                   books={filteredBooks} 
-                  onSelectBook={handleOpenBook}
+                  onSelectBook={handleSelectBook}
                 />
               )}
             </TabsContent>
@@ -173,25 +199,48 @@ export default function BibliotecaJuridica() {
 
         {user && (
           <>
-            <h2 className="text-2xl font-bold mt-12 mb-6">Seus Favoritos</h2>
-            <BibliotecaFavoritos onSelectBook={handleOpenBook} />
+            <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
+              Seus Favoritos
+              <span className="ml-2 text-sm text-muted-foreground font-normal">
+                (Livros que você marcou como favoritos)
+              </span>
+            </h2>
+            <BibliotecaFavoritos onSelectBook={handleSelectBook} />
             
-            <h2 className="text-2xl font-bold mt-12 mb-6">Recentemente Visualizados</h2>
-            <BibliotecaRecentes onSelectBook={handleOpenBook} />
+            <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
+              Recentemente Visualizados
+              <span className="ml-2 text-sm text-muted-foreground font-normal">
+                (Últimos livros que você acessou)
+              </span>
+            </h2>
+            <BibliotecaRecentes onSelectBook={handleSelectBook} />
           </>
         )}
 
         {sugestoes && sugestoes.length > 0 && (
           <>
-            <h2 className="text-2xl font-bold mt-12 mb-6">Recomendado Para Você</h2>
+            <h2 className="text-2xl font-bold mt-12 mb-6 flex items-center">
+              Recomendado Para Você
+              <span className="ml-2 text-sm text-muted-foreground font-normal">
+                (Baseado em seus interesses)
+              </span>
+            </h2>
             <BibliotecaGridView 
               books={sugestoes} 
-              onSelectBook={handleOpenBook}
+              onSelectBook={handleSelectBook}
               showBadge
             />
           </>
         )}
       </div>
+
+      <Dialog open={showBookModal} onOpenChange={setShowBookModal}>
+        <BibliotecaBookModal 
+          book={selectedBook}
+          onClose={handleCloseModal}
+          onReadBook={handleOpenBook}
+        />
+      </Dialog>
     </PageTransition>
   );
 }

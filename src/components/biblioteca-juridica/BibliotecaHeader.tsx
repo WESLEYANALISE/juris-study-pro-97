@@ -2,32 +2,43 @@
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Grid2x2, List, Search } from 'lucide-react';
+import { Grid2x2, List, Search, SlidersHorizontal, BookSearch } from 'lucide-react';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface BibliotecaHeaderProps {
   searchTerm: string;
   onSearchChange: (value: string) => void;
   viewMode: 'list' | 'grid';
   onViewModeChange: (mode: 'list' | 'grid') => void;
+  isMobile?: boolean;
 }
 
 export function BibliotecaHeader({
   searchTerm,
   onSearchChange,
   viewMode,
-  onViewModeChange
+  onViewModeChange,
+  isMobile = false
 }: BibliotecaHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div className="space-y-4 md:space-y-0 md:flex md:items-center md:justify-between">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Biblioteca Jurídica</h1>
+        <h1 className="text-3xl font-bold tracking-tight flex items-center">
+          <BookSearch className="mr-2 h-7 w-7 text-primary" /> 
+          Biblioteca Jurídica
+        </h1>
         <p className="text-muted-foreground mt-1">
           Explore nossa coleção de obras jurídicas
         </p>
       </div>
       
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 md:min-w-[300px]">
+      <div className="flex flex-col sm:flex-row gap-2">
+        <div className="relative flex-1 min-w-[200px] sm:min-w-[300px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Pesquisar livros..."
@@ -37,26 +48,46 @@ export function BibliotecaHeader({
           />
         </div>
         
-        <div className="flex items-center border rounded-md">
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'ghost'}
-            size="icon"
-            onClick={() => onViewModeChange('grid')}
-            className="rounded-none rounded-l-md"
-            aria-label="Visualização em grade"
-          >
-            <Grid2x2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={viewMode === 'list' ? 'default' : 'ghost'}
-            size="icon"
-            onClick={() => onViewModeChange('list')}
-            className="rounded-none rounded-r-md"
-            aria-label="Visualização em lista"
-          >
-            <List className="h-4 w-4" />
-          </Button>
-        </div>
+        {isMobile ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => onViewModeChange('grid')}>
+                <Grid2x2 className="mr-2 h-4 w-4" />
+                <span>Visualização em grade</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onViewModeChange('list')}>
+                <List className="mr-2 h-4 w-4" />
+                <span>Visualização em lista</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="flex items-center border rounded-md">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => onViewModeChange('grid')}
+              className="rounded-none rounded-l-md"
+              aria-label="Visualização em grade"
+            >
+              <Grid2x2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'ghost'}
+              size="icon"
+              onClick={() => onViewModeChange('list')}
+              className="rounded-none rounded-r-md"
+              aria-label="Visualização em lista"
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
