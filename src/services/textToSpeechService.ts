@@ -5,11 +5,16 @@ let audioContext: AudioContext | null = null;
 
 export const TextToSpeechService = {
   /**
-   * Convert text to speech using the Google Cloud Text-to-Speech API via Supabase Edge Function
+   * Convert text to speech using the Google Cloud Text-to-Speech API
    * @param text The text to convert to speech
-   * @param voice The voice to use (default: 'pt-BR-Wavenet-D')
+   * @param voice The voice to use (default: 'pt-BR-Wavenet-E')
+   * @param rate Speaking rate (0.25 to 4.0, default: 1.0)
    */
-  speak: async (text: string, voiceId: string = 'pt-BR-Wavenet-D'): Promise<void> => {
+  speak: async (
+    text: string, 
+    voice: string = 'pt-BR-Wavenet-E', 
+    rate: number = 1.0
+  ): Promise<void> => {
     try {
       // If there's already audio playing, stop it
       if (currentAudio) {
@@ -20,44 +25,47 @@ export const TextToSpeechService = {
       const maxLength = 3000;
       const truncatedText = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
 
-      // Call the Edge Function
-      const response = await fetch('/api/text-to-speech', {
+      const apiKey = 'AIzaSyCX26cgIpSd-BvtOLDdEQFa28_wh_HX1uk';
+      const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
+
+      const requestBody = {
+        input: {
+          text: truncatedText
+        },
+        voice: {
+          languageCode: 'pt-BR',
+          name: voice
+        },
+        audioConfig: {
+          audioEncoding: 'MP3',
+          speakingRate: rate, // Control the speed
+          pitch: 0.0,         // Default pitch
+          volumeGainDb: 0.0   // Default volume
+        }
+      };
+
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          text: truncatedText,
-          voice: voiceId
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao gerar áudio');
+        throw new Error(error.error?.message || 'Falha ao gerar áudio');
       }
 
       const data = await response.json();
       
-      // Convert base64 audio content to playable audio
-      const audioContent = data.audioContent;
-      if (!audioContent) {
-        throw new Error('Áudio não recebido do servidor');
-      }
-
       // Clean up any existing audio
       TextToSpeechService.cleanup();
 
-      const audioBlob = new Blob(
-        [Uint8Array.from(atob(audioContent), c => c.charCodeAt(0))], 
-        { type: 'audio/mp3' }
-      );
-      
-      const audioUrl = URL.createObjectURL(audioBlob);
-      currentAudio = new Audio(audioUrl);
+      // Play the audio
+      currentAudio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
       
       // Set up audio context to provide better control (volume, playbackRate)
-      // This is optional but improves the quality of the playback
       try {
         audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         const source = audioContext.createMediaElementSource(currentAudio);

@@ -2,6 +2,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
+import { cn } from '@/lib/utils';
 
 interface ArticleContentProps {
   articleNumber: string;
@@ -25,25 +26,28 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
 
   return (
     <motion.div 
-      className={`flex flex-col ${isHeading ? "w-full" : ""}`}
+      className={cn("flex flex-col", isHeading ? "w-full" : "")}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
       {articleNumber?.trim() ? (
-        <h3 className="text-lg font-semibold bg-primary/10 px-3 py-1 rounded-lg inline-block shadow-sm">
-          Art. {articleNumber}
-        </h3>
+        <div className="flex items-center gap-2 mb-2">
+          <h3 className="text-base font-medium bg-primary/10 px-3 py-1 rounded-md inline-block">
+            Art. {articleNumber}
+          </h3>
+        </div>
       ) : null}
       <div 
         id={`article-content-${articleNumber}`}
         style={{ fontSize: `${fontSize}px` }} 
-        className={`
-          mt-3 whitespace-pre-line px-1 py-3 ml-0 
-          ${isHeading 
+        className={cn(
+          "prose-sm prose-zinc dark:prose-invert max-w-none",
+          "mt-1 whitespace-pre-line px-1 py-2 ml-0 vademecum-content", 
+          isHeading 
             ? "text-center w-full font-semibold text-primary" 
-            : "border-l-0 pl-3"}
-        `}
+            : "border-l-0 pl-3"
+        )}
       >
         {formattedText ? (
           <ReactMarkdown 

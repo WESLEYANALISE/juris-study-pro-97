@@ -1,4 +1,3 @@
-
 /* Reset global scrollbar appearance */
 ::-webkit-scrollbar {
   width: 6px;
@@ -149,6 +148,33 @@
   animation: scaleIn 0.3s ease forwards;
 }
 
+/* Highlight text animations and styles */
+.highlight-text {
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  cursor: default;
+}
+
+.highlight-text:hover {
+  filter: brightness(1.1);
+}
+
+/* Custom scrollbar for the VadeMecum mobile view */
+@media (max-width: 768px) {
+  .vademecum-content::-webkit-scrollbar {
+    width: 3px;
+  }
+
+  .vademecum-content::-webkit-scrollbar-track {
+    background: rgba(20, 20, 40, 0.1);
+  }
+
+  .vademecum-content::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 20px;
+  }
+}
+
 /* Immersive reader mode */
 .immersive-reader {
   max-width: 800px;
@@ -188,7 +214,7 @@
   }
 }
 
-/* Progress indicator styles */
+/* Progress bar customization */
 .progress-bar-amber::-webkit-progress-value {
   background-color: #fbbf24;
 }
@@ -206,4 +232,42 @@
 
 .bookmark-added {
   animation: bookmark-pulse 0.5s ease;
+}
+
+/* Elegant card transitions */
+.article-card {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.article-card:hover {
+  transform: translateY(-2px);
+}
+
+/* Button animations */
+.action-button {
+  transition: all 0.2s ease;
+}
+
+.action-button:hover {
+  transform: translateY(-1px);
+}
+
+.action-button:active {
+  transform: translateY(0);
+}
+
+/* Annotation indicator */
+.has-annotation {
+  position: relative;
+}
+
+.has-annotation::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 6px;
+  height: 6px;
+  background-color: #9b87f5;
+  border-radius: 50%;
 }

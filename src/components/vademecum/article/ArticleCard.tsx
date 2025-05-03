@@ -1,12 +1,11 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronDown, ChevronUp } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArticleContent } from './ArticleContent';
-import { ArticleDetails } from './ArticleDetails';
 import { cn } from '@/lib/utils';
 import { ArticleActions } from './ArticleActions';
+
 interface ArticleCardProps {
   articleId: string;
   articleNumber: string;
@@ -20,6 +19,7 @@ interface ArticleCardProps {
   favoriteIcon?: React.ReactNode;
   fontSize?: number;
 }
+
 export const ArticleCard: React.FC<ArticleCardProps> = ({
   articleId,
   articleNumber,
@@ -33,58 +33,45 @@ export const ArticleCard: React.FC<ArticleCardProps> = ({
   favoriteIcon,
   fontSize = 16
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const [isNarrating, setIsNarrating] = useState(false);
   const hasDetails = technicalExplanation || formalExplanation || practicalExample;
   const isHeading = !articleNumber && (articleText?.includes('TÍTULO') || articleText?.includes('CAPÍTULO'));
 
-  // Toggle expanded state with animation
-  const toggleExpanded = () => {
-    setIsExpanded(prev => !prev);
-    if (isExpanded) {
-      setShowDetails(false);
-    }
-  };
-
-  // Toggle details panel
-  const toggleDetails = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setShowDetails(prev => !prev);
-  };
-  return <motion.div initial={{
-    opacity: 0,
-    y: 10
-  }} animate={{
-    opacity: 1,
-    y: 0
-  }} transition={{
-    duration: 0.3
-  }}>
-      <Card className={cn("shadow-sm hover:shadow-md transition-all overflow-hidden border", isHeading ? "bg-muted/30" : "", isFavorite ? "border-primary" : "")}>
-        <div className={cn("cursor-pointer", isHeading ? "py-3 px-4" : "p-4")} onClick={toggleExpanded}>
-          <div className="flex justify-between items-start">
-            <ArticleContent articleNumber={articleNumber} articleText={articleText} fontSize={fontSize} isHeading={isHeading} />
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <Card 
+        className={cn(
+          "overflow-hidden transition-all duration-300 backdrop-blur-sm hover:shadow-md", 
+          isHeading ? "bg-muted/10 border-primary/10" : "bg-card/90",
+          isFavorite ? "border-l-4 border-l-primary/50" : "border"
+        )}
+      >
+        <CardContent className={cn("p-4", isHeading ? "py-3" : "")}>
+          <div className="flex flex-col">
+            <ArticleContent 
+              articleNumber={articleNumber} 
+              articleText={articleText} 
+              fontSize={fontSize} 
+              isHeading={isHeading} 
+            />
             
-            <div className="flex items-center gap-2">
-              {/* Favorite button */}
-              {onToggleFavorite && <Button variant={isFavorite ? "default" : "ghost"} size="icon" className="h-8 w-8" onClick={e => {
-              e.stopPropagation();
-              onToggleFavorite();
-            }} title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}>
-                  {favoriteIcon}
-                </Button>}
-              
-              {/* Expand button */}
-              
-            </div>
+            {/* Article Actions - Always visible */}
+            <ArticleActions 
+              articleText={articleText} 
+              articleNumber={articleNumber} 
+              technicalExplanation={technicalExplanation} 
+              formalExplanation={formalExplanation} 
+              practicalExample={practicalExample} 
+              isVisible={true} 
+              lawName={lawName} 
+            />
           </div>
-
-          {/* Action buttons - Always visible now, regardless of expanded state */}
-          <div className="mt-4">
-            <ArticleActions articleText={articleText} articleNumber={articleNumber} technicalExplanation={technicalExplanation} formalExplanation={formalExplanation} practicalExample={practicalExample} isVisible={true} lawName={lawName} />
-          </div>
-        </div>
+        </CardContent>
       </Card>
-    </motion.div>;
+    </motion.div>
+  );
 };
