@@ -93,6 +93,8 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       return [];
     }
 
+    console.log("Raw data sample (first 2 items):", data.slice(0, 2));
+
     // Mapear e transformar os dados
     const mappedData = data.map((item: any) => {
       // Garante que temos pelo menos os campos necessários
@@ -117,6 +119,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       withPracticalExample: mappedData.filter(a => !!a.practical_example?.trim()).length
     };
     
+    console.log("Mapped data sample (first 2 items):", mappedData.slice(0, 2));
     console.log("Dados processados:", {
       tableName: getTableName(lawId),
       totalRecords: mappedData.length,
@@ -133,6 +136,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
   const loadArticles = useCallback(async (retryCount = 0) => {
     setLoading(true);
     setError(null);
+
     try {
       // Obter e verificar o nome da tabela
       const tableName = getTableName(lawId);
@@ -144,54 +148,47 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
       console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Chamada para a edge function com o nome da tabela
+      // Tentativa 1: Chamada para a edge function com o nome da tabela
+      console.log("Tentativa de carregamento via Edge Function");
       const response = await supabase.functions.invoke("query-vademecum-table", {
         body: { table_name: tableName }
       });
 
       // Verificar se há erro na chamada da função
       if (response.error) {
-        console.error(`Erro ao carregar artigos (tentativa ${retryCount + 1}):`, response.error);
+        console.error(`Erro ao carregar artigos via Edge Function (tentativa ${retryCount + 1}):`, response.error);
 
-        // Retry automático para erros temporários, até 3 tentativas
-        if (retryCount < 3) {
-          setTimeout(() => loadArticles(retryCount + 1), 1000 * (retryCount + 1));
-          return;
-        }
-        
-        setError(`Erro ao carregar artigos: ${response.error.message}`);
-        setLoading(false);
-        return;
-      }
-
-      // Verificar se os dados são válidos
-      const responseData = response.data;
-      
-      // Se a resposta está vazia ou não é um array, tente uma consulta direta como fallback
-      if (!responseData || !Array.isArray(responseData) || responseData.length === 0) {
-        console.log("Edge function retornou dados vazios, tentando consulta direta como fallback");
-        
-        // Validamos o tableName acima, então podemos usar type assertion para suprimir o erro do TypeScript
+        // Tentativa 2: Fallback para consulta direta
+        console.log("Tentando consulta direta como fallback");
         const { data: directData, error: directError } = await supabase
           .from(tableName as any)
           .select('*');
         
         if (directError) {
           console.error("Falha na consulta direta:", directError);
+          
+          if (retryCount < 3) {
+            console.log(`Tentando novamente (${retryCount + 1}/3)...`);
+            setTimeout(() => loadArticles(retryCount + 1), 1000 * (retryCount + 1));
+            return;
+          }
+          
           setError(`Erro ao carregar artigos: ${directError.message}`);
           setLoading(false);
           return;
         }
         
-        if (directData && Array.isArray(directData) && directData.length > 0) {
+        if (directData && Array.isArray(directData)) {
           console.log(`Dados recebidos via consulta direta: ${directData.length} registros`);
+          console.log("Primeiros registros:", directData.slice(0, 3));
+          
           const processedArticles = processRawData(directData);
           setArticles(processedArticles);
           setFilteredArticles(processedArticles);
           setLoading(false);
           return;
         } else {
-          console.error("Consulta direta retornou dados vazios");
+          console.error("Consulta direta retornou dados vazios ou inválidos");
           setArticles([]);
           setFilteredArticles([]);
           setLoading(false);
@@ -199,11 +196,21 @@ export const useVadeMecumArticles = (searchQuery: string) => {
         }
       }
       
-      console.log(`Dados recebidos da tabela ${tableName}:`, 
-        Array.isArray(responseData) ? responseData.length : 'não é um array');
-
+      // Tentativa 1 bem-sucedida: processar dados da Edge Function
+      const responseData = response.data;
+      console.log(`Dados recebidos da Edge Function para ${tableName}:`, 
+        Array.isArray(responseData) ? `${responseData.length} registros` : 'não é um array');
+      
+      if (!responseData || !Array.isArray(responseData) || responseData.length === 0) {
+        console.error("Edge function retornou dados vazios ou inválidos");
+        setArticles([]);
+        setFilteredArticles([]);
+        setLoading(false);
+        return;
+      }
+      
       // Processar e validar os dados recebidos
-      const processedArticles = processRawData(Array.isArray(responseData) ? responseData : []);
+      const processedArticles = processRawData(responseData);
       setArticles(processedArticles);
       setFilteredArticles(processedArticles);
 
@@ -217,6 +224,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
 
   // Efeito para carregar artigos quando o ID da lei mudar
   useEffect(() => {
+    console.log("lawId mudou, carregando artigos:", lawId);
     loadArticles();
   }, [loadArticles]);
 
@@ -224,6 +232,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
   useEffect(() => {
     if (searchQuery.trim() === "") {
       setFilteredArticles(articles);
+      console.log(`Mostrando todos os ${articles.length} artigos`);
     } else {
       const lowerQuery = searchQuery.toLowerCase();
       const filtered = articles.filter(article => {
@@ -233,6 +242,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
           article.article_number?.toLowerCase().includes(lowerQuery)
         );
       });
+      console.log(`Filtro aplicado: ${filtered.length}/${articles.length} artigos correspondem a "${searchQuery}"`);
       setFilteredArticles(filtered);
     }
   }, [searchQuery, articles]);

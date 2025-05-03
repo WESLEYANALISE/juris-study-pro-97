@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
@@ -267,7 +266,7 @@ interface BookGridProps {
 const BookGrid: React.FC<BookGridProps> = ({ livros, isLoading, onOpenBook }) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
         {Array.from({ length: 8 }).map((_, index) => (
           <BookSkeleton key={index} />
         ))}
@@ -287,8 +286,9 @@ const BookGrid: React.FC<BookGridProps> = ({ livros, isLoading, onOpenBook }) =>
     );
   }
 
+  // Using a 5-column grid where each book takes 2 columns (making 2.5 books per row)
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    <div className="grid grid-cols-5 gap-4">
       {livros.map((livro, index) => (
         <motion.div
           key={livro.id}
@@ -296,9 +296,13 @@ const BookGrid: React.FC<BookGridProps> = ({ livros, isLoading, onOpenBook }) =>
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
           whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="book-card"
+          className="book-card col-span-2"
+          style={{ marginBottom: '20px' }}
         >
-          <Card className="overflow-hidden h-full hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-primary" onClick={() => onOpenBook(livro)}>
+          <Card 
+            className="overflow-hidden h-full hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-primary" 
+            onClick={() => onOpenBook(livro)}
+          >
             <div className="aspect-[3/4] relative overflow-hidden bg-muted">
               {livro.capa_url ? (
                 <img
@@ -306,7 +310,7 @@ const BookGrid: React.FC<BookGridProps> = ({ livros, isLoading, onOpenBook }) =>
                   alt={livro.titulo}
                   className="object-cover w-full h-full"
                   onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/book-placeholder.png';
+                    (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
                   }}
                 />
               ) : (
@@ -342,7 +346,7 @@ const BookGrid: React.FC<BookGridProps> = ({ livros, isLoading, onOpenBook }) =>
 
 const BookSkeleton: React.FC = () => {
   return (
-    <Card className="overflow-hidden h-full">
+    <Card className="overflow-hidden h-full col-span-2">
       <div className="aspect-[3/4] bg-muted animate-pulse" />
       <CardContent className="p-4">
         <div className="h-5 w-16 bg-muted animate-pulse rounded mb-2" />

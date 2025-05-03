@@ -49,3 +49,14 @@ export interface BibliotecaFilters {
   sort?: 'title' | 'date' | 'author';
   sortDirection?: 'asc' | 'desc';
 }
+
+// New interfaces for recent content
+export interface RecentContentItem {
+  id: string;
+  title: string;
+  type: 'book' | 'video' | 'podcast' | 'article';
+  thumbnailUrl?: string;
+  path: string;
+  lastAccessed: Date;
+  progress?: number;
+}

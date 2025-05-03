@@ -4,11 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, BookOpen, Clock, BarChart } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
 import { useState, useEffect } from "react";
-import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
+import { useRecentContent } from "@/hooks/useRecentContent";
+import { RecentContentSection } from "@/components/home/RecentContentSection";
 
 interface WelcomeCardProps {
   userName?: string;
@@ -24,12 +24,9 @@ const WelcomeCard = ({
   progress = 0
 }: WelcomeCardProps) => {
   const navigate = useNavigate();
-  const [lastStudyContent, setLastStudyContent] = useState<string | null>(null);
   const [progressValue, setProgressValue] = useState(0);
-
-  useEffect(() => {
-    setLastStudyContent("/videoaulas");
-  }, []);
+  const [showRecentContent, setShowRecentContent] = useState(false);
+  const { recentContent, isLoading, hasContent, getMostRecentContentPath } = useRecentContent(6);
 
   // Animate progress bar
   useEffect(() => {
@@ -40,7 +37,13 @@ const WelcomeCard = ({
   }, [progress]);
 
   const handleContinueStudying = () => {
-    navigate(lastStudyContent || "/videoaulas");
+    if (showRecentContent) {
+      setShowRecentContent(false);
+    } else if (hasContent) {
+      setShowRecentContent(true);
+    } else {
+      navigate(getMostRecentContentPath());
+    }
   };
 
   const handleViewSchedule = () => {
@@ -92,13 +95,20 @@ const WelcomeCard = ({
               <div className="flex flex-wrap gap-3 mt-4">
                 <Button onClick={handleContinueStudying} className="gradient-button">
                   <BookOpen className="mr-2 h-4 w-4" />
-                  Continuar estudando
+                  {showRecentContent ? "Fechar" : "Continuar estudando"}
                 </Button>
                 <Button variant="outline" onClick={handleViewSchedule} className="hover-lift">
                   <Calendar className="mr-2 h-4 w-4" />
                   Ver cronograma
                 </Button>
               </div>
+              
+              {showRecentContent && (
+                <RecentContentSection 
+                  content={recentContent}
+                  isLoading={isLoading}
+                />
+              )}
             </div>
           </div>
         </CardContent>

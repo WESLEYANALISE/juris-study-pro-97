@@ -77,6 +77,9 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
     );
   }
 
+  // Debug: Log the first few articles to see their structure
+  console.log("First few articles:", visibleArticles.slice(0, 3));
+
   return (
     <motion.div 
       className="space-y-4"
@@ -85,20 +88,27 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
       animate="visible"
     >
       {visibleArticles.map(article => {
-        // Debug log to see article data
-        console.log("Rendering article:", article);
+        if (!article) {
+          console.warn("Received undefined or null article");
+          return null;
+        }
         
         // Ensure all required properties exist for display
         const articleNumber = article.numero || '';
         const articleText = article.artigo || '';
-        const articleId = article.id?.toString() || '';
-        // Fixed: Passing only two arguments as expected
-        const isFavorited = isFavorite(articleNumber, tableName);
+        const articleId = article.id ? article.id.toString() : '';
+        const technicalExplanation = article.tecnica || '';
+        const formalExplanation = article.formal || '';
+        const practicalExample = article.exemplo || '';
         
+        // Check if article has either a number or text to display
         if (!articleText && !articleNumber) {
           console.warn("Skipping article without text or number:", article);
-          return null; // Skip articles without text or number
+          return null;
         }
+        
+        // Check if the article is a favorite
+        const isFavorited = isFavorite(articleNumber, tableName);
         
         return (
           <motion.div 
@@ -109,12 +119,11 @@ export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
               articleId={articleId}
               articleNumber={articleNumber}
               articleText={articleText}
-              technicalExplanation={article.tecnica}
-              formalExplanation={article.formal}
-              practicalExample={article.exemplo}
+              technicalExplanation={technicalExplanation}
+              formalExplanation={formalExplanation}
+              practicalExample={practicalExample}
               lawName={tableName}
               isFavorite={isFavorited}
-              // Fixed: Passing only one argument with the expected object structure
               onToggleFavorite={() => toggleFavorite({
                 law_name: tableName,
                 article_id: articleId,
