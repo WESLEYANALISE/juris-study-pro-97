@@ -16,15 +16,12 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
   fontSize,
   isHeading
 }) => {
-  // Format paragraphs and bold "Parágrafo único"
+  // Format paragraphs, bold "Parágrafo único", and handle highlights
   const formattedText = articleText
     ? articleText
         .replace(/(Parágrafo único\.|PARÁGRAFO ÚNICO\.)/g, '**$1**')
         .replace(/(\n\s*\n)/g, '\n\n')
     : '';
-
-  // Log article text to debug
-  console.log("Article content:", { number: articleNumber, text: articleText, formatted: formattedText });
 
   return (
     <motion.div 
@@ -39,6 +36,7 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
         </h3>
       ) : null}
       <div 
+        id={`article-content-${articleNumber}`}
         style={{ fontSize: `${fontSize}px` }} 
         className={`
           mt-3 whitespace-pre-line px-1 py-3 ml-0 
@@ -49,7 +47,7 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
       >
         {formattedText ? (
           <ReactMarkdown 
-            className="prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4"
+            className="prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4 article-content"
           >
             {formattedText}
           </ReactMarkdown>

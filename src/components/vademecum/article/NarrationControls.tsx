@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Volume2, Pause, Loader2 } from 'lucide-react';
+import { Volume2, Loader2 } from 'lucide-react';
 import { TextToSpeechService } from '@/services/textToSpeechService';
 import { toast } from 'sonner';
 
@@ -44,7 +44,7 @@ export const NarrationControls = ({ text, isNarrating, setIsNarrating, showLabel
       variant="outline" 
       size={showLabel ? "sm" : "icon"} 
       onClick={handleNarration}
-      className={`${isNarrating ? 'bg-primary/10 text-primary border-primary/20' : ''} ${showLabel ? 'flex gap-2' : ''}`}
+      className={`${isNarrating ? 'bg-primary/10 text-primary border-primary/20' : 'bg-primary/5'} ${showLabel ? 'flex gap-2' : ''}`}
       disabled={isLoading}
     >
       {isNarrating || isLoading ? (

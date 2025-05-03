@@ -1,13 +1,15 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Info, FileText, Copy } from 'lucide-react';
+import { Info, FileText, Copy, BookOpen, Highlighter, PencilLine, Volume2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExplanationDialog } from './ExplanationDialog';
 import { PracticalExampleDialog } from './PracticalExampleDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnnotationButton } from './AnnotationButton';
 import { useAuth } from '@/hooks/use-auth';
+import { NarrationControls } from './NarrationControls';
+import { TextToSpeechService } from '@/services/textToSpeechService';
 
 interface ArticleActionsProps {
   articleText: string;
@@ -15,7 +17,6 @@ interface ArticleActionsProps {
   technicalExplanation?: string;
   formalExplanation?: string;
   practicalExample?: string;
-  handleNarration: (text: string) => Promise<void>;
   isVisible: boolean;
   lawName: string;
 }
@@ -26,7 +27,6 @@ export const ArticleActions = ({
   technicalExplanation,
   formalExplanation,
   practicalExample,
-  handleNarration,
   isVisible,
   lawName
 }: ArticleActionsProps) => {
@@ -34,7 +34,8 @@ export const ArticleActions = ({
   const [isExplanationDialogOpen, setIsExplanationDialogOpen] = useState(false);
   const [isPracticalExampleDialogOpen, setIsPracticalExampleDialogOpen] = useState(false);
   const [isCopying, setIsCopying] = useState(false);
-
+  const [isNarrating, setIsNarrating] = useState(false);
+  
   const handleCopy = async (text: string) => {
     if (!text) return;
     
@@ -69,6 +70,46 @@ export const ArticleActions = ({
       toast.error('Erro ao copiar texto. Por favor, tente novamente.');
     } finally {
       setIsCopying(false);
+    }
+  };
+
+  const handleNarration = async () => {
+    if (isNarrating) {
+      TextToSpeechService.stop();
+      setIsNarrating(false);
+      return;
+    }
+
+    try {
+      setIsNarrating(true);
+      await TextToSpeechService.speak(articleText, 'pt-BR-Wavenet-D');
+      setIsNarrating(false);
+    } catch (error) {
+      console.error("Erro na narração:", error);
+      toast.error("Não foi possível iniciar a narração");
+      setIsNarrating(false);
+    }
+  };
+
+  const handleHighlight = () => {
+    const contentElement = document.getElementById(`article-content-${articleNumber}`);
+    if (contentElement) {
+      const selection = window.getSelection();
+      if (selection && selection.toString()) {
+        try {
+          // Create a highlight span
+          const range = selection.getRangeAt(0);
+          const span = document.createElement("span");
+          span.className = "bg-yellow-200 dark:bg-yellow-800";
+          range.surroundContents(span);
+          toast.success("Texto destacado com sucesso");
+        } catch (e) {
+          toast.error("Não foi possível destacar este texto");
+          console.error("Erro ao destacar texto:", e);
+        }
+      } else {
+        toast.info("Selecione o texto que deseja destacar");
+      }
     }
   };
 
@@ -117,12 +158,33 @@ export const ArticleActions = ({
               <span>Copiar</span>
             </Button>
             
-            {/* New annotation button, only shown for logged-in users */}
+            <Button 
+              variant="outline"
+              size="sm"
+              className={`gap-2 ${isNarrating ? "bg-primary/20" : "bg-primary/5"} hover:bg-primary/10 text-primary-foreground`}
+              onClick={handleNarration}
+            >
+              <Volume2 size={16} />
+              <span>{isNarrating ? "Parar" : "Narrar"}</span>
+            </Button>
+
+            <Button 
+              variant="outline"
+              size="sm"
+              className="gap-2 bg-primary/5 hover:bg-primary/10 text-primary-foreground"
+              onClick={handleHighlight}
+            >
+              <Highlighter size={16} />
+              <span>Destacar</span>
+            </Button>
+            
+            {/* Annotation button, only shown for logged-in users */}
             {user && articleNumber && (
               <AnnotationButton 
                 lawName={lawName} 
                 articleNumber={articleNumber} 
                 articleText={articleText} 
+                showLabel={true}
               />
             )}
           </motion.div>
@@ -136,7 +198,7 @@ export const ArticleActions = ({
         articleNumber={articleNumber}
         technicalExplanation={technicalExplanation}
         formalExplanation={formalExplanation}
-        onNarration={null} // Disabling narration for explanations
+        onNarration={TextToSpeechService.speak}
       />
 
       {/* Practical Example Dialog */}
@@ -145,7 +207,7 @@ export const ArticleActions = ({
         onClose={() => setIsPracticalExampleDialogOpen(false)}
         articleNumber={articleNumber}
         example={practicalExample}
-        onNarration={null} // Disabling narration for examples
+        onNarration={TextToSpeechService.speak}
       />
     </>
   );
