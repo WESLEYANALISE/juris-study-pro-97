@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { 
   Search, Grid3X3, Clock, Puzzle, SplitSquareVertical, 
-  ListTodo, Shuffle, AlphaBracket, Grid2X2
+  ListTodo, Shuffle, BookText, Grid2X2
 } from 'lucide-react';
 import type { GameCategory } from '@/pages/JogosJuridicos';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -28,7 +28,7 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
       case 'square-split-vertical': return <SplitSquareVertical className="h-5 w-5" />;
       case 'list-todo': return <ListTodo className="h-5 w-5" />;
       case 'shuffle': return <Shuffle className="h-5 w-5" />;
-      case 'abc': return <AlphaBracket className="h-5 w-5" />;
+      case 'abc': return <BookText className="h-5 w-5" />; // Changed from AlphaBracket to BookText
       case 'memory': return <Grid2X2 className="h-5 w-5" />;
       default: return <Puzzle className="h-5 w-5" />;
     }
