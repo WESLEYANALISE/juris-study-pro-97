@@ -54,6 +54,21 @@
   }
 }
 
+/* Define custom shadow utilities */
+@layer utilities {
+  .shadow-purple {
+    --tw-shadow-color: rgb(139 92 246 / 1);
+    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+
+  .hover\:shadow-purple\/20:hover {
+    --tw-shadow-color: rgb(139 92 246 / 0.2);
+    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+}
+
 /* Perspective and 3D styles */
 .perspective-1000 {
   perspective: 1000px;
@@ -143,7 +158,7 @@
 
 /* Flashcard specific styles */
 .gradient-button {
-  @apply bg-gradient-to-r from-primary/90 to-purple-600/90 shadow-lg hover:shadow-purple/20 border border-primary/20 transition-all duration-300;
+  @apply bg-gradient-to-r from-primary/90 to-purple-600/90 shadow-lg border border-primary/20 transition-all duration-300;
 }
 
 .flashcard-dark {
