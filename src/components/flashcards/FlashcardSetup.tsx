@@ -126,14 +126,14 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
             <div className="space-y-2">
               <Label>Área do Direito</Label>
               <Select
-                value={selectedArea || ""}
-                onValueChange={(value) => setSelectedArea(value || null)}
+                value={selectedArea || "all"}
+                onValueChange={(value) => setSelectedArea(value === "all" ? null : value)}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Selecione uma área" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todas as áreas</SelectItem>
+                  <SelectItem value="all">Todas as áreas</SelectItem>
                   {areas.map((area) => (
                     <SelectItem key={area} value={area}>{area}</SelectItem>
                   ))}
