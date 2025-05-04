@@ -1,4 +1,5 @@
-import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight, AlertTriangle } from "lucide-react";
+
+import { ArrowLeft, Download, ZoomIn, ZoomOut, Maximize2, Columns, LayoutGrid, Bookmark, BookmarkPlus, Search, Menu, X, Settings, Plus, Minus, RotateCw, RotateCcw, ArrowRight, AlertTriangle, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
@@ -12,6 +13,7 @@ import "react-pdf/dist/esm/Page/AnnotationLayer.css";
 import "react-pdf/dist/esm/Page/TextLayer.css";
 import { useTouchGestures } from "@/hooks/use-touch-gestures";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
 
 // Set up the worker for PDF.js
 try {
@@ -47,10 +49,23 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   const [pdfLoadError, setPdfLoadError] = useState<Error | null>(null);
   const [pdfLoadRetries, setPdfLoadRetries] = useState(0);
   const [useAlternativeViewer, setUseAlternativeViewer] = useState(false);
+  const [isDocx, setIsDocx] = useState(false);
 
   const pdfContainerRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
+    // Detect if the URL is a .docx file
+    const isDocxFile = url.toLowerCase().endsWith('.docx') || 
+                     url.toLowerCase().includes('doc') || 
+                     url.includes('document/d/');
+    setIsDocx(isDocxFile);
+    
+    // For .docx files, immediately use the alternative viewer
+    if (isDocxFile) {
+      setUseAlternativeViewer(true);
+      setLoading(false);
+    }
+    
     const updateSize = () => {
       if (pdfContainerRef.current) {
         setContainerSize({
@@ -64,7 +79,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
     window.addEventListener('resize', updateSize);
     
     return () => window.removeEventListener('resize', updateSize);
-  }, []);
+  }, [url]);
   
   useEffect(() => {
     if (viewMode === "custom") return;
@@ -114,6 +129,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
 
   // PDF retry mechanism
   useEffect(() => {
+    if (isDocx) return; // Skip for .docx files
+    
     if (pdfLoadError && pdfLoadRetries < 3 && !useAlternativeViewer) {
       const retryTimeout = setTimeout(() => {
         setPdfLoadRetries(prev => prev + 1);
@@ -129,14 +146,27 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         variant: "destructive",
       });
     }
-  }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer]);
+  }, [pdfLoadError, pdfLoadRetries, toast, useAlternativeViewer, isDocx]);
 
   const zoomIn = () => setScale((prev) => Math.min(prev + 0.2, 3));
   const zoomOut = () => setScale((prev) => Math.max(prev - 0.2, 0.5));
   const resetZoom = () => setScale(1);
 
+  // Get Google Docs Viewer URL for both PDF and DOCX
   const getGoogleViewerUrl = () => {
     return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+  };
+
+  // Get Drive Viewer URL (for Google Drive files)
+  const getDriveViewerUrl = () => {
+    if (url.includes("drive.google.com")) {
+      // Extract the file ID from the Drive URL
+      const matches = url.match(/[-\w]{25,}/);
+      if (matches && matches[0]) {
+        return `https://drive.google.com/file/d/${matches[0]}/preview`;
+      }
+    }
+    return getGoogleViewerUrl();
   };
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
@@ -146,7 +176,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   };
 
   const changePage = (delta: number) => {
-    if (!numPages || isAnimating) return;
+    if (!numPages || isAnimating || isDocx) return;
     
     let newPage = pageNumber + delta;
     
@@ -168,7 +198,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   };
   
   const goToPage = (page: number) => {
-    if (!numPages || isAnimating) return;
+    if (!numPages || isAnimating || isDocx) return;
     
     if (page >= 1 && page <= numPages) {
       const direction = page > pageNumber ? "next" : "prev";
@@ -193,6 +223,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
   };
   
   const addBookmark = () => {
+    if (isDocx) return; // Skip for .docx files
+    
     const title = bookmarkTitle || `Página ${pageNumber}`;
     const newBookmark = { 
       id: Date.now().toString(), 
@@ -309,52 +341,109 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
       ).filter(p => p > 0 && (!numPages || p <= numPages))
     : [pageNumber];
 
-  const renderAlternativeViewer = () => {
-    return (
-      <div className="w-full h-full flex flex-col">
-        <div className="bg-card/90 backdrop-blur-sm p-4 text-center mb-4 rounded-lg border">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <AlertTriangle className="h-5 w-5 text-amber-500" />
-            <h3 className="font-medium">Visualizador alternativo</h3>
+  const renderDocumentViewer = () => {
+    // For docx files or when alternative viewer is enabled
+    if (isDocx || useAlternativeViewer) {
+      return (
+        <div className="w-full h-full flex flex-col">
+          <div className="bg-card/90 backdrop-blur-sm p-4 text-center mb-4 rounded-lg border">
+            <div className="flex items-center justify-center gap-2 mb-2">
+              {isDocx ? (
+                <FileText className="h-5 w-5 text-blue-500" />
+              ) : (
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+              )}
+              <h3 className="font-medium">
+                {isDocx ? "Documento Word" : "Visualizador alternativo"}
+              </h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">
+              {isDocx 
+                ? "Visualizando documento no formato Microsoft Word (.docx)"
+                : "Estamos usando um visualizador alternativo para este documento."
+              }
+            </p>
           </div>
-          <p className="text-sm text-muted-foreground mb-2">
-            Estamos usando um visualizador alternativo para este documento.
-          </p>
-        </div>
-        
-        <iframe
-          src={getGoogleViewerUrl()}
-          className="flex-1 w-full rounded-lg border shadow-lg bg-white"
-          title="Visualizador de PDF alternativo"
-          onLoad={() => setLoading(false)}
-        />
-        
-        <div className="flex justify-between mt-4">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setPdfLoadRetries(0);
-              setPdfLoadError(null);
-              setUseAlternativeViewer(false);
-            }}
-            className="gap-2"
-          >
-            <RotateCw className="h-4 w-4" />
-            Tentar visualizador normal
-          </Button>
           
-          <Button
-            variant="default"
-            asChild
-            className="gap-2"
-          >
-            <a href={url} download target="_blank" rel="noopener noreferrer">
-              <Download className="h-4 w-4" />
-              Baixar PDF
-            </a>
-          </Button>
+          <iframe
+            src={isDocx ? getDriveViewerUrl() : getGoogleViewerUrl()}
+            className="flex-1 w-full rounded-lg border shadow-lg bg-white"
+            title="Visualizador de documento"
+            onLoad={() => setLoading(false)}
+            sandbox="allow-scripts allow-same-origin allow-forms"
+          />
+          
+          <div className="flex justify-between mt-4">
+            {!isDocx && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPdfLoadRetries(0);
+                  setPdfLoadError(null);
+                  setUseAlternativeViewer(false);
+                }}
+                className="gap-2"
+              >
+                <RotateCw className="h-4 w-4" />
+                Tentar visualizador normal
+              </Button>
+            )}
+            
+            <Button
+              variant="default"
+              asChild
+              className={`gap-2 ${isDocx ? 'ml-auto' : ''}`}
+            >
+              <a href={url} download target="_blank" rel="noopener noreferrer">
+                <Download className="h-4 w-4" />
+                Baixar Documento
+              </a>
+            </Button>
+          </div>
         </div>
-      </div>
+      );
+    }
+
+    // For PDF files with the default viewer
+    return (
+      <Document
+        file={url}
+        onLoadSuccess={onDocumentLoadSuccess}
+        onLoadError={(error) => {
+          console.error("Error loading PDF:", error);
+          setPdfLoadError(error);
+          setError(true);
+          setLoading(false);
+        }}
+        loading={
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
+          </div>
+        }
+        className="w-full h-full flex items-center justify-center"
+        options={{ 
+          cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+          isEvalSupported: false,
+          worker: pdfLoadRetries > 0 ? null : undefined,
+          // Improve rendering quality
+          maxImageSize: 10000,
+          disableRange: false,
+          disableStream: false,
+          disableAutoFetch: false
+        }}
+      >
+        <Page
+          pageNumber={pageNumber}
+          scale={isMobile ? touchScale : scale}
+          rotate={rotation}
+          renderTextLayer={false}
+          renderAnnotationLayer={true}
+          className="shadow-lg mx-auto"
+          width={isMobile ? window.innerWidth : undefined}
+          canvasBackground="white"
+          renderMode="canvas"
+        />
+      </Document>
     );
   };
 
@@ -380,7 +469,7 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         </div>
         
         <div className="flex items-center gap-2">
-          {!isMobile && (
+          {!isDocx && !isMobile && (
             <>
               <span className="text-sm text-muted-foreground">
                 {pageNumber} / {numPages || '?'}
@@ -410,55 +499,19 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
       
       {/* Main content area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* PDF Document with improved quality settings */}
+        {/* PDF or DOCX Document with improved quality settings */}
         <div className="flex-1 overflow-auto flex items-center justify-center bg-stone-100 dark:bg-stone-900">
-          {useAlternativeViewer ? (
-            renderAlternativeViewer()
-          ) : (
-            <Document
-              file={url}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={(error) => {
-                console.error("Error loading PDF:", error);
-                setPdfLoadError(error);
-                setError(true);
-                setLoading(false);
-              }}
-              loading={
-                <div className="flex items-center justify-center h-full">
-                  <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-                </div>
-              }
-              className="w-full h-full flex items-center justify-center"
-              options={{ 
-                cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
-                isEvalSupported: false,
-                worker: pdfLoadRetries > 0 ? null : undefined,
-                // Improve rendering quality
-                maxImageSize: 10000,
-                disableRange: false,
-                disableStream: false,
-                disableAutoFetch: false
-              }}
-            >
-              <Page
-                pageNumber={pageNumber}
-                scale={isMobile ? touchScale : scale}
-                rotate={rotation}
-                renderTextLayer={false}
-                renderAnnotationLayer={true}
-                className="shadow-lg mx-auto"
-                width={isMobile ? window.innerWidth : undefined}
-                canvasBackground="white"
-                renderMode="canvas"
-              />
-            </Document>
-          )}
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-full">
+              <LoadingSpinner size="lg" />
+              <p className="mt-4 text-muted-foreground">Carregando documento...</p>
+            </div>
+          ) : renderDocumentViewer()}
         </div>
       </div>
       
-      {/* Mobile bottom navigation */}
-      {isMobile && (
+      {/* Mobile bottom navigation - only shown for PDF files */}
+      {isMobile && !isDocx && !useAlternativeViewer && (
         <div className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t p-4">
           <div className="flex items-center justify-between gap-4 max-w-lg mx-auto">
             <Button
@@ -492,8 +545,8 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
         </div>
       )}
 
-      {/* Mobile FAB menu */}
-      {isMobile && (
+      {/* Mobile FAB menu - only shown for PDF files */}
+      {isMobile && !isDocx && !useAlternativeViewer && (
         <div className="fixed bottom-24 right-4">
           <Sheet>
             <SheetTrigger asChild>

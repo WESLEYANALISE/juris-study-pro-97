@@ -4,6 +4,7 @@ import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Eye, DownloadCloud } from "lucide-react";
 import { motion } from "framer-motion";
+import { memo } from "react";
 
 interface PeticaoCardProps {
   peticao: {
@@ -18,7 +19,11 @@ interface PeticaoCardProps {
   onView: (url: string) => void;
 }
 
-export function PeticaoCard({ peticao, onView }: PeticaoCardProps) {
+export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: PeticaoCardProps) {
+  const isDocx = peticao.link.toLowerCase().endsWith('.docx') || 
+                peticao.link.toLowerCase().includes('doc') || 
+                peticao.link.includes('document/d/');
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -36,6 +41,11 @@ export function PeticaoCard({ peticao, onView }: PeticaoCardProps) {
             {peticao.sub_area && (
               <Badge variant="secondary" className="w-fit">
                 {peticao.sub_area}
+              </Badge>
+            )}
+            {isDocx && (
+              <Badge variant="outline" className="w-fit bg-blue-900/20 text-xs">
+                DOCX
               </Badge>
             )}
           </div>
@@ -83,4 +93,4 @@ export function PeticaoCard({ peticao, onView }: PeticaoCardProps) {
       </Card>
     </motion.div>
   );
-}
+});
