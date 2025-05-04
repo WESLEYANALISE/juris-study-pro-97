@@ -36,23 +36,23 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
   
   const getDifficultyColor = (nivel: string) => {
     switch (nivel) {
-      case 'iniciante': return 'text-green-600';
-      case 'intermediário': return 'text-amber-600';
-      case 'avançado': return 'text-red-600';
-      default: return 'text-blue-600';
+      case 'iniciante': return 'text-green-500';
+      case 'intermediário': return 'text-amber-500';
+      case 'avançado': return 'text-red-500';
+      default: return 'text-primary';
     }
   };
   
   const getBackgroundStyle = (variant: string) => {
     switch (variant) {
-      case 'scales': return 'bg-gradient-to-br from-green-50 to-green-100';
-      case 'courthouse': return 'bg-gradient-to-br from-amber-50 to-amber-100';
-      case 'constitution': return 'bg-gradient-to-br from-blue-50 to-blue-100';
-      case 'books': return 'bg-gradient-to-br from-indigo-50 to-indigo-100';
-      case 'gavel': return 'bg-gradient-to-br from-rose-50 to-rose-100';
-      case 'landmark': return 'bg-gradient-to-br from-purple-50 to-purple-100';
-      case 'scroll': return 'bg-gradient-to-br from-orange-50 to-orange-100';
-      default: return 'bg-gradient-to-br from-slate-50 to-slate-100';
+      case 'scales': return 'bg-gradient-to-br from-green-900/20 to-green-700/10';
+      case 'courthouse': return 'bg-gradient-to-br from-amber-900/20 to-amber-700/10';
+      case 'constitution': return 'bg-gradient-to-br from-blue-900/20 to-blue-700/10';
+      case 'books': return 'bg-gradient-to-br from-indigo-900/20 to-indigo-700/10';
+      case 'gavel': return 'bg-gradient-to-br from-rose-900/20 to-rose-700/10';
+      case 'landmark': return 'bg-gradient-to-br from-purple-900/20 to-purple-700/10';
+      case 'scroll': return 'bg-gradient-to-br from-orange-900/20 to-orange-700/10';
+      default: return 'bg-gradient-to-br from-slate-900/20 to-slate-700/10';
     }
   };
   
@@ -66,30 +66,31 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
   
   if (games.length === 0) {
     return (
-      <div className="text-center p-12 border border-dashed rounded-lg">
+      <div className="text-center p-12 border border-white/10 rounded-lg bg-card/30">
         <p className="text-muted-foreground">Nenhum jogo encontrado nesta categoria.</p>
       </div>
     );
   }
   
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {games.map((game, index) => (
         <motion.div
           key={game.id}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
+          whileHover={{ y: -5, scale: 1.02 }}
         >
-          <Card className={`h-full flex flex-col hover:shadow-md transition-all duration-200 ${getBackgroundStyle(game.background_variant)}`}>
+          <Card className={`h-full flex flex-col border border-white/10 shadow-card hover:shadow-glow transition-all duration-300 ${getBackgroundStyle(game.background_variant)}`}>
             <CardHeader className="pb-2">
               <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-md bg-white/80 text-primary">
+                <span className="p-2 rounded-lg bg-glass text-primary">
                   {getIconComponent(game.icone)}
                 </span>
                 <CardTitle className="text-lg">{game.nome}</CardTitle>
               </div>
-              <CardDescription className="line-clamp-2 text-gray-700">
+              <CardDescription className="line-clamp-2 text-gray-300">
                 {game.descricao}
               </CardDescription>
             </CardHeader>
@@ -103,6 +104,7 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
             <CardFooter>
               <Button 
                 className="w-full" 
+                variant="gradient"
                 onClick={() => navigate(`/jogos/${game.id}`)}
               >
                 Jogar Agora

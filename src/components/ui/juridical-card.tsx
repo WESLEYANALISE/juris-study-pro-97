@@ -13,7 +13,7 @@ interface JuridicalCardProps {
   children?: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
-  onClick?: () => void; // Added onClick prop
+  onClick?: () => void;
 }
 
 export function JuridicalCard({
@@ -24,7 +24,7 @@ export function JuridicalCard({
   children,
   footer,
   className,
-  onClick // Destructure onClick prop
+  onClick
 }: JuridicalCardProps) {
   const iconMap = {
     scales: Scale,
@@ -38,8 +38,8 @@ export function JuridicalCard({
   
   const variantClasses = {
     default: "border-border/50",
-    primary: "border-primary/20 gradient-purple",
-    secondary: "border-secondary/20 gradient-card"
+    primary: "border-primary/20 bg-gradient-to-br from-purple-900/30 to-purple-800/20",
+    secondary: "border-secondary/20 bg-gradient-to-br from-blue-900/30 to-purple-800/20"
   };
   
   return (
@@ -47,7 +47,7 @@ export function JuridicalCard({
       whileHover={{ y: -3, boxShadow: "0 10px 30px -10px rgba(0,0,0,0.2)" }}
       transition={{ duration: 0.2 }}
       className={cn("group", className)}
-      onClick={onClick} // Add onClick handler
+      onClick={onClick}
     >
       <Card className={cn("transition-all duration-300", variantClasses[variant])}>
         <CardHeader className="pb-2">

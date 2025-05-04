@@ -18,6 +18,7 @@ const buttonVariants = cva(
         success: "bg-green-600 text-white shadow-subtle hover:shadow-elegant hover:bg-green-700",
         warning: "bg-yellow-500 text-white shadow-subtle hover:shadow-elegant hover:bg-yellow-600",
         purple: "bg-[#9b87f5] text-white shadow-subtle hover:shadow-elegant hover:bg-[#7E69AB]",
+        gradient: "bg-gradient-purple-magenta text-white shadow-subtle hover:shadow-elegant hover:saturate-150",
       },
       size: {
         default: "h-10 px-4 py-2",

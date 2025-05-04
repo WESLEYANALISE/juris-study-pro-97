@@ -18,6 +18,7 @@ import { useLocation } from "react-router-dom";
 import { type ProfileType } from "@/components/WelcomeModal";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
 
 interface AppSidebarProps {
   userProfile: ProfileType;
@@ -114,26 +115,31 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
   const { title, description, icon: ProfileIcon } = profileConfig[userProfile];
 
   return (
-    <Sidebar>
+    <Sidebar className="gradient-sidebar">
       <SidebarHeader className="flex items-center">
         <div className="flex items-center gap-2 ml-2">
           <Scale className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">Direito 360</span>
+          <span className="font-bold text-xl bg-gradient-to-r from-primary via-purple-500 to-purple-600 bg-clip-text text-transparent">Direito 360</span>
         </div>
         <SidebarTrigger className="ml-auto" />
       </SidebarHeader>
       
       <SidebarContent>
         <SidebarGroup>
-          <div className="mb-4 px-3 py-2">
-            <div className="bg-primary/10 text-primary rounded-md p-3 transition-all hover:bg-primary/15">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="mb-4 px-3 py-2"
+          >
+            <div className="bg-glass rounded-lg p-3 transition-all hover:shadow-glow hover:bg-white/10">
               <div className="flex items-center mb-2">
-                <ProfileIcon className="h-5 w-5 mr-2" />
+                <ProfileIcon className="h-5 w-5 mr-2 text-primary" />
                 <h3 className="font-medium">{title}</h3>
               </div>
               <p className="text-xs text-muted-foreground">{description}</p>
             </div>
-          </div>
+          </motion.div>
         </SidebarGroup>
         
         {filteredMenuCategories.map((category, index) => (
@@ -141,37 +147,44 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
             <SidebarGroupLabel>{category.label}</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {category.items.map((item) => {
+                {category.items.map((item, itemIndex) => {
                   const isActive = location.pathname === item.url || 
                                   (item.url !== "/" && location.pathname.startsWith(item.url));
                   return (
-                    <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton asChild>
-                        <a 
-                          href={item.url} 
-                          className={cn(
-                            "flex items-center gap-3 px-3 py-2 rounded-md min-h-[44px] transition-colors",
-                            isActive 
-                              ? "bg-primary/20 text-primary font-medium" 
-                              : "hover:bg-accent/50 hover:text-accent-foreground"
-                          )}
-                          aria-current={isActive ? "page" : undefined}
-                        >
-                          <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
-                          <span>{item.title}</span>
-                          {item.isNew && (
-                            <Badge variant="secondary" className="ml-auto text-[10px] py-0">
-                              NOVO
-                            </Badge>
-                          )}
-                          {'isPremium' in item && item.isPremium && (
-                            <Badge variant="outline" className="ml-auto text-[10px] py-0 bg-amber-500/20 text-amber-500 border-amber-500/30">
-                              PRO
-                            </Badge>
-                          )}
-                        </a>
-                      </SidebarMenuButton>
-                    </SidebarMenuItem>
+                    <motion.div
+                      key={item.title}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3, delay: itemIndex * 0.05 + index * 0.1 }}
+                    >
+                      <SidebarMenuItem>
+                        <SidebarMenuButton asChild>
+                          <a 
+                            href={item.url} 
+                            className={cn(
+                              "flex items-center gap-3 px-3 py-2 rounded-md min-h-[44px] transition-all duration-300",
+                              isActive 
+                                ? "bg-primary/20 text-primary font-medium shadow-glow" 
+                                : "hover:bg-white/5 hover:shadow-glow hover:text-primary"
+                            )}
+                            aria-current={isActive ? "page" : undefined}
+                          >
+                            <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "")} />
+                            <span>{item.title}</span>
+                            {item.isNew && (
+                              <Badge variant="secondary" className="ml-auto text-[10px] py-0 bg-purple-500/20 text-purple-300 border-purple-500/30">
+                                NOVO
+                              </Badge>
+                            )}
+                            {'isPremium' in item && item.isPremium && (
+                              <Badge variant="outline" className="ml-auto text-[10px] py-0 bg-amber-500/20 text-amber-500 border-amber-500/30">
+                                PRO
+                              </Badge>
+                            )}
+                          </a>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    </motion.div>
                   );
                 })}
               </SidebarMenu>
@@ -181,7 +194,7 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       </SidebarContent>
       
       <SidebarFooter>
-        <div className="flex items-center justify-between px-4">
+        <div className="flex items-center justify-between px-4 py-2">
           <span className="text-xs text-muted-foreground">v1.2.0</span>
           <ThemeToggle />
         </div>

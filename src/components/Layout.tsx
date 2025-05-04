@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -11,9 +12,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 import MobileNavigation from "@/components/MobileNavigation";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { JuridicalBackground } from "@/components/ui/juridical-background";
+import { motion } from "framer-motion";
+
 interface LayoutProps {
   children: React.ReactNode;
 }
+
 interface UserDataType {
   displayName: string | null;
   onboardingCompleted: boolean;
@@ -23,15 +28,10 @@ interface UserDataType {
     time: string | null;
   };
 }
-const Layout = ({
-  children
-}: LayoutProps) => {
+
+const Layout = ({ children }: LayoutProps) => {
   const isMobile = useIsMobile();
-  const {
-    user,
-    profile,
-    isLoading: authLoading
-  } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuth();
   const location = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -111,23 +111,61 @@ const Layout = ({
     }
   };
 
+  // Determine background variant based on current route
+  const getBackgroundVariant = () => {
+    const path = location.pathname;
+    
+    if (path.includes('/vademecum')) return 'books';
+    if (path.includes('/jogos')) return 'scales';
+    if (path.includes('/jurisprudencia')) return 'gavel';
+    if (path.includes('/constituicao')) return 'constitution';
+    return 'default';
+  };
+
   // Show a loading screen while auth and user data are being fetched
   if (authLoading || isLoading) {
-    return <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
-      </div>;
+    return (
+      <div className="flex items-center justify-center h-screen bg-background">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          className="text-center"
+        >
+          <LoadingSpinner className="h-12 w-12 text-primary" />
+          <p className="mt-4 text-muted-foreground">Carregando aplicativo...</p>
+        </motion.div>
+      </div>
+    );
   }
-  return <SidebarProvider defaultOpen={!isMobile}>
+
+  return (
+    <SidebarProvider defaultOpen={!isMobile}>
       <div className="min-h-screen flex flex-col w-full">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />
           <main className="flex-1 overflow-auto pb-20 md:pb-6 w-full">
-            <div className="container mx-auto p-4 md:p-6 py-[19px] px-px">
-              {/* Mostrar WelcomeCard apenas para usuários logados */}
-              {user && location.pathname === '/' && <WelcomeCard userName={userData.displayName || user.email?.split('@')[0] || 'Usuário'} progress={userData.progress} nextTaskTitle={userData.nextTask.title} nextTaskTime={userData.nextTask.time} />}
-              {children}
-            </div>
+            <JuridicalBackground variant={getBackgroundVariant()}>
+              <div className="container mx-auto p-4 md:p-6 py-[19px] px-px">
+                {/* Mostrar WelcomeCard apenas para usuários logados */}
+                {user && location.pathname === '/' && (
+                  <WelcomeCard 
+                    userName={userData.displayName || user.email?.split('@')[0] || 'Usuário'} 
+                    progress={userData.progress} 
+                    nextTaskTitle={userData.nextTask.title} 
+                    nextTaskTime={userData.nextTask.time} 
+                  />
+                )}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {children}
+                </motion.div>
+              </div>
+            </JuridicalBackground>
           </main>
         </div>
         <MobileNavigation />
@@ -136,6 +174,8 @@ const Layout = ({
         {/* Modal de onboarding para novos usuários */}
         <OnboardingModal open={showOnboarding} onOpenChange={setShowOnboarding} onComplete={handleOnboardingComplete} />
       </div>
-    </SidebarProvider>;
+    </SidebarProvider>
+  );
 };
+
 export default Layout;

@@ -52,8 +52,9 @@ export default function MobileNavigation() {
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 50, opacity: 0 }}
+        transition={{ duration: 0.3 }}
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur-sm p-2 md:hidden shadow-xl"
+          "fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-glass-darker backdrop-blur-lg p-2 md:hidden shadow-lg border border-white/10"
         )}
       >
         <ul className="flex justify-around">
@@ -77,12 +78,12 @@ export default function MobileNavigation() {
                     whileTap={{ scale: 0.9 }}
                     className={cn(
                       "flex items-center justify-center w-10 h-10 rounded-full mb-1",
-                      isActive && "bg-primary/10 shadow-inner"
+                      isActive && "bg-primary/20 shadow-glow"
                     )}
                   >
                     <item.icon className={cn(
                       "h-5 w-5 transition-transform",
-                      isActive && "animate-pulse-once" // Custom animation for active icon
+                      isActive && "text-primary animate-pulse-once" // Custom animation for active icon
                     )} />
                   </motion.div>
                   <span className={cn(

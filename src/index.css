@@ -67,6 +67,57 @@
     --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
     box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
   }
+
+  /* Adding new elegant shadow utilities */
+  .shadow-card {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 15px 2px rgba(139, 92, 246, 0.15);
+  }
+  
+  .hover\:shadow-glow:hover {
+    box-shadow: 0 0 20px 5px rgba(139, 92, 246, 0.25);
+  }
+
+  /* Background texture utilities */
+  .bg-texture-dots {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .bg-texture-grid {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  /* Glassmorphism effects */
+  .bg-glass {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+
+  .bg-glass-darker {
+    @apply bg-black/20 backdrop-blur-md border border-white/5;
+  }
+
+  /* Gradient backgrounds */
+  .bg-gradient-purple {
+    @apply bg-gradient-to-br from-purple-800/80 to-purple-600/80;
+  }
+
+  .bg-gradient-blue-purple {
+    @apply bg-gradient-to-br from-blue-700/80 to-purple-600/80;
+  }
+
+  .bg-gradient-purple-magenta {
+    @apply bg-gradient-to-br from-purple-700/80 to-pink-600/80;
+  }
 }
 
 /* Perspective and 3D styles */
@@ -218,4 +269,14 @@
 
 .flashcard-back {
   transform: rotateY(180deg);
+}
+
+/* Sidebar styling */
+.gradient-sidebar {
+  @apply bg-gradient-to-b from-background to-secondary/50 border-r border-white/5;
+}
+
+/* Mobile navigation styling */
+.mobile-bottom-controls {
+  @apply fixed bottom-0 left-0 right-0 z-50 grid grid-cols-4 bg-glass-darker border-t border-white/5 px-2 py-1;
 }

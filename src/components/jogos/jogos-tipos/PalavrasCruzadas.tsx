@@ -154,7 +154,9 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
       setPalavrasEncontradas(novasPalavrasEncontradas);
       
       if (novasPalavrasEncontradas.length === jogo.palavras.length) {
-        toast.success('Parabéns! Você completou o jogo de palavras cruzadas!');
+        toast.success('Parabéns! Você completou o jogo de palavras cruzadas!', {
+          duration: 5000
+        });
       }
     }
   };
@@ -168,7 +170,7 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-[400px]">
-        <LoadingSpinner />
+        <LoadingSpinner className="text-primary" />
       </div>
     );
   }
@@ -183,102 +185,116 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
 
   return (
     <div className="p-4 max-w-3xl mx-auto">
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Grid3X3 className="h-5 w-5 text-primary" />
-            {jogo.titulo}
-          </CardTitle>
-          <p className="text-muted-foreground">{jogo.descricao}</p>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-lg font-medium">Progresso:</p>
-              <p className="text-sm text-muted-foreground">
-                {palavrasEncontradas.length}/{jogo.palavras.length} palavras
-              </p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <Card className="mb-6 bg-glass-darker border-white/10 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gradient bg-gradient-to-r from-primary to-purple-400">
+              <Grid3X3 className="h-5 w-5 text-primary" />
+              {jogo.titulo}
+            </CardTitle>
+            <p className="text-muted-foreground">{jogo.descricao}</p>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <p className="text-lg font-medium text-primary">Progresso:</p>
+                <p className="text-sm text-muted-foreground">
+                  {palavrasEncontradas.length}/{jogo.palavras.length} palavras
+                </p>
+              </div>
+              <div className="h-2 bg-black/30 rounded-full overflow-hidden border border-white/5">
+                <div 
+                  className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-500"
+                  style={{ width: `${(palavrasEncontradas.length / jogo.palavras.length) * 100}%` }}
+                ></div>
+              </div>
             </div>
-            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+
+            {/* Palavras cruzadas grid */}
+            <div className="border border-white/10 rounded-lg p-4 bg-black/20 mb-6 overflow-x-auto">
               <div 
-                className="h-full bg-primary rounded-full transition-all duration-300"
-                style={{ width: `${(palavrasEncontradas.length / jogo.palavras.length) * 100}%` }}
-              ></div>
-            </div>
-          </div>
-
-          {/* Palavras cruzadas grid */}
-          <div className="border rounded-lg p-4 bg-slate-50 mb-6 overflow-x-auto">
-            <div 
-              className="grid gap-1" 
-              style={{ 
-                gridTemplateColumns: `repeat(${jogo.grade_tamanho.largura}, minmax(30px, 1fr))`,
-                gridTemplateRows: `repeat(${jogo.grade_tamanho.altura}, 30px)`
-              }}
-            >
-              {Array.from({ length: jogo.grade_tamanho.altura }).map((_, y) => (
-                Array.from({ length: jogo.grade_tamanho.largura }).map((_, x) => {
-                  const key = `${x},${y}`;
-                  const temCelula = entradas.hasOwnProperty(key);
-                  
-                  return (
-                    <div key={key} className={`${temCelula ? 'border bg-white' : ''} flex items-center justify-center`}>
-                      {temCelula && (
-                        <input
-                          type="text"
-                          maxLength={1}
-                          value={entradas[key]}
-                          onChange={(e) => handleInputChange(x, y, e.target.value)}
-                          className="w-full h-full text-center uppercase font-medium"
-                        />
-                      )}
-                    </div>
-                  );
-                })
-              ))}
-            </div>
-          </div>
-
-          {/* Palavras e dicas */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div>
-              <h3 className="font-medium mb-2">Palavras:</h3>
-              <div className="space-y-2">
-                {jogo.palavras.map(({ palavra }) => (
-                  <div key={palavra} className="flex items-center gap-2">
-                    <Badge 
-                      variant={palavrasEncontradas.includes(palavra) ? "default" : "outline"}
-                      className={palavrasEncontradas.includes(palavra) ? "bg-green-500 hover:bg-green-600" : ""}
-                    >
-                      {palavrasEncontradas.includes(palavra) ? (
-                        <Check className="mr-1 h-3 w-3" />
-                      ) : (
-                        <span className="mr-1">•</span>
-                      )}
-                      {palavra}
-                    </Badge>
-                    <Button 
-                      variant="ghost" 
-                      size="icon" 
-                      className="h-6 w-6"
-                      onClick={() => handleShowDica(palavra)}
-                    >
-                      <Info className="h-4 w-4" />
-                    </Button>
-                  </div>
+                className="grid gap-1" 
+                style={{ 
+                  gridTemplateColumns: `repeat(${jogo.grade_tamanho.largura}, minmax(30px, 1fr))`,
+                  gridTemplateRows: `repeat(${jogo.grade_tamanho.altura}, 30px)`
+                }}
+              >
+                {Array.from({ length: jogo.grade_tamanho.altura }).map((_, y) => (
+                  Array.from({ length: jogo.grade_tamanho.largura }).map((_, x) => {
+                    const key = `${x},${y}`;
+                    const temCelula = entradas.hasOwnProperty(key);
+                    
+                    return (
+                      <div key={key} className={`${temCelula ? 'border border-white/20 bg-glass' : ''} flex items-center justify-center`}>
+                        {temCelula && (
+                          <input
+                            type="text"
+                            maxLength={1}
+                            value={entradas[key]}
+                            onChange={(e) => handleInputChange(x, y, e.target.value)}
+                            className="w-full h-full text-center uppercase font-medium bg-transparent text-primary focus:outline-none focus:ring-1 focus:ring-primary/50"
+                          />
+                        )}
+                      </div>
+                    );
+                  })
                 ))}
               </div>
             </div>
-            
-            <div>
-              <h3 className="font-medium mb-2">Dica:</h3>
-              <div className="border rounded p-3 bg-slate-50 min-h-[100px]">
-                {dicaAtual ? dicaAtual : "Clique no ícone de informação ao lado de uma palavra para ver sua dica."}
+
+            {/* Palavras e dicas */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="bg-glass rounded-lg p-4 border border-white/10">
+                <h3 className="font-medium mb-4 text-primary">Palavras:</h3>
+                <div className="grid grid-cols-2 gap-2">
+                  {jogo.palavras.map(({ palavra }) => (
+                    <motion.div 
+                      key={palavra} 
+                      className="flex items-center gap-2"
+                      whileHover={{ scale: 1.02 }}
+                    >
+                      <Badge 
+                        variant={palavrasEncontradas.includes(palavra) ? "default" : "outline"}
+                        className={palavrasEncontradas.includes(palavra) ? "bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600" : "border-white/20"}
+                      >
+                        {palavrasEncontradas.includes(palavra) ? (
+                          <Check className="mr-1 h-3 w-3" />
+                        ) : (
+                          <span className="mr-1">•</span>
+                        )}
+                        {palavra}
+                      </Badge>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 rounded-full hover:bg-white/10"
+                        onClick={() => handleShowDica(palavra)}
+                      >
+                        <Info className="h-3 w-3 text-primary" />
+                      </Button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="bg-glass rounded-lg p-4 border border-white/10">
+                <h3 className="font-medium mb-2 text-primary">Dica:</h3>
+                <div className="min-h-[100px] bg-black/20 p-4 rounded-lg border border-white/5">
+                  {dicaAtual ? dicaAtual : (
+                    <span className="text-muted-foreground">
+                      Clique no ícone <Info className="h-3 w-3 inline" /> ao lado de uma palavra para ver sua dica.
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 };
