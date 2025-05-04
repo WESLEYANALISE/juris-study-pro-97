@@ -3,7 +3,7 @@ import { useState } from "react";
 import { FlashcardStudySession } from "./FlashcardStudySession";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Award, BookOpen, CheckCircle2, Confetti } from "lucide-react";
+import { Award, BookOpen, CheckCircle2, PartyPopper } from "lucide-react";
 import { motion } from "framer-motion";
 
 type FlashCard = {
@@ -47,7 +47,7 @@ export function FlashcardSession({ cards, showAnswers, studyMode, autoSpeed = 35
                 transition={{ duration: 0.7, delay: 0.2 }}
                 className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400"
               >
-                <Confetti className="h-8 w-8" />
+                <PartyPopper className="h-8 w-8" />
               </motion.div>
             </div>
             <CardTitle className="text-2xl text-center">Sessão Concluída!</CardTitle>

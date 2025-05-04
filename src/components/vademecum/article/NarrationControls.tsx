@@ -40,7 +40,7 @@ export const NarrationControls = ({
       setIsNarrating(true);
       
       // Use the updated service with Google TTS
-      await TextToSpeechService.speak(text, 'pt-BR-Wavenet-E', rate);
+      await TextToSpeechService.speak(text, { rate });
       
       setIsNarrating(false);
       setIsLoading(false);

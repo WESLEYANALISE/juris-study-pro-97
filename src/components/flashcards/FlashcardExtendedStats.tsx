@@ -103,21 +103,37 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
       }
       
       // Get area progress
-      const { data: areaStats } = await supabase
+      const { data: userCards } = await supabase
         .from('user_flashcards')
-        .select('flash_cards_improved!inner(area)')
-        .eq('user_id', userId);
+        .select('flashcard_id, conhecimento');
+      
+      // Now fetch the cards with their area information
+      const { data: flashcardAreas } = await supabase
+        .from('flash_cards_improved')
+        .select('id, area');
         
+      // Create a map of flashcard IDs to their areas
+      const flashcardAreasMap: Record<string, string> = {};
+      if (flashcardAreas) {
+        flashcardAreas.forEach(card => {
+          flashcardAreasMap[String(card.id)] = card.area;
+        });
+      }
+      
+      // Now create the area progress using the map
       const areaProgress: Record<string, {total: number, mastered: number}> = {};
       
-      if (areaStats) {
-        areaStats.forEach(item => {
-          const area = item.flash_cards_improved.area;
+      if (userCards) {
+        userCards.forEach(card => {
+          const area = flashcardAreasMap[card.flashcard_id];
+          if (!area) return; // Skip if area not found
+          
           if (!areaProgress[area]) {
             areaProgress[area] = {total: 0, mastered: 0};
           }
+          
           areaProgress[area].total++;
-          if (item.conhecimento === 5) {
+          if (card.conhecimento === 5) {
             areaProgress[area].mastered++;
           }
         });
