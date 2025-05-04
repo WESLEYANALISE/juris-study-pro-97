@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageTransition } from '@/components/PageTransition';
 import { JogosLeaderboard } from '@/components/jogos/JogosLeaderboard';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+
+// Importação dos jogos de palavras
+import { CacaPalavras } from '@/components/jogos/jogos-tipos/CacaPalavras';
+import { PalavrasCruzadas } from '@/components/jogos/jogos-tipos/PalavrasCruzadas';
+import { JogoForca } from '@/components/jogos/jogos-tipos/JogoForca';
+
+// Importação dos jogos existentes (futuramente poderemos remover)
 import { QuizJogo } from '@/components/jogos/jogos-tipos/QuizJogo';
 import { SimulacaoJulgamento } from '@/components/jogos/jogos-tipos/SimulacaoJulgamento';
 import { EscritorioVirtual } from '@/components/jogos/jogos-tipos/EscritorioVirtual';
@@ -64,6 +72,41 @@ const JogoDetalhes = () => {
     if (!gameDetails) return null;
     
     switch (gameDetails.nome) {
+      case 'Caça Palavras':
+        return <CacaPalavras gameId={gameDetails.id} />;
+      case 'Palavras Cruzadas':
+        return <PalavrasCruzadas gameId={gameDetails.id} />;
+      case 'Jogo da Forca':
+        return <JogoForca gameId={gameDetails.id} />;
+      case 'Enigmas Jurídicos':
+        // Aqui adicionaríamos o componente de enigmas quando implementado
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[300px] text-center px-4">
+            <h3 className="text-2xl font-bold mb-4">Jogo em Desenvolvimento</h3>
+            <p className="text-muted-foreground mb-6">
+              Este jogo está atualmente em desenvolvimento e será disponibilizado em breve.
+              Aguarde por novas atualizações na plataforma!
+            </p>
+            <Button onClick={() => navigate('/jogos')}>Voltar para Jogos</Button>
+          </div>
+        );
+      case 'Pares Jurídicos':
+      case 'Preencha os Espaços':
+      case 'Desembaralhe Palavras':
+      case 'Alfabeto Jurídico':
+      case 'Memória Jurídica':
+        // Componentes a serem implementados para os outros jogos de palavras
+        return (
+          <div className="flex flex-col items-center justify-center min-h-[300px] text-center px-4">
+            <h3 className="text-2xl font-bold mb-4">Jogo em Desenvolvimento</h3>
+            <p className="text-muted-foreground mb-6">
+              Este jogo está atualmente em desenvolvimento e será disponibilizado em breve.
+              Aguarde por novas atualizações na plataforma!
+            </p>
+            <Button onClick={() => navigate('/jogos')}>Voltar para Jogos</Button>
+          </div>
+        );
+      // Mantive os casos dos jogos antigos para compatibilidade, podemos removê-los quando estiver tudo migrado
       case 'Quiz de Direito':
         return <QuizJogo gameId={gameDetails.id} />;
       case 'Simulações de Julgamentos':

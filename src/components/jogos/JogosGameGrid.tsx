@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { 
-  Book, Gavel, User, BookOpen, Users, MessageSquare, 
-  Key, Briefcase, GitBranch, FileText 
+  Search, Grid3X3, AlarmClock, Puzzle, Split, 
+  ListTodo, Shuffle, AlphabetLatin, Grid2X2
 } from 'lucide-react';
 import type { GameCategory } from '@/pages/JogosJuridicos';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
@@ -21,17 +21,16 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
   
   const getIconComponent = (iconName: string) => {
     switch (iconName) {
-      case 'book': return <Book className="h-5 w-5" />;
-      case 'gavel': return <Gavel className="h-5 w-5" />;
-      case 'user': return <User className="h-5 w-5" />;
-      case 'book-open': return <BookOpen className="h-5 w-5" />;
-      case 'users': return <Users className="h-5 w-5" />;
-      case 'message-square': return <MessageSquare className="h-5 w-5" />;
-      case 'key': return <Key className="h-5 w-5" />;
-      case 'briefcase': return <Briefcase className="h-5 w-5" />;
-      case 'git-branch': return <GitBranch className="h-5 w-5" />;
-      case 'file-text': return <FileText className="h-5 w-5" />;
-      default: return <Book className="h-5 w-5" />;
+      case 'search': return <Search className="h-5 w-5" />;
+      case 'grid-3x3': return <Grid3X3 className="h-5 w-5" />;
+      case 'hang-up': return <AlarmClock className="h-5 w-5" />;
+      case 'puzzle': return <Puzzle className="h-5 w-5" />;
+      case 'square-split-vertical': return <Split className="h-5 w-5" />;
+      case 'list-todo': return <ListTodo className="h-5 w-5" />;
+      case 'shuffle': return <Shuffle className="h-5 w-5" />;
+      case 'abc': return <AlphabetLatin className="h-5 w-5" />;
+      case 'memory': return <Grid2X2 className="h-5 w-5" />;
+      default: return <Puzzle className="h-5 w-5" />;
     }
   };
   
@@ -46,13 +45,13 @@ export const JogosGameGrid = ({ games, isLoading }: JogosGameGridProps) => {
   
   const getBackgroundStyle = (variant: string) => {
     switch (variant) {
-      case 'scales': return 'bg-gradient-to-br from-blue-50 to-blue-100';
+      case 'scales': return 'bg-gradient-to-br from-green-50 to-green-100';
       case 'courthouse': return 'bg-gradient-to-br from-amber-50 to-amber-100';
-      case 'constitution': return 'bg-gradient-to-br from-emerald-50 to-emerald-100';
+      case 'constitution': return 'bg-gradient-to-br from-blue-50 to-blue-100';
       case 'books': return 'bg-gradient-to-br from-indigo-50 to-indigo-100';
       case 'gavel': return 'bg-gradient-to-br from-rose-50 to-rose-100';
-      case 'landmark': return 'bg-gradient-to-br from-cyan-50 to-cyan-100';
-      case 'scroll': return 'bg-gradient-to-br from-violet-50 to-violet-100';
+      case 'landmark': return 'bg-gradient-to-br from-purple-50 to-purple-100';
+      case 'scroll': return 'bg-gradient-to-br from-orange-50 to-orange-100';
       default: return 'bg-gradient-to-br from-slate-50 to-slate-100';
     }
   };

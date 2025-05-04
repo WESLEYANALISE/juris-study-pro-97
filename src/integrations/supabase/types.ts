@@ -1525,6 +1525,81 @@ export type Database = {
           },
         ]
       }
+      jogos_alfabeto: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          id: string
+          letras: Json
+          nivel_dificuldade: string | null
+          palavras: Json
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          letras: Json
+          nivel_dificuldade?: string | null
+          palavras: Json
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          letras?: Json
+          nivel_dificuldade?: string | null
+          palavras?: Json
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      jogos_caca_palavras: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          dicas: Json | null
+          grade: Json
+          id: string
+          nivel_dificuldade: string | null
+          palavras: Json
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          dicas?: Json | null
+          grade: Json
+          id?: string
+          nivel_dificuldade?: string | null
+          palavras: Json
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          dicas?: Json | null
+          grade?: Json
+          id?: string
+          nivel_dificuldade?: string | null
+          palavras?: Json
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       jogos_cartas_artigos: {
         Row: {
           artigo: string
@@ -1664,6 +1739,81 @@ export type Database = {
         }
         Relationships: []
       }
+      jogos_desembaralhar: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          dicas: Json | null
+          id: string
+          nivel_dificuldade: string | null
+          palavras: Json
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          dicas?: Json | null
+          id?: string
+          nivel_dificuldade?: string | null
+          palavras: Json
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          dicas?: Json | null
+          id?: string
+          nivel_dificuldade?: string | null
+          palavras?: Json
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      jogos_enigmas: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          dicas: Json | null
+          id: string
+          nivel_dificuldade: string | null
+          pergunta: string
+          resposta: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          dicas?: Json | null
+          id?: string
+          nivel_dificuldade?: string | null
+          pergunta: string
+          resposta: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          dicas?: Json | null
+          id?: string
+          nivel_dificuldade?: string | null
+          pergunta?: string
+          resposta?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       jogos_escritorio_casos: {
         Row: {
           cliente: string
@@ -1738,6 +1888,45 @@ export type Database = {
           },
         ]
       }
+      jogos_forca: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          dicas: Json
+          id: string
+          max_tentativas: number | null
+          nivel_dificuldade: string | null
+          palavras: Json
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          dicas: Json
+          id?: string
+          max_tentativas?: number | null
+          nivel_dificuldade?: string | null
+          palavras: Json
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          dicas?: Json
+          id?: string
+          max_tentativas?: number | null
+          nivel_dificuldade?: string | null
+          palavras?: Json
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       jogos_leaderboards: {
         Row: {
           data_registro: string
@@ -1769,6 +1958,150 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      jogos_memoria: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          id: string
+          nivel_dificuldade: string | null
+          pares: Json
+          tema: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          nivel_dificuldade?: string | null
+          pares: Json
+          tema: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          nivel_dificuldade?: string | null
+          pares?: Json
+          tema?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      jogos_palavras_cruzadas: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          dicas: Json
+          grade_tamanho: Json
+          id: string
+          nivel_dificuldade: string | null
+          palavras: Json
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          dicas: Json
+          grade_tamanho: Json
+          id?: string
+          nivel_dificuldade?: string | null
+          palavras: Json
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          dicas?: Json
+          grade_tamanho?: Json
+          id?: string
+          nivel_dificuldade?: string | null
+          palavras?: Json
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      jogos_pares: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          id: string
+          nivel_dificuldade: string | null
+          pares: Json
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          nivel_dificuldade?: string | null
+          pares: Json
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          nivel_dificuldade?: string | null
+          pares?: Json
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      jogos_preencher_espacos: {
+        Row: {
+          area_direito: string
+          created_at: string | null
+          descricao: string
+          id: string
+          nivel_dificuldade: string | null
+          respostas: Json
+          texto: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          area_direito: string
+          created_at?: string | null
+          descricao: string
+          id?: string
+          nivel_dificuldade?: string | null
+          respostas: Json
+          texto: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          area_direito?: string
+          created_at?: string | null
+          descricao?: string
+          id?: string
+          nivel_dificuldade?: string | null
+          respostas?: Json
+          texto?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       jogos_quiz_perguntas: {
         Row: {

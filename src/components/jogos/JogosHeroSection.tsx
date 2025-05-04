@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Gavel, Brain, Book, Award } from 'lucide-react';
+import { Search, PuzzlePiece, Book, Award } from 'lucide-react';
 
 export const JogosHeroSection = () => {
   return (
@@ -15,16 +15,16 @@ export const JogosHeroSection = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl md:text-4xl font-bold mb-4">Jogos Jurídicos</h1>
+        <h1 className="text-3xl md:text-4xl font-bold mb-4">Jogos de Palavras</h1>
         <p className="text-lg md:text-xl text-white/90 max-w-3xl mb-6">
-          Aprenda e teste seus conhecimentos jurídicos de forma divertida e interativa através de quizzes, simulações e outros jogos especialmente desenvolvidos para estudantes e profissionais do Direito.
+          Aprimore seu vocabulário jurídico com jogos divertidos e educativos. Teste seus conhecimentos através de caça-palavras, palavras cruzadas, jogo da forca e outros desafios especialmente desenvolvidos para estudantes e profissionais do Direito.
         </p>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           {[
+            { icon: <Search className="h-6 w-6" />, text: "Encontre palavras" },
+            { icon: <PuzzlePiece className="h-6 w-6" />, text: "Resolva desafios" },
             { icon: <Book className="h-6 w-6" />, text: "Aprenda jogando" },
-            { icon: <Brain className="h-6 w-6" />, text: "Desenvolva habilidades" },
-            { icon: <Gavel className="h-6 w-6" />, text: "Pratique casos reais" },
             { icon: <Award className="h-6 w-6" />, text: "Ganhe conquistas" }
           ].map((item, index) => (
             <motion.div
