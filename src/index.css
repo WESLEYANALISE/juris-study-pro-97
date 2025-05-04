@@ -63,6 +63,14 @@
   transform-style: preserve-3d;
 }
 
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
 /* Text shadow for better readability */
 .text-shadow {
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
@@ -131,4 +139,68 @@
 /* Soundscape theme */
 .soundscape-bg {
   background: linear-gradient(to bottom, #1a133d, #0c0c16);
+}
+
+/* Flashcard specific styles */
+.gradient-button {
+  @apply bg-gradient-to-r from-primary/90 to-purple-600/90 shadow-lg hover:shadow-purple/20 border border-primary/20 transition-all duration-300;
+}
+
+.flashcard-dark {
+  @apply bg-gradient-to-br from-[#1A1633] via-[#262051] to-[#1A1633];
+}
+
+.flashcard-highlight {
+  @apply ring-2 ring-primary/50 ring-offset-2 ring-offset-background/10;
+}
+
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(155, 135, 245, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 15px rgba(155, 135, 245, 0.5);
+  }
+}
+
+.glow-animation {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Add color to confetti */
+.confetti-purple {
+  background-color: var(--primary);
+}
+
+.confetti-violet {
+  background-color: #7c68e3;
+}
+
+.confetti-blue {
+  background-color: #6d56cc;
+}
+
+/* 3D Flashcard flip animation */
+.flashcard-container {
+  perspective: 1000px;
+}
+
+.flashcard {
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+
+.flashcard.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-front, .flashcard-back {
+  position: absolute;
+  backface-visibility: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.flashcard-back {
+  transform: rotateY(180deg);
 }
