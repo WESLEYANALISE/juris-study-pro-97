@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, PuzzlePiece, Book, Award } from 'lucide-react';
+import { Search, Puzzle, BookOpen, Award } from 'lucide-react';
 
 export const JogosHeroSection = () => {
   return (
@@ -23,8 +23,8 @@ export const JogosHeroSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
           {[
             { icon: <Search className="h-6 w-6" />, text: "Encontre palavras" },
-            { icon: <PuzzlePiece className="h-6 w-6" />, text: "Resolva desafios" },
-            { icon: <Book className="h-6 w-6" />, text: "Aprenda jogando" },
+            { icon: <Puzzle className="h-6 w-6" />, text: "Resolva desafios" },
+            { icon: <BookOpen className="h-6 w-6" />, text: "Aprenda jogando" },
             { icon: <Award className="h-6 w-6" />, text: "Ganhe conquistas" }
           ].map((item, index) => (
             <motion.div

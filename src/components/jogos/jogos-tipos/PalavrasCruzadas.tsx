@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Grid3X3, HelpCircle, Check, X } from 'lucide-react';
+import { Info, Check, Grid3X3 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +13,7 @@ interface PalavraPos {
   palavra: string;
   x: number;
   y: number;
-  direcao: 'horizontal' | 'vertical';
+  direcao: "horizontal" | "vertical";
 }
 
 interface JogoPalavrasCruzadas {
@@ -38,11 +38,9 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
   const [jogo, setJogo] = useState<JogoPalavrasCruzadas | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [grade, setGrade] = useState<string[][]>([]);
+  const [entradas, setEntradas] = useState<Record<string, string>>({});
   const [palavrasEncontradas, setPalavrasEncontradas] = useState<string[]>([]);
-  const [palavraAtual, setPalavraAtual] = useState<string>('');
   const [dicaAtual, setDicaAtual] = useState<string>('');
-  const [mostrarDicas, setMostrarDicas] = useState(false);
-  const [tentativa, setTentativa] = useState<string>('');
 
   useEffect(() => {
     const fetchJogo = async () => {
@@ -69,27 +67,25 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
 
         if (error) throw error;
         if (data && data.length > 0) {
-          const jogoData = data[0] as JogoPalavrasCruzadas;
-          setJogo(jogoData);
+          // Parse the JSON fields properly to match our types
+          const rawData = data[0];
+          const palavrasArray = JSON.parse(typeof rawData.palavras === 'string' ? rawData.palavras : JSON.stringify(rawData.palavras)) as PalavraPos[];
+          const dicasObj = JSON.parse(typeof rawData.dicas === 'string' ? rawData.dicas : JSON.stringify(rawData.dicas)) as Record<string, string>;
+          const gradeTamanhoObj = JSON.parse(typeof rawData.grade_tamanho === 'string' ? rawData.grade_tamanho : JSON.stringify(rawData.grade_tamanho)) as {largura: number, altura: number};
           
-          // Inicializa a grade vazia
-          const novaGrade: string[][] = [];
-          for (let y = 0; y < jogoData.grade_tamanho.altura; y++) {
-            novaGrade[y] = [];
-            for (let x = 0; x < jogoData.grade_tamanho.largura; x++) {
-              novaGrade[y][x] = '';
-            }
-          }
+          const parsedJogo: JogoPalavrasCruzadas = {
+            id: rawData.id,
+            titulo: rawData.titulo,
+            descricao: rawData.descricao,
+            nivel_dificuldade: rawData.nivel_dificuldade,
+            area_direito: rawData.area_direito,
+            palavras: palavrasArray,
+            dicas: dicasObj,
+            grade_tamanho: gradeTamanhoObj
+          };
           
-          // Preenche a grade com as palavras encontradas
-          setGrade(novaGrade);
-          
-          // Define a primeira dica ativa
-          if (jogoData.palavras.length > 0) {
-            const primeiraPalavra = jogoData.palavras[0].palavra;
-            setPalavraAtual(primeiraPalavra);
-            setDicaAtual(jogoData.dicas[primeiraPalavra] || '');
-          }
+          setJogo(parsedJogo);
+          inicializarGrade(parsedJogo);
         }
       } catch (error) {
         console.error('Erro ao carregar jogo:', error);
@@ -102,68 +98,70 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
     fetchJogo();
   }, [gameId]);
 
-  useEffect(() => {
-    if (jogo && palavrasEncontradas.length > 0) {
-      // Atualizar a grade com as palavras encontradas
-      const novaGrade: string[][] = [];
-      for (let y = 0; y < jogo.grade_tamanho.altura; y++) {
-        novaGrade[y] = [];
-        for (let x = 0; x < jogo.grade_tamanho.largura; x++) {
-          novaGrade[y][x] = '';
-        }
-      }
-
-      jogo.palavras.forEach(({ palavra, x, y, direcao }) => {
-        if (palavrasEncontradas.includes(palavra)) {
-          for (let i = 0; i < palavra.length; i++) {
-            if (direcao === 'horizontal') {
-              novaGrade[y][x + i] = palavra[i];
-            } else {
-              novaGrade[y + i][x] = palavra[i];
-            }
-          }
-        }
-      });
-
-      setGrade(novaGrade);
-    }
-  }, [jogo, palavrasEncontradas]);
-
-  const handleVerificarPalavra = () => {
-    if (!tentativa.trim()) {
-      toast.warning('Digite uma palavra primeiro');
-      return;
-    }
-
-    const tentativaFormatada = tentativa.trim().toUpperCase();
+  // Initialize the empty grid based on game dimensions
+  const inicializarGrade = (jogoData: JogoPalavrasCruzadas) => {
+    const { largura, altura } = jogoData.grade_tamanho;
+    const novaGrade: string[][] = Array(altura).fill('').map(() => Array(largura).fill(''));
+    setGrade(novaGrade);
     
-    if (tentativaFormatada === palavraAtual) {
-      setPalavrasEncontradas([...palavrasEncontradas, palavraAtual]);
-      setTentativa('');
-      toast.success('Palavra correta!');
+    // Pre-fill any known letters from words
+    const novasEntradas: Record<string, string> = {};
+    jogoData.palavras.forEach(palavra => {
+      palavra.palavra.split('').forEach((letra, index) => {
+        const x = palavra.direcao === 'horizontal' ? palavra.x + index : palavra.x;
+        const y = palavra.direcao === 'vertical' ? palavra.y + index : palavra.y;
+        const key = `${x},${y}`;
+        novasEntradas[key] = '';
+      });
+    });
+    setEntradas(novasEntradas);
+  };
+
+  const handleInputChange = (x: number, y: number, valor: string) => {
+    const chave = `${x},${y}`;
+    const novasEntradas = { ...entradas, [chave]: valor.toUpperCase() };
+    setEntradas(novasEntradas);
+    verificarPalavras(novasEntradas);
+  };
+
+  const verificarPalavras = (novasEntradas: Record<string, string>) => {
+    if (!jogo) return;
+
+    const novasPalavrasEncontradas = [...palavrasEncontradas];
+
+    jogo.palavras.forEach(palavraPos => {
+      const { palavra, x, y, direcao } = palavraPos;
       
-      // Avança para a próxima palavra não encontrada
-      if (jogo) {
-        const proximasPalavras = jogo.palavras.filter(p => !palavrasEncontradas.includes(p.palavra) && p.palavra !== palavraAtual);
-        if (proximasPalavras.length > 0) {
-          const proxima = proximasPalavras[0].palavra;
-          setPalavraAtual(proxima);
-          setDicaAtual(jogo.dicas[proxima] || '');
-        } else {
-          // Todas as palavras foram encontradas
-          toast.success('Parabéns! Você completou as palavras cruzadas!');
+      let encontrada = true;
+      for (let i = 0; i < palavra.length; i++) {
+        const posX = direcao === 'horizontal' ? x + i : x;
+        const posY = direcao === 'vertical' ? y + i : y;
+        const chave = `${posX},${posY}`;
+        
+        if (novasEntradas[chave] !== palavra[i]) {
+          encontrada = false;
+          break;
         }
       }
-    } else {
-      toast.error('Palavra incorreta, tente novamente');
+      
+      if (encontrada && !novasPalavrasEncontradas.includes(palavra)) {
+        novasPalavrasEncontradas.push(palavra);
+        toast.success(`Parabéns! Você encontrou a palavra ${palavra}!`);
+      }
+    });
+
+    if (novasPalavrasEncontradas.length > palavrasEncontradas.length) {
+      setPalavrasEncontradas(novasPalavrasEncontradas);
+      
+      if (novasPalavrasEncontradas.length === jogo.palavras.length) {
+        toast.success('Parabéns! Você completou o jogo de palavras cruzadas!');
+      }
     }
   };
 
-  const selecionarPalavra = (novaPalavra: string) => {
+  const handleShowDica = (palavra: string) => {
     if (jogo) {
-      setPalavraAtual(novaPalavra);
-      setDicaAtual(jogo.dicas[novaPalavra] || '');
-      setTentativa('');
+      setDicaAtual(jogo.dicas[palavra]);
     }
   };
 
@@ -183,9 +181,6 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
     );
   }
 
-  const totalPalavras = jogo.palavras.length;
-  const progresso = Math.round((palavrasEncontradas.length / totalPalavras) * 100);
-
   return (
     <div className="p-4 max-w-3xl mx-auto">
       <Card className="mb-6">
@@ -197,132 +192,90 @@ export const PalavrasCruzadas = ({ gameId }: PalavrasCruzadasProps) => {
           <p className="text-muted-foreground">{jogo.descricao}</p>
         </CardHeader>
         <CardContent>
-          <div className="mb-6">
-            <div className="mb-4 text-lg font-medium">Palavras Cruzadas:</div>
-            <div className="border rounded-lg p-4 bg-slate-50 mb-6 overflow-x-auto">
-              <div className="grid" style={{ gridTemplateColumns: `repeat(${jogo.grade_tamanho.largura}, minmax(2rem, 1fr))` }}>
-                {grade.map((linha, y) => 
-                  linha.map((letra, x) => {
-                    // Verifica se esta posição é o início de alguma palavra
-                    const palavraInicio = jogo.palavras.find(p => 
-                      (p.x === x && p.y === y) || 
-                      // Verifica se esta célula faz parte de alguma palavra
-                      (p.direcao === 'horizontal' && p.y === y && x >= p.x && x < p.x + p.palavra.length) ||
-                      (p.direcao === 'vertical' && p.x === x && y >= p.y && y < p.y + p.palavra.length)
-                    );
-
-                    return (
-                      <div 
-                        key={`${y}-${x}`} 
-                        className={`w-8 h-8 flex items-center justify-center border m-0.5 rounded ${
-                          palavraInicio ? 'bg-white' : 'bg-gray-200'
-                        }`}
-                      >
-                        {letra}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
+          <div className="mb-4">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-lg font-medium">Progresso:</p>
+              <p className="text-sm text-muted-foreground">
+                {palavrasEncontradas.length}/{jogo.palavras.length} palavras
+              </p>
             </div>
-
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-lg font-medium">Progresso: {progresso}%</p>
-                <p className="text-sm text-muted-foreground">
-                  {palavrasEncontradas.length}/{totalPalavras} palavras
-                </p>
-              </div>
-              <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary rounded-full transition-all duration-300"
-                  style={{ width: `${progresso}%` }}
-                ></div>
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <div className="flex flex-wrap gap-2">
-                {jogo.palavras.map(({ palavra }) => (
-                  <Badge 
-                    key={palavra} 
-                    variant={palavrasEncontradas.includes(palavra) ? "default" : palavra === palavraAtual ? "secondary" : "outline"}
-                    className={`cursor-pointer ${
-                      palavrasEncontradas.includes(palavra) 
-                        ? "bg-green-500 hover:bg-green-600" 
-                        : palavra === palavraAtual
-                          ? "bg-blue-100 hover:bg-blue-200 text-blue-800"
-                          : "text-muted-foreground hover:bg-slate-100"
-                    }`}
-                    onClick={() => !palavrasEncontradas.includes(palavra) && selecionarPalavra(palavra)}
-                  >
-                    {palavrasEncontradas.includes(palavra) ? (
-                      <Check className="mr-1 h-3 w-3" />
-                    ) : (
-                      <span className="mr-1">•</span>
-                    )}
-                    {palavrasEncontradas.includes(palavra) ? palavra : `${palavra.length} letras`}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <div className="mb-6">
-              <div className="p-4 border rounded-lg bg-blue-50 mb-4">
-                <p className="font-medium mb-2">Dica atual:</p>
-                <p>{dicaAtual}</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex-grow">
-                  <input
-                    type="text"
-                    value={tentativa}
-                    onChange={(e) => setTentativa(e.target.value)}
-                    placeholder={`Digite a palavra (${palavraAtual.length} letras)`}
-                    className="w-full border rounded-md px-3 py-2"
-                    onKeyPress={(e) => e.key === 'Enter' && handleVerificarPalavra()}
-                  />
-                </div>
-                <Button onClick={handleVerificarPalavra}>Verificar</Button>
-              </div>
+            <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-primary rounded-full transition-all duration-300"
+                style={{ width: `${(palavrasEncontradas.length / jogo.palavras.length) * 100}%` }}
+              ></div>
             </div>
           </div>
 
-          <div>
-            <Button 
-              variant="outline" 
-              onClick={() => setMostrarDicas(!mostrarDicas)}
-              className="w-full flex items-center justify-center gap-2"
+          {/* Palavras cruzadas grid */}
+          <div className="border rounded-lg p-4 bg-slate-50 mb-6 overflow-x-auto">
+            <div 
+              className="grid gap-1" 
+              style={{ 
+                gridTemplateColumns: `repeat(${jogo.grade_tamanho.largura}, minmax(30px, 1fr))`,
+                gridTemplateRows: `repeat(${jogo.grade_tamanho.altura}, 30px)`
+              }}
             >
-              <HelpCircle className="h-4 w-4" />
-              {mostrarDicas ? 'Ocultar Todas as Dicas' : 'Mostrar Todas as Dicas'}
-            </Button>
+              {Array.from({ length: jogo.grade_tamanho.altura }).map((_, y) => (
+                Array.from({ length: jogo.grade_tamanho.largura }).map((_, x) => {
+                  const key = `${x},${y}`;
+                  const temCelula = entradas.hasOwnProperty(key);
+                  
+                  return (
+                    <div key={key} className={`${temCelula ? 'border bg-white' : ''} flex items-center justify-center`}>
+                      {temCelula && (
+                        <input
+                          type="text"
+                          maxLength={1}
+                          value={entradas[key]}
+                          onChange={(e) => handleInputChange(x, y, e.target.value)}
+                          className="w-full h-full text-center uppercase font-medium"
+                        />
+                      )}
+                    </div>
+                  );
+                })
+              ))}
+            </div>
+          </div>
+
+          {/* Palavras e dicas */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div>
+              <h3 className="font-medium mb-2">Palavras:</h3>
+              <div className="space-y-2">
+                {jogo.palavras.map(({ palavra }) => (
+                  <div key={palavra} className="flex items-center gap-2">
+                    <Badge 
+                      variant={palavrasEncontradas.includes(palavra) ? "default" : "outline"}
+                      className={palavrasEncontradas.includes(palavra) ? "bg-green-500 hover:bg-green-600" : ""}
+                    >
+                      {palavrasEncontradas.includes(palavra) ? (
+                        <Check className="mr-1 h-3 w-3" />
+                      ) : (
+                        <span className="mr-1">•</span>
+                      )}
+                      {palavra}
+                    </Badge>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-6 w-6"
+                      onClick={() => handleShowDica(palavra)}
+                    >
+                      <Info className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            </div>
             
-            {mostrarDicas && (
-              <motion.div 
-                className="mt-4 border rounded-lg p-4 bg-slate-50"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                transition={{ duration: 0.3 }}
-              >
-                <h4 className="font-medium mb-2">Dicas:</h4>
-                <ul className="space-y-2">
-                  {jogo.palavras.map(({ palavra }) => (
-                    <li key={palavra} className="text-sm flex items-center">
-                      <span className={`w-6 h-6 rounded-full flex items-center justify-center mr-2 ${
-                        palavrasEncontradas.includes(palavra) ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                      }`}>
-                        {palavrasEncontradas.includes(palavra) ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
-                      </span>
-                      <span className="font-medium">{palavrasEncontradas.includes(palavra) ? palavra : `${palavra.length} letras`}</span>
-                      <span className="mx-2">-</span>
-                      <span className="text-muted-foreground">{jogo.dicas[palavra]}</span>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            )}
+            <div>
+              <h3 className="font-medium mb-2">Dica:</h3>
+              <div className="border rounded p-3 bg-slate-50 min-h-[100px]">
+                {dicaAtual ? dicaAtual : "Clique no ícone de informação ao lado de uma palavra para ver sua dica."}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
