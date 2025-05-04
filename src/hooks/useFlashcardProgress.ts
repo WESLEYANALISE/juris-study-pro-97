@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { calculateNextReview, getNextReviewDate } from "@/utils/spacedRepetition";
 import { useToast } from "@/hooks/use-toast";
 
-type FlashcardProgress = {
+export type FlashcardProgress = {
   id: string;
   flashcard_id: string;
   user_id?: string;
@@ -13,6 +13,8 @@ type FlashcardProgress = {
   ultima_revisao: string | null;
   proxima_revisao: string | null;
 };
+
+export type KnowledgeLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export function useFlashcardProgress() {
   const [isLoading, setIsLoading] = useState(false);
@@ -69,7 +71,7 @@ export function useFlashcardProgress() {
     }
   }, []);
   
-  const updateProgress = useCallback(async (flashcardId: string | number, knowledgeLevel: number) => {
+  const updateProgress = useCallback(async (flashcardId: string | number, knowledgeLevel: KnowledgeLevel) => {
     try {
       setIsLoading(true);
       
@@ -111,6 +113,9 @@ export function useFlashcardProgress() {
       );
       
       const nextReviewDate = getNextReviewDate(nextInterval);
+      
+      // Update user's gamification data (streak, points)
+      await updateGamification(user.id);
       
       if (existingProgress) {
         // Update existing progress
@@ -158,6 +163,68 @@ export function useFlashcardProgress() {
       setIsLoading(false);
     }
   }, [toast]);
+  
+  // Helper function to update gamification data
+  const updateGamification = async (userId: string) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Check if user has gamification data
+      const { data: gamificationData, error: getError } = await supabase
+        .from('gamificacao')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+      
+      if (getError && getError.code !== 'PGRST116') {
+        throw getError;
+      }
+      
+      if (gamificationData) {
+        // Update existing gamification data
+        const lastActivityDate = gamificationData.ultima_atividade ? new Date(gamificationData.ultima_atividade).toISOString().split('T')[0] : null;
+        const isConsecutiveDay = lastActivityDate === today || 
+                               (lastActivityDate && getDayDifference(lastActivityDate, today) === 1);
+        
+        const newPoints = gamificationData.pontos + 5;
+        const newLevel = Math.floor(newPoints / 100) + 1;
+        const newStreak = isConsecutiveDay && lastActivityDate !== today 
+                        ? gamificationData.streak_dias + 1 
+                        : (lastActivityDate === today ? gamificationData.streak_dias : 1);
+        
+        await supabase
+          .from('gamificacao')
+          .update({
+            pontos: newPoints,
+            nivel: newLevel,
+            streak_dias: newStreak,
+            ultima_atividade: new Date().toISOString()
+          })
+          .eq('id', gamificationData.id);
+      } else {
+        // Create new gamification data
+        await supabase
+          .from('gamificacao')
+          .insert({
+            user_id: userId,
+            pontos: 5,
+            nivel: 1,
+            streak_dias: 1,
+            ultima_atividade: new Date().toISOString()
+          });
+      }
+    } catch (error) {
+      console.error('Error updating gamification data:', error);
+    }
+  };
+  
+  // Helper function to calculate day difference between two date strings
+  const getDayDifference = (dateStr1: string, dateStr2: string): number => {
+    const date1 = new Date(dateStr1);
+    const date2 = new Date(dateStr2);
+    const timeDiff = Math.abs(date2.getTime() - date1.getTime());
+    return Math.floor(timeDiff / (1000 * 3600 * 24));
+  };
   
   return {
     getUserProgress,

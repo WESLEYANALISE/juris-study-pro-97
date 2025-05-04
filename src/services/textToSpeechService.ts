@@ -1,46 +1,64 @@
 
-// Singleton service for handling text-to-speech functionality
-let currentAudio: HTMLAudioElement | null = null;
-let audioContext: AudioContext | null = null;
+import { useToast } from "@/hooks/use-toast";
 
-export const TextToSpeechService = {
-  /**
-   * Convert text to speech using the Google Cloud Text-to-Speech API
-   * @param text The text to convert to speech
-   * @param voice The voice to use (default: 'pt-BR-Wavenet-E')
-   * @param rate Speaking rate (0.25 to 4.0, default: 1.0)
-   */
-  speak: async (
-    text: string, 
-    voice: string = 'pt-BR-Wavenet-E', 
-    rate: number = 1.0
-  ): Promise<void> => {
+interface SpeechConfig {
+  voiceName: string;
+  language: string;
+  pitch: number;
+  rate: number;
+}
+
+class TextToSpeechServiceClass {
+  private speechSynthesis: SpeechSynthesis | null;
+  private utterance: SpeechSynthesisUtterance | null;
+  private defaultConfig: SpeechConfig;
+  private speaking: boolean;
+
+  constructor() {
+    this.speechSynthesis = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    this.utterance = null;
+    this.speaking = false;
+    this.defaultConfig = {
+      voiceName: 'Google português do Brasil',
+      language: 'pt-BR',
+      pitch: 1,
+      rate: 1
+    };
+  }
+
+  public async speak(text: string, config?: Partial<SpeechConfig>): Promise<void> {
+    // Use Google Cloud TTS API if available
     try {
-      // If there's already audio playing, stop it
-      if (currentAudio) {
-        TextToSpeechService.stop();
-      }
+      await this.speakWithGoogleTTS(text);
+      return;
+    } catch (error) {
+      console.warn('Failed to use Google Cloud TTS, falling back to browser TTS', error);
+      this.speakWithBrowserTTS(text, config);
+    }
+  }
 
-      // Truncate text if too long (API limits)
-      const maxLength = 3000;
-      const truncatedText = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+  public stop(): void {
+    if (this.speechSynthesis && this.speaking) {
+      this.speechSynthesis.cancel();
+      this.speaking = false;
+    }
+  }
 
+  private async speakWithGoogleTTS(text: string): Promise<void> {
+    try {
       const apiKey = 'AIzaSyCX26cgIpSd-BvtOLDdEQFa28_wh_HX1uk';
       const url = `https://texttospeech.googleapis.com/v1/text:synthesize?key=${apiKey}`;
 
       const requestBody = {
         input: {
-          text: truncatedText
+          text: text
         },
         voice: {
           languageCode: 'pt-BR',
-          name: voice
+          name: 'pt-BR-Wavenet-E'
         },
         audioConfig: {
-          audioEncoding: 'MP3',
-          speakingRate: rate, // Control the speed
-          pitch: 0.0,         // Default pitch
-          volumeGainDb: 0.0   // Default volume
+          audioEncoding: 'MP3'
         }
       };
 
@@ -53,85 +71,73 @@ export const TextToSpeechService = {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error?.message || 'Falha ao gerar áudio');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
 
       const data = await response.json();
       
-      // Clean up any existing audio
-      TextToSpeechService.cleanup();
-
-      // Play the audio
-      currentAudio = new Audio(`data:audio/mp3;base64,${data.audioContent}`);
+      // Convert base64 to audio
+      const audioContent = data.audioContent;
+      const audio = new Audio(`data:audio/mp3;base64,${audioContent}`);
       
-      // Set up audio context to provide better control (volume, playbackRate)
-      try {
-        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        const source = audioContext.createMediaElementSource(currentAudio);
-        const gainNode = audioContext.createGain();
-        gainNode.gain.value = 1.0; // Default volume
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-      } catch (err) {
-        console.warn('AudioContext not supported, falling back to basic audio playback', err);
-      }
+      this.speaking = true;
       
-      // Play the audio
-      currentAudio.play();
-      
-      // Clean up when audio is done
-      currentAudio.onended = () => {
-        TextToSpeechService.cleanup();
-        return Promise.resolve();
+      audio.onended = () => {
+        this.speaking = false;
       };
-
-      // Return a promise that resolves when the audio is done playing
-      return new Promise((resolve) => {
-        if (currentAudio) {
-          currentAudio.onended = () => {
-            TextToSpeechService.cleanup();
-            resolve();
-          };
-        } else {
-          resolve();
-        }
-      });
+      
+      await audio.play();
     } catch (error) {
-      console.error('Error in TextToSpeechService.speak:', error);
-      TextToSpeechService.cleanup();
-      return Promise.reject(error);
-    }
-  },
-
-  /**
-   * Stop the current audio playback
-   */
-  stop: (): void => {
-    if (currentAudio) {
-      currentAudio.pause();
-      TextToSpeechService.cleanup();
-    }
-  },
-
-  /**
-   * Clean up resources
-   */
-  cleanup: (): void => {
-    if (currentAudio) {
-      const url = currentAudio.src;
-      currentAudio.onended = null;
-      currentAudio.onerror = null;
-      currentAudio.pause();
-      currentAudio = null;
-      URL.revokeObjectURL(url);
-    }
-    
-    if (audioContext) {
-      audioContext.close().catch(console.error);
-      audioContext = null;
+      console.error('Error with Google Cloud TTS:', error);
+      throw error;
     }
   }
-};
 
-export default TextToSpeechService;
+  private speakWithBrowserTTS(text: string, config?: Partial<SpeechConfig>): void {
+    if (!this.speechSynthesis) {
+      console.error('Speech synthesis not available');
+      return;
+    }
+
+    // Stop any current speech
+    this.stop();
+
+    // Create new utterance
+    const utterance = new SpeechSynthesisUtterance(text);
+    this.utterance = utterance;
+
+    // Merge configs
+    const mergedConfig = { ...this.defaultConfig, ...config };
+
+    // Set utterance properties
+    utterance.lang = mergedConfig.language;
+    utterance.pitch = mergedConfig.pitch;
+    utterance.rate = mergedConfig.rate;
+
+    // Find voice
+    const voices = this.speechSynthesis.getVoices();
+    const preferredVoice = voices.find(voice => 
+      voice.name.includes(mergedConfig.voiceName) || 
+      voice.lang.includes(mergedConfig.language)
+    );
+
+    if (preferredVoice) {
+      utterance.voice = preferredVoice;
+    }
+
+    // Start speaking
+    this.speaking = true;
+    utterance.onend = () => {
+      this.speaking = false;
+    };
+
+    this.speechSynthesis.speak(utterance);
+  }
+
+  public isSpeaking(): boolean {
+    return this.speaking;
+  }
+}
+
+// Export as singleton
+export const TextToSpeechService = new TextToSpeechServiceClass();
