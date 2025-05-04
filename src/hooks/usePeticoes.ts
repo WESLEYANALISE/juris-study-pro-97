@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -83,7 +84,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes cache
+    gcTime: 30 * 60 * 1000, // 30 minutes cache (previously cacheTime)
     refetchOnWindowFocus: false,
     refetchOnMount: false
   });
@@ -110,7 +111,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
   });
 
   // Group petições by area for display
-  const peticoesByArea = {};
+  const peticoesByArea: Record<string, Peticao[]> = {};
   filteredPeticoes.forEach(peticao => {
     if (!peticoesByArea[peticao.area]) {
       peticoesByArea[peticao.area] = [];
@@ -121,7 +122,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
   // Calculate statistics for each area
   const areaStats = Object.entries(peticoesByArea).map(([area, areaPeticoes]) => ({
     area,
-    count: (areaPeticoes as Peticao[]).length
+    count: areaPeticoes.length
   }));
 
   return {

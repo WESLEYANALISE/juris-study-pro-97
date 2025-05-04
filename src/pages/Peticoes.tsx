@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/sheet";
 
 // Lazy-load the PeticaoViewer to reduce initial bundle size
-const PeticaoViewer = lazy(() => import("@/components/peticoes/PeticaoViewer").then(module => ({
+const PeticaoViewer = lazy(() => import("@/components/peticoes/PeticaoViewerExport").then(module => ({
   default: module.PeticaoViewer
 })));
 
@@ -66,8 +66,9 @@ const Peticoes = () => {
   const { recentItems, addRecentItem, clearRecentItems } = useRecentPeticoes();
   
   // Handle document view
-  const handleViewPeticao = (peticao) => {
-    setSelectedPeticaoUrl(peticao.arquivo_url || peticao.link);
+  const handleViewPeticao = (peticao: any) => {
+    const url = peticao.arquivo_url || peticao.link;
+    setSelectedPeticaoUrl(url);
     setViewerOpen(true);
     
     // Add to recently viewed
@@ -75,7 +76,7 @@ const Peticoes = () => {
       id: peticao.id,
       title: peticao.titulo || peticao.tipo,
       area: peticao.area,
-      url: peticao.arquivo_url || peticao.link
+      url: url
     });
   };
 
@@ -85,7 +86,7 @@ const Peticoes = () => {
   };
 
   // Handle search updates
-  const updateSearchQuery = (value) => {
+  const updateSearchQuery = (value: string) => {
     setSearchQuery(value);
     setFilters(prev => ({ ...prev, search: value }));
   };
@@ -233,7 +234,7 @@ const Peticoes = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <h2 className="text-xl font-semibold">{area}</h2>
-                          <Badge variant="secondary" className="ml-2">
+                          <Badge variant="outline" className="ml-2">
                             {areaPeticoes.length} {areaPeticoes.length === 1 ? 'modelo' : 'modelos'}
                           </Badge>
                         </div>
@@ -278,7 +279,7 @@ const Peticoes = () => {
               <div className="mb-4 flex items-center justify-between">
                 <h2 className="text-xl font-semibold">Visualizados Recentemente</h2>
                 
-                {recentItems.length > 0 && (
+                {recentItems && recentItems.length > 0 && (
                   <Button 
                     variant="outline" 
                     size="sm" 
@@ -291,7 +292,7 @@ const Peticoes = () => {
                 )}
               </div>
               
-              {recentItems.length === 0 ? (
+              {!recentItems || recentItems.length === 0 ? (
                 <div className="text-center py-12 bg-card/30 backdrop-blur-sm rounded-lg border border-white/5 shadow-lg">
                   <History className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
                   <h3 className="mt-4 text-lg font-semibold">Nenhum documento visualizado recentemente</h3>
@@ -335,7 +336,7 @@ const Peticoes = () => {
                 </div>
               )}
               
-              {peticoes.length > 0 && (
+              {peticoes && peticoes.length > 0 && (
                 <div className="mt-8">
                   <h2 className="text-xl font-semibold mb-4">Petições Disponíveis</h2>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -371,7 +372,7 @@ const Peticoes = () => {
                 <div className="flex justify-center py-12">
                   <LoadingSpinner />
                 </div>
-              ) : peticoes.length === 0 ? (
+              ) : !peticoes || peticoes.length === 0 ? (
                 <div className="text-center py-12 bg-card/30 backdrop-blur-sm rounded-lg border border-white/5 shadow-lg">
                   <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
                   <h3 className="mt-4 text-lg font-semibold">Nenhuma petição encontrada</h3>
