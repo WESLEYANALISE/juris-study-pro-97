@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
@@ -39,6 +38,15 @@ interface AreaStats {
   count: number;
 }
 
+// Define the actual structure of the database record
+interface PeticaoRecord {
+  id: string;
+  area: string;
+  tipo: string;
+  documento: string;
+  // Other fields might be present but not required for our mapping
+}
+
 const Peticoes = () => {
   const [peticoes, setPeticoes] = useState<Peticao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,10 +73,11 @@ const Peticoes = () => {
       }
 
       // Map the data to match our interface
-      const mappedPeticoes = (data || []).map(item => ({
+      const mappedPeticoes = (data as PeticaoRecord[] || []).map(item => ({
         id: item.id || '',
         titulo: item.tipo || '',
-        descricao: item.descricao || 'Modelo de petição jurídica para uso profissional',
+        // Since descricao doesn't exist in the database, provide a default value
+        descricao: 'Modelo de petição jurídica para uso profissional',
         categoria: item.area || '',
         arquivo_url: item.documento || '',
         created_at: new Date().toISOString(),
@@ -174,7 +183,7 @@ const Peticoes = () => {
                   <Filter className="h-4 w-4" />
                   Filtros
                 </Button>
-                <Button variant="secondary" size="sm" className="gap-2">
+                <Button variant="primary" size="sm" className="gap-2">
                   <BarChart3 className="h-4 w-4" />
                   Estatísticas
                 </Button>
@@ -204,7 +213,7 @@ const Peticoes = () => {
               <DataCard 
                 title="Últimas atualizações"
                 icon={<DownloadCloud className="h-4 w-4" />}
-                variant="secondary"
+                variant="primary"
               >
                 <div className="text-sm">Novos modelos adicionados recentemente</div>
               </DataCard>

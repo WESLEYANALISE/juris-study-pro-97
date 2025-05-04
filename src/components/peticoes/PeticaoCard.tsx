@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Eye, DownloadCloud } from "lucide-react";
+import { Eye, DownloadCloud } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface PeticaoCardProps {

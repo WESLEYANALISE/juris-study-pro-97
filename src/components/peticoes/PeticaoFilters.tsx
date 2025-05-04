@@ -47,18 +47,34 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
     },
   });
 
+  // We need to modify this query since sub_area doesn't exist in the peticoes table
+  // We'll use a dummy approach that extracts sub-areas from the tipo field for now
   const { data: subAreas } = useQuery({
     queryKey: ["peticoes-subareas", filters.area],
     queryFn: async () => {
+      if (!filters.area || filters.area === "all") return [];
+      
       const { data } = await supabase
         .from("peticoes")
-        .select("sub_area")
+        .select("tipo")
         .eq("area", filters.area)
-        .order("sub_area");
+        .order("tipo");
       
-      return [...new Set(data?.map((item) => item.sub_area).filter(Boolean))];
+      // Extract potential sub-areas from the tipo field (this is a workaround)
+      // In a real scenario, you might want to add a sub_area column to your peticoes table
+      const subAreaSet = new Set<string>();
+      data?.forEach(item => {
+        if (item.tipo && item.tipo.includes("-")) {
+          const potentialSubArea = item.tipo.split("-")[0].trim();
+          if (potentialSubArea && potentialSubArea !== item.tipo) {
+            subAreaSet.add(potentialSubArea);
+          }
+        }
+      });
+      
+      return Array.from(subAreaSet);
     },
-    enabled: !!filters.area,
+    enabled: !!filters.area && filters.area !== "all",
   });
 
   return (
