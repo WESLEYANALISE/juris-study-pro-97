@@ -13,8 +13,8 @@ export function PeticaoSearch({ value, onChange }: PeticaoSearchProps) {
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
       <Input
         type="search"
-        placeholder="Buscar petições..."
-        className="pl-10"
+        placeholder="Buscar petições por título, tipo ou área..."
+        className="pl-10 bg-card/30 backdrop-blur-sm border-white/5 shadow-inner"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

@@ -33,11 +33,11 @@ export function DataCard({
   ...props
 }: DataCardProps) {
   const variantStyles = {
-    default: "gradient-card",
-    primary: "gradient-card border-primary/20 shadow-purple/10",
-    success: "gradient-card border-green-500/20 shadow-success/10",
-    warning: "gradient-card border-yellow-500/20 shadow-warning/10",
-    destructive: "gradient-card border-destructive/20 shadow-destructive/10",
+    default: "gradient-card bg-gradient-to-br from-background/60 to-background/90 shadow-lg hover:shadow-xl",
+    primary: "gradient-card border-primary/20 bg-gradient-to-br from-purple-900/30 to-purple-800/20 shadow-lg hover:shadow-xl hover:shadow-purple/10",
+    success: "gradient-card border-green-500/20 bg-gradient-to-br from-green-900/20 to-green-800/10 shadow-lg hover:shadow-xl hover:shadow-success/10",
+    warning: "gradient-card border-yellow-500/20 bg-gradient-to-br from-yellow-900/20 to-yellow-800/10 shadow-lg hover:shadow-xl hover:shadow-warning/10",
+    destructive: "gradient-card border-destructive/20 bg-gradient-to-br from-destructive/20 to-destructive/5 shadow-lg hover:shadow-xl hover:shadow-destructive/10",
   };
 
   const variantIconStyles = {
@@ -53,15 +53,16 @@ export function DataCard({
     initial: initial || { opacity: 0, y: 10 },
     animate: animate || { opacity: 1, y: 0 },
     exit,
-    transition: transition || { duration: 0.3 }
+    transition: transition || { duration: 0.3 },
+    whileHover: { y: -5, boxShadow: "0 15px 30px -8px rgba(0,0,0,0.3), 0 0 15px -3px rgba(139,92,246,0.2)" }
   };
 
   return (
     <motion.div {...motionProps}>
-      <Card className={cn("overflow-hidden hover-lift backdrop-blur-sm", variantStyles[variant], className)} {...props}>
+      <Card className={cn("overflow-hidden hover-lift backdrop-blur-sm border-white/5", variantStyles[variant], className)} {...props}>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
-            {icon && <span className={cn("bg-card/50 p-1.5 rounded-full", variantIconStyles[variant])}>{icon}</span>}
+            {icon && <span className={cn("bg-card/50 p-1.5 rounded-full shadow-inner", variantIconStyles[variant])}>{icon}</span>}
             {title}
           </CardTitle>
         </CardHeader>
@@ -69,7 +70,7 @@ export function DataCard({
           {children}
         </CardContent>
         {footer && (
-          <CardFooter className="border-t bg-muted/20 px-6 py-3">
+          <CardFooter className="border-t border-white/5 bg-muted/20 px-6 py-3">
             {footer}
           </CardFooter>
         )}

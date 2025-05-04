@@ -2684,30 +2684,21 @@ export type Database = {
       peticoes: {
         Row: {
           area: string
-          descricao: string
+          documento: string
           id: string
-          link: string
-          sub_area: string | null
-          tags: string[] | null
-          tipo: string
+          tipo: string | null
         }
         Insert: {
           area: string
-          descricao: string
+          documento: string
           id?: string
-          link: string
-          sub_area?: string | null
-          tags?: string[] | null
-          tipo: string
+          tipo?: string | null
         }
         Update: {
           area?: string
-          descricao?: string
+          documento?: string
           id?: string
-          link?: string
-          sub_area?: string | null
-          tags?: string[] | null
-          tipo?: string
+          tipo?: string | null
         }
         Relationships: []
       }

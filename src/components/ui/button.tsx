@@ -9,16 +9,16 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground shadow-subtle hover:shadow-elegant hover:bg-primary/90",
-        destructive: "bg-destructive text-destructive-foreground shadow-subtle hover:shadow-elegant hover:bg-destructive/90",
-        outline: "border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary: "bg-secondary text-secondary-foreground shadow-subtle hover:shadow-elegant hover:bg-secondary/80",
+        default: "bg-primary text-primary-foreground shadow-lg hover:shadow-xl hover:shadow-primary/20 hover:bg-primary/90",
+        destructive: "bg-destructive text-destructive-foreground shadow-lg hover:shadow-xl hover:shadow-destructive/20 hover:bg-destructive/90",
+        outline: "border-2 border-input bg-background hover:bg-accent hover:text-accent-foreground shadow-lg hover:shadow-accent/20",
+        secondary: "bg-secondary text-secondary-foreground shadow-lg hover:shadow-xl hover:shadow-secondary/20 hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
         link: "text-primary underline-offset-4 hover:underline",
-        success: "bg-green-600 text-white shadow-subtle hover:shadow-elegant hover:bg-green-700",
-        warning: "bg-yellow-500 text-white shadow-subtle hover:shadow-elegant hover:bg-yellow-600",
-        purple: "bg-[#9b87f5] text-white shadow-subtle hover:shadow-elegant hover:bg-[#7E69AB]",
-        gradient: "bg-gradient-purple-magenta text-white shadow-subtle hover:shadow-elegant hover:saturate-150",
+        success: "bg-green-600 text-white shadow-lg hover:shadow-xl hover:shadow-green-700/20 hover:bg-green-700",
+        warning: "bg-yellow-500 text-white shadow-lg hover:shadow-xl hover:shadow-yellow-500/20 hover:bg-yellow-600",
+        purple: "bg-[#9b87f5] text-white shadow-lg hover:shadow-xl hover:shadow-[#9b87f5]/25 hover:bg-[#7E69AB]",
+        gradient: "bg-gradient-to-r from-purple-600 to-purple-900 text-white shadow-lg hover:shadow-xl hover:shadow-purple-600/25 hover:saturate-150 border border-white/5",
       },
       size: {
         default: "h-10 px-4 py-2",
