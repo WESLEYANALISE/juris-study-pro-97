@@ -1,33 +1,35 @@
 
-// Import React first
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-// PDF.js setup must happen before any component imports
-console.log('Initializing PDF.js configuration...');
+// CRITICAL: Import and configure PDF.js before importing any components that might use it
 import { configurePdfWorker } from '@/lib/pdf-config';
+console.log('Initializing PDF.js in main.tsx...');
 
-// Make sure the worker is configured
+// Try to configure the worker
 configurePdfWorker();
 
-// Delay React initialization slightly to ensure PDF.js configuration completes
-setTimeout(() => {
-  console.log('Starting React application initialization');
+// Use dynamic imports to ensure PDF.js is configured before React components render
+const renderApp = () => {
+  // Configure PDF.js again just to be safe
+  configurePdfWorker();
   
-  // Now import the rest of the app
   import('./App').then(({ default: App }) => {
     import('./index.css').then(() => {
       console.log('All modules loaded, starting React render');
       
-      // Try configuring PDF.js one more time before render
+      // Configure one last time right before render
       configurePdfWorker();
       
       // Render the React application
       ReactDOM.createRoot(document.getElementById('root')!).render(
         <React.StrictMode>
           <App />
-        </React.StrictMode>,
+        </React.StrictMode>
       );
     });
   });
-}, 200); // Slightly longer delay to ensure PDF.js initialization completes
+};
+
+// Small delay to ensure PDF.js has time to initialize
+setTimeout(renderApp, 100);

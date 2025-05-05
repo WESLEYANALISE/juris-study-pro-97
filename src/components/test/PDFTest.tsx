@@ -38,13 +38,12 @@ export function PDFTest() {
     
     return () => {
       clearTimeout(timer);
-      console.log("PDFTest component unmounted");
     };
   }, []);
   
   return (
-    <div className="hidden">
-      {/* This component is only for PDF.js configuration debugging */}
+    <div className="pdf-test-component">
+      {/* Hidden component for PDF.js configuration debugging */}
     </div>
   );
 }
