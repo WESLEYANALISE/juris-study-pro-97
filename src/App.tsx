@@ -1,9 +1,9 @@
 
 import { useState } from 'react';
-import { AppRouter } from './router';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
-import { ThemeProvider } from '@/components/ui/theme-provider';
+import { ThemeProvider } from './components/theme-provider';
 import { PDFTest } from './components/test/PDFTest';
 
 // Create a client
@@ -16,7 +16,11 @@ function App() {
         {/* PDFTest component for PDF.js configuration debugging */}
         <PDFTest />
         
-        <AppRouter />
+        <Router>
+          <Routes>
+            <Route path="/" element={<div>Home Page</div>} />
+          </Routes>
+        </Router>
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>
