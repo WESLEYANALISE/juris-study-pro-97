@@ -16,13 +16,15 @@ export const queryClient = new QueryClient({
     },
   },
   queryCache: new QueryCache({
-    onError: (error) => {
-      toast.error(`Erro na consulta: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    onError: (error, query) => {
+      const errorMessage = query.meta?.errorMessage as string;
+      toast.error(errorMessage || `Erro na consulta: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     },
   }),
   mutationCache: new MutationCache({
-    onError: (error) => {
-      toast.error(`Erro na operação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    onError: (error, _variables, _context, mutation) => {
+      const errorMessage = mutation.meta?.errorMessage as string;
+      toast.error(errorMessage || `Erro na operação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     },
   }),
 });
@@ -32,19 +34,16 @@ if (typeof window !== 'undefined') {
   const localStoragePersister = createSyncStoragePersister({
     storage: window.localStorage,
     key: 'CACHED_QUERIES',
-    // Limit storage size to avoid local storage limit issues
     serialize: (data) => {
       const serialized = JSON.stringify(data);
-      // If data is too large, only store minimal cache
       if (serialized.length > 1_500_000) { // ~1.5MB
         return JSON.stringify({
-          timestamp: data.timestamp,
-          buster: data.buster,
-          // Store only metadata without actual query results
-          queries: data.queries.map((query: any) => ({
-            ...query,
-            state: { ...query.state, data: null }
-          }))
+          timestamp: Date.now(),
+          buster: String(Date.now()),
+          clientState: {
+            mutations: [],
+            queries: []
+          }
         });
       }
       return serialized;
@@ -55,15 +54,11 @@ if (typeof window !== 'undefined') {
   persistQueryClient({
     queryClient,
     persister: localStoragePersister,
-    // Only persist after delay to avoid excessive writes
-    buster: String(new Date().getTime()),
+    buster: String(Date.now()),
     dehydrateOptions: {
       shouldDehydrateQuery: (query) => {
-        // Only persist queries that should be cached
         const queryKey = query.queryKey[0];
         if (typeof queryKey !== 'string') return false;
-        
-        // Cache law articles, books, and other static content
         return (
           queryKey.includes('vademecum') || 
           queryKey.includes('biblioteca') || 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
@@ -181,9 +180,8 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     gcTime: 60 * 60 * 1000, // 1 hour (antigo cacheTime)
     retry: 1,
     refetchOnWindowFocus: false,
-    onError: (err) => {
-      console.error("Error fetching articles:", err);
-      toast.error("Erro ao carregar artigos. Tente novamente.");
+    meta: {
+      errorMessage: "Erro ao carregar artigos. Tente novamente."
     }
   });
 
