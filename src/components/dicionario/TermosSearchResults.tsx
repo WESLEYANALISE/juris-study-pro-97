@@ -2,6 +2,8 @@
 import React from 'react';
 import { TermoCard } from './TermoCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Search } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface DicionarioTermo {
   id: string;
@@ -68,17 +70,62 @@ export const TermosSearchResults: React.FC<TermosSearchResultsProps> = ({
     );
   }
 
+  // Group terms by first letter for better visual organization
+  const groupedTermos: Record<string, DicionarioTermo[]> = {};
+  termos.forEach(termo => {
+    const firstLetter = termo.termo.charAt(0).toUpperCase();
+    if (!groupedTermos[firstLetter]) {
+      groupedTermos[firstLetter] = [];
+    }
+    groupedTermos[firstLetter].push(termo);
+  });
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {termos.map((termo) => (
-        <TermoCard 
-          key={termo.id} 
-          termo={termo} 
-          onView={onTermoView}
-        />
-      ))}
+    <div className="space-y-8">
+      {searchTerm ? (
+        // When searching, show a simple grid without letter grouping
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {termos.map((termo) => (
+            <motion.div
+              key={termo.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TermoCard 
+                termo={termo} 
+                onView={onTermoView}
+              />
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        // When browsing, group by first letter
+        Object.entries(groupedTermos)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([letter, termosList]) => (
+            <div key={letter} className="space-y-4">
+              <h3 className="text-xl font-semibold border-b pb-2" id={`letra-${letter}`}>
+                {letter}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {termosList.map((termo) => (
+                  <motion.div
+                    key={termo.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <TermoCard 
+                      termo={termo} 
+                      onView={onTermoView}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ))
+      )}
     </div>
   );
 };
-
-import { Search } from 'lucide-react';

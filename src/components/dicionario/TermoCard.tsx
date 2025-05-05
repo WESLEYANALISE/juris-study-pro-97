@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Volume2, Copy, ExternalLink } from "lucide-react";
+import { Volume2, Copy, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { TextToSpeechService } from "@/services/textToSpeechService";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface TermoCardProps {
   termo: {
@@ -20,6 +21,8 @@ interface TermoCardProps {
 }
 
 export const TermoCard: React.FC<TermoCardProps> = ({ termo, className, onView }) => {
+  const [showExemplo, setShowExemplo] = useState(false);
+  
   // Call onView when component is mounted
   React.useEffect(() => {
     if (onView) {
@@ -57,6 +60,7 @@ export const TermoCard: React.FC<TermoCardProps> = ({ termo, className, onView }
               size="icon" 
               className="h-8 w-8" 
               onClick={() => handleTextToSpeech(termo.definicao)}
+              aria-label="Ouvir definição"
             >
               <Volume2 className="h-4 w-4" />
             </Button>
@@ -65,6 +69,7 @@ export const TermoCard: React.FC<TermoCardProps> = ({ termo, className, onView }
               size="icon" 
               className="h-8 w-8" 
               onClick={() => handleCopyText(termo.definicao)}
+              aria-label="Copiar texto"
             >
               <Copy className="h-4 w-4" />
             </Button>
@@ -74,9 +79,30 @@ export const TermoCard: React.FC<TermoCardProps> = ({ termo, className, onView }
         <p className="text-base mb-4">{termo.definicao}</p>
         
         {termo.exemplo_uso && (
-          <div className="bg-muted p-3 rounded-md mb-4">
-            <strong className="text-sm text-muted-foreground">Exemplo de uso:</strong> 
-            <p className="italic text-sm mt-1">{termo.exemplo_uso}</p>
+          <div>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center justify-between w-full mb-2 text-muted-foreground hover:text-primary"
+              onClick={() => setShowExemplo(!showExemplo)}
+            >
+              <span>Exemplo de uso</span>
+              {showExemplo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </Button>
+            
+            <AnimatePresence>
+              {showExemplo && (
+                <motion.div 
+                  initial={{ height: 0, opacity: 0 }} 
+                  animate={{ height: "auto", opacity: 1 }} 
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="bg-muted p-3 rounded-md mb-4 overflow-hidden"
+                >
+                  <p className="italic text-sm">{termo.exemplo_uso}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
 
