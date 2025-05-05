@@ -25,9 +25,9 @@ const Cursos = () => {
     queryKey: ['courses', selectedCategory, debouncedSearchQuery],
     queryFn: async () => {
       try {
-        // Using type assertion to avoid TypeScript errors with Supabase client
+        // Direct query with type assertion to bypass type errors
         let query = supabase
-          .from('cursos_narrados' as any)
+          .from('cursos_narrados')
           .select('*');
         
         // Apply category filter if selected
@@ -48,6 +48,7 @@ const Cursos = () => {
           throw error;
         }
         
+        // Safely cast the data to the Curso type
         return (data || []) as Curso[];
       } catch (error) {
         console.error('Error fetching courses:', error);

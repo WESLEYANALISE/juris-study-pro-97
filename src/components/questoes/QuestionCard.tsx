@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageSquare, Share2, Flag, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Heart, MessageSquare, Share2, Flag, CheckCircle, XCircle, Loader2, ChevronRight } from 'lucide-react';
 import { useAuth } from "@/hooks/use-auth";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { safeSelect, safeInsert, safeDelete } from "@/utils/supabase-helpers";
+import { SupabaseFavorite, SupabaseHistoryEntry } from "@/types/supabase";
 
 export interface QuestionCardProps {
   question?: any; // Question object from the original implementation
@@ -43,7 +43,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     if (!user || !question) return false;
     
     try {
-      const { data, error } = await safeSelect(
+      const { data, error } = await safeSelect<SupabaseFavorite>(
         'questoes_favoritas', 
         '*', 
         query => query.eq('user_id', user.id).eq('questao_id', question.id)
@@ -61,7 +61,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     if (!user || !question) return;
     
     try {
-      await safeInsert(
+      await safeInsert<SupabaseHistoryEntry>(
         'historico_questoes',
         {
           user_id: user.id,
@@ -75,19 +75,21 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   };
 
   const toggleFavorite = async () => {
-    if (!user || !question) return;
+    if (!user || !question) return false;
     
     try {
       setLoadingFavorite(true);
+      
       if (isFavorited) {
         // Remove from favorites
-        await safeDelete(
+        await safeDelete<SupabaseFavorite>(
           'questoes_favoritas',
           query => query.eq('user_id', user.id).eq('questao_id', question.id)
         );
+        return false;
       } else {
         // Add to favorites
-        await safeInsert(
+        await safeInsert<SupabaseFavorite>(
           'questoes_favoritas',
           {
             user_id: user.id,
@@ -95,15 +97,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
             favoritado_em: new Date().toISOString()
           }
         );
+        return true;
       }
-      
-      setIsFavorited(!isFavorited);
-      setLoadingFavorite(false);
-      return !isFavorited;
     } catch (error) {
       console.error('Erro ao favoritar questão:', error);
+      return isFavorited; // Return current state if there was an error
+    } finally {
       setLoadingFavorite(false);
-      return isFavorited;
     }
   };
 

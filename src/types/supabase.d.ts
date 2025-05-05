@@ -59,3 +59,15 @@ export interface SupabaseDatabaseTables {
   progresso_usuario: SupabaseUserProgress;
   cursos_narrados: any;
 }
+
+// For strongly typing our app interfaces
+export interface HistoricoQuestao {
+  questao_id: string;
+  visualizado_em: string;
+}
+
+export interface ProgressoUsuario {
+  progresso: number;
+  concluido?: boolean;
+  ultimo_acesso?: string;
+}

@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
@@ -10,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { Curso } from '@/types/curso';
-import { SupabaseHistoryEntry, SupabaseUserProgress } from '@/types/supabase';
+import { HistoricoQuestao, ProgressoUsuario } from '@/types/supabase';
 
 interface HistoricoQuestao {
   questao_id: string;
@@ -40,7 +39,7 @@ const IniciandoNoDireito = () => {
       try {
         // Fetch courses
         const { data: coursesData, error: coursesError } = await supabase
-          .from('cursos_narrados' as any)
+          .from('cursos_narrados')
           .select('*')
           .limit(3);
 
@@ -56,7 +55,7 @@ const IniciandoNoDireito = () => {
           
           try {
             const { data, error } = await supabase
-              .from('progresso_usuario' as any)
+              .from('progresso_usuario')
               .select('*')
               .eq('user_id', user.id)
               .single();
@@ -66,7 +65,8 @@ const IniciandoNoDireito = () => {
               return null;
             }
             
-            return data as ProgressoUsuario;
+            // Return the data as ProgressoUsuario or a default object if null
+            return data ? (data as ProgressoUsuario) : null;
           } catch (error) {
             console.error('Erro ao buscar progresso:', error);
             return null;
@@ -79,7 +79,7 @@ const IniciandoNoDireito = () => {
           
           try {
             const { data, error } = await supabase
-              .from('historico_questoes' as any)
+              .from('historico_questoes')
               .select('questao_id, visualizado_em')
               .eq('user_id', user.id)
               .order('visualizado_em', { ascending: false })
@@ -90,7 +90,8 @@ const IniciandoNoDireito = () => {
               return [];
             }
             
-            return data as HistoricoQuestao[];
+            // Return the data as HistoricoQuestao[] or an empty array if null
+            return (data || []) as HistoricoQuestao[];
           } catch (error) {
             console.error('Erro ao buscar questões recentes:', error);
             return [];
@@ -101,7 +102,7 @@ const IniciandoNoDireito = () => {
         setUserProgress(progress);
 
         const questions = await fetchRecentQuestions();
-        setRecentQuestions(questions || []);
+        setRecentQuestions(questions);
 
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
