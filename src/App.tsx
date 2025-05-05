@@ -1,4 +1,3 @@
-
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
@@ -9,6 +8,8 @@ import Layout from './components/Layout';
 import { AuthProvider } from './hooks/use-auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { lazyLoad } from './lib/code-splitting';
+import { configurePdfWorker } from '@/lib/pdf-config';
+import { PDFConfigValidator } from '@/components/pdf/PDFConfigValidator';
 
 // Eagerly load common components
 import NotFound from './pages/NotFound';
@@ -66,6 +67,11 @@ function App() {
     }, 2000);
     
     return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Configure PDF.js worker when App mounts
+    configurePdfWorker();
   }, []);
 
   return (

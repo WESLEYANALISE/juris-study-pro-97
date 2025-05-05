@@ -16,14 +16,14 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['react-pdf'],
-    exclude: ['pdfjs-dist'], // Exclude pdfjs-dist from optimization to avoid eval issues
+    // No longer exclude pdfjs-dist to ensure proper bundling
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks: {
           // Split PDF.js into a separate chunk to manage its size
-          pdfjs: ['react-pdf', 'pdfjs-dist'],
+          pdfjs: ['react-pdf'],
           // Split other large dependencies
           vendor: [
             'react', 
@@ -39,7 +39,7 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    sourcemap: false,
+    sourcemap: true, // Enable sourcemaps for easier debugging
     target: 'esnext',
     minify: 'esbuild', // Change from terser to esbuild for faster builds
     chunkSizeWarningLimit: 1000, // Increase the warning limit

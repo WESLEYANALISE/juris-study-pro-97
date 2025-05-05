@@ -7,7 +7,7 @@ const pdfjsVersion = '3.11.174';
 // Use CDN URL for the worker in production, local for development
 const workerSrc = import.meta.env.PROD 
   ? `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`
-  : '/pdf.worker.js';
+  : '/pdf.worker.min.js';
 
 /**
  * Configures the PDF.js worker globally to ensure consistent behavior
@@ -17,20 +17,29 @@ export function configurePdfWorker() {
   try {
     console.log('Configuring PDF worker with version:', pdfjsVersion);
     
-    // Set worker URL for react-pdf
-    reactPdfJs.GlobalWorkerOptions.workerSrc = workerSrc;
-    
-    // Also set on window object for redundancy and global access
-    if (typeof window !== 'undefined') {
-      if (!window.pdfjsLib) {
-        window.pdfjsLib = reactPdfJs;
+    // Set worker directly on pdfjs.GlobalWorkerOptions
+    if (reactPdfJs.GlobalWorkerOptions) {
+      reactPdfJs.GlobalWorkerOptions.workerSrc = workerSrc;
+    } else {
+      console.warn('GlobalWorkerOptions not available, using alternative configuration');
+      // Use the older method of configuring if GlobalWorkerOptions is undefined
+      if (typeof window !== 'undefined') {
+        window.__pdfjsWorkerSrc = workerSrc;
       }
+    }
+    
+    // Also set on window object for global access
+    if (typeof window !== 'undefined') {
+      window.pdfjsLib = window.pdfjsLib || reactPdfJs;
       
-      if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+      if (window.pdfjsLib) {
+        // Ensure GlobalWorkerOptions exists
+        window.pdfjsLib.GlobalWorkerOptions = window.pdfjsLib.GlobalWorkerOptions || {};
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
       }
     }
     
+    console.log('PDF.js worker configuration complete. Worker URL:', workerSrc);
     return true;
   } catch (error) {
     console.error('Error configuring PDF worker:', error);
