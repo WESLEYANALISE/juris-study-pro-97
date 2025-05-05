@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInView } from "react-intersection-observer";
@@ -18,19 +17,28 @@ import { useParams, useNavigate } from "react-router-dom";
 
 // Define a type for the supported background variants
 type VadeMecumBackgroundVariant = "scales" | "books" | "constitution";
-
 const VadeMecumViewer = () => {
   const navigate = useNavigate();
-  const { lawId } = useParams<{ lawId: string }>();
+  const {
+    lawId
+  } = useParams<{
+    lawId: string;
+  }>();
   // Initial batch size increased for better initial load
   const [visibleBatch, setVisibleBatch] = useState(30);
   const [recentHistory, setRecentHistory] = useState<any[]>([]);
-  
-  const { searchQuery, setSearchQuery } = useVadeMecumSearch();
-  const { favorites, loadHistory } = useVadeMecumFavorites();
-  const { user } = useAuth();
+  const {
+    searchQuery,
+    setSearchQuery
+  } = useVadeMecumSearch();
+  const {
+    favorites,
+    loadHistory
+  } = useVadeMecumFavorites();
+  const {
+    user
+  } = useAuth();
   const isMobile = useIsMobile();
-  
   const {
     fontSize,
     showBackToTop,
@@ -43,20 +51,19 @@ const VadeMecumViewer = () => {
   const [articlesCache, setArticlesCache] = useState<Record<string, any[]>>({});
 
   // Use react-intersection-observer for "infinite scroll" detection
-  const { ref, inView } = useInView({
+  const {
+    ref,
+    inView
+  } = useInView({
     threshold: 0.1,
     triggerOnce: false
   });
 
   // Connect the intersection observer ref with our React ref
-  const setRefs = useCallback(
-    (node: HTMLDivElement | null) => {
-      // Call the ref function from useInView
-      ref(node);
-    },
-    [ref]
-  );
-  
+  const setRefs = useCallback((node: HTMLDivElement | null) => {
+    // Call the ref function from useInView
+    ref(node);
+  }, [ref]);
   const {
     filteredArticles,
     loading,
@@ -68,14 +75,17 @@ const VadeMecumViewer = () => {
 
   // Add debugging logs
   useEffect(() => {
-    console.log("Current page:", { lawId, tableName });
+    console.log("Current page:", {
+      lawId,
+      tableName
+    });
     console.log("Articles found:", filteredArticles.length);
   }, [lawId, tableName, filteredArticles]);
 
   // Memorize the filtered articles to avoid unnecessary re-renders
   const cachedArticles = useMemo(() => {
     if (!filteredArticles.length || !tableName) return filteredArticles;
-    
+
     // Store in cache for future use
     if (filteredArticles.length > 0 && tableName) {
       setArticlesCache(prev => ({
@@ -83,7 +93,6 @@ const VadeMecumViewer = () => {
         [tableName]: filteredArticles
       }));
     }
-    
     return filteredArticles;
   }, [filteredArticles, tableName]);
 
@@ -125,7 +134,6 @@ const VadeMecumViewer = () => {
   // Select the appropriate background based on law type
   const getBgVariant = useMemo((): VadeMecumBackgroundVariant => {
     if (!tableName) return "books";
-    
     const lawNameLower = tableName.toLowerCase();
     if (lawNameLower.includes('constituição') || lawNameLower.includes('constituicao')) return "constitution";
     if (lawNameLower.includes('código') || lawNameLower.includes('codigo')) return "constitution";
@@ -137,76 +145,42 @@ const VadeMecumViewer = () => {
   const goToFavorites = useCallback(() => {
     navigate('/vademecum/favoritos');
   }, [navigate]);
-
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[200px] py-12">
+    return <div className="flex justify-center items-center min-h-[200px] py-12">
         <div className="text-center">
           <LoadingSpinner className="h-8 w-8 mx-auto mb-4" />
           <p className="text-muted-foreground">Carregando artigos...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
   if (error) {
     return <VadeMecumError error={error} onRetry={() => loadArticles()} />;
   }
-
-  return (
-    <JuridicalBackground variant={getBgVariant} opacity={0.03}>
+  return <JuridicalBackground variant={getBgVariant} opacity={0.03}>
       <div className="container mx-auto p-4 px-0">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* For mobile, display sidebar at top when on smaller screens */}
-          {isMobile && (
-            <div className="lg:col-span-1 mb-6">
+          {isMobile && <div className="lg:col-span-1 mb-6">
               <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
-            </div>
-          )}
+            </div>}
           
-          <div className="lg:col-span-3">
-            <VadeMecumHeader 
-              title={decodedLawName} 
-              searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
-              onReload={() => loadArticles()} 
-            />
+          <div className="lg:col-span-3 px-[10px]">
+            <VadeMecumHeader title={decodedLawName} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onReload={() => loadArticles()} />
 
-            {cachedArticles.length === 0 && !loading ? (
-              <div className="text-center py-8">
+            {cachedArticles.length === 0 && !loading ? <div className="text-center py-8">
                 <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
-              </div>
-            ) : (
-              <VadeMecumArticleList 
-                isLoading={loading} 
-                data={cachedArticles}
-                filter={searchQuery}
-                tableName={tableName}
-                visibleArticles={visibleArticles}
-                loadMoreRef={setRefs}
-              />
-            )}
+              </div> : <VadeMecumArticleList isLoading={loading} data={cachedArticles} filter={searchQuery} tableName={tableName} visibleArticles={visibleArticles} loadMoreRef={setRefs} />}
           </div>
           
           {/* Only show sidebar in this position on desktop */}
-          {!isMobile && (
-            <div className="lg:col-span-1">
+          {!isMobile && <div className="lg:col-span-1">
               <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
-            </div>
-          )}
+            </div>}
         </div>
 
         {/* Bottom floating controls for font size and back to top */}
-        <FloatingControls 
-          fontSize={fontSize} 
-          increaseFontSize={increaseFontSize} 
-          decreaseFontSize={decreaseFontSize} 
-          showBackToTop={showBackToTop} 
-          scrollToTop={scrollToTop} 
-        />
+        <FloatingControls fontSize={fontSize} increaseFontSize={increaseFontSize} decreaseFontSize={decreaseFontSize} showBackToTop={showBackToTop} scrollToTop={scrollToTop} />
       </div>
-    </JuridicalBackground>
-  );
+    </JuridicalBackground>;
 };
-
 export default VadeMecumViewer;
