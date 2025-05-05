@@ -1,37 +1,36 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 222 30% 10%; /* Dark gray background */
+    --foreground: 210 20% 98%; /* Light text */
     
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
+    --card: 222 25% 16%; /* Slightly lighter gray for cards */
+    --card-foreground: 210 20% 98%;
     
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
+    --popover: 222 25% 16%;
+    --popover-foreground: 210 20% 98%;
     
-    --primary: 265 70% 70%;
+    --primary: 265 70% 70%; /* Purple - keep the brand color */
     --primary-foreground: 0 0% 98%;
     
-    --secondary: 240 3.7% 15.9%;
+    --secondary: 222 20% 20%; /* Medium gray for secondary elements */
     --secondary-foreground: 0 0% 98%;
     
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted: 225 20% 25%; /* Muted backgrounds */
+    --muted-foreground: 240 5% 75%;
     
-    --accent: 273 70% 65%;
+    --accent: 273 70% 65%; /* Purple accent */
     --accent-foreground: 0 0% 98%;
     
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    --border: 225 12% 25%;
+    --input: 225 12% 25%;
+    --ring: 240 4% 35%;
     
     --radius: 0.75rem;
     
@@ -60,19 +59,15 @@
   
   /* Enhanced scrollbar */
   ::-webkit-scrollbar {
-    @apply w-2 h-2;
+    @apply w-1.5 h-1.5;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-black/20;
+    @apply bg-gray-900/20;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-purple-800/50 rounded-full transition-colors;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-purple-700/70;
+    @apply bg-gray-700/50 rounded-full transition-colors hover:bg-gray-600/70;
   }
   
   /* Custom selection colors */
@@ -101,7 +96,12 @@
   }
   
   .bg-glass-darker {
-    @apply backdrop-blur-xl bg-black/30 border border-white/5 shadow-lg;
+    @apply backdrop-blur-xl bg-black/30 border border-gray-800 shadow-lg;
+  }
+  
+  /* Dark glass effect for cards */
+  .bg-glass-card {
+    @apply backdrop-blur-xl bg-gray-800/40 border border-gray-700/50 shadow-card-dark;
   }
   
   /* Progressive gradient transition effect */
@@ -117,7 +117,7 @@
   
   .hover-lift:hover {
     @apply -translate-y-1 shadow-xl;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -5px rgba(0, 0, 0, 0.2);
   }
   
   .hover-scale {
@@ -136,25 +136,16 @@
   .text-gradient-purple {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-primary to-violet-400;
   }
-  
-  /* New animations */
-  .animate-float {
-    animation: float 6s ease-in-out infinite;
-  }
-  
-  .animate-pulse-once {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) 1;
-  }
-  
-  .animate-glow {
-    animation: glow 2s ease-in-out infinite;
-  }
 }
 
 /* Enhanced card and button styles */
 @layer components {
   .card-glass {
     @apply bg-glass rounded-xl border border-white/10 shadow-lg overflow-hidden;
+  }
+  
+  .card-dark {
+    @apply bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-card-dark hover:shadow-lg transition-all duration-300;
   }
   
   .card-hover {
@@ -180,28 +171,9 @@
   }
 }
 
-/* Custom animations */
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(155, 135, 245, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(155, 135, 245, 0.6);
-  }
-}
-
 /* Sidebar styling */
 .gradient-sidebar {
-  @apply bg-gradient-to-b from-background via-background/95 to-secondary/30 border-r border-white/5;
+  @apply bg-gradient-to-b from-gray-900/95 via-gray-900 to-gray-800/90 border-r border-gray-800/50;
 }
 
 /* 3D Flashcard flip animation */
@@ -247,8 +219,8 @@
 .bg-gradient-multilayer::before {
   @apply content-[''] absolute w-full h-full inset-0 opacity-20;
   background: 
-    radial-gradient(circle at 0% 0%, theme(colors.purple.800 / 30%) 0%, transparent 60%),
-    radial-gradient(circle at 100% 100%, theme(colors.primary.DEFAULT / 40%) 0%, transparent 60%);
+    radial-gradient(circle at 0% 0%, theme(colors.gray.800 / 60%) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, theme(colors.primary.DEFAULT / 30%) 0%, transparent 60%);
   z-index: -1;
 }
 

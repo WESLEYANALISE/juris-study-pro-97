@@ -40,12 +40,12 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
-      className="sticky top-0 z-40 w-full border-b border-white/5 backdrop-blur-xl bg-background/80"
+      className="sticky top-0 z-40 w-full border-b border-gray-800 backdrop-blur-xl bg-gray-900/80"
     >
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {!isMobile && (
-            <Button variant="ghost" size="icon" onClick={handleSidebarToggle} className="shrink-0">
+            <Button variant="ghost" size="icon" onClick={handleSidebarToggle} className="shrink-0 text-gray-400 hover:text-white hover:bg-gray-800">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle sidebar</span>
             </Button>
@@ -81,12 +81,12 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>
           </Button>
 
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800">
             <Bell className="h-5 w-5" />
             <span className="sr-only">Notifications</span>
           </Button>
@@ -99,14 +99,18 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
               <Link to="/perfil">
                 <Avatar className="border-2 border-purple-500/30 hover:border-purple-500/60 transition-colors">
                   <AvatarImage src={user.user_metadata?.avatar_url} />
-                  <AvatarFallback className="bg-gradient-to-br from-primary/50 to-purple-700/50">
+                  <AvatarFallback className="bg-gradient-to-br from-gray-700 to-gray-800">
                     {user.email?.substring(0, 2).toUpperCase() || <User className="h-4 w-4" />}
                   </AvatarFallback>
                 </Avatar>
               </Link>
             </motion.div>
           ) : (
-            <Button variant="default" onClick={() => navigate("/auth")}>
+            <Button 
+              variant="default" 
+              onClick={() => navigate("/auth")}
+              className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600"
+            >
               Login
             </Button>
           )}

@@ -1,3 +1,4 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -125,7 +126,7 @@ const Layout = ({ children }: LayoutProps) => {
   // Show a loading screen while auth and user data are being fetched
   if (authLoading || isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
+      <div className="flex items-center justify-center h-screen bg-gray-950">
         <motion.div 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -141,7 +142,7 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <SidebarProvider defaultOpen={!isMobile}>
-      <div className="min-h-screen flex flex-col w-full">
+      <div className="min-h-screen flex flex-col w-full bg-gradient-dark">
         <Header userProfile={userProfile} />
         <div className="flex flex-1 w-full">
           <AppSidebar userProfile={userProfile} />

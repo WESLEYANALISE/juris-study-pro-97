@@ -8,12 +8,13 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card border-white/5",
+        default: "bg-gray-800/70 border-gray-700/50",
         glass: "bg-white/5 backdrop-blur-md border-white/10",
         primary: "bg-gradient-to-br from-primary/10 to-purple-900/10 border-primary/20",
         secondary: "bg-gradient-to-br from-secondary/30 to-secondary/10 border-secondary/20",
-        outline: "bg-transparent border-white/10",
+        outline: "bg-transparent border-gray-700/50",
         gradient: "bg-gradient-to-br from-purple-800/30 to-purple-900/10 border-purple-800/20",
+        dark: "bg-gray-900/90 border-gray-800/50",
       },
       hover: {
         true: "hover:shadow-hover hover:-translate-y-1",
