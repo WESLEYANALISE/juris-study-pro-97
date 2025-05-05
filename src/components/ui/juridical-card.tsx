@@ -44,14 +44,14 @@ export function JuridicalCard({
     secondary: "from-indigo-950/30 to-indigo-900/10 border-indigo-700/20 hover:border-indigo-700/40",
   };
 
+  // Using a regular div instead of motion.div to avoid TypeScript errors
+  // We'll add our own animation with CSS instead
   return (
-    <motion.div
-      whileHover={{ y: -5, boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)" }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+    <div
       className={cn(
         "relative rounded-xl overflow-hidden border backdrop-blur-sm",
-        "transition-colors duration-300 p-6",
-        "bg-gradient-to-br shadow-xl hover:shadow-2xl",
+        "transition-all duration-300 p-6 hover:-translate-y-1 hover:shadow-xl",
+        "bg-gradient-to-br shadow-xl",
         variants[variant],
         className
       )}
@@ -71,6 +71,6 @@ export function JuridicalCard({
         <p className="text-sm text-muted-foreground">{description}</p>
         {children}
       </div>
-    </motion.div>
+    </div>
   );
 }

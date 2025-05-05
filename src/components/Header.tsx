@@ -11,16 +11,23 @@ import MobileMenu from "./MobileMenu";
 import { motion } from "framer-motion";
 
 interface HeaderProps {
-  userProfile?: string;
+  userProfile?: "basic" | "premium" | "admin";
 }
 
 export function Header({ userProfile = "basic" }: HeaderProps) {
-  const { toggle } = useSidebar();
+  const sidebar = useSidebar();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Function to handle sidebar toggle, checking if toggle exists first
+  const handleSidebarToggle = () => {
+    if (sidebar && typeof sidebar.toggleSidebar === 'function') {
+      sidebar.toggleSidebar();
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -37,14 +44,14 @@ export function Header({ userProfile = "basic" }: HeaderProps) {
       <div className="container flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-2 md:gap-4">
           {!isMobile && (
-            <Button variant="ghost" size="icon" onClick={toggle} className="shrink-0">
+            <Button variant="ghost" size="icon" onClick={handleSidebarToggle} className="shrink-0">
               <Menu className="h-5 w-5" />
               <span className="sr-only">Toggle sidebar</span>
             </Button>
           )}
 
           {isMobile ? (
-            <MobileMenu userProfile={userProfile} />
+            <MobileMenu userProfile={userProfile as "basic" | "premium" | "admin"} />
           ) : null}
 
           <Link to="/" className="flex items-center gap-2">

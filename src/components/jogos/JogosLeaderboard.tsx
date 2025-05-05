@@ -125,6 +125,7 @@ export const JogosLeaderboard = ({ gameId }: JogosLeaderboardProps) => {
   return (
     <JuridicalCard
       title="Ranking dos Jogadores"
+      description="Classificação dos melhores jogadores"
       icon="scroll"
       variant="default"
     >

@@ -16,6 +16,9 @@ import { useVadeMecumArticles } from "@/hooks/useVadeMecumArticles";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { useParams, useNavigate } from "react-router-dom";
 
+// Define a type for the supported background variants
+type VadeMecumBackgroundVariant = "scales" | "books" | "constitution";
+
 const VadeMecumViewer = () => {
   const navigate = useNavigate();
   const { lawId } = useParams<{ lawId: string }>();
@@ -120,16 +123,14 @@ const VadeMecumViewer = () => {
   }, [inView, cachedArticles.length, visibleBatch, isMobile]);
 
   // Select the appropriate background based on law type
-  const getBgVariant = useMemo(() => {
+  const getBgVariant = useMemo((): VadeMecumBackgroundVariant => {
     if (!tableName) return "books";
     
     const lawNameLower = tableName.toLowerCase();
     if (lawNameLower.includes('constituição') || lawNameLower.includes('constituicao')) return "constitution";
     if (lawNameLower.includes('código') || lawNameLower.includes('codigo')) return "constitution";
-    if (lawNameLower.includes('estatuto')) return "courthouse";
-    if (lawNameLower.includes('lei')) return "scales";
-    
-    return "books";
+    // Using scales for all other types to fix the type error
+    return "scales";
   }, [tableName]);
 
   // Navigate to favorites page

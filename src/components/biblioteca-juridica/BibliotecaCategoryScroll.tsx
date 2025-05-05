@@ -104,6 +104,7 @@ export const BibliotecaCategoryScroll = ({
             >
               <JuridicalCard
                 title={category}
+                description={`Categoria de ${category}`}
                 icon="book"
                 className={cn(
                   "w-[200px] cursor-pointer",

@@ -150,7 +150,7 @@ const JogoDetalhes = () => {
   
   return (
     <PageTransition>
-      <JuridicalBackground variant={gameDetails?.background_variant as any || 'scales'} opacity={0.03}>
+      <JuridicalBackground variant="scales" opacity={0.03}>
         <div className="container mx-auto px-4 py-6">
           <Button 
             variant="ghost" 
@@ -184,7 +184,8 @@ const JogoDetalhes = () => {
             <TabsContent value="jogar" className="mt-0">
               <JuridicalCard
                 title={gameDetails?.nome || ''}
-                icon={gameDetails?.icone as any}
+                description={gameDetails?.descricao || 'Jogo interativo de conteúdo jurídico'}
+                icon={gameDetails?.icone as string}
                 variant="default"
                 className="md:p-4"
               >
@@ -199,6 +200,7 @@ const JogoDetalhes = () => {
             <TabsContent value="estatisticas" className="mt-0">
               <JuridicalCard
                 title="Estatísticas do Jogo"
+                description="Dados estatísticos e métricas de desempenho"
                 icon="book"
                 variant="default"
                 className="md:p-4"

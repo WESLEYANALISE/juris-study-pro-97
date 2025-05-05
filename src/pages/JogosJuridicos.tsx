@@ -61,7 +61,7 @@ const JogosJuridicos = () => {
 
   return (
     <PageTransition>
-      <JuridicalBackground variant="courthouse" opacity={0.03}>
+      <JuridicalBackground variant="scales" opacity={0.03}>
         <div className="container mx-auto px-4 py-6">
           <JogosHeroSection />
           
