@@ -26,6 +26,8 @@ import Flashcards from './pages/Flashcards';
 import Dicionario from './pages/Dicionario';
 import Anotacoes from './pages/Anotacoes';
 import Bloger from './pages/Bloger';
+import Cursos from './pages/Cursos';
+import CursoViewer from './pages/CursoViewer';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -163,6 +165,62 @@ function App() {
                 </Layout>
               } />
 
+              {/* Cursos route - ADDED */}
+              <Route path="/cursos" element={
+                <Layout>
+                  <Cursos />
+                </Layout>
+              } />
+              
+              {/* Curso viewer route - ADDED */}
+              <Route path="/curso/:cursoId" element={
+                <Layout>
+                  <CursoViewer />
+                </Layout>
+              } />
+              
+              {/* Jurisprudência route - ADDED */}
+              <Route path="/jurisprudencia" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+              
+              {/* Notícias route - ADDED */}
+              <Route path="/noticias" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+              
+              {/* Cronograma route - ADDED */}
+              <Route path="/cronograma" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+              
+              {/* Gamificação route - ADDED */}
+              <Route path="/gamificacao" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+              
+              {/* Remote Desktop route - ADDED */}
+              <Route path="/remote" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+              
+              {/* Perfil route - ADDED */}
+              <Route path="/perfil" element={
+                <Layout>
+                  <NotFound />
+                </Layout>
+              } />
+              
               {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
