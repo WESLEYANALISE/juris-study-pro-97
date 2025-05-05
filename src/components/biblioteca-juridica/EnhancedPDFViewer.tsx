@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { motion } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
-import { configurePdfWorker } from '@/lib/pdf-config';
+import { configurePdfWorker, processPdfUrl } from '@/lib/pdf-config';
+import { toast } from 'sonner';
 import './BibliotecaPDFViewer.css';
 
 // Ensure PDF.js worker is configured
@@ -37,33 +39,26 @@ export function EnhancedPDFViewer({
   }, []);
 
   // Process URL to get full path
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-    if (url.startsWith('http')) {
-      return url;
-    }
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    return `${baseUrl}/storage/v1/object/public/agoravai/${url}`;
-  };
+  const processedPdfUrl = processPdfUrl(pdfUrl);
   
   function onDocumentLoadSuccess({ numPages: totalPages }: { numPages: number }) {
     console.log('PDF loaded successfully with', totalPages, 'pages');
     setNumPages(totalPages);
     setIsLoading(false);
+    toast.success(`Documento carregado com sucesso: ${bookTitle}`);
   }
   
   function onDocumentLoadError(error: Error) {
     console.error('Error loading PDF:', error);
     setIsError(true);
     setIsLoading(false);
+    toast.error(`Erro ao carregar o PDF: ${error.message}`);
   }
   
   function changePage(offset: number) {
     setPageNumber(prev => Math.max(1, Math.min((numPages || 1), prev + offset)));
   }
 
-  const processedPdfUrl = processUrl(pdfUrl);
-  
   return (
     <div className="fixed inset-0 bg-black z-50 flex flex-col">
       {/* Back button header */}
@@ -108,6 +103,8 @@ export function EnhancedPDFViewer({
               pageNumber={pageNumber} 
               scale={scale}
               className="shadow-xl mx-auto"
+              renderTextLayer={false}
+              renderAnnotationLayer={false}
             />
           </Document>
         )}

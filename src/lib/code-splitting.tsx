@@ -34,3 +34,29 @@ export function prefetchComponent(importFn: () => Promise<any>) {
   // This starts loading the component in the background
   importFn();
 }
+
+/**
+ * Routes manager for preloading and code splitting
+ * Helps manage which routes to preload based on user navigation patterns
+ */
+export class RoutePreloader {
+  private static preloadedRoutes = new Set<string>();
+  
+  /**
+   * Preload a route's components
+   */
+  static preloadRoute(routePath: string, importFn: () => Promise<any>) {
+    if (!this.preloadedRoutes.has(routePath)) {
+      console.log(`Preloading route: ${routePath}`);
+      prefetchComponent(importFn);
+      this.preloadedRoutes.add(routePath);
+    }
+  }
+  
+  /**
+   * Check if a route has been preloaded
+   */
+  static isRoutePreloaded(routePath: string): boolean {
+    return this.preloadedRoutes.has(routePath);
+  }
+}

@@ -1,32 +1,29 @@
 
 import { pdfjs as reactPdfJs } from 'react-pdf';
 
-// Define the PDF.js version
-const pdfjsVersion = '3.11.174'; // Updated to match the version from console.logs
+// Define the PDF.js version - use only one consistent version
+const pdfjsVersion = '3.11.174';
 
 // Direct import of the worker
 import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
-console.log('Worker URL from direct import:', pdfWorker);
 
 /**
- * Creates a global pdfjs object with proper worker configuration
+ * Configures the PDF.js worker globally to ensure consistent behavior
+ * across all PDF viewers in the application
  */
 export function configurePdfWorker() {
   try {
-    console.log('Configuring PDF worker, reactPdfJs available:', !!reactPdfJs);
+    console.log('Configuring PDF worker with version:', pdfjsVersion);
     
-    // Manually set PDF.js on window object to ensure it's globally accessible
+    // Set worker URL for react-pdf
+    reactPdfJs.GlobalWorkerOptions.workerSrc = pdfWorker;
+    
+    // Also set on window object for redundancy and global access
     if (typeof window !== 'undefined') {
       if (!window.pdfjsLib) {
-        console.log('Setting pdfjsLib on window');
         window.pdfjsLib = reactPdfJs;
       }
       
-      // Set worker directly using the imported worker URL
-      console.log('Setting worker src to:', pdfWorker);
-      reactPdfJs.GlobalWorkerOptions.workerSrc = pdfWorker;
-      
-      // Also set on window object for redundancy
       if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
         window.pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
       }
@@ -39,8 +36,25 @@ export function configurePdfWorker() {
   }
 }
 
-// Try to configure immediately
+// Configure immediately
 configurePdfWorker();
 
 // Export the configured pdfjs object
 export const pdfjs = reactPdfJs;
+
+// Helper function to process PDF URLs from Supabase storage
+export function processPdfUrl(url: string): string {
+  if (!url) return '';
+  
+  // If already a full URL, return as is
+  if (url.startsWith('http')) {
+    return url;
+  }
+  
+  // Get base URL from environment or use default Supabase URL
+  const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+  const fullUrl = `${baseUrl}/storage/v1/object/public/agoravai/${url}`;
+  
+  console.log('Processed PDF URL:', fullUrl);
+  return fullUrl;
+}

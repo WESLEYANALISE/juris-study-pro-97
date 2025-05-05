@@ -1,6 +1,6 @@
 
-import { useState, lazy, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/theme-provider';
@@ -8,31 +8,34 @@ import { PDFTest } from './components/test/PDFTest';
 import Layout from './components/Layout';
 import { AuthProvider } from './hooks/use-auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { lazyLoad } from './lib/code-splitting';
 
 // Eagerly load common components
 import NotFound from './pages/NotFound';
 
 // Lazily load page components for better performance
-const Index = lazy(() => import('./pages/Index'));
-const VadeMecum = lazy(() => import('./pages/VadeMecum'));
-const VadeMecumViewer = lazy(() => import('./pages/VadeMecumViewer'));
-const VadeMecumFavorites = lazy(() => import('./pages/VadeMecumFavorites'));
-const BibliotecaJuridica = lazy(() => import('./pages/BibliotecaJuridica'));
-const Podcasts = lazy(() => import('./pages/Podcasts'));
-const Questoes = lazy(() => import('./pages/Questoes'));
-const JogosJuridicos = lazy(() => import('./pages/JogosJuridicos'));
-const MapasMentais = lazy(() => import('./pages/MapasMentais'));
-const RedacaoJuridica = lazy(() => import('./pages/RedacaoJuridica'));
-const Peticoes = lazy(() => import('./pages/Peticoes'));
-const AssistenteJuridico = lazy(() => import('./pages/AssistenteJuridico'));
-const IniciandoNoDireito = lazy(() => import('./pages/IniciandoNoDireito'));
-const VideoAulas = lazy(() => import('./pages/VideoAulas'));
-const Flashcards = lazy(() => import('./pages/Flashcards'));
-const Dicionario = lazy(() => import('./pages/Dicionario'));
-const Anotacoes = lazy(() => import('./pages/Anotacoes'));
-const Bloger = lazy(() => import('./pages/Bloger'));
-const Cursos = lazy(() => import('./pages/Cursos'));
-const CursoViewer = lazy(() => import('./pages/CursoViewer'));
+const Index = lazyLoad(() => import('./pages/Index'));
+const VadeMecum = lazyLoad(() => import('./pages/VadeMecum'));
+const VadeMecumViewer = lazyLoad(() => import('./pages/VadeMecumViewer'));
+const VadeMecumFavorites = lazyLoad(() => import('./pages/VadeMecumFavorites'));
+const BibliotecaJuridica = lazyLoad(() => import('./pages/BibliotecaJuridica'));
+const Podcasts = lazyLoad(() => import('./pages/Podcasts'));
+const Questoes = lazyLoad(() => import('./pages/Questoes'));
+const JogosJuridicos = lazyLoad(() => import('./pages/JogosJuridicos'));
+const MapasMentais = lazyLoad(() => import('./pages/MapasMentais'));
+const RedacaoJuridica = lazyLoad(() => import('./pages/RedacaoJuridica'));
+const Peticoes = lazyLoad(() => import('./pages/Peticoes'));
+const AssistenteJuridico = lazyLoad(() => import('./pages/AssistenteJuridico'));
+const IniciandoNoDireito = lazyLoad(() => import('./pages/IniciandoNoDireito'));
+const VideoAulas = lazyLoad(() => import('./pages/VideoAulas'));
+const Flashcards = lazyLoad(() => import('./pages/Flashcards'));
+const Dicionario = lazyLoad(() => import('./pages/Dicionario'));
+const Anotacoes = lazyLoad(() => import('./pages/Anotacoes'));
+const Bloger = lazyLoad(() => import('./pages/Bloger'));
+const Cursos = lazyLoad(() => import('./pages/Cursos'));
+const CursoViewer = lazyLoad(() => import('./pages/CursoViewer'));
+const Simulados = lazyLoad(() => import('./pages/Simulados'));
+const Noticias = lazyLoad(() => import('./pages/Noticias'));
 
 // Create a client with optimized settings
 const queryClient = new QueryClient({
@@ -53,6 +56,18 @@ const PageLoader = () => (
 );
 
 function App() {
+  // Track initial loading state
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  // Set initial load to false after a short delay
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false);
+    }, 2000);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider storageKey="vite-ui-theme">
@@ -95,6 +110,9 @@ function App() {
                   </Layout>
                 } />
                 
+                {/* Redirect /biblioteca to /biblioteca-juridica */}
+                <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
+                
                 {/* Podcasts route */}
                 <Route path="/podcasts" element={
                   <Layout>
@@ -106,6 +124,13 @@ function App() {
                 <Route path="/questoes" element={
                   <Layout>
                     <Questoes />
+                  </Layout>
+                } />
+                
+                {/* Simulados route */}
+                <Route path="/simulados" element={
+                  <Layout>
+                    <Simulados />
                   </Layout>
                 } />
                 
@@ -136,6 +161,9 @@ function App() {
                     <Peticoes />
                   </Layout>
                 } />
+                
+                {/* Redirect /peticionario to /peticoes */}
+                <Route path="/peticionario" element={<Navigate to="/peticoes" replace />} />
                 
                 {/* Assistente Jurídico route */}
                 <Route path="/assistente" element={
@@ -200,42 +228,42 @@ function App() {
                   </Layout>
                 } />
                 
-                {/* Jurisprudência route */}
+                {/* Notícias route */}
+                <Route path="/noticias" element={
+                  <Layout>
+                    <Noticias />
+                  </Layout>
+                } />
+                
+                {/* Jurisprudência route - Using NotFound for now */}
                 <Route path="/jurisprudencia" element={
                   <Layout>
                     <NotFound />
                   </Layout>
                 } />
                 
-                {/* Notícias route */}
-                <Route path="/noticias" element={
-                  <Layout>
-                    <NotFound />
-                  </Layout>
-                } />
-                
-                {/* Cronograma route */}
+                {/* Cronograma route - Using NotFound for now */}
                 <Route path="/cronograma" element={
                   <Layout>
                     <NotFound />
                   </Layout>
                 } />
                 
-                {/* Gamificação route */}
+                {/* Gamificação route - Using NotFound for now */}
                 <Route path="/gamificacao" element={
                   <Layout>
                     <NotFound />
                   </Layout>
                 } />
                 
-                {/* Remote Desktop route */}
+                {/* Remote Desktop route - Using NotFound for now */}
                 <Route path="/remote" element={
                   <Layout>
                     <NotFound />
                   </Layout>
                 } />
                 
-                {/* Perfil route */}
+                {/* Perfil route - Using NotFound for now */}
                 <Route path="/perfil" element={
                   <Layout>
                     <NotFound />
