@@ -1,4 +1,3 @@
-
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
@@ -9,11 +8,9 @@
 // resources are updated in the background.
 
 export const registerSW = () => {
-  if ('serviceWorker' in navigator && import.meta.env.PROD) {
+  if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      const swUrl = '/sw.js';
-      
-      navigator.serviceWorker.register(swUrl).then(
+      navigator.serviceWorker.register('/sw.js').then(
         (registration) => {
           console.log('ServiceWorker registration successful with scope: ', registration.scope);
         },

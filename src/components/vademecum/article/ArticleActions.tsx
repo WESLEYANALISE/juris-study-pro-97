@@ -225,21 +225,21 @@ export const ArticleActions = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="mt-4 rounded-md bg-background/70 backdrop-blur-sm border border-purple-200 dark:border-purple-800/30 shadow-lg"
+          className="mt-4 rounded-md bg-background/50 backdrop-blur-sm border border-muted/30 shadow-sm"
         >
-          <div className="p-3">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+          <div className="px-3 py-2">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5">
               <Button 
                 variant="ghost" 
                 size="sm" 
                 className={cn(
-                  "gap-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200",
-                  isExplanationDialogOpen && "bg-purple-100 dark:bg-purple-900/40 shadow-inner"
+                  "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
+                  isExplanationDialogOpen && "bg-primary/10"
                 )}
                 onClick={() => setIsExplanationDialogOpen(true)} 
                 disabled={!technicalExplanation && !formalExplanation}
               >
-                <Info className="h-5 w-5" />
+                <Info size={14} />
                 <span>Explicação</span>
               </Button>
 
@@ -247,23 +247,23 @@ export const ArticleActions = ({
                 variant="ghost" 
                 size="sm" 
                 className={cn(
-                  "gap-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200",
-                  isPracticalExampleDialogOpen && "bg-purple-100 dark:bg-purple-900/40 shadow-inner"
+                  "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
+                  isPracticalExampleDialogOpen && "bg-primary/10"
                 )}
                 onClick={() => setIsPracticalExampleDialogOpen(true)}
               >
-                <FileText className="h-5 w-5" />
+                <FileText size={14} />
                 <span>Exemplo</span>
               </Button>}
 
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="gap-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200"
+                className="gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5"
                 onClick={() => handleCopy(articleText)} 
                 disabled={isCopying}
               >
-                <Copy className="h-5 w-5" />
+                <Copy size={14} />
                 <span>Copiar</span>
               </Button>
               
@@ -271,12 +271,12 @@ export const ArticleActions = ({
                 variant="ghost" 
                 size="sm" 
                 className={cn(
-                  "gap-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200",
-                  isNarrating && "bg-purple-100 dark:bg-purple-900/40 shadow-inner"
+                  "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
+                  isNarrating && "bg-primary/10"
                 )}
                 onClick={handleNarration}
               >
-                <Volume2 className="h-5 w-5" />
+                <Volume2 size={14} />
                 <span>{isNarrating ? "Parar" : "Narrar"}</span>
               </Button>
 
@@ -286,11 +286,11 @@ export const ArticleActions = ({
                     variant="ghost" 
                     size="sm" 
                     className={cn(
-                      "gap-1.5 text-sm font-medium text-purple-700 dark:text-purple-300 hover:text-purple-800 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-all duration-200",
-                      isHighlightMode && "bg-purple-100 dark:bg-purple-900/40 shadow-inner"
+                      "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
+                      isHighlightMode && "bg-primary/10"
                     )}
                   >
-                    <Highlighter className="h-5 w-5" />
+                    <Highlighter size={14} />
                     <span>Destacar</span>
                   </Button>
                 </PopoverTrigger>
@@ -301,7 +301,7 @@ export const ArticleActions = ({
                       {HIGHLIGHT_COLORS.map((color) => (
                         <button
                           key={color.name}
-                          className={`h-8 w-8 rounded-full ${color.class} hover:scale-110 transition-transform shadow-sm`}
+                          className={`h-6 w-6 rounded ${color.class} hover:scale-110 transition-transform`}
                           title={color.name}
                           onClick={() => handleHighlight(color.class)}
                         />

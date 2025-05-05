@@ -1,22 +1,16 @@
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Document, Page } from 'react-pdf';
-import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, ZoomIn, ZoomOut, RotateCw, Download, Search, Menu, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Input } from '@/components/ui/input';
-import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Progress } from '@/components/ui/progress';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
-import { useDebounce } from '@/hooks/use-debounce';
-import { pdfjs, processPdfUrl } from '@/lib/pdf-config';
 import './BibliotecaPDFViewer.css';
 
-// pdfjs worker is now configured in pdf-config.ts
+// Set PDF.js worker source
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface BibliotecaPDFViewerProps {
   pdfUrl: string;
@@ -25,447 +19,289 @@ interface BibliotecaPDFViewerProps {
   book: LivroJuridico | null;
 }
 
-export function BibliotecaPDFViewer({
-  pdfUrl,
-  onClose,
-  bookTitle,
-  book
-}: BibliotecaPDFViewerProps) {
+export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: BibliotecaPDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [loadProgress, setLoadProgress] = useState(0);
-  const [visiblePages, setVisiblePages] = useState<number[]>([1]);
-  const [controlsVisible, setControlsVisible] = useState(true);
-  const [pageInputValue, setPageInputValue] = useState("1");
-  const [showOutline, setShowOutline] = useState(false);
-  const [outline, setOutline] = useState<any[]>([]);
-  const {
-    saveReadingProgress,
-    getReadingProgress,
-    isFavorite,
-    toggleFavorite
-  } = useBibliotecaProgresso();
+  const [progress, setProgress] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  
+  const { saveReadingProgress } = useBibliotecaProgresso();
   const containerRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Add body class to prevent scrolling and hide mobile nav
+  
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
-
-    // Load saved reading progress
-    if (book?.id) {
-      const savedProgress = getReadingProgress(book.id);
-      if (savedProgress?.pagina_atual && savedProgress.pagina_atual > 1) {
-        setPageNumber(savedProgress.pagina_atual);
-        setPageInputValue(savedProgress.pagina_atual.toString());
-      }
-    }
+    
+    // Force reload PDF when URL changes
+    setIsLoaded(false);
+    setIsLoading(true);
+    setPageNumber(1);
+    
+    console.log("Loading PDF from URL:", pdfUrl);
+    
     return () => {
       document.body.classList.remove('pdf-viewer-open');
     };
-  }, [book, getReadingProgress]);
-
-  // Auto-hide controls after period of inactivity
+  }, [pdfUrl]);
+  
   useEffect(() => {
-    const showControls = () => {
-      setControlsVisible(true);
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      timeoutRef.current = setTimeout(() => {
-        setControlsVisible(false);
-      }, 3000);
-    };
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('mousemove', showControls);
-      container.addEventListener('touchstart', showControls);
+    if (book && pageNumber > 0 && isLoaded) {
+      saveReadingProgress(book.id, pageNumber);
     }
+  }, [pageNumber, book, saveReadingProgress, isLoaded]);
 
-    // Initial show controls
-    showControls();
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (container) {
-        container.removeEventListener('mousemove', showControls);
-        container.removeEventListener('touchstart', showControls);
-      }
-    };
-  }, []);
-
-  // Handle keyboard controls
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      switch (e.key) {
-        case 'ArrowRight':
-        case ' ':
-          if (pageNumber < (numPages || 1)) setPageNumber(p => p + 1);
-          break;
-        case 'ArrowLeft':
-          if (pageNumber > 1) setPageNumber(p => p - 1);
-          break;
-        case 'Home':
-          setPageNumber(1);
-          break;
-        case 'End':
-          setPageNumber(numPages || 1);
-          break;
-        case 'Escape':
-          onClose();
-          break;
-        default:
-          break;
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [pageNumber, numPages, onClose]);
-
-  // Debounced save reading progress
-  const debouncedPageNumber = useDebounce(pageNumber, 1000);
-  useEffect(() => {
-    if (book?.id && debouncedPageNumber > 0 && !isLoading && debouncedPageNumber <= (numPages || 1)) {
-      saveReadingProgress(book.id, debouncedPageNumber);
+  // Process the URL to ensure it's a full URL
+  const processUrl = (url: string): string => {
+    if (!url) return '';
+    
+    // Already a full URL
+    if (url.startsWith('http')) {
+      console.log("URL is already complete:", url);
+      return url;
     }
-  }, [debouncedPageNumber, book, saveReadingProgress, isLoading, numPages]);
+    
+    // Add the Supabase storage URL prefix if it's just a path
+    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
+    console.log("Converted URL:", fullUrl);
+    return fullUrl;
+  };
 
-  // Calculate buffer of pages to render
-  useEffect(() => {
-    const calculateVisiblePages = () => {
-      const pagesToBuffer = 2; // Number of pages to buffer on each side
-      const pages = [];
-      for (let i = Math.max(1, pageNumber - pagesToBuffer); i <= Math.min(numPages || 1, pageNumber + pagesToBuffer); i++) {
-        pages.push(i);
-      }
-      setVisiblePages(pages);
-    };
-    calculateVisiblePages();
-  }, [pageNumber, numPages]);
-
-  // Scroll to current page
-  useEffect(() => {
-    const scrollToCurrentPage = () => {
-      const currentPageElement = document.getElementById(`page-${pageNumber}`);
-      if (currentPageElement && contentRef.current) {
-        const containerRect = contentRef.current.getBoundingClientRect();
-        const elementRect = currentPageElement.getBoundingClientRect();
-
-        // Calculate scroll position to center the page
-        const scrollTop = elementRect.top - containerRect.top - (containerRect.height - elementRect.height) / 2 + contentRef.current.scrollTop;
-        contentRef.current.scrollTo({
-          top: scrollTop,
-          behavior: isInitialLoad ? 'auto' : 'smooth'
-        });
-      }
-    };
-    if (!isLoading) {
-      scrollToCurrentPage();
-
-      // After initial load, set to false
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-      }
+  // Verify the URL is valid
+  const verifyPdfUrl = (url: string): boolean => {
+    // Empty URL
+    if (!url) {
+      setErrorMessage("URL do PDF não fornecida");
+      setIsError(true);
+      setIsLoading(false);
+      return false;
     }
-  }, [pageNumber, isLoading, isInitialLoad]);
-
-  // Handle document load success
-  const onDocumentLoadSuccess = useCallback(({
-    numPages: totalPages,
-    outline: pdfOutline
-  }: any) => {
+    
+    // Check if URL is valid
+    try {
+      const processedUrl = processUrl(url);
+      new URL(processedUrl);
+      return true;
+    } catch (e) {
+      console.error("Invalid PDF URL:", e);
+      setErrorMessage("URL do PDF inválida ou mal formatada");
+      setIsError(true);
+      setIsLoading(false);
+      return false;
+    }
+  };
+  
+  useEffect(() => {
+    verifyPdfUrl(pdfUrl);
+  }, [pdfUrl]);
+  
+  function onDocumentLoadSuccess({ numPages: totalPages }) {
+    console.log("PDF loaded successfully. Total pages:", totalPages);
     setNumPages(totalPages);
     setIsLoading(false);
-    if (pdfOutline) {
-      setOutline(pdfOutline);
-    }
-
-    // If we're on page 1, no need to notify, otherwise show which page we loaded
-    if (pageNumber > 1) {
-      toast.success(`PDF carregado: página ${pageNumber} de ${totalPages}`);
-    }
-  }, [pageNumber]);
-
-  // Handle document load error
-  const onDocumentLoadError = useCallback((error: Error) => {
+    setIsLoaded(true);
+    toast.success(`PDF carregado: ${totalPages} páginas`);
+  }
+  
+  function onDocumentLoadError(error: any) {
     console.error('Error loading PDF:', error);
-    setIsError(true);
     setIsLoading(false);
-    setErrorMessage(error.message || "Não foi possível carregar o arquivo PDF");
+    setIsError(true);
+    setErrorMessage(`Erro ao carregar PDF: ${error.message || "Verifique se o arquivo existe"}`);
     toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
-  }, []);
-
-  // Handle page navigation
-  const changePage = useCallback((offset: number) => {
-    setPageNumber(prevPage => {
-      const newPage = prevPage + offset;
-      if (newPage >= 1 && newPage <= (numPages || 1)) {
-        setPageInputValue(newPage.toString());
-        return newPage;
-      }
-      return prevPage;
-    });
-  }, [numPages]);
-
-  // Handle zoom changes
-  const zoomIn = useCallback(() => {
-    setScale(prev => Math.min(prev + 0.2, 3));
-  }, []);
-  const zoomOut = useCallback(() => {
-    setScale(prev => Math.max(prev - 0.2, 0.5));
-  }, []);
-
-  // Handle page input change
-  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPageInputValue(e.target.value);
-  };
-  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      const pageNum = parseInt(pageInputValue);
-      if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= (numPages || 1)) {
-        setPageNumber(pageNum);
+  }
+  
+  function changePage(amount: number) {
+    setPageNumber((prevPageNumber) => {
+      const newPageNumber = prevPageNumber + amount;
+      if (newPageNumber >= 1 && newPageNumber <= (numPages || 1)) {
+        return newPageNumber;
       } else {
-        setPageInputValue(pageNumber.toString());
+        return prevPageNumber;
       }
+    });
+  }
+  
+  function zoomIn() {
+    setScale((prevScale) => Math.min(prevScale + 0.25, 3.0));
+  }
+  
+  function zoomOut() {
+    setScale((prevScale) => Math.max(prevScale - 0.25, 0.5));
+  }
+  
+  function rotate() {
+    setRotation((prevRotation) => (prevRotation + 90) % 360);
+  }
+  
+  const toggleFullScreen = () => {
+    if (containerRef.current) {
+      if (!isFullScreen) {
+        if (containerRef.current.requestFullscreen) {
+          containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          (containerRef.current as any).msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          (document as any).mozCancelFullScreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) {
+          (document as any).msExitFullscreen();
+        }
+      }
+      setIsFullScreen(!isFullScreen);
     }
   };
-  const handlePageInputBlur = () => {
-    const pageNum = parseInt(pageInputValue);
-    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= (numPages || 1)) {
-      setPageNumber(pageNum);
-    } else {
-      setPageInputValue(pageNumber.toString());
-    }
-  };
-
-  // Handle rotation
-  const rotate = useCallback(() => {
-    setRotation(prev => (prev + 90) % 360);
+  
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+    document.addEventListener('msfullscreenchange', handleFullScreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullScreenChange);
+    };
   }, []);
-
-  // Handle favorite toggle
-  const handleToggleFavorite = useCallback(() => {
-    if (book?.id) {
-      toggleFavorite(book.id);
-      toast.success(isFavorite(book.id) ? "Livro removido dos favoritos" : "Livro adicionado aos favoritos");
-    }
-  }, [book, toggleFavorite, isFavorite]);
-
-  // Handle download
-  const handleDownload = useCallback(() => {
-    if (pdfUrl) {
-      // Use our utility function to ensure we have the correct URL
-      const processedUrl = processPdfUrl(pdfUrl);
-      const link = document.createElement('a');
-      link.href = processedUrl;
-      link.download = bookTitle.replace(/\s+/g, '_') + '.pdf';
-      link.click();
-      toast.success("Download iniciado");
-    } else {
-      toast.error("URL do PDF não disponível");
-    }
-  }, [pdfUrl, bookTitle]);
-
-  // Calculate progress percentage
-  const progressPercentage = numPages ? pageNumber / numPages * 100 : 0;
-
-  // Handle slider change
-  const handleSliderChange = useCallback((value: number[]) => {
-    const newPage = Math.round(value[0] * (numPages || 1) / 100);
-    if (newPage >= 1) {
-      setPageNumber(newPage);
-      setPageInputValue(newPage.toString());
-    }
-  }, [numPages]);
-
-  // Error display component
+  
   if (isError) {
-    return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center">
-          <h2 className="text-2xl font-bold mb-4">Erro ao carregar PDF</h2>
-          <p className="mb-4 text-muted-foreground">{errorMessage}</p>
-          <p className="text-sm text-muted-foreground mb-4">
-            Tentamos carregar: {pdfUrl}
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
+          <AlertCircle className="h-16 w-16 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
+          <p className="text-muted-foreground mb-6">
+            {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
           </p>
-          <Button onClick={onClose} variant="default">
-            Voltar
+          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+            <code className="break-all whitespace-pre-wrap">{processUrl(pdfUrl)}</code>
+          </div>
+          <Button onClick={onClose} className="mt-4">
+            Fechar
           </Button>
         </div>
-      </motion.div>;
+      </div>
+    );
   }
-
-  // Get the final PDF URL via our utility
-  const processedPdfUrl = processPdfUrl(pdfUrl);
   
-  return <motion.div className="fixed inset-0 bg-black z-50 flex flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} ref={containerRef}>
-      {/* Back button header - always visible */}
-      <div className="absolute top-0 left-0 z-20 m-4">
-        <Button onClick={onClose} variant="outline" size="icon" className="bg-black/50 backdrop-blur-sm border-white/20 text-white hover:bg-black/70">
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-      </div>
-      
-      {/* Main PDF content */}
-      <div className="flex-1 overflow-auto flex items-center justify-center pdf-content" ref={contentRef}>
-        {isLoading ? <div className="flex flex-col items-center justify-center">
-            <div className="flex flex-col items-center justify-center gap-6">
-              <div className="relative h-16 w-16">
-                <div className="absolute inset-0 border-4 border-primary/40 border-t-primary rounded-full animate-spin" />
-                {loadProgress > 0 && <div className="absolute inset-0 flex items-center justify-center">
-                    <p className="text-xs font-mono text-white/70">{loadProgress}%</p>
-                  </div>}
-              </div>
-              <div className="text-center">
-                <h3 className="text-lg text-white/80 font-medium">{bookTitle}</h3>
-                <p className="text-sm text-white/60 mt-1">Carregando PDF...</p>
-              </div>
-            </div>
-          </div> : <Document file={processedPdfUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} onProgress={({ loaded, total }) => {
-        if (total) {
-          const progress = Math.round(loaded / total * 100);
-          setLoadProgress(progress);
-        }
-      }} loading={<div className="flex items-center justify-center">
+  // Use the processed URL for the PDF
+  const processedPdfUrl = processUrl(pdfUrl);
+  
+  return (
+    <div className="fixed inset-0 bg-background z-50">
+      <div className="pdf-container flex flex-col h-full" ref={containerRef}>
+        {/* Header with title and close button */}
+        <div className="px-4 py-3 border-b bg-secondary/80 backdrop-blur-sm sticky top-0 z-40">
+          <div className="container max-w-5xl mx-auto flex items-center justify-between">
+            <h2 className="text-lg font-semibold truncate">{bookTitle}</h2>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar visualizador">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-lg text-muted-foreground">Carregando livro... {progress}%</p>
+            <p className="text-xs text-muted-foreground mt-2 max-w-md text-center">
+              Se o livro não carregar, verifique se o PDF está disponível no servidor.
+            </p>
+          </div>
+        )}
+        
+        {/* PDF Viewer Content */}
+        <div className="pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
+          <Document
+            file={processedPdfUrl}
+            onLoadSuccess={onDocumentLoadSuccess}
+            onLoadError={onDocumentLoadError}
+            onProgress={({ loaded, total }) => {
+              if (total) {
+                setProgress(Math.round((loaded / total) * 100));
+              }
+            }}
+            loading={
+              <div className="flex flex-col items-center justify-center">
                 <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>} className="pdf-document max-h-full w-full">
-            {numPages && visiblePages.map(pageNum => <div id={`page-${pageNum}`} key={`page-${pageNum}`} className={`pdf-page ${pageNum !== pageNumber ? 'opacity-50' : ''}`}>
-                <Page pageNumber={pageNum} scale={scale} rotate={rotation} loading={<div className="flex justify-center py-10">
-                      <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                    </div>} renderTextLayer={false} renderAnnotationLayer={false} className={cn("shadow-2xl mx-auto", pageNum === pageNumber ? "shadow-xl" : "shadow-md")} />
-                
-                {/* Page number indicator */}
-                <div className="w-full flex justify-center mt-2 mb-8">
-                  <div className="bg-black/70 px-3 py-1 rounded-full">
-                    <span className="text-xs text-white/80">
-                      Página {pageNum} de {numPages}
-                    </span>
+                <span className="mt-2 text-sm">Carregando...</span>
+              </div>
+            }
+            error={
+              <div className="text-center text-red-500">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                <p>Erro ao carregar PDF</p>
+              </div>
+            }
+          >
+            {isLoaded && (
+              <Page 
+                pageNumber={pageNumber} 
+                scale={scale} 
+                rotate={rotation} 
+                error={
+                  <div className="text-center text-red-500 p-4">
+                    <p>Erro ao renderizar página {pageNumber}</p>
                   </div>
-                </div>
-              </div>)}
-          </Document>}
+                }
+              />
+            )}
+          </Document>
+        </div>
+        
+        {/* Mobile Controls */}
+        <div className="pdf-mobile-controls">
+          <div className="pdf-mobile-controls-row">
+            <Button variant="outline" size="sm" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
+              <ChevronLeft className="h-4 w-4 mr-2" /> Anterior
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Página {pageNumber} de {numPages || '?'}
+            </span>
+            <Button variant="outline" size="sm" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 0)}>
+              Próximo <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+          
+          <div className="pdf-mobile-button-grid">
+            <Button variant="secondary" size="icon" onClick={zoomIn} aria-label="Aumentar zoom">
+              <ZoomIn className="h-4 w-4" />
+            </Button>
+            <Button variant="secondary" size="icon" onClick={zoomOut} aria-label="Diminuir zoom">
+              <ZoomOut className="h-4 w-4" />
+            </Button>
+            <Button variant="secondary" size="icon" onClick={rotate} aria-label="Rotacionar">
+              <RotateCw className="h-4 w-4" />
+            </Button>
+            <Button variant="secondary" size="icon" onClick={toggleFullScreen} aria-label="Tela cheia">
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </div>
-      
-      {/* Page navigation and controls */}
-      <AnimatePresence>
-        {controlsVisible && <>
-            {/* Top bar with title and controls */}
-            <motion.div className="pdf-top-controls" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
-              <div className="flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-md border-b border-white/10">
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white text-sm font-medium truncate">{bookTitle}</h3>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={handleToggleFavorite} className={cn("text-white hover:bg-white/10", book && isFavorite(book.id) ? "text-amber-400" : "text-white")}>
-                        {book && isFavorite(book.id) ? <BookmarkCheck className="h-5 w-5" /> : <BookmarkPlus className="h-5 w-5" />}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {book && isFavorite(book.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                    </TooltipContent>
-                  </Tooltip>
-                  
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon" onClick={handleDownload} className="text-white hover:bg-white/10">
-                        <Download className="h-5 w-5" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Baixar PDF</TooltipContent>
-                  </Tooltip>
-                  
-                  <Drawer>
-                    <DrawerTrigger asChild>
-                      <Button variant="ghost" size="icon" className="text-white hover:bg-white/10">
-                        <Menu className="h-5 w-5" />
-                      </Button>
-                    </DrawerTrigger>
-                    <DrawerContent>
-                      <div className="p-4 max-h-[80vh] overflow-auto">
-                        <h3 className="text-lg font-bold mb-4">{bookTitle}</h3>
-                        {outline && outline.length > 0 ? <div className="space-y-2">
-                            {outline.map((item: any, index: number) => <div key={`outline-${index}`} className="cursor-pointer hover:bg-accent p-2 rounded" onClick={() => {
-                        if (item.dest) {
-                          setPageNumber(item.dest[0].num);
-                          setPageInputValue(item.dest[0].num.toString());
-                        }
-                      }}>
-                                <p className="font-medium">{item.title}</p>
-                                {item.items && item.items.length > 0 && <div className="pl-4 mt-1 space-y-1">
-                                    {item.items.map((subitem: any, subindex: number) => <div key={`subitem-${subindex}`} className="cursor-pointer hover:bg-accent p-1 rounded text-sm" onClick={e => {
-                            e.stopPropagation();
-                            if (subitem.dest) {
-                              setPageNumber(subitem.dest[0].num);
-                              setPageInputValue(subitem.dest[0].num.toString());
-                            }
-                          }}>
-                                        {subitem.title}
-                                      </div>)}
-                                  </div>}
-                              </div>)}
-                          </div> : <p className="text-muted-foreground">Este documento não possui um índice.</p>}
-                      </div>
-                    </DrawerContent>
-                  </Drawer>
-                </div>
-              </div>
-            </motion.div>
-            
-            {/* Bottom controls */}
-            <motion.div className="pdf-controls" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.2 }}>
-              <div className="flex flex-col px-4 py-3 bg-black/80 backdrop-blur-md border-t border-white/10">
-                {/* Progress bar */}
-                <div className="w-full mb-4">
-                  <Slider value={[progressPercentage]} onValueChange={handleSliderChange} step={1} className="pdf-progress" />
-                </div>
-                
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  {/* Page navigation */}
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={() => changePage(-1)} disabled={pageNumber <= 1} className="text-white hover:bg-white/10">
-                      <ChevronLeft className="h-5 w-5" />
-                    </Button>
-                    
-                    <div className="flex items-center bg-white/10 rounded px-1">
-                      <Input type="number" min={1} max={numPages || 1} value={pageInputValue} onChange={handlePageInputChange} onKeyDown={handlePageInputKeyDown} onBlur={handlePageInputBlur} className="w-12 h-8 text-white text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
-                      <span className="text-white/70 text-sm px-1">/ {numPages || '-'}</span>
-                    </div>
-                    
-                    <Button variant="ghost" size="sm" onClick={() => changePage(1)} disabled={!numPages || pageNumber >= numPages} className="text-white hover:bg-white/10">
-                      <ChevronRight className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  
-                  {/* Zoom and rotate controls */}
-                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="sm" onClick={zoomOut} disabled={scale <= 0.5} className="text-white hover:bg-white/10">
-                      <ZoomOut className="h-5 w-5" />
-                    </Button>
-                    
-                    <span className="text-white/80 text-sm min-w-[40px] text-center">
-                      {Math.round(scale * 100)}%
-                    </span>
-                    
-                    <Button variant="ghost" size="sm" onClick={zoomIn} disabled={scale >= 3} className="text-white hover:bg-white/10">
-                      <ZoomIn className="h-5 w-5" />
-                    </Button>
-                    
-                    <Button variant="ghost" size="sm" onClick={rotate} className="text-white hover:bg-white/10">
-                      <RotateCw className="h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </>}
-      </AnimatePresence>
-    </motion.div>;
+    </div>
+  );
 }
+
+export default BibliotecaPDFViewer;

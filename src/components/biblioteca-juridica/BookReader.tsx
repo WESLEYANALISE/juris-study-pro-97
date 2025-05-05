@@ -3,10 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { EnhancedPDFViewer } from './EnhancedPDFViewer';
-import { configurePdfWorker } from '@/lib/pdf-config';
-
-// Configure PDF worker when this module loads
-configurePdfWorker();
 
 interface BookReaderProps {
   book: LivroJuridico;
@@ -20,21 +16,16 @@ export const BookReader: React.FC<BookReaderProps> = ({ book, onClose }) => {
   useEffect(() => {
     if (!book || !book.pdf_url) return;
 
-    console.log('BookReader: Setting up with PDF URL:', book.pdf_url);
-    
-    // Ensure PDF.js is configured
-    configurePdfWorker();
-    
-    // Store the PDF URL 
+    // Store the PDF URL directly - the EnhancedPDFViewer will handle creating the full URL
     setPdfUrl(book.pdf_url);
     
     // Add class to body when PDF reader is open to prevent scrolling
     document.body.classList.add('pdf-viewer-open');
     
-    // Small delay to ensure smooth animation and PDF.js initialization
+    // Small delay to ensure smooth animation
     const timer = setTimeout(() => {
       setIsReady(true);
-    }, 200);
+    }, 100);
     
     return () => {
       // Remove class when PDF reader is closed

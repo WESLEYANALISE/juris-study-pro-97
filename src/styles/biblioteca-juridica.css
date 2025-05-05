@@ -1,10 +1,12 @@
 
-/* Minimized CSS for better performance */
-
-/* Essential scrollbar styling */
+/* Reset global scrollbar appearance */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
@@ -12,38 +14,160 @@
   border-radius: 20px;
 }
 
-/* Hide scrollbars where needed */
-.scrollbar-hide::-webkit-scrollbar {
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(139, 92, 246, 0.4);
+}
+
+/* Allow components to opt out of scrollbars */
+.no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-.scrollbar-hide {
+.no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* Book Card Effects - extremely simplified */
-.book-card {
+/* Kindle Book Carousel */
+.kindle-carousel {
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+}
+
+.kindle-book-card {
   cursor: pointer;
   border-radius: 6px;
   overflow: hidden;
+  transform-origin: center bottom;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.15s ease-out;
+  transition: all 0.2s ease-in-out;
 }
 
-.book-card:hover {
-  transform: translateY(-3px);
+.kindle-book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
 
-/* Simplified 3D effects */
+/* Add 3D transforms for book cards */
+.book-3d {
+  transform-style: preserve-3d;
+  perspective: 1500px;
+}
+
 .book-3d-cover {
+  transition: transform 0.5s ease;
+  transform-origin: left center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.book-3d:hover .book-3d-cover {
+  transform: rotateY(-25deg);
+  box-shadow: 20px 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Animated background for category cards */
+.category-card-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, rgba(139, 92, 246, 0.1), rgba(217, 70, 239, 0.1), rgba(139, 92, 246, 0.1));
+  background-size: 200% 200%;
+  animation: gradient-shift 5s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50% }
+  50% { background-position: 100% 50% }
+  100% { background-position: 0% 50% }
+}
+
+/* PDF Reader styles */
+.pdf-reader-container {
+  position: relative;
+  height: calc(100vh - 12rem);
+  overflow: hidden;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.pdf-controls {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
+}
+
+.pdf-page {
+  position: relative;
+  margin: 0 auto;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+/* Cinema mode */
+.cinema-mode {
+  position: fixed;
+  inset: 0;
+  background-color: black;
+  z-index: 100;
+}
+
+.cinema-mode .pdf-controls {
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cinema-mode:hover .pdf-controls {
+  opacity: 1;
+}
+
+/* Perspective for book cards */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Backface visibility utilities */
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease forwards;
+}
+
+/* Progress bar customization */
+.progress-bar-amber::-webkit-progress-value {
+  background-color: #fbbf24;
+}
+
+.progress-bar-amber::-moz-progress-bar {
+  background-color: #fbbf24;
 }
 
 /* Mobile optimization */
 @media (max-width: 768px) {
   .pdf-controls {
-    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
+    flex-direction: column;
+    gap: 0.5rem;
   }
   
   .pdf-mobile-controls {
@@ -52,24 +176,41 @@
     left: 0;
     right: 0;
     background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
+    backdrop-filter: blur(10px);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.5rem;
     z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
-/* Modern library design elements - reduced */
-.library-hero-gradient {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(79, 70, 229, 0.15) 100%);
-  border-radius: 1rem;
+/* Custom book styling */
+.book-card {
+  position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-/* Fix PDF viewing in fullscreen - critical for performance */
-.pdf-viewer-open {
-  position: fixed !important;
-  height: 100% !important;
-  width: 100% !important;
-  overflow: hidden !important;
-  touch-action: none;
+.book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Card rotation effect */
+.book-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.book-card:hover .book-card-inner {
+  transform: rotateY(10deg);
+}
+
+.book-front, .book-back {
+  backface-visibility: hidden;
+}
+
+.book-back {
+  transform: rotateY(180deg);
 }

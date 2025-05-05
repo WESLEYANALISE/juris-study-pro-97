@@ -1,186 +1,98 @@
 
-/* PDF Viewer Styles - Optimized for Performance */
-.pdf-viewer-open {
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  height: 100%;
-}
-
+/* PDF Viewer Styles */
 .pdf-container {
   height: 100vh;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  background-color: rgb(10, 10, 10);
-  overflow: hidden;
 }
 
 .pdf-content {
-  height: 100%;
-  width: 100%;
-  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
-  overflow: auto;
-  padding: 2rem 0;
-  /* Enable hardware acceleration */
-  transform: translateZ(0);
-  will-change: scroll-position;
-  scroll-padding-top: 2rem;
-  scroll-padding-bottom: 2rem;
+  justify-content: center;
+  padding: 1rem;
 }
 
 /* PDF.js specific styles */
-.pdf-document {
+.react-pdf__Document {
   display: flex;
   flex-direction: column;
   align-items: center;
-  max-width: 100%;
   margin: 0 auto;
-  padding: 0 1rem;
-  width: 100%;
-  contain: content;
 }
 
-.pdf-page {
-  margin: 0 0 1rem 0;
+.react-pdf__Page {
+  margin: 1rem 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   border-radius: 4px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
-  will-change: transform, opacity;
-  contain: paint layout;
-  /* Enable hardware acceleration */
-  transform: translateZ(0);
+  overflow: hidden;
 }
 
-.pdf-page canvas {
-  max-width: 100% !important;
-  height: auto !important;
-  max-height: calc(100vh - 120px) !important;
-  margin: 0 auto;
-  display: block;
+.react-pdf__Page__canvas {
   border-radius: 4px;
   background-color: white;
-  /* Shadow effect for pages */
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
-  transition: box-shadow 0.3s ease;
 }
 
-.pdf-page:hover canvas {
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* Controls for PDF viewer */
-.pdf-controls {
-  position: fixed;
+/* Mobile controls */
+.pdf-mobile-controls {
+  position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
+  background-color: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+  padding: 0.5rem;
   z-index: 10;
-  width: 100%;
-  /* Enable hardware acceleration */
-  transform: translateZ(0);
-  will-change: transform, opacity;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.pdf-top-controls {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  width: 100%;
-  /* Enable hardware acceleration */
-  transform: translateZ(0);
-  will-change: transform, opacity;
+.pdf-mobile-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-/* Disable default PDF.js buttons and overlays */
+.pdf-mobile-button-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+/* Helper to prevent scrolling when PDF is open */
+body.pdf-viewer-open {
+  overflow: hidden;
+}
+
+/* Disable default PDF.js buttons */
 .react-pdf__Page__annotations.annotationLayer,
 .react-pdf__Page__textContent.textLayer {
   display: none;
 }
 
-/* Page turning animation */
-@keyframes pageIn {
-  from { opacity: 0; transform: translateX(20px); }
-  to { opacity: 1; transform: translateX(0); }
+/* Loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-@keyframes pageOut {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(-20px); }
-}
-
-/* Loading animation */
-@keyframes pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-.loading-pulse {
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-/* Mobile optimizations */
+/* Mobile optimization */
 @media (max-width: 640px) {
   .pdf-content {
-    padding: 1rem 0;
+    padding: 0.5rem;
   }
   
-  .pdf-page canvas {
-    max-height: calc(100vh - 150px) !important;
-    max-width: 95% !important;
+  .react-pdf__Page {
+    margin: 0;
   }
   
-  .pdf-controls,
-  .pdf-top-controls {
-    padding-bottom: env(safe-area-inset-bottom, 0);
+  .pdf-mobile-controls {
+    padding: 0.5rem;
   }
 }
 
-/* 3D page turn effect */
-.page-3d-effect canvas {
-  transition: transform 0.5s ease;
-  transform-origin: left center;
-  box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.3);
-}
-
-.page-3d-effect:hover canvas {
-  transform: rotateY(-5deg) translateZ(0);
-  box-shadow: 20px 5px 30px rgba(0, 0, 0, 0.4);
-}
-
-/* Animation for PDF page navigation controls */
-.pdf-controls button, 
-.pdf-top-controls button {
-  transition: all 0.2s ease;
-}
-
-.pdf-controls button:hover, 
-.pdf-top-controls button:hover {
-  transform: translateY(-2px);
-}
-
-.pdf-controls button:active, 
-.pdf-top-controls button:active {
-  transform: translateY(0);
-}
-
-/* Enhanced visibility when current page is centered */
-.pdf-page:not(.opacity-50) canvas {
-  box-shadow: 0 0 40px rgba(139, 92, 246, 0.2); /* Purple glow for current page */
-}
-
-/* Progress indicator animations */
-@keyframes progressPulse {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
-}
-
-.pdf-progress-indicator {
-  animation: progressPulse 2s infinite;
+/* Make sure PDF page is responsive */
+.react-pdf__Page__canvas {
+  max-width: 100%;
+  height: auto !important;
 }

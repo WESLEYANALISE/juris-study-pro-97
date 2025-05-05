@@ -1,137 +1,90 @@
 
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
-import { componentTagger } from 'lovable-tagger';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react-swc";
+import path from "path";
+import { componentTagger } from "lovable-tagger";
+import { VitePWA } from 'vite-plugin-pwa';
 
+// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  server: {
+    host: "::",
+    port: 8080,
+  },
   plugins: [
-    react({
-      // Usar configuração de babel mais simples para evitar problemas de compatibilidade
-      babel: {
-        plugins: []
+    react(),
+    mode === 'development' &&
+    componentTagger(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['favicon.ico', 'robots.txt', 'placeholder.svg'],
+      manifest: {
+        name: 'Direito 360',
+        short_name: 'Direito 360',
+        description: 'Plataforma completa para estudantes e profissionais de direito',
+        theme_color: '#121212',
+        background_color: '#121212',
+        display: 'standalone',
+        icons: [
+          {
+            src: '/favicon.ico',
+            sizes: '48x48',
+            type: 'image/x-icon'
+          },
+          {
+            src: 'https://imgur.com/G15NKWM.png',
+            sizes: '192x192',
+            type: 'image/png'
+          }
+        ]
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /.*\.(?:png|jpg|jpeg|svg|gif|webp)/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'images-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              }
+            }
+          },
+          {
+            urlPattern: ({ url }) => {
+              return url.pathname.includes('vademecum');
+            },
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'vademecum-cache',
+              expiration: {
+                maxEntries: 200,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
+          }
+        ]
       }
-    }),
-    mode === 'development' && componentTagger(),
+    })
   ].filter(Boolean),
-  
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src'),
+      "@": path.resolve(__dirname, "./src"),
     },
   },
-  
-  // Optimize dependency pre-bundling
-  optimizeDeps: {
-    include: [
-      'react-pdf', 
-      'pdfjs-dist', 
-      'react-router-dom', 
-      'framer-motion', 
-      '@tanstack/react-query'
-    ],
-    esbuildOptions: {
-      // Improve tree-shaking
-      treeShaking: true,
-    }
-  },
-  
-  build: {
-    // Use faster minification
-    minify: 'esbuild',
-    
-    // Generate separate chunks for better caching
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Split PDF.js into a separate chunk to manage its size
-          pdfjs: ['react-pdf', 'pdfjs-dist'],
-          
-          // Split other large dependencies
-          core: [
-            'react', 
-            'react-dom', 
-            'react-router-dom',
-          ],
-          
-          // Separate state management
-          state: [
-            '@tanstack/react-query',
-            '@tanstack/react-query-persist-client',
-            '@tanstack/query-sync-storage-persister'
-          ],
-          
-          // Animations
-          animation: [
-            'framer-motion',
-          ],
-          
-          // UI libraries
-          ui: [
-            '@radix-ui/react-accordion',
-            '@radix-ui/react-alert-dialog',
-            '@radix-ui/react-aspect-ratio',
-            '@radix-ui/react-avatar',
-            '@radix-ui/react-checkbox',
-            '@radix-ui/react-collapsible',
-            '@radix-ui/react-context-menu',
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-hover-card',
-            '@radix-ui/react-icons',
-            '@radix-ui/react-label',
-            '@radix-ui/react-menubar',
-            '@radix-ui/react-navigation-menu',
-            '@radix-ui/react-popover',
-            '@radix-ui/react-progress',
-            '@radix-ui/react-radio-group',
-            '@radix-ui/react-scroll-area',
-            '@radix-ui/react-select',
-            '@radix-ui/react-separator',
-            '@radix-ui/react-slider',
-            '@radix-ui/react-slot',
-            '@radix-ui/react-switch',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-toast',
-            '@radix-ui/react-toggle',
-            '@radix-ui/react-toggle-group',
-            '@radix-ui/react-tooltip',
-            'lucide-react'
-          ]
-        },
-      },
-    },
-    
-    // Generate source maps for better debugging
-    sourcemap: mode === 'development',
-    
-    // Target modern browsers for smaller bundles
-    target: 'esnext',
-    
-    // Increase the warning limit to avoid noise
-    chunkSizeWarningLimit: 1000,
-  },
-  
-  server: {
-    port: 8080,
-    host: '::',
-    // Improve hot module replacement performance
-    hmr: {
-      overlay: true,
-    },
-  },
-  
-  // Cache dependencies during development
-  cacheDir: '.vite_cache',
-  
-  // Improve CSS handling
-  css: {
-    devSourcemap: true, // Enable CSS source maps
-  },
-  
-  // Improve previews
-  preview: {
-    port: 8080,
-    host: '::',
-  }
 }));

@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useRef } from 'react';
-import { Document, Page } from 'react-pdf';
+import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
@@ -18,10 +18,10 @@ import {
 } from 'lucide-react';
 import { useTouchGestures } from '@/hooks/use-touch-gestures';
 import { motion, AnimatePresence } from 'framer-motion';
-import { pdfjs } from '@/lib/pdf-config';
 import './PDFViewer.css';
 
-// pdfjs worker is now configured in pdf-config.ts
+// Set up the PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 interface PDFViewerProps {
   livro: {

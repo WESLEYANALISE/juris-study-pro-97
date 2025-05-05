@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Document, Page } from 'react-pdf';
+import { Document, Page, pdfjs } from 'react-pdf';
 import { 
   ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, 
   Bookmark, Heart, Download, Share2, StickyNote, Lightbulb, 
@@ -13,10 +13,9 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
-import { pdfjs } from '@/lib/pdf-config';
 import './BibliotecaPDFViewer.css';
 
-// pdfjs worker is now configured in pdf-config.ts
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface CinemaPDFViewerProps {
   pdfUrl: string;

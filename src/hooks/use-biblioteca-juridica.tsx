@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
-import { ProgressoLeitura } from '@/types/biblioteca-juridica';
+import { ProgressoLeitura, Marcador, Anotacao } from '@/types/biblioteca-juridica';
 import { useAuth } from '@/hooks/use-auth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -58,8 +58,8 @@ export function useBibliotecaProgresso() {
     loadProgressos();
   }, [user, loadProgressos]);
 
-  // Update reading progress
-  const saveReadingProgress = useCallback(async (livroId: string, paginaAtual: number) => {
+  // Update reading progress - renamed from updateProgress to saveReadingProgress for consistency
+  const saveReadingProgress = async (livroId: string, paginaAtual: number) => {
     if (!user) {
       console.log('User not authenticated, progress not saved');
       return;
@@ -118,10 +118,10 @@ export function useBibliotecaProgresso() {
       console.error('Error updating progress:', error);
       toast.error('Erro ao salvar progresso de leitura');
     }
-  }, [progressos, user]);
+  };
 
   // Toggle favorite status
-  const toggleFavorite = useCallback(async (livroId: string) => {
+  const toggleFavorite = async (livroId: string) => {
     if (!user) {
       toast.error('Você precisa estar logado para favoritar livros');
       return;
@@ -191,30 +191,30 @@ export function useBibliotecaProgresso() {
       console.error('Error toggling favorite:', error);
       toast.error('Erro ao atualizar favoritos');
     }
-  }, [progressos, user]);
+  };
 
   // Check if book is favorite
-  const isFavorite = useCallback((livroId: string): boolean => {
+  const isFavorite = (livroId: string): boolean => {
     return favoritos.includes(livroId);
-  }, [favoritos]);
+  };
 
   // Get reading progress for a book
-  const getReadingProgress = useCallback((livroId: string): ProgressoLeitura | null => {
+  const getReadingProgress = (livroId: string): ProgressoLeitura | null => {
     const progress = progressos.find(p => p.livro_id === livroId);
     return progress || null;
-  }, [progressos]);
+  };
   
-  // Get favorite books list
-  const getFavorites = useCallback((): string[] => {
+  // Get favorite books - fix: make it an actual function that returns an array
+  const getFavoriteBooks = (): string[] => {
     return favoritos;
-  }, [favoritos]);
+  };
   
   // For manual refetch
   const refetch = async () => {
     await loadProgressos();
   };
 
-  // Support methods
+  // Add these methods for API compatibility with the TS version
   const getLastReadPage = (): { bookId: string; page: number } | null => {
     let lastRead: { bookId: string; timestamp: string; page: number } | null = null;
     
@@ -259,9 +259,9 @@ export function useBibliotecaProgresso() {
     isLoading,
     getReadingProgress,
     isFavorite,
-    saveReadingProgress,
+    saveReadingProgress, // Renamed from updateProgress
     toggleFavorite,
-    getFavorites,
+    getFavoriteBooks,
     getLastReadPage,
     resetProgress,
     refetch,

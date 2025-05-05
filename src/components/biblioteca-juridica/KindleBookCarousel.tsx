@@ -1,10 +1,10 @@
 
-import React from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ChevronRight } from 'lucide-react';
+import { Book, BookOpen, ChevronRight } from 'lucide-react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BibliotecaBookCard } from './BibliotecaBookCard';
 import {
   Carousel,
   CarouselContent,
@@ -12,14 +12,16 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from '@/components/ui/carousel';
+import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { cn } from '@/lib/utils';
 
-interface KindleBookCarouselProps {
+interface BibliotecaBookCarouselProps {
   title: string;
+  description?: string;
   books: LivroJuridico[];
   onSelectBook: (book: LivroJuridico) => void;
-  description?: string;
-  showAll?: boolean;
   accent?: boolean;
+  showAll?: boolean;
   onShowAll?: () => void;
 }
 
@@ -28,100 +30,171 @@ export function KindleBookCarousel({
   description,
   books,
   onSelectBook,
-  showAll = true,
   accent = false,
+  showAll = true,
   onShowAll
-}: KindleBookCarouselProps) {
-  // Early return if no books
-  if (!books.length) return null;
+}: BibliotecaBookCarouselProps) {
+  const { getReadingProgress, isFavorite } = useBibliotecaProgresso();
   
-  // Animation variants for staggered animation
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.07
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { 
-      opacity: 1, 
-      y: 0
-    }
-  };
-
+  if (!books?.length) return null;
+  
   return (
-    <div className="mb-12">
-      {/* Header */}
-      <div className={`flex flex-col mb-4 ${accent ? "bg-primary/5 p-4 rounded-lg" : ""}`}>
-        <div className="flex justify-between items-center">
-          <motion.h2 
-            className="text-2xl font-bold"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
+    <div className="mb-10">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className={cn(
+            "text-2xl font-bold",
+            accent ? "text-primary" : ""
+          )}>
             {title}
-          </motion.h2>
-          
-          {showAll && books.length > 5 && onShowAll && (
-            <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" onClick={onShowAll}>
-              Ver todos ({books.length})
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          </h2>
+          {description && (
+            <p className="text-muted-foreground mt-1">{description}</p>
           )}
         </div>
         
-        {description && (
-          <motion.p 
-            className="text-sm text-muted-foreground mt-1"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+        {showAll && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1 text-primary" 
+            onClick={onShowAll}
           >
-            {description}
-          </motion.p>
+            VER TODOS
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         )}
       </div>
       
-      {/* Carousel */}
-      <Carousel
-        opts={{
-          align: "start",
-          loop: books.length > 5,
-        }}
-        className="w-full"
-      >
-        <CarouselContent>
-          {books.map((book, i) => (
-            <CarouselItem 
-              key={book.id || `book-${i}`} 
-              className="basis-1/2 xs:basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6 xl:basis-1/7 pl-4"
-            >
-              <motion.div
-                variants={itemVariants}
-                initial="hidden"
-                animate="show"
-                className="w-full"
-                style={{ contain: 'paint' }}
-              >
-                <BibliotecaBookCard 
-                  book={book} 
-                  onClick={onSelectBook} 
-                  showBadge={i < 3} 
-                  accent={accent} 
-                />
-              </motion.div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <CarouselPrevious className="hidden sm:flex" />
-        <CarouselNext className="hidden sm:flex" />
-      </Carousel>
+      <div className="relative">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: books.length > 4,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-4">
+            {books.map((book) => (
+              <BookCard 
+                key={book.id} 
+                book={book} 
+                onSelect={onSelectBook}
+                progress={getReadingProgress(book.id)}
+                isFavorited={isFavorite(book.id)}
+              />
+            ))}
+          </CarouselContent>
+          
+          <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 shadow-md" />
+          <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 shadow-md" />
+        </Carousel>
+      </div>
     </div>
+  );
+}
+
+interface BookCardProps {
+  book: LivroJuridico;
+  onSelect: (book: LivroJuridico) => void;
+  progress?: {
+    pagina_atual: number;
+    ultima_leitura: string | Date;
+    favorito: boolean;
+  } | null;
+  isFavorited?: boolean;
+}
+
+function BookCard({ book, onSelect, progress, isFavorited }: BookCardProps) {
+  const [isHovering, setIsHovering] = useState(false);
+  
+  return (
+    <CarouselItem className="pl-4 basis-full xs:basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+      <motion.div 
+        className="book-card h-full cursor-pointer perspective-1000"
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 300 }}
+        onHoverStart={() => setIsHovering(true)}
+        onHoverEnd={() => setIsHovering(false)}
+        onClick={() => onSelect(book)}
+      >
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted/30 border shadow-md">
+          {book.capa_url ? (
+            <img 
+              src={book.capa_url} 
+              alt={book.titulo}
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+              loading="lazy"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/50 to-background p-4">
+              <div className="text-center">
+                <BookOpen className="h-16 w-16 mx-auto mb-2 text-primary/30" />
+                <h3 className="font-medium text-sm line-clamp-3">{book.titulo}</h3>
+              </div>
+            </div>
+          )}
+          
+          {/* Progress indicator */}
+          {progress && progress.pagina_atual > 1 && book.total_paginas && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
+              <div 
+                className="h-full bg-primary" 
+                style={{ 
+                  width: `${Math.min(
+                    100, 
+                    (progress.pagina_atual / book.total_paginas) * 100
+                  )}%` 
+                }}
+              />
+            </div>
+          )}
+          
+          {/* Book info overlay */}
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-3 flex flex-col justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isHovering ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <h3 className="font-semibold text-white text-sm line-clamp-2">{book.titulo}</h3>
+            {book.categoria && (
+              <span className="text-xs text-white/80 mb-1">{book.categoria}</span>
+            )}
+            
+            {progress && progress.pagina_atual > 1 && (
+              <p className="text-xs text-primary mt-1">
+                {book.total_paginas 
+                  ? `${progress.pagina_atual} de ${book.total_paginas} páginas`
+                  : `Página ${progress.pagina_atual}`}
+              </p>
+            )}
+            
+            <Button 
+              size="sm" 
+              className="w-full mt-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(book);
+              }}
+            >
+              Ler agora
+            </Button>
+          </motion.div>
+          
+          {/* Badges */}
+          {isFavorited && (
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="bg-primary text-primary-foreground">
+                Favorito
+              </Badge>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </CarouselItem>
   );
 }
