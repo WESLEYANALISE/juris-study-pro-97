@@ -16,28 +16,20 @@ export function configurePdfWorker() {
     console.log('Configuring PDF worker, reactPdfJs available:', !!reactPdfJs);
     
     // Manually set PDF.js on window object to ensure it's globally accessible
-    if (!window.pdfjsLib) {
-      console.log('Setting pdfjsLib on window');
-      window.pdfjsLib = reactPdfJs;
-    }
-    
-    // Create GlobalWorkerOptions if it doesn't exist
-    if (!reactPdfJs.GlobalWorkerOptions) {
-      console.log('Creating GlobalWorkerOptions object');
-      reactPdfJs.GlobalWorkerOptions = {};
-    }
-    
-    // Set worker directly using the imported worker URL
-    console.log('Setting worker src to:', pdfWorker);
-    reactPdfJs.GlobalWorkerOptions.workerSrc = pdfWorker;
-    
-    // Also set on window object for redundancy
-    if (window.pdfjsLib && !window.pdfjsLib.GlobalWorkerOptions) {
-      window.pdfjsLib.GlobalWorkerOptions = {};
-    }
-    
-    if (window.pdfjsLib) {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+    if (typeof window !== 'undefined') {
+      if (!window.pdfjsLib) {
+        console.log('Setting pdfjsLib on window');
+        window.pdfjsLib = reactPdfJs;
+      }
+      
+      // Set worker directly using the imported worker URL
+      console.log('Setting worker src to:', pdfWorker);
+      reactPdfJs.GlobalWorkerOptions.workerSrc = pdfWorker;
+      
+      // Also set on window object for redundancy
+      if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+      }
     }
     
     return true;
