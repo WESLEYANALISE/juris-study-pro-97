@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink, Download } from "lucide-react";
@@ -11,7 +11,28 @@ interface DocxViewerProps {
 
 export function DocxViewer({ url, onBack }: DocxViewerProps) {
   const [isLoading, setIsLoading] = useState(true);
-  const googleDocsViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+  const [iframeKey, setIframeKey] = useState(Date.now()); // Used to force reload when needed
+  
+  // Cache the Google Docs Viewer URL to avoid re-encoding
+  const googleDocsViewerUrl = React.useMemo(() => {
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+  }, [url]);
+  
+  // Retry logic for Google Docs Viewer which sometimes fails to load
+  useEffect(() => {
+    let timeout: number;
+    
+    // If still loading after 10 seconds, try to reload the iframe
+    if (isLoading) {
+      timeout = window.setTimeout(() => {
+        setIframeKey(Date.now());
+      }, 10000);
+    }
+    
+    return () => {
+      if (timeout) window.clearTimeout(timeout);
+    };
+  }, [isLoading, iframeKey]);
   
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col">
@@ -50,12 +71,14 @@ export function DocxViewer({ url, onBack }: DocxViewerProps) {
       
       <div className="flex-1 relative">
         {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/80 z-10">
             <LoadingSpinner size="lg" />
+            <p className="mt-4 text-sm text-muted-foreground">Carregando documento...</p>
           </div>
         )}
         
         <iframe 
+          key={iframeKey}
           src={googleDocsViewerUrl}
           className="w-full h-full"
           onLoad={() => setIsLoading(false)}

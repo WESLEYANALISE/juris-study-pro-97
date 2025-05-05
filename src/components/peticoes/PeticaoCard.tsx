@@ -3,7 +3,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, DownloadCloud } from "lucide-react";
-import { motion } from "framer-motion";
 import { memo } from "react";
 
 interface PeticaoCardProps {
@@ -19,24 +18,18 @@ interface PeticaoCardProps {
   onView: (url: string) => void;
 }
 
+// Using memo to prevent unnecessary re-renders
 export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: PeticaoCardProps) {
   const isDocx = peticao.link.toLowerCase().endsWith('.docx') || 
                 peticao.link.toLowerCase().includes('doc') || 
                 peticao.link.includes('document/d/');
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: 1.02 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.2 }}
-      className="h-full"
-    >
-      <Card className="flex flex-col h-full overflow-hidden border border-white/5 bg-gradient-to-br from-background/60 to-background/90 shadow-lg hover:shadow-xl hover:shadow-purple-900/10 transition-all duration-300">
+    <div className="h-full transition-transform duration-200 hover:scale-[1.01]">
+      <Card className="flex flex-col h-full overflow-hidden border border-white/5 bg-gradient-to-br from-background/60 to-background/90 shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex flex-col gap-2">
-            <Badge variant="outline" className="w-fit animate-fade-in text-xs bg-purple-900/20">{peticao.area}</Badge>
+            <Badge variant="outline" className="w-fit bg-purple-900/20">{peticao.area}</Badge>
             <h3 className="text-lg font-semibold line-clamp-1 text-gradient">{peticao.tipo}</h3>
             {peticao.sub_area && (
               <Badge variant="secondary" className="w-fit">
@@ -55,25 +48,20 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
           <p className="text-muted-foreground text-sm line-clamp-3">{peticao.descricao}</p>
           
           {peticao.tags && peticao.tags.length > 0 && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="flex flex-wrap gap-1 mt-3"
-            >
-              {peticao.tags.map((tag) => (
+            <div className="flex flex-wrap gap-1 mt-3">
+              {peticao.tags.slice(0, 3).map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
                 </Badge>
               ))}
-            </motion.div>
+            </div>
           )}
         </CardContent>
         
         <CardFooter className="pt-2 border-t border-white/5 bg-card/30">
           <div className="flex gap-2 w-full">
             <Button 
-              className="flex-1 gap-2 hover:gap-3 transition-all" 
+              className="flex-1 gap-2" 
               onClick={() => onView(peticao.link)}
               variant="gradient"
             >
@@ -91,6 +79,6 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
           </div>
         </CardFooter>
       </Card>
-    </motion.div>
+    </div>
   );
 });

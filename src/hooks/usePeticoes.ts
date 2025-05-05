@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -34,6 +33,8 @@ interface UsePeticoesOptions {
     tags: string[];
     search: string;
   };
+  page?: number;
+  pageSize?: number;
 }
 
 export function usePeticoes(options: UsePeticoesOptions = {}) {
@@ -45,15 +46,48 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
     search: "",
     ...options.initialFilters
   });
+  
+  const [page, setPage] = useState(options.page || 1);
+  const pageSize = options.pageSize || 12;
+  
+  const [totalCount, setTotalCount] = useState(0);
 
   // Use React Query for data fetching with caching
-  const { data: peticoes = [], isLoading, error, refetch } = useQuery({
-    queryKey: ["peticoes"],
+  const { data: peticoes = [], isLoading, error, refetch, isFetching } = useQuery({
+    queryKey: ["peticoes", page, pageSize, filters],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
+        // First, get the total count for pagination
+        const { count, error: countError } = await supabase
+          .from("peticoes")
+          .select("*", { count: "exact", head: true });
+        
+        if (countError) {
+          throw countError;
+        }
+        
+        setTotalCount(count || 0);
+        
+        // Build the query with filters
+        let query = supabase
           .from("peticoes")
           .select("*");
+        
+        // Apply filters if provided
+        if (filters.area && filters.area !== "all") {
+          query = query.eq("area", filters.area);
+        }
+        
+        if (filters.tipo && filters.tipo !== "all") {
+          query = query.eq("tipo", filters.tipo);
+        }
+        
+        // Apply pagination
+        query = query
+          .range((page - 1) * pageSize, page * pageSize - 1)
+          .order("area", { ascending: true });
+        
+        const { data, error } = await query;
 
         if (error) {
           throw error;
@@ -90,27 +124,21 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
   });
 
   const filteredPeticoes = peticoes.filter((peticao) => {
-    const matchesSearch = filters.search === "" || 
+    const matchesSearch = !filters.search || 
       peticao.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
       peticao.area.toLowerCase().includes(filters.search.toLowerCase()) ||
       (peticao.descricao && peticao.descricao.toLowerCase().includes(filters.search.toLowerCase()));
     
-    const matchesArea = filters.area === "" || filters.area === "all" || 
-      peticao.area === filters.area;
-    
-    const matchesSubArea = filters.subArea === "" || filters.subArea === "all" || 
+    const matchesSubArea = !filters.subArea || filters.subArea === "all" || 
       (peticao.sub_area && peticao.sub_area === filters.subArea);
-    
-    const matchesTipo = filters.tipo === "" || filters.tipo === "all" || 
-      peticao.tipo === filters.tipo;
     
     const matchesTags = filters.tags.length === 0 || 
       (peticao.tags && filters.tags.every(tag => peticao.tags?.includes(tag)));
     
-    return matchesSearch && matchesArea && matchesSubArea && matchesTipo && matchesTags;
+    return matchesSearch && matchesSubArea && matchesTags;
   });
 
-  // Group petições by area for display
+  // Group petições by area for display efficiently
   const peticoesByArea: Record<string, Peticao[]> = {};
   filteredPeticoes.forEach(peticao => {
     if (!peticoesByArea[peticao.area]) {
@@ -125,6 +153,9 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
     count: areaPeticoes.length
   }));
 
+  // Calculate total pages for pagination
+  const totalPages = Math.ceil(totalCount / pageSize);
+
   return {
     peticoes: filteredPeticoes,
     peticoesByArea,
@@ -132,9 +163,15 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
     filters,
     setFilters,
     isLoading,
+    isFetching,
     error,
     refetch,
-    totalPeticoes: peticoes.length,
-    totalAreas: Object.keys(peticoesByArea).length
+    totalPeticoes: totalCount,
+    totalAreas: Object.keys(peticoesByArea).length,
+    // Pagination
+    page,
+    setPage,
+    totalPages,
+    pageSize
   };
 }

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -11,6 +11,7 @@ interface PeticaoViewerProps {
 }
 
 export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
+  const [isLoading, setIsLoading] = useState(true);
   const isDocx = url.toLowerCase().endsWith('.docx') || 
                 url.toLowerCase().includes('doc') || 
                 url.includes('document/d/');
@@ -43,10 +44,16 @@ export function PeticaoViewer({ url, onBack }: PeticaoViewerProps) {
       </div>
       
       <div className="flex-1 relative">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-background/80 z-10">
+            <LoadingSpinner size="lg" />
+          </div>
+        )}
         <iframe 
           src={url} 
           className="w-full h-full"
           title="PDF Viewer"
+          onLoad={() => setIsLoading(false)}
         ></iframe>
       </div>
     </div>

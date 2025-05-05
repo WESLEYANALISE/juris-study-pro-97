@@ -2,18 +2,11 @@
 import { useState, lazy, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { PeticaoSearch } from "@/components/peticoes/PeticaoSearch";
 import { Button } from "@/components/ui/button";
 import { FileText, DownloadCloud, Eye, BookOpen, Filter, BarChart3, History, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { DataCard } from "@/components/ui/data-card";
 import { JuridicalCard } from "@/components/ui/juridical-card";
 import { PeticaoCard } from "@/components/peticoes/PeticaoCard";
@@ -22,6 +15,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePeticoes } from "@/hooks/usePeticoes";
 import { useRecentPeticoes } from "@/hooks/useRecentPeticoes";
 import { PeticaoFilters } from "@/components/peticoes/PeticaoFilters";
+import { DataPagination } from "@/components/ui/data-pagination";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetContent,
@@ -37,13 +33,16 @@ const PeticaoViewer = lazy(() => import("@/components/peticoes/PeticaoViewerExpo
 })));
 
 const Peticoes = () => {
+  // Basic states
   const [searchQuery, setSearchQuery] = useState("");
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedPeticaoUrl, setSelectedPeticaoUrl] = useState<string | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
   const navigate = useNavigate();
 
-  // Use our custom hooks
+  // Use our custom hooks with pagination
   const { 
     peticoes, 
     peticoesByArea, 
@@ -51,8 +50,10 @@ const Peticoes = () => {
     filters, 
     setFilters, 
     isLoading, 
+    isFetching,
     totalPeticoes, 
-    totalAreas 
+    totalAreas,
+    totalPages
   } = usePeticoes({
     initialFilters: {
       area: "", 
@@ -60,7 +61,9 @@ const Peticoes = () => {
       tipo: "", 
       tags: [],
       search: searchQuery
-    }
+    },
+    page: currentPage,
+    pageSize
   });
 
   const { recentItems, addRecentItem, clearRecentItems } = useRecentPeticoes();
@@ -85,10 +88,17 @@ const Peticoes = () => {
     setSelectedPeticaoUrl(null);
   };
 
-  // Handle search updates
+  // Handle search updates - with debounce
   const updateSearchQuery = (value: string) => {
     setSearchQuery(value);
     setFilters(prev => ({ ...prev, search: value }));
+  };
+  
+  // Handle page changes
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when changing page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -116,11 +126,7 @@ const Peticoes = () => {
                 </p>
               </div>
               
-              <motion.div 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex flex-wrap gap-2"
-              >
+              <div className="flex flex-wrap gap-2">
                 <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="sm" className="gap-2">
@@ -144,7 +150,7 @@ const Peticoes = () => {
                   <BarChart3 className="h-4 w-4" />
                   Estatísticas
                 </Button>
-              </motion.div>
+              </div>
             </div>
             
             {/* Statistics cards */}
@@ -195,9 +201,7 @@ const Peticoes = () => {
             
             <TabsContent value="areas">
               {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <LoadingSpinner />
-                </div>
+                <LoadingState variant="skeleton" count={6} />
               ) : Object.keys(peticoesByArea).length === 0 ? (
                 <div className="text-center py-12 bg-card/30 backdrop-blur-sm rounded-lg border border-white/5 shadow-lg">
                   <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
@@ -222,55 +226,79 @@ const Peticoes = () => {
                   )}
                 </div>
               ) : (
-                <div className="space-y-8">
-                  {Object.entries(peticoesByArea).map(([area, areaPeticoes]) => (
-                    <motion.section 
-                      key={area}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4 }}
-                      className="space-y-4"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <h2 className="text-xl font-semibold">{area}</h2>
-                          <Badge variant="outline" className="ml-2">
-                            {areaPeticoes.length} {areaPeticoes.length === 1 ? 'modelo' : 'modelos'}
-                          </Badge>
-                        </div>
-                        
-                        <Button 
-                          variant="ghost" 
-                          size="sm"
-                          onClick={() => setFilters(prev => ({
-                            ...prev,
-                            area: prev.area === area ? "" : area
-                          }))}
-                          className="text-xs"
+                <ScrollArea className="pr-4">
+                  <div className="space-y-8">
+                    <AnimatePresence mode="wait">
+                      {Object.entries(peticoesByArea).map(([area, areaPeticoes]) => (
+                        <motion.section 
+                          key={area}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -10 }}
+                          transition={{ duration: 0.3 }}
+                          className="space-y-4"
                         >
-                          {filters.area === area ? 'Limpar filtro' : 'Filtrar por esta área'}
-                        </Button>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {areaPeticoes.map((peticao) => (
-                          <PeticaoCard
-                            key={peticao.id}
-                            peticao={{
-                              id: peticao.id,
-                              area: peticao.area,
-                              sub_area: peticao.sub_area,
-                              tipo: peticao.tipo,
-                              link: peticao.arquivo_url,
-                              descricao: peticao.descricao || '',
-                              tags: peticao.tags
-                            }}
-                            onView={() => handleViewPeticao(peticao)}
-                          />
-                        ))}
-                      </div>
-                    </motion.section>
-                  ))}
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <h2 className="text-xl font-semibold">{area}</h2>
+                              <Badge variant="outline" className="ml-2">
+                                {areaPeticoes.length} {areaPeticoes.length === 1 ? 'modelo' : 'modelos'}
+                              </Badge>
+                            </div>
+                            
+                            <Button 
+                              variant="ghost" 
+                              size="sm"
+                              onClick={() => setFilters(prev => ({
+                                ...prev,
+                                area: prev.area === area ? "" : area
+                              }))}
+                              className="text-xs"
+                            >
+                              {filters.area === area ? 'Limpar filtro' : 'Filtrar por esta área'}
+                            </Button>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {areaPeticoes.map((peticao) => (
+                              <PeticaoCard
+                                key={peticao.id}
+                                peticao={{
+                                  id: peticao.id,
+                                  area: peticao.area,
+                                  sub_area: peticao.sub_area,
+                                  tipo: peticao.tipo,
+                                  link: peticao.arquivo_url,
+                                  descricao: peticao.descricao || '',
+                                  tags: peticao.tags
+                                }}
+                                onView={() => handleViewPeticao(peticao)}
+                              />
+                            ))}
+                          </div>
+                        </motion.section>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </ScrollArea>
+              )}
+              
+              {/* Show pagination only when needed */}
+              {totalPages > 1 && (
+                <div className="mt-6">
+                  <DataPagination 
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                    className="justify-center"
+                  />
+                </div>
+              )}
+              
+              {/* Show loading indicator when fetching new page */}
+              {isFetching && !isLoading && (
+                <div className="flex justify-center my-4">
+                  <LoadingSpinner size="sm" />
                 </div>
               )}
             </TabsContent>
@@ -369,9 +397,7 @@ const Peticoes = () => {
             
             <TabsContent value="todos">
               {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <LoadingSpinner />
-                </div>
+                <LoadingState variant="skeleton" count={12} />
               ) : !peticoes || peticoes.length === 0 ? (
                 <div className="text-center py-12 bg-card/30 backdrop-blur-sm rounded-lg border border-white/5 shadow-lg">
                   <FileText className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
@@ -381,37 +407,58 @@ const Peticoes = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {peticoes.map((peticao) => (
-                    <Card key={peticao.id} className="h-full flex flex-col bg-gradient-to-br from-background/60 to-background/90 border-white/5 shadow-lg hover:shadow-xl transition-all duration-300">
-                      <CardHeader>
-                        <CardTitle>{peticao.tipo}</CardTitle>
-                        <CardDescription>{peticao.area}</CardDescription>
-                      </CardHeader>
-                      <CardContent className="flex-grow">
-                        {peticao.descricao || "Modelo de petição para uso profissional."}
-                      </CardContent>
-                      <CardFooter className="border-t border-white/5 bg-black/20 pt-4">
-                        <div className="flex gap-2 w-full">
-                          <Button
-                            onClick={() => handleViewPeticao(peticao)}
-                            className="flex-1"
-                            variant="default"
-                          >
-                            <Eye className="mr-2 h-4 w-4" />
-                            Visualizar
-                          </Button>
-                          <Button
-                            onClick={() => window.open(peticao.arquivo_url, "_blank")}
-                            variant="outline"
-                          >
-                            <DownloadCloud className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {peticoes.map((peticao) => (
+                      <Card key={peticao.id} className="h-full flex flex-col bg-gradient-to-br from-background/60 to-background/90 border-white/5 shadow-lg hover:shadow-xl transition-all duration-300">
+                        <CardHeader>
+                          <CardTitle>{peticao.tipo}</CardTitle>
+                          <CardDescription>{peticao.area}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                          {peticao.descricao || "Modelo de petição para uso profissional."}
+                        </CardContent>
+                        <CardFooter className="border-t border-white/5 bg-black/20 pt-4">
+                          <div className="flex gap-2 w-full">
+                            <Button
+                              onClick={() => handleViewPeticao(peticao)}
+                              className="flex-1"
+                              variant="default"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              Visualizar
+                            </Button>
+                            <Button
+                              onClick={() => window.open(peticao.arquivo_url, "_blank")}
+                              variant="outline"
+                            >
+                              <DownloadCloud className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </CardFooter>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  {/* Pagination for "todos" tab */}
+                  {totalPages > 1 && (
+                    <div className="mt-6">
+                      <DataPagination 
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                        className="justify-center"
+                      />
+                    </div>
+                  )}
+                  
+                  {/* Show loading indicator when fetching new page */}
+                  {isFetching && !isLoading && (
+                    <div className="flex justify-center my-4">
+                      <LoadingSpinner size="sm" />
+                    </div>
+                  )}
+                </>
               )}
             </TabsContent>
           </Tabs>
