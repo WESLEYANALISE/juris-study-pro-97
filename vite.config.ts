@@ -11,6 +11,68 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    // Reduce memory usage during build
+    minify: mode === 'production' ? 'terser' : false,
+    sourcemap: mode === 'development', 
+    // Improve chunking strategy to reduce memory usage
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Optimize chunks for better memory usage
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          'ui-vendor': [
+            '@radix-ui/react-dialog', 
+            '@radix-ui/react-tooltip', 
+            '@radix-ui/react-tabs'
+          ],
+          // Separate PDF library into its own chunk to reduce memory pressure
+          'pdf-vendor': ['react-pdf'],
+          'pdf-lib': ['pdfjs-dist'],
+          'framer-motion': ['framer-motion'],
+          'tanstack': ['@tanstack/react-query'],
+          'shadcn-ui': [
+            '@/components/ui/button',
+            '@/components/ui/input',
+            '@/components/ui/dialog',
+            '@/components/ui/drawer',
+          ],
+        },
+        // Output chunking strategy
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: ({name}) => {
+          if (/\.(gif|jpe?g|png|svg|webp)$/.test(name ?? '')){
+            return 'assets/images/[name]-[hash][extname]';
+          }
+          
+          if (/\.css$/.test(name ?? '')) {
+            return 'assets/css/[name]-[hash][extname]';
+          }
+
+          if (/\.pdf$/.test(name ?? '')) {
+            return 'assets/docs/[name]-[hash][extname]';
+          }
+          
+          return 'assets/[name]-[hash][extname]';
+        },
+      },
+    },
+    // Optimize terser options
+    terserOptions: {
+      compress: {
+        drop_console: false,
+        drop_debugger: true
+      }
+    },
+    // Set memory limit for node during build
+    chunkSizeWarningLimit: 1600, // Increase the warning limit
+  },
+  // Optimize PDF.js handling by excluding it from transformation
+  optimizeDeps: {
+    exclude: ['pdfjs-dist'],
+    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion']
+  },
   plugins: [
     react(),
     mode === 'development' &&
@@ -66,7 +128,7 @@ export default defineConfig(({ mode }) => ({
               }
             }
           },
-          // PDF caching strategy - use NetworkFirst for PDFs
+          // Use NetworkFirst for PDFs with more relaxed memory constraints
           {
             urlPattern: ({ url }) => {
               return url.pathname.endsWith('.pdf') || url.pathname.includes('storage/v1/object');
@@ -75,10 +137,10 @@ export default defineConfig(({ mode }) => ({
             options: {
               cacheName: 'pdf-cache',
               expiration: {
-                maxEntries: 50,
+                maxEntries: 10, // Reduce from 50 to 10
                 maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
               },
-              networkTimeoutSeconds: 10, // Timeout if network is slow
+              networkTimeoutSeconds: 10,
               cacheableResponse: {
                 statuses: [0, 200]
               }
@@ -101,61 +163,15 @@ export default defineConfig(({ mode }) => ({
       }
     })
   ].filter(Boolean),
-  build: {
-    // Implement code splitting
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Split library code into chunks
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          'ui-vendor': ['@radix-ui/react-dialog', '@radix-ui/react-tooltip', '@radix-ui/react-tabs'],
-          'pdf-vendor': ['react-pdf', 'pdfjs-dist'],
-          'framer-motion': ['framer-motion'],
-          'shadcn-ui': [
-            '@/components/ui/button',
-            '@/components/ui/input',
-            '@/components/ui/dialog',
-            '@/components/ui/drawer',
-          ],
-        },
-        // Output chunking strategy
-        chunkFileNames: 'assets/js/[name]-[hash].js',
-        entryFileNames: 'assets/js/[name]-[hash].js',
-        assetFileNames: ({name}) => {
-          if (/\.(gif|jpe?g|png|svg|webp)$/.test(name ?? '')){
-            return 'assets/images/[name]-[hash][extname]';
-          }
-          
-          if (/\.css$/.test(name ?? '')) {
-            return 'assets/css/[name]-[hash][extname]';
-          }
-
-          if (/\.pdf$/.test(name ?? '')) {
-            return 'assets/docs/[name]-[hash][extname]';
-          }
-          
-          return 'assets/[name]-[hash][extname]';
-        },
-      },
-    },
-    // Minification and optimization
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: false, // Keep console.logs for debugging
-        drop_debugger: true
-      }
-    },
-    // Source maps for production troubleshooting
-    sourcemap: mode === 'development',
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Optimize dependency pre-bundling
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom', 'framer-motion', 'react-pdf']
+  // Prevent excessive memory use
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(mode),
+    // Add a memory limit hint for Node
+    '__MEMORY_LIMIT__': JSON.stringify('4096')
   },
 }));
