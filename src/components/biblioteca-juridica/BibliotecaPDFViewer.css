@@ -1,113 +1,98 @@
 
-/* PDF Viewer Container */
-.pdf-document-container {
+/* PDF Viewer Styles */
+.pdf-container {
+  height: 100vh;
+  width: 100%;
+}
+
+.pdf-content {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-  user-select: none;
+  padding: 1rem;
 }
 
-/* PDF Document */
-.pdf-document {
-  max-height: 100%;
-  width: 100%;
+/* PDF.js specific styles */
+.react-pdf__Document {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-}
-
-/* PDF Page */
-.pdf-page {
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
-  border-radius: 4px;
-  transition: all 0.3s ease;
   margin: 0 auto;
 }
 
-/* Canvas adjustments for proper sizing */
-.pdf-page canvas {
-  height: auto !important;
-  width: 100% !important;
-  max-height: calc(100vh - 40px);
-  object-fit: contain;
+.react-pdf__Page {
+  margin: 1rem 0;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
 }
 
-/* Animation for page turning */
-.page-turn-enter {
-  opacity: 0;
-  transform: translateX(30px);
+.react-pdf__Page__canvas {
+  border-radius: 4px;
+  background-color: white;
 }
 
-.page-turn-enter-active {
-  opacity: 1;
-  transform: translateX(0);
-  transition: opacity 300ms, transform 300ms;
+/* Mobile controls */
+.pdf-mobile-controls {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+  padding: 0.5rem;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 }
 
-.page-turn-exit {
-  opacity: 1;
-  transform: translateX(0);
+.pdf-mobile-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
 }
 
-.page-turn-exit-active {
-  opacity: 0;
-  transform: translateX(-30px);
-  transition: opacity 300ms, transform 300ms;
+.pdf-mobile-button-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
 }
 
-/* Loading indicator */
-@keyframes loading-pulse {
-  0% { opacity: 0.6; }
-  50% { opacity: 1; }
-  100% { opacity: 0.6; }
+/* Helper to prevent scrolling when PDF is open */
+body.pdf-viewer-open {
+  overflow: hidden;
 }
 
-.loading-pulse {
-  animation: loading-pulse 1.5s infinite;
-}
-
-/* Disable default PDF viewer UI elements */
+/* Disable default PDF.js buttons */
 .react-pdf__Page__annotations.annotationLayer,
 .react-pdf__Page__textContent.textLayer {
   display: none;
 }
 
-/* Media queries for mobile optimization */
+/* Loading spinner */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Mobile optimization */
 @media (max-width: 640px) {
-  .pdf-page {
-    margin: 0;
-    border-radius: 0;
-    box-shadow: none;
+  .pdf-content {
+    padding: 0.5rem;
   }
   
-  .pdf-page canvas {
-    max-height: 100vh;
+  .react-pdf__Page {
+    margin: 0;
+  }
+  
+  .pdf-mobile-controls {
+    padding: 0.5rem;
   }
 }
 
-/* Fix for fullscreen mode */
-.pdf-document-container:-webkit-full-screen {
-  background-color: black;
-  width: 100vw;
-  height: 100vh;
-}
-
-.pdf-document-container:-moz-full-screen {
-  background-color: black;
-  width: 100vw;
-  height: 100vh;
-}
-
-.pdf-document-container:-ms-fullscreen {
-  background-color: black;
-  width: 100vw;
-  height: 100vh;
-}
-
-.pdf-document-container:fullscreen {
-  background-color: black;
-  width: 100vw;
-  height: 100vh;
+/* Make sure PDF page is responsive */
+.react-pdf__Page__canvas {
+  max-width: 100%;
+  height: auto !important;
 }

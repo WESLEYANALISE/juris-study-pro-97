@@ -7,7 +7,7 @@ import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Book, BookOpen, FileText, Search, Loader2 } from 'lucide-react';
+import { Book, BookOpen, FileText, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { Container } from '@/components/ui/container';
@@ -24,7 +24,6 @@ interface Livro extends LivroJuridico {
   capa_url: string | null;
   descricao: string | null;
   total_paginas: number | null;
-  autor: string | null;
 }
 
 export default function BibliotecaJuridica() {
@@ -64,8 +63,7 @@ export default function BibliotecaJuridica() {
             pdf_url: item.pdf_url,
             capa_url: item.capa_url,
             descricao: item.descricao,
-            total_paginas: item.total_paginas,
-            autor: item.autor
+            total_paginas: item.total_paginas
           }));
           
           setLivros(convertedData);
@@ -101,8 +99,7 @@ export default function BibliotecaJuridica() {
       result = result.filter(livro => 
         livro.titulo.toLowerCase().includes(query) || 
         livro.categoria.toLowerCase().includes(query) || 
-        (livro.descricao && livro.descricao.toLowerCase().includes(query)) ||
-        (livro.autor && livro.autor.toLowerCase().includes(query))
+        (livro.descricao && livro.descricao.toLowerCase().includes(query))
       );
     }
     
@@ -146,75 +143,6 @@ export default function BibliotecaJuridica() {
   function handleClosePDF() {
     setSelectedBook(null);
   }
-
-  const renderContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex flex-col items-center justify-center py-24">
-          <Loader2 className="h-12 w-12 text-primary animate-spin mb-4" />
-          <p className="text-lg font-medium">Carregando biblioteca...</p>
-          <p className="text-muted-foreground">Aguarde enquanto buscamos os livros disponíveis</p>
-        </div>
-      );
-    }
-
-    if (searchQuery && filteredLivros.length === 0) {
-      return (
-        <motion.div 
-          className="flex flex-col items-center justify-center py-24"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Book className="h-16 w-16 text-muted-foreground mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
-          <p className="text-muted-foreground text-center max-w-md">
-            Não encontramos nenhum livro correspondente aos seus critérios de busca.
-          </p>
-          <Button 
-            className="mt-6"
-            onClick={() => setSearchQuery('')}
-          >
-            Limpar busca
-          </Button>
-        </motion.div>
-      );
-    }
-
-    return (
-      <div className="space-y-12">
-        {/* Favorites Section */}
-        {favoriteBooks.length > 0 && (
-          <KindleBookCarousel
-            title="Seus Favoritos"
-            description="Livros que você marcou como favoritos"
-            books={favoriteBooks}
-            onSelectBook={handleOpenPDF}
-            accent={true}
-          />
-        )}
-        
-        {/* Search Results or Categories */}
-        {searchQuery ? (
-          <KindleBookCarousel
-            title="Resultados da Busca"
-            books={filteredLivros}
-            onSelectBook={handleOpenPDF}
-            showAll={true}
-          />
-        ) : (
-          Object.entries(booksByCategory).map(([category, books]) => (
-            <KindleBookCarousel
-              key={category}
-              title={category}
-              books={books}
-              onSelectBook={handleOpenPDF}
-            />
-          ))
-        )}
-      </div>
-    );
-  };
 
   return (
     <JuridicalBackground variant="books" opacity={0.03}>
@@ -264,7 +192,7 @@ export default function BibliotecaJuridica() {
               value={currentTab}
               onValueChange={setCurrentTab}
             >
-              <TabsList className="mb-6 overflow-x-auto flex-wrap">
+              <TabsList className="mb-6">
                 <TabsTrigger value="todos" className="min-w-fit">
                   <Book className="mr-1 h-4 w-4" />
                   Todos
@@ -288,8 +216,57 @@ export default function BibliotecaJuridica() {
                 ))}
               </TabsList>
 
-              {/* Main content */}
-              {renderContent()}
+              {/* Main carousel content */}
+              <div className="space-y-12">
+                {/* Favorites Section */}
+                {favoriteBooks.length > 0 && (
+                  <KindleBookCarousel
+                    title="Seus Favoritos"
+                    description="Livros que você marcou como favoritos"
+                    books={favoriteBooks}
+                    onSelectBook={handleOpenPDF}
+                    accent={true}
+                  />
+                )}
+                
+                {/* Categories Sections */}
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="text-muted-foreground">Carregando biblioteca...</p>
+                  </div>
+                ) : searchQuery ? (
+                  // Search Results
+                  <>
+                    {filteredLivros.length > 0 ? (
+                      <KindleBookCarousel
+                        title="Resultados da Busca"
+                        books={filteredLivros}
+                        onSelectBook={handleOpenPDF}
+                        showAll={false}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-16">
+                        <Book className="h-16 w-16 text-muted-foreground mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
+                        <p className="text-muted-foreground text-center max-w-md">
+                          Não encontramos nenhum livro correspondente aos seus critérios de busca.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // Categories
+                  Object.entries(booksByCategory).map(([category, books]) => (
+                    <KindleBookCarousel
+                      key={category}
+                      title={category}
+                      books={books}
+                      onSelectBook={handleOpenPDF}
+                    />
+                  ))
+                )}
+              </div>
             </Tabs>
           </motion.div>
         </div>

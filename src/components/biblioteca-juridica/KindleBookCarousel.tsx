@@ -1,21 +1,28 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Book, BookOpen, ChevronRight } from 'lucide-react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, BookOpen, Bookmark } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
-import { BibliotecaBookModal } from './BibliotecaBookModal';
-import { useInView } from 'react-intersection-observer';
+import { cn } from '@/lib/utils';
 
-interface KindleBookCarouselProps {
+interface BibliotecaBookCarouselProps {
   title: string;
   description?: string;
   books: LivroJuridico[];
   onSelectBook: (book: LivroJuridico) => void;
-  showAll?: boolean;
   accent?: boolean;
+  showAll?: boolean;
+  onShowAll?: () => void;
 }
 
 export function KindleBookCarousel({
@@ -23,217 +30,171 @@ export function KindleBookCarousel({
   description,
   books,
   onSelectBook,
-  showAll = true,
   accent = false,
-}: KindleBookCarouselProps) {
-  const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [visibleBooks, setVisibleBooks] = useState<number>(6);
-  const carouselRef = useRef<HTMLDivElement>(null);
+  showAll = true,
+  onShowAll
+}: BibliotecaBookCarouselProps) {
   const { getReadingProgress, isFavorite } = useBibliotecaProgresso();
-  const { ref: sectionRef, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: true
-  });
   
-  // Calculate visible books based on screen width
-  useEffect(() => {
-    const updateVisibleBooks = () => {
-      if (window.innerWidth < 640) {
-        setVisibleBooks(2);
-      } else if (window.innerWidth < 768) {
-        setVisibleBooks(3);
-      } else if (window.innerWidth < 1024) {
-        setVisibleBooks(4);
-      } else {
-        setVisibleBooks(6);
-      }
-    };
-
-    updateVisibleBooks();
-    window.addEventListener('resize', updateVisibleBooks);
-    
-    return () => {
-      window.removeEventListener('resize', updateVisibleBooks);
-    };
-  }, []);
+  if (!books?.length) return null;
   
-  // Scroll functions for carousel
-  const scrollLeft = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: -320, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (carouselRef.current) {
-      carouselRef.current.scrollBy({ left: 320, behavior: 'smooth' });
-    }
-  };
-  
-  // Book selection handler
-  const handleBookClick = (book: LivroJuridico) => {
-    setSelectedBook(book);
-    setModalOpen(true);
-  };
-  
-  // Book reading handler from modal
-  const handleReadBook = () => {
-    if (selectedBook) {
-      setModalOpen(false);
-      onSelectBook(selectedBook);
-    }
-  };
-
   return (
-    <motion.section
-      ref={sectionRef}
-      initial={{ opacity: 0, y: 30 }}
-      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`pb-8 pt-4 ${accent ? 'bg-gradient-to-r from-purple-900/10 via-primary/5 to-purple-900/10 rounded-xl p-6' : ''}`}
-    >
-      <div className="flex items-center justify-between mb-6">
+    <div className="mb-10">
+      <div className="flex items-start justify-between mb-4">
         <div>
-          <motion.h2 
-            className="text-2xl font-bold"
-            initial={{ opacity: 0, x: -20 }}
-            animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
+          <h2 className={cn(
+            "text-2xl font-bold",
+            accent ? "text-primary" : ""
+          )}>
             {title}
-          </motion.h2>
+          </h2>
           {description && (
-            <motion.p 
-              className="text-muted-foreground"
-              initial={{ opacity: 0 }}
-              animate={inView ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
-            >
-              {description}
-            </motion.p>
+            <p className="text-muted-foreground mt-1">{description}</p>
           )}
         </div>
         
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={scrollLeft}
+        {showAll && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="gap-1 text-primary" 
+            onClick={onShowAll}
           >
-            <ChevronLeft className="h-5 w-5" />
+            VER TODOS
+            <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="rounded-full bg-background/80 backdrop-blur-sm hover:bg-background"
-            onClick={scrollRight}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </Button>
-        </div>
-      </div>
-
-      <div 
-        ref={carouselRef}
-        className="kindle-carousel flex gap-4 overflow-x-auto pb-4 no-scrollbar snap-x snap-mandatory"
-      >
-        <AnimatePresence>
-          {books.slice(0, showAll ? books.length : visibleBooks).map((book, index) => {
-            const progress = book.id ? getReadingProgress(book.id) : null;
-            const percentComplete = progress && book.total_paginas 
-              ? (progress.pagina_atual / book.total_paginas) * 100 
-              : 0;
-            const isFavorited = book.id ? isFavorite(book.id) : false;
-            const coverUrl = book.capa_url || '/placeholder-book-cover.jpg';
-            
-            return (
-              <motion.div
-                key={book.id}
-                className="kindle-book-card flex-shrink-0 snap-start w-[210px] h-[310px]"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.4, delay: 0.1 + index * 0.05 }}
-                whileHover={{ y: -8, scale: 1.03 }}
-                onClick={() => handleBookClick(book)}
-              >
-                <div className="relative w-full h-full flex flex-col rounded-lg overflow-hidden bg-card border shadow-lg hover:shadow-xl transition-all duration-300 perspective-1000">
-                  {/* Book Cover */}
-                  <div className="relative flex-1 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10"></div>
-                    <img
-                      src={coverUrl}
-                      alt={book.titulo}
-                      className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder-book-cover.jpg';
-                      }}
-                    />
-                    
-                    {/* Favorite Badge */}
-                    {isFavorited && (
-                      <div className="absolute top-2 right-2 z-20">
-                        <Bookmark className="h-5 w-5 text-primary fill-primary" />
-                      </div>
-                    )}
-                    
-                    {/* Reading Progress */}
-                    {percentComplete > 0 && (
-                      <div className="absolute bottom-2 left-2 right-2 z-20">
-                        <div className="w-full bg-white/20 h-1 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-primary"
-                            style={{ width: `${Math.min(percentComplete, 100)}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {/* Book Info */}
-                  <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
-                    <h3 className="text-sm font-medium text-white line-clamp-2">{book.titulo}</h3>
-                    
-                    <div className="flex items-center justify-between mt-1">
-                      <Badge 
-                        variant="outline" 
-                        className="bg-black/40 text-xs text-white border-white/20"
-                      >
-                        {book.categoria}
-                      </Badge>
-                      
-                      {book.autor && (
-                        <span className="text-xs text-white/70">{book.autor}</span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Hover overlay with read button */}
-                  <div className="absolute inset-0 bg-black/70 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-300 z-20">
-                    <Button 
-                      variant="outline"
-                      className="bg-transparent border-white text-white hover:bg-white/20"
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" />
-                      Ver detalhes
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </AnimatePresence>
+        )}
       </div>
       
-      {/* Book Details Modal */}
-      <BibliotecaBookModal 
-        book={selectedBook}
-        open={modalOpen}
-        onClose={() => setModalOpen(false)}
-        onRead={handleReadBook}
-      />
-    </motion.section>
+      <div className="relative">
+        <Carousel
+          opts={{
+            align: "start",
+            loop: books.length > 4,
+          }}
+          className="w-full"
+        >
+          <CarouselContent className="-ml-4">
+            {books.map((book) => (
+              <BookCard 
+                key={book.id} 
+                book={book} 
+                onSelect={onSelectBook}
+                progress={getReadingProgress(book.id)}
+                isFavorited={isFavorite(book.id)}
+              />
+            ))}
+          </CarouselContent>
+          
+          <CarouselPrevious className="absolute -left-4 top-1/2 -translate-y-1/2 shadow-md" />
+          <CarouselNext className="absolute -right-4 top-1/2 -translate-y-1/2 shadow-md" />
+        </Carousel>
+      </div>
+    </div>
+  );
+}
+
+interface BookCardProps {
+  book: LivroJuridico;
+  onSelect: (book: LivroJuridico) => void;
+  progress?: {
+    pagina_atual: number;
+    ultima_leitura: string | Date;
+    favorito: boolean;
+  } | null;
+  isFavorited?: boolean;
+}
+
+function BookCard({ book, onSelect, progress, isFavorited }: BookCardProps) {
+  const [isHovering, setIsHovering] = useState(false);
+  
+  return (
+    <CarouselItem className="pl-4 basis-full xs:basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6">
+      <motion.div 
+        className="book-card h-full cursor-pointer perspective-1000"
+        whileHover={{ scale: 1.05 }}
+        transition={{ type: "spring", stiffness: 300 }}
+        onHoverStart={() => setIsHovering(true)}
+        onHoverEnd={() => setIsHovering(false)}
+        onClick={() => onSelect(book)}
+      >
+        <div className="relative aspect-[2/3] w-full overflow-hidden rounded-lg bg-muted/30 border shadow-md">
+          {book.capa_url ? (
+            <img 
+              src={book.capa_url} 
+              alt={book.titulo}
+              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+              loading="lazy"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted/50 to-background p-4">
+              <div className="text-center">
+                <BookOpen className="h-16 w-16 mx-auto mb-2 text-primary/30" />
+                <h3 className="font-medium text-sm line-clamp-3">{book.titulo}</h3>
+              </div>
+            </div>
+          )}
+          
+          {/* Progress indicator */}
+          {progress && progress.pagina_atual > 1 && book.total_paginas && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-muted">
+              <div 
+                className="h-full bg-primary" 
+                style={{ 
+                  width: `${Math.min(
+                    100, 
+                    (progress.pagina_atual / book.total_paginas) * 100
+                  )}%` 
+                }}
+              />
+            </div>
+          )}
+          
+          {/* Book info overlay */}
+          <motion.div 
+            className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent p-3 flex flex-col justify-end"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: isHovering ? 1 : 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            <h3 className="font-semibold text-white text-sm line-clamp-2">{book.titulo}</h3>
+            {book.categoria && (
+              <span className="text-xs text-white/80 mb-1">{book.categoria}</span>
+            )}
+            
+            {progress && progress.pagina_atual > 1 && (
+              <p className="text-xs text-primary mt-1">
+                {book.total_paginas 
+                  ? `${progress.pagina_atual} de ${book.total_paginas} páginas`
+                  : `Página ${progress.pagina_atual}`}
+              </p>
+            )}
+            
+            <Button 
+              size="sm" 
+              className="w-full mt-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                onSelect(book);
+              }}
+            >
+              Ler agora
+            </Button>
+          </motion.div>
+          
+          {/* Badges */}
+          {isFavorited && (
+            <div className="absolute top-2 right-2">
+              <Badge variant="secondary" className="bg-primary text-primary-foreground">
+                Favorito
+              </Badge>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </CarouselItem>
   );
 }
