@@ -21,6 +21,59 @@ const renderApp = async () => {
     import('./index.css')
   ]);
   
+  // Set up query persistence if needed
+  if (typeof window !== 'undefined') {
+    try {
+      const { persistQueryClient } = await import('@tanstack/react-query-persist-client');
+      const { createSyncStoragePersister } = await import('@tanstack/query-sync-storage-persister');
+      
+      const localStoragePersister = createSyncStoragePersister({
+        storage: window.localStorage,
+        key: 'CACHED_QUERIES',
+        serialize: (data) => {
+          try {
+            const serialized = JSON.stringify(data);
+            if (serialized.length > 1_500_000) { // ~1.5MB
+              return JSON.stringify({
+                timestamp: Date.now(),
+                buster: String(Date.now()),
+                clientState: {
+                  mutations: [],
+                  queries: []
+                }
+              });
+            }
+            return serialized;
+          } catch (err) {
+            console.error('Error serializing cache:', err);
+            return '{}';
+          }
+        }
+      });
+      
+      // Setup the persistence
+      persistQueryClient({
+        queryClient,
+        persister: localStoragePersister,
+        buster: String(Date.now()),
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) => {
+            const queryKey = query.queryKey[0];
+            if (typeof queryKey !== 'string') return false;
+            return (
+              queryKey.includes('vademecum') || 
+              queryKey.includes('biblioteca') || 
+              queryKey.includes('law-')
+            );
+          },
+        },
+      });
+    } catch (err) {
+      console.error('Failed to setup query persistence:', err);
+      // Continue without persistence if it fails
+    }
+  }
+  
   // Set up any missing PDF.js configurations if needed
   const { pdfjs } = await import('react-pdf');
   if (typeof window !== 'undefined' && window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
