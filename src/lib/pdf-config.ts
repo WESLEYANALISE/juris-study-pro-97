@@ -16,9 +16,16 @@ const WORKER_SOURCES = [
 
 /**
  * Ensures GlobalWorkerOptions exists and sets the worker source
+ * This is the key fix for the "Cannot set properties of undefined (setting 'workerSrc')" error
  */
 function ensureGlobalWorkerOptions() {
   try {
+    // Check if pdfjs exists
+    if (!reactPdfJs) {
+      console.error('PDF.js is not loaded yet');
+      return false;
+    }
+    
     // If GlobalWorkerOptions doesn't exist on pdfjs, create it
     if (!reactPdfJs.GlobalWorkerOptions) {
       console.log('Creating missing GlobalWorkerOptions object');
@@ -43,6 +50,7 @@ export function configurePdfWorker() {
     // Make sure GlobalWorkerOptions exists
     const optionsExist = ensureGlobalWorkerOptions();
     if (!optionsExist) {
+      console.log('GlobalWorkerOptions unavailable. Will retry later.');
       return false;
     }
     
