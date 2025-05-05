@@ -1,6 +1,8 @@
 
+import React from "react";
+import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Eye, DownloadCloud } from "lucide-react";
 import { memo } from "react";
@@ -25,26 +27,41 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
                 peticao.link.includes('document/d/');
 
   return (
-    <div className="h-full transition-transform hover:scale-[1.01]">
-      <Card className="flex flex-col h-full overflow-hidden border border-white/5 bg-gradient-to-br from-background/60 to-background/90 shadow-lg">
-        <CardHeader className="pb-2">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      whileHover={{ y: -5, transition: { duration: 0.2 } }}
+      className="h-full"
+    >
+      <Card 
+        variant="glass" 
+        className="flex flex-col h-full overflow-hidden border border-white/5 shadow-lg"
+      >
+        <div className="p-5 pb-3">
           <div className="flex flex-col gap-2">
-            <Badge variant="outline" className="w-fit bg-purple-900/20">{peticao.area}</Badge>
-            <h3 className="text-lg font-semibold line-clamp-1 text-gradient">{peticao.tipo}</h3>
+            <div className="flex items-center justify-between">
+              <Badge variant="outline" className="w-fit bg-purple-900/20">{peticao.area}</Badge>
+              {isDocx && (
+                <Badge variant="outline" className="w-fit bg-blue-900/20 text-xs">
+                  DOCX
+                </Badge>
+              )}
+            </div>
+            
+            <h3 className="text-lg font-semibold line-clamp-1 bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
+              {peticao.tipo}
+            </h3>
+            
             {peticao.sub_area && (
               <Badge variant="secondary" className="w-fit">
                 {peticao.sub_area}
               </Badge>
             )}
-            {isDocx && (
-              <Badge variant="outline" className="w-fit bg-blue-900/20 text-xs">
-                DOCX
-              </Badge>
-            )}
           </div>
-        </CardHeader>
+        </div>
         
-        <CardContent className="flex-1 pt-0">
+        <div className="px-5 py-2 flex-1">
           <p className="text-muted-foreground text-sm line-clamp-2">{peticao.descricao}</p>
           
           {peticao.tags && peticao.tags.length > 0 && (
@@ -56,14 +73,15 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
               ))}
             </div>
           )}
-        </CardContent>
+        </div>
         
-        <CardFooter className="pt-2 border-t border-white/5 bg-card/30">
+        <div className="p-3 border-t border-white/5 bg-card/30 mt-auto">
           <div className="flex gap-2 w-full">
             <Button 
               className="flex-1 gap-2" 
               onClick={() => onView(peticao.link)}
               variant="gradient"
+              glow
             >
               <Eye className="w-4 h-4" />
               Visualizar
@@ -77,8 +95,8 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
               <DownloadCloud className="w-4 h-4" />
             </Button>
           </div>
-        </CardFooter>
+        </div>
       </Card>
-    </div>
+    </motion.div>
   );
 });

@@ -54,11 +54,15 @@ export default function MobileNavigation() {
         exit={{ y: 50, opacity: 0 }}
         transition={{ duration: 0.3 }}
         className={cn(
-          "fixed bottom-4 left-4 right-4 z-50 rounded-2xl bg-glass-darker backdrop-blur-lg p-2 md:hidden shadow-purple/20",
-          "border border-white/10 shadow-[0_8px_32px_rgba(139,92,246,0.25)]"
+          "fixed bottom-4 left-4 right-4 z-50 rounded-2xl backdrop-blur-xl p-2 md:hidden",
+          "border border-white/10 bg-black/40 shadow-[0_8px_32px_rgba(139,92,246,0.25)]"
         )}
       >
-        <ul className="flex justify-around">
+        <div className="absolute inset-0 rounded-2xl overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-b from-purple-800/20 to-purple-900/30" />
+        </div>
+        
+        <ul className="flex justify-around relative z-10">
           {navItems.map((item) => {
             const isActive = location.pathname === item.href || 
                             (location.pathname !== "/" && item.href !== "/" && location.pathname.startsWith(item.href));
@@ -78,19 +82,35 @@ export default function MobileNavigation() {
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                     className={cn(
-                      "flex items-center justify-center w-10 h-10 rounded-full mb-1",
-                      isActive && "bg-primary/20 shadow-[0_0_15px_rgba(139,92,246,0.4)]"
+                      "flex items-center justify-center w-10 h-10 rounded-full mb-1 relative",
+                      isActive && "bg-primary/20"
                     )}
                   >
+                    {isActive && (
+                      <motion.div
+                        layoutId="navHighlight"
+                        className="absolute inset-0 rounded-full bg-primary/20 shadow-[0_0_15px_rgba(139,92,246,0.4)]"
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
                     <item.icon className={cn(
-                      "h-5 w-5 transition-transform",
-                      isActive && "text-primary animate-pulse-once"
+                      "h-5 w-5 relative z-10 transition-transform",
+                      isActive && "text-primary"
                     )} />
                   </motion.div>
                   <span className={cn(
-                    "transition-all",
+                    "transition-all relative",
                     isActive && "font-medium"
-                  )}>{item.name}</span>
+                  )}>
+                    {isActive && (
+                      <motion.span
+                        layoutId="navTextHighlight" 
+                        className="absolute -inset-x-1 -inset-y-0.5 rounded-md -z-10 bg-primary/10"
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                      />
+                    )}
+                    {item.name}
+                  </span>
                 </Link>
               </li>
             );
