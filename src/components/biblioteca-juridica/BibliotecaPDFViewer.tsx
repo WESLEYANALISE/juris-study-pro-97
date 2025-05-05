@@ -12,12 +12,14 @@ interface BibliotecaPDFViewerProps {
 
 export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: BibliotecaPDFViewerProps) {
   return (
-    <EnhancedPDFViewer
-      pdfUrl={pdfUrl}
-      onClose={onClose}
-      bookTitle={bookTitle}
-      book={book}
-    />
+    <div className="fixed inset-0 z-50 bg-black/90">
+      <EnhancedPDFViewer
+        pdfUrl={pdfUrl}
+        onClose={onClose}
+        bookTitle={bookTitle}
+        book={book}
+      />
+    </div>
   );
 }
 

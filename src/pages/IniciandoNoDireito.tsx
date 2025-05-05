@@ -16,6 +16,32 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/components/ui/use-toast';
 
+// Define type for user progress
+interface UserProgress {
+  id?: string;
+  user_id: string;
+  trilha_progresso?: number;
+  questionarios_completos?: number;
+  artigos_lidos?: number;
+  videos_assistidos?: number;
+  tempo_estudo_total?: number;
+  ultima_atividade?: string;
+  nivel_atual?: string;
+  pontos_experiencia?: number;
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: any; // Allow for dynamic properties
+}
+
+// Define type for study stats
+interface StudyStats {
+  questoesRespondidas: number;
+  questoesCorretas: number;
+  flashcardsRevisados: number;
+  tempoEstudoTotal: number;
+  [key: string]: any; // Allow for dynamic properties
+}
+
 const IniciandoNoDireito = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const { toast } = useToast();
@@ -31,7 +57,7 @@ const IniciandoNoDireito = () => {
     getUser();
   }, []);
   
-  // Query to get the user's progress data
+  // Query to get the user's progress data with proper types
   const { data: userProgress, isLoading: loadingProgress } = useQuery({
     queryKey: ['user-progress', userId],
     queryFn: async () => {
@@ -39,18 +65,24 @@ const IniciandoNoDireito = () => {
       
       try {
         // Get all the study data for this user using a generic approach
-        const { data: progressData, error } = await supabase
+        const { data, error } = await supabase
           .from('progresso_usuario')
           .select('*')
           .eq('user_id', userId)
-          .single();
+          .maybeSingle();
           
         if (error) {
           console.error('Error fetching user progress:', error);
+          toast({
+            title: 'Erro ao carregar progresso',
+            description: 'Não foi possível carregar seu progresso. Usando dados padrão.',
+            variant: 'destructive'
+          });
           return null;
         }
         
-        return progressData;
+        // Return the data (might be null if no record exists)
+        return data as UserProgress | null;
       } catch (error) {
         console.error('Error in progress query:', error);
         toast({
@@ -64,14 +96,14 @@ const IniciandoNoDireito = () => {
     enabled: !!userId
   });
   
-  // Query to get the study stats for this user
+  // Query to get the study stats for this user with proper types
   const { data: studyStats, isLoading: loadingStats } = useQuery({
     queryKey: ['study-stats', userId],
     queryFn: async () => {
       if (!userId) return null;
       
       try {
-        // Get statistics about questions answered using a generic approach
+        // Get statistics about questions answered
         const { data: questoesStats, error: questoesError } = await supabase
           .from('historico_questoes')
           .select('*', { count: 'exact' })
@@ -81,7 +113,7 @@ const IniciandoNoDireito = () => {
           console.error('Error fetching questions history:', questoesError);
         }
         
-        // Get flashcard stats using a generic approach
+        // Get flashcard stats
         const { data: flashcardStats, error: flashcardError } = await supabase
           .from('user_flashcards')
           .select('*', { count: 'exact' })
@@ -91,7 +123,7 @@ const IniciandoNoDireito = () => {
           console.error('Error fetching flashcard stats:', flashcardError);
         }
         
-        // Study time from study sessions using a generic approach
+        // Study time from study sessions
         const { data: studySessions, error: sessionsError } = await supabase
           .from('sessoes_estudo')
           .select('duracao_minutos')
@@ -103,15 +135,21 @@ const IniciandoNoDireito = () => {
         
         const totalStudyTime = studySessions?.reduce((sum, session) => sum + (session.duracao_minutos || 0), 0) || 0;
         
+        // Return study stats object
         return {
           questoesRespondidas: questoesStats?.length || 0,
-          questoesCorretas: questoesStats?.filter(q => q.correta)?.length || 0,
+          questoesCorretas: questoesStats?.filter((q: any) => q.correta)?.length || 0,
           flashcardsRevisados: flashcardStats?.length || 0,
           tempoEstudoTotal: totalStudyTime,
-        };
+        } as StudyStats;
       } catch (error) {
         console.error('Error in stats query:', error);
-        return null;
+        return {
+          questoesRespondidas: 0,
+          questoesCorretas: 0,
+          flashcardsRevisados: 0,
+          tempoEstudoTotal: 0,
+        } as StudyStats;
       }
     },
     enabled: !!userId
