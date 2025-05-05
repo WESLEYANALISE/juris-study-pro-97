@@ -27,11 +27,15 @@ export function PDFConfigValidator() {
         console.log('- pdfjs.GlobalWorkerOptions.workerSrc:', pdfjs.GlobalWorkerOptions.workerSrc);
       }
       
-      // Create test instance to validate configuration
-      if (pdfjs.getDocument) {
-        console.log('- pdfjs.getDocument exists, PDF.js should be able to load documents');
-      } else {
-        console.warn('- pdfjs.getDocument is missing, PDF.js may not work correctly');
+      // Attempt to set the workerSrc safely
+      if (pdfjs.GlobalWorkerOptions) {
+        const workerSrc = import.meta.env.PROD 
+          ? 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+          : '/pdf.worker.min.js';
+          
+        // Direct assignment to workerSrc property
+        pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+        console.log('- Set pdfjs.GlobalWorkerOptions.workerSrc:', workerSrc);
       }
     } catch (error) {
       console.error('Error during PDF.js validation:', error);

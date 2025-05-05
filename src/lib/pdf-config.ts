@@ -17,7 +17,7 @@ export function configurePdfWorker() {
   try {
     console.log('Configuring PDF worker with version:', pdfjsVersion);
     
-    // Set worker directly on pdfjs.GlobalWorkerOptions
+    // Only assign to workerSrc, not to GlobalWorkerOptions directly
     if (reactPdfJs.GlobalWorkerOptions) {
       reactPdfJs.GlobalWorkerOptions.workerSrc = workerSrc;
     } else {
@@ -33,9 +33,12 @@ export function configurePdfWorker() {
       window.pdfjsLib = window.pdfjsLib || reactPdfJs;
       
       if (window.pdfjsLib) {
-        // Ensure GlobalWorkerOptions exists
-        window.pdfjsLib.GlobalWorkerOptions = window.pdfjsLib.GlobalWorkerOptions || {};
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+        // Set the workerSrc property, not GlobalWorkerOptions itself
+        if (!window.pdfjsLib.GlobalWorkerOptions) {
+          console.warn('window.pdfjsLib.GlobalWorkerOptions is undefined');
+        } else {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+        }
       }
     }
     
@@ -46,9 +49,6 @@ export function configurePdfWorker() {
     return false;
   }
 }
-
-// Configure immediately
-configurePdfWorker();
 
 // Export the configured pdfjs object
 export const pdfjs = reactPdfJs;

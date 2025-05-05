@@ -27,9 +27,8 @@ import { pdfjs } from 'react-pdf';
 if (typeof window !== 'undefined') {
   window.pdfjsLib = pdfjs;
   
-  // Ensure GlobalWorkerOptions exists and is properly configured
-  if (window.pdfjsLib) {
-    window.pdfjsLib.GlobalWorkerOptions = window.pdfjsLib.GlobalWorkerOptions || {};
+  // Set workerSrc property directly, not trying to assign to GlobalWorkerOptions
+  if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
     window.pdfjsLib.GlobalWorkerOptions.workerSrc = import.meta.env.PROD 
       ? 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
       : '/pdf.worker.min.js';

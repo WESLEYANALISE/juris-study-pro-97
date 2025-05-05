@@ -1,12 +1,10 @@
 
-import { PDFDocumentProxy } from 'pdfjs-dist';
+import { GlobalWorkerOptionsType } from 'pdfjs-dist';
 
 declare global {
   interface Window {
     pdfjsLib: typeof import('react-pdf').pdfjs & {
-      GlobalWorkerOptions: {
-        workerSrc: string;
-      };
+      GlobalWorkerOptions: GlobalWorkerOptionsType;
     };
     __pdfjsWorkerSrc?: string;
   }

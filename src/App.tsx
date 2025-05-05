@@ -1,3 +1,4 @@
+
 import { useState, lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import Layout from './components/Layout';
 import { AuthProvider } from './hooks/use-auth';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { lazyLoad } from './lib/code-splitting';
-import { configurePdfWorker } from '@/lib/pdf-config';
+import { configurePdfWorker } from './lib/pdf-config';
 import { PDFConfigValidator } from '@/components/pdf/PDFConfigValidator';
 
 // Eagerly load common components
@@ -72,6 +73,17 @@ function App() {
   useEffect(() => {
     // Configure PDF.js worker when App mounts
     configurePdfWorker();
+    
+    // Add PDF.js configuration validator to ensure proper setup
+    const pdf = document.createElement('div');
+    pdf.id = 'pdf-config-validator';
+    document.body.appendChild(pdf);
+    
+    return () => {
+      if (pdf.parentElement) {
+        pdf.parentElement.removeChild(pdf);
+      }
+    };
   }, []);
 
   return (
@@ -81,6 +93,7 @@ function App() {
         <AuthProvider>
           {/* PDFTest component for PDF.js configuration debugging */}
           <PDFTest />
+          <PDFConfigValidator />
           
           <Router>
             <Suspense fallback={<PageLoader />}>
