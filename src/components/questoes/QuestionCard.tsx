@@ -237,18 +237,9 @@ export const QuestionCard = ({
               </Button>}
             
             {!isMobile && <>
-                <Button variant="outline" size="icon" onClick={handleBookmark} title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"} className="hover-glow">
-                  {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
-                </Button>
                 
-                <Button variant="outline" size="icon" onClick={() => {
-              toast({
-                title: "Link copiado!",
-                description: "Link para esta questão copiado para a área de transferência"
-              });
-            }} title="Compartilhar esta questão" className="hover-glow">
-                  <Share2 className="h-4 w-4" />
-                </Button>
+                
+                
               </>}
             
             {isMobile && <div className="flex justify-between w-full">
