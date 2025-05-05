@@ -243,7 +243,7 @@ export function EnhancedPDFViewer({
         <X className="h-5 w-5" />
       </Button>
       
-      <div className="enhanced-pdf-container flex flex-col h-full" ref={containerRef}>
+      <div ref={containerRef} className="enhanced-pdf-container flex flex-col h-full my-0 py-0 px-0 mx-0">
         {/* Header with title */}
         <div className="px-4 py-3 border-b border-gray-800 bg-black/80 backdrop-blur-sm sticky top-0 z-40">
           <div className="container max-w-5xl mx-auto flex items-center justify-between">
