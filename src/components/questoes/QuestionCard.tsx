@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -298,8 +299,5 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   );
 };
 
-// Import missing ChevronRight icon
-import { ChevronRight } from 'lucide-react';
-
-// Make sure we also have this default export to maintain compatibility
+// Export the component with default export to maintain compatibility
 export default QuestionCard;

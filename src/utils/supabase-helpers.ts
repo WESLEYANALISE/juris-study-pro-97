@@ -1,5 +1,5 @@
 
-import { PostgrestFilterBuilder, PostgrestQueryBuilder } from '@supabase/postgrest-js';
+import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -9,8 +9,8 @@ import { supabase } from '@/integrations/supabase/client';
 export const safeQueryFrom = <T = any>(
   tableName: string
 ): PostgrestFilterBuilder<any, any, T[], any> => {
-  // Using type assertion to avoid TypeScript errors with database schema
-  return supabase.from(tableName) as unknown as PostgrestFilterBuilder<any, any, T[], any>;
+  // Using a type assertion to handle dynamic table names
+  return supabase.from(tableName as any) as unknown as PostgrestFilterBuilder<any, any, T[], any>;
 };
 
 /**
@@ -58,7 +58,8 @@ export async function safeInsert<T = any>(
   options?: { returning?: string }
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = safeQueryFrom(tableName);
+    const query = safeQueryFrom<T>(tableName);
+    // Using type assertion to access insert method
     const { data, error } = await (query as any).insert(values, options);
     
     if (error) {
@@ -83,8 +84,9 @@ export async function safeUpdate<T = any>(
 ): Promise<{ data: T[] | null; error: any }> {
   try {
     const query = safeQueryFrom<T>(tableName);
+    // Using type assertion to access update method
     const updateQuery = (query as any).update(values);
-    const filteredQuery = queryBuilder(updateQuery);
+    const filteredQuery = queryBuilder(updateQuery as any);
     
     const { data, error } = await filteredQuery;
     
@@ -109,8 +111,9 @@ export async function safeDelete<T = any>(
 ): Promise<{ data: T[] | null; error: any }> {
   try {
     const query = safeQueryFrom<T>(tableName);
+    // Using type assertion to access delete method
     const deleteQuery = (query as any).delete();
-    const filteredQuery = queryBuilder(deleteQuery);
+    const filteredQuery = queryBuilder(deleteQuery as any);
     
     const { data, error } = await filteredQuery;
     

@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseCategories } from '@/components/cursos/CourseCategories';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
 import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BookOpen, Star, Clock, TrendingUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -25,31 +24,35 @@ const Cursos = () => {
     queryKey: ['courses', selectedCategory, debouncedSearchQuery],
     queryFn: async () => {
       try {
-        // Direct query with type assertion to bypass type errors
-        let query = supabase
-          .from('cursos_narrados')
-          .select('*');
-        
-        // Apply category filter if selected
-        if (selectedCategory) {
-          query = query.eq('categoria', selectedCategory);
-        }
-        
-        // Apply search filter if there's a search query
-        if (debouncedSearchQuery) {
-          query = query.or(
-            `titulo.ilike.%${debouncedSearchQuery}%,descricao.ilike.%${debouncedSearchQuery}%,autor.ilike.%${debouncedSearchQuery}%,materia.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
-          );
-        }
-        
-        const { data, error } = await query;
+        // Use our safer select function
+        const { data, error } = await safeSelect<Curso>(
+          'cursos_narrados',
+          '*',
+          query => {
+            let result = query;
+            
+            // Apply category filter if selected
+            if (selectedCategory) {
+              result = result.eq('categoria', selectedCategory);
+            }
+            
+            // Apply search filter if there's a search query
+            if (debouncedSearchQuery) {
+              result = result.or(
+                `titulo.ilike.%${debouncedSearchQuery}%,descricao.ilike.%${debouncedSearchQuery}%,autor.ilike.%${debouncedSearchQuery}%,materia.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
+              );
+            }
+            
+            return result;
+          }
+        );
         
         if (error) {
           throw error;
         }
         
-        // Safely cast the data to the Curso type
-        return (data || []) as Curso[];
+        // Handle and return the data safely
+        return data || [];
       } catch (error) {
         console.error('Error fetching courses:', error);
         return [] as Curso[];

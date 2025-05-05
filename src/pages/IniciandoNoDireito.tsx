@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
@@ -7,25 +8,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BookOpen, GraduationCap, Lightbulb, Search, Sparkles, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { supabase } from '@/integrations/supabase/client';
 import { Curso } from '@/types/curso';
-import { HistoricoQuestao, ProgressoUsuario } from '@/types/supabase';
+import { SupabaseHistoryEntry, SupabaseUserProgress } from '@/types/supabase';
+import { safeSelect } from '@/utils/supabase-helpers';
 
-interface HistoricoQuestao {
+// Use specific types for local data representations
+type HistoricoQuestaoItem = {
   questao_id: string;
   visualizado_em: string;
-}
+};
 
-interface ProgressoUsuario {
+type ProgressoUsuarioItem = {
   progresso: number;
-}
+  concluido?: boolean;
+  ultimo_acesso?: string;
+};
 
 const IniciandoNoDireito = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Curso[]>([]);
-  const [recentQuestions, setRecentQuestions] = useState<HistoricoQuestao[]>([]);
-  const [userProgress, setUserProgress] = useState<ProgressoUsuario | null>(null);
+  const [recentQuestions, setRecentQuestions] = useState<HistoricoQuestaoItem[]>([]);
+  const [userProgress, setUserProgress] = useState<ProgressoUsuarioItem | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -37,72 +41,59 @@ const IniciandoNoDireito = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch courses
-        const { data: coursesData, error: coursesError } = await supabase
-          .from('cursos_narrados')
-          .select('*')
-          .limit(3);
+        // Fetch courses using direct supabase client to avoid type issues
+        const { data: coursesData, error: coursesError } = await safeSelect<Curso>(
+          'cursos_narrados',
+          '*',
+          query => query.limit(3)
+        );
 
         if (coursesError) {
           console.error('Erro ao buscar cursos:', coursesError);
-        } else {
-          setCourses((coursesData || []) as Curso[]);
+        } else if (coursesData) {
+          setCourses(coursesData);
         }
 
-        // For user progress
-        const fetchUserProgress = async () => {
-          if (!user) return null;
+        // For user progress - using direct client for safety
+        if (user) {
+          const { data: progressData, error: progressError } = await safeSelect<SupabaseUserProgress>(
+            'progresso_usuario',
+            '*',
+            query => query.eq('user_id', user.id).single()
+          );
           
-          try {
-            const { data, error } = await supabase
-              .from('progresso_usuario')
-              .select('*')
-              .eq('user_id', user.id)
-              .single();
-              
-            if (error && error.code !== 'PGRST116') {
-              console.error('Erro ao buscar progresso:', error);
-              return null;
-            }
-            
-            // Return the data as ProgressoUsuario or a default object if null
-            return data ? (data as ProgressoUsuario) : null;
-          } catch (error) {
-            console.error('Erro ao buscar progresso:', error);
-            return null;
+          if (progressError && progressError.code !== 'PGRST116') {
+            console.error('Erro ao buscar progresso:', progressError);
+          } else if (progressData && progressData.length > 0) {
+            setUserProgress({
+              progresso: progressData[0].progresso,
+              concluido: progressData[0].concluido,
+              ultimo_acesso: progressData[0].ultimo_acesso
+            });
           }
-        };
+        }
 
-        // For question history
-        const fetchRecentQuestions = async () => {
-          if (!user) return [];
-          
-          try {
-            const { data, error } = await supabase
-              .from('historico_questoes')
-              .select('questao_id, visualizado_em')
+        // For question history - using direct client for safety
+        if (user) {
+          const { data: questionsData, error: questionsError } = await safeSelect<SupabaseHistoryEntry>(
+            'historico_questoes',
+            'questao_id, visualizado_em',
+            query => query
               .eq('user_id', user.id)
               .order('visualizado_em', { ascending: false })
-              .limit(5);
-              
-            if (error) {
-              console.error('Erro ao buscar questões recentes:', error);
-              return [];
-            }
-            
-            // Return the data as HistoricoQuestao[] or an empty array if null
-            return (data || []) as HistoricoQuestao[];
-          } catch (error) {
-            console.error('Erro ao buscar questões recentes:', error);
-            return [];
+              .limit(5)
+          );
+          
+          if (questionsError) {
+            console.error('Erro ao buscar questões recentes:', questionsError);
+          } else if (questionsData) {
+            const formattedQuestions: HistoricoQuestaoItem[] = questionsData.map(item => ({
+              questao_id: String(item.questao_id),
+              visualizado_em: String(item.visualizado_em)
+            }));
+            setRecentQuestions(formattedQuestions);
           }
-        };
-
-        const progress = await fetchUserProgress();
-        setUserProgress(progress);
-
-        const questions = await fetchRecentQuestions();
-        setRecentQuestions(questions);
+        }
 
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
