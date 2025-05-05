@@ -1,0 +1,26 @@
+
+{
+  "short_name": "Direito 360",
+  "name": "Direito 360 - Seu conhecimento jurídico completo",
+  "icons": [
+    {
+      "src": "https://imgur.com/G15NKWM.png",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "https://imgur.com/G15NKWM.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://imgur.com/G15NKWM.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#9333ea",
+  "background_color": "#1f2937"
+}

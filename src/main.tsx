@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 
 // Load PDF.js worker configuration first
 import { configurePdfWorker } from '@/lib/pdf-config';
+import { registerSW } from './registerSW';
 
 console.log('Initializing application in main.tsx');
 
@@ -14,6 +15,11 @@ configurePdfWorker();
 import { pdfjs } from 'react-pdf';
 if (typeof window !== 'undefined') {
   window.pdfjsLib = pdfjs;
+}
+
+// Register service worker in production
+if (import.meta.env.PROD) {
+  registerSW();
 }
 
 // Create a function for rendering the app

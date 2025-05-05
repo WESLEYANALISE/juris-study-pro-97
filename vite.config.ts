@@ -26,6 +26,9 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
+    sourcemap: false,
+    target: 'esnext',
+    minify: 'terser'
   },
   server: {
     port: 8080,
