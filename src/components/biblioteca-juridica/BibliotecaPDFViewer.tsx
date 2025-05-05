@@ -1,307 +1,400 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { LivroJuridico } from '@/types/biblioteca-juridica';
+import { 
+  X, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, 
+  RotateCw, Bookmark, Download, ArrowLeft,
+  Maximize, Minimize
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { toast } from 'sonner';
 import './BibliotecaPDFViewer.css';
 
-// Set PDF.js worker source
+// Set up the PDF.js worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface BibliotecaPDFViewerProps {
   pdfUrl: string;
-  onClose: () => void;
   bookTitle: string;
-  book: LivroJuridico | null;
+  onClose: () => void;
+  book: LivroJuridico;
 }
 
-export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: BibliotecaPDFViewerProps) {
+export function BibliotecaPDFViewer({
+  pdfUrl,
+  bookTitle,
+  onClose,
+  book
+}: BibliotecaPDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.0);
-  const [rotation, setRotation] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isError, setIsError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
-  
-  const { saveReadingProgress } = useBibliotecaProgresso();
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [scale, setScale] = useState<number>(1.0);
+  const [rotation, setRotation] = useState<number>(0);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isFullScreen, setIsFullScreen] = useState<boolean>(false);
+  const [showControls, setShowControls] = useState<boolean>(true);
+  const [isFittingWidth, setIsFittingWidth] = useState<boolean>(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pdfViewerRef = useRef<HTMLDivElement>(null);
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Get the progress tracking hook
+  const { saveReadingProgress, getReadingProgress, isFavorite, toggleFavorite } = useBibliotecaProgresso();
+
+  // Format the PDF URL correctly 
+  const formattedPdfUrl = pdfUrl.startsWith('http') 
+    ? pdfUrl 
+    : `https://yovocuutiwwmbempxcyo.supabase.co/storage/v1/object/public/agoravai/${pdfUrl}`;
+
+  // Load saved page number on mount
   useEffect(() => {
-    document.body.classList.add('pdf-viewer-open');
+    if (book && book.id) {
+      const savedProgress = getReadingProgress(book.id);
+      if (savedProgress && savedProgress.pagina_atual > 0) {
+        setPageNumber(savedProgress.pagina_atual);
+      }
+    }
+
+    // Prevent body scrolling when PDF viewer is open
+    document.body.style.overflow = 'hidden';
     
-    // Force reload PDF when URL changes
-    setIsLoaded(false);
-    setIsLoading(true);
-    setPageNumber(1);
+    // Restore scroll on unmount
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [book, getReadingProgress]);
+
+  // Auto-hide controls after inactivity
+  useEffect(() => {
+    const handleActivity = () => {
+      setShowControls(true);
+      
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3000);
+    };
+
+    document.addEventListener('mousemove', handleActivity);
+    document.addEventListener('touchstart', handleActivity);
     
-    console.log("Loading PDF from URL:", pdfUrl);
+    // Initial trigger
+    handleActivity();
     
     return () => {
-      document.body.classList.remove('pdf-viewer-open');
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+      document.removeEventListener('mousemove', handleActivity);
+      document.removeEventListener('touchstart', handleActivity);
     };
-  }, [pdfUrl]);
-  
+  }, []);
+
+  // Save reading progress when page changes
   useEffect(() => {
-    if (book && pageNumber > 0 && isLoaded) {
+    if (book && book.id && pageNumber > 0) {
       saveReadingProgress(book.id, pageNumber);
     }
-  }, [pageNumber, book, saveReadingProgress, isLoaded]);
+  }, [pageNumber, book, saveReadingProgress]);
 
-  // Process the URL to ensure it's a full URL
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-    
-    // Already a full URL
-    if (url.startsWith('http')) {
-      console.log("URL is already complete:", url);
-      return url;
-    }
-    
-    // Add the Supabase storage URL prefix if it's just a path
-    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
-    console.log("Converted URL:", fullUrl);
-    return fullUrl;
-  };
-
-  // Verify the URL is valid
-  const verifyPdfUrl = (url: string): boolean => {
-    // Empty URL
-    if (!url) {
-      setErrorMessage("URL do PDF não fornecida");
-      setIsError(true);
-      setIsLoading(false);
-      return false;
-    }
-    
-    // Check if URL is valid
-    try {
-      const processedUrl = processUrl(url);
-      new URL(processedUrl);
-      return true;
-    } catch (e) {
-      console.error("Invalid PDF URL:", e);
-      setErrorMessage("URL do PDF inválida ou mal formatada");
-      setIsError(true);
-      setIsLoading(false);
-      return false;
-    }
-  };
-  
-  useEffect(() => {
-    verifyPdfUrl(pdfUrl);
-  }, [pdfUrl]);
-  
-  function onDocumentLoadSuccess({ numPages: totalPages }) {
-    console.log("PDF loaded successfully. Total pages:", totalPages);
-    setNumPages(totalPages);
+  // Handle document loading success
+  const onDocumentLoadSuccess = ({ numPages: nextNumPages }: { numPages: number }) => {
+    setNumPages(nextNumPages);
     setIsLoading(false);
-    setIsLoaded(true);
-    toast.success(`PDF carregado: ${totalPages} páginas`);
-  }
-  
-  function onDocumentLoadError(error: any) {
-    console.error('Error loading PDF:', error);
-    setIsLoading(false);
-    setIsError(true);
-    setErrorMessage(`Erro ao carregar PDF: ${error.message || "Verifique se o arquivo existe"}`);
-    toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
-  }
-  
-  function changePage(amount: number) {
-    setPageNumber((prevPageNumber) => {
-      const newPageNumber = prevPageNumber + amount;
-      if (newPageNumber >= 1 && newPageNumber <= (numPages || 1)) {
-        return newPageNumber;
-      } else {
-        return prevPageNumber;
+    
+    // Calculate best scale for fitting the page width
+    if (pdfViewerRef.current && containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const pageWidth = pdfViewerRef.current.clientWidth;
+      
+      if (pageWidth > 0 && containerWidth > 0) {
+        // Leave some margin
+        const idealScale = (containerWidth - 40) / pageWidth;
+        setScale(idealScale);
       }
-    });
-  }
+    }
+  };
   
-  function zoomIn() {
-    setScale((prevScale) => Math.min(prevScale + 0.25, 3.0));
-  }
-  
-  function zoomOut() {
-    setScale((prevScale) => Math.max(prevScale - 0.25, 0.5));
-  }
-  
-  function rotate() {
-    setRotation((prevRotation) => (prevRotation + 90) % 360);
-  }
-  
+  // Toggle fullscreen mode
   const toggleFullScreen = () => {
-    if (containerRef.current) {
-      if (!isFullScreen) {
-        if (containerRef.current.requestFullscreen) {
-          containerRef.current.requestFullscreen();
-        } else if ((containerRef.current as any).mozRequestFullScreen) {
-          (containerRef.current as any).mozRequestFullScreen();
-        } else if ((containerRef.current as any).webkitRequestFullscreen) {
-          (containerRef.current as any).webkitRequestFullscreen();
-        } else if ((containerRef.current as any).msRequestFullscreen) {
-          (containerRef.current as any).msRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          (document as any).mozCancelFullScreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          (document as any).webkitExitFullscreen();
-        } else if ((document as any).msExitFullscreen) {
-          (document as any).msExitFullscreen();
-        }
-      }
-      setIsFullScreen(!isFullScreen);
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen().catch(err => {
+        toast.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
     }
+    setIsFullScreen(!isFullScreen);
   };
   
+  // Monitor fullscreen changes
   useEffect(() => {
     const handleFullScreenChange = () => {
       setIsFullScreen(!!document.fullscreenElement);
     };
     
     document.addEventListener('fullscreenchange', handleFullScreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
-    document.addEventListener('msfullscreenchange', handleFullScreenChange);
-    
     return () => {
       document.removeEventListener('fullscreenchange', handleFullScreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullScreenChange);
     };
   }, []);
   
-  if (isError) {
-    return (
-      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
-          <AlertCircle className="h-16 w-16 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
-          <p className="text-muted-foreground mb-6">
-            {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
-          </p>
-          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
-            <code className="break-all whitespace-pre-wrap">{processUrl(pdfUrl)}</code>
-          </div>
-          <Button onClick={onClose} className="mt-4">
-            Fechar
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // Handle keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'ArrowRight':
+          if (pageNumber < (numPages || 1)) {
+            setPageNumber(pageNumber + 1);
+          }
+          break;
+        case 'ArrowLeft':
+          if (pageNumber > 1) {
+            setPageNumber(pageNumber - 1);
+          }
+          break;
+        case 'Escape':
+          if (!document.fullscreenElement) {
+            onClose();
+          }
+          break;
+        case 'f':
+          toggleFullScreen();
+          break;
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [pageNumber, numPages, onClose]);
   
-  // Use the processed URL for the PDF
-  const processedPdfUrl = processUrl(pdfUrl);
+  // Navigation functions
+  const goToPreviousPage = () => {
+    if (pageNumber > 1) {
+      setPageNumber(pageNumber - 1);
+    }
+  };
   
+  const goToNextPage = () => {
+    if (pageNumber < (numPages || 1)) {
+      setPageNumber(pageNumber + 1);
+    }
+  };
+  
+  // Zoom functions
+  const zoomIn = () => {
+    setScale(prevScale => Math.min(prevScale + 0.2, 3));
+    setIsFittingWidth(false);
+  };
+  
+  const zoomOut = () => {
+    setScale(prevScale => Math.max(prevScale - 0.2, 0.5));
+    setIsFittingWidth(false);
+  };
+  
+  // Fit to width
+  const fitToWidth = () => {
+    if (pdfViewerRef.current && containerRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const pageWidth = pdfViewerRef.current.clientWidth / scale;
+      
+      if (pageWidth > 0 && containerWidth > 0) {
+        // Leave some margin
+        const idealScale = (containerWidth - 40) / pageWidth;
+        setScale(idealScale);
+        setIsFittingWidth(true);
+      }
+    }
+  };
+  
+  // Toggle favorite status
+  const handleToggleFavorite = () => {
+    if (book && book.id) {
+      toggleFavorite(book.id);
+      toast.success(isFavorite(book.id) 
+        ? "Livro adicionado aos favoritos" 
+        : "Livro removido dos favoritos"
+      );
+    }
+  };
+  
+  // Download the PDF
+  const handleDownload = () => {
+    const link = document.createElement('a');
+    link.href = formattedPdfUrl;
+    link.download = `${bookTitle.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    toast.success("Download iniciado");
+  };
+
   return (
-    <div className="fixed inset-0 bg-background z-50">
-      <div className="pdf-container flex flex-col h-full" ref={containerRef}>
-        {/* Header with title and close button */}
-        <div className="px-4 py-3 border-b bg-secondary/80 backdrop-blur-sm sticky top-0 z-40">
-          <div className="container max-w-5xl mx-auto flex items-center justify-between">
-            <h2 className="text-lg font-semibold truncate">{bookTitle}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar visualizador">
-              <X className="h-5 w-5" />
+    <div 
+      className="fixed inset-0 bg-black/95 backdrop-blur-md z-50 flex flex-col"
+      ref={containerRef}
+    >
+      <AnimatePresence>
+        {showControls && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+            className="absolute top-4 left-4 z-50 flex items-center gap-3"
+          >
+            <Button 
+              onClick={onClose}
+              variant="ghost"
+              size="icon"
+              className="bg-black/50 text-white hover:bg-black/70 backdrop-blur-sm rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
             </Button>
-          </div>
-        </div>
-        
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center h-full p-4">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-lg text-muted-foreground">Carregando livro... {progress}%</p>
-            <p className="text-xs text-muted-foreground mt-2 max-w-md text-center">
-              Se o livro não carregar, verifique se o PDF está disponível no servidor.
-            </p>
-          </div>
+          </motion.div>
         )}
         
-        {/* PDF Viewer Content */}
-        <div className="pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
-          <Document
-            file={processedPdfUrl}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            onProgress={({ loaded, total }) => {
-              if (total) {
-                setProgress(Math.round((loaded / total) * 100));
-              }
-            }}
-            loading={
-              <div className="flex flex-col items-center justify-center">
-                <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <span className="mt-2 text-sm">Carregando...</span>
-              </div>
-            }
-            error={
-              <div className="text-center text-red-500">
-                <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                <p>Erro ao carregar PDF</p>
-              </div>
-            }
+        {showControls && (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.3 }}
+            className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 shadow-xl"
           >
-            {isLoaded && (
-              <Page 
-                pageNumber={pageNumber} 
-                scale={scale} 
-                rotate={rotation} 
-                error={
-                  <div className="text-center text-red-500 p-4">
-                    <p>Erro ao renderizar página {pageNumber}</p>
-                  </div>
-                }
-              />
-            )}
-          </Document>
-        </div>
-        
-        {/* Mobile Controls */}
-        <div className="pdf-mobile-controls">
-          <div className="pdf-mobile-controls-row">
-            <Button variant="outline" size="sm" onClick={() => changePage(-1)} disabled={pageNumber <= 1}>
-              <ChevronLeft className="h-4 w-4 mr-2" /> Anterior
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={goToPreviousPage} 
+              disabled={pageNumber <= 1}
+            >
+              <ChevronLeft className="h-5 w-5" />
             </Button>
-            <span className="text-sm text-muted-foreground">
-              Página {pageNumber} de {numPages || '?'}
+            
+            <span className="text-white text-sm px-2">
+              {pageNumber} / {numPages || '--'}
             </span>
-            <Button variant="outline" size="sm" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 0)}>
-              Próximo <ChevronRight className="h-4 w-4 ml-2" />
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={goToNextPage} 
+              disabled={pageNumber >= (numPages || 1)}
+            >
+              <ChevronRight className="h-5 w-5" />
             </Button>
-          </div>
-          
-          <div className="pdf-mobile-button-grid">
-            <Button variant="secondary" size="icon" onClick={zoomIn} aria-label="Aumentar zoom">
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <Button variant="secondary" size="icon" onClick={zoomOut} aria-label="Diminuir zoom">
+            
+            <div className="w-px h-5 bg-white/30 mx-1" />
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={zoomOut}
+            >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <Button variant="secondary" size="icon" onClick={rotate} aria-label="Rotacionar">
-              <RotateCw className="h-4 w-4" />
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={zoomIn}
+            >
+              <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="secondary" size="icon" onClick={toggleFullScreen} aria-label="Tela cheia">
-              <Share2 className="h-4 w-4" />
+            
+            <div className="w-px h-5 bg-white/30 mx-1" />
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={handleToggleFavorite}
+            >
+              <Bookmark className={`h-4 w-4 ${book && isFavorite(book.id) ? 'fill-primary' : ''}`} />
             </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={handleDownload}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            
+            <Button 
+              variant="ghost" 
+              size="icon"
+              className="text-white h-8 w-8 hover:bg-white/20"
+              onClick={toggleFullScreen}
+            >
+              {isFullScreen ? (
+                <Minimize className="h-4 w-4" />
+              ) : (
+                <Maximize className="h-4 w-4" />
+              )}
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      <div className="flex-1 overflow-auto flex justify-center items-center p-0 md:p-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-white text-opacity-80">Carregando PDF...</p>
           </div>
-        </div>
+        ) : (
+          <div 
+            className="pdf-document-container"
+            ref={pdfViewerRef}
+            onClick={() => setShowControls(true)}
+          >
+            <Document
+              file={formattedPdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={(error) => {
+                console.error('Error loading PDF:', error);
+                toast.error("Erro ao carregar o PDF. Por favor, tente novamente.");
+              }}
+              className="pdf-document"
+              loading={
+                <div className="flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-white text-opacity-80">Carregando PDF...</p>
+                </div>
+              }
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                rotate={rotation}
+                className="pdf-page"
+                loading={
+                  <div className="flex items-center justify-center w-full h-[80vh]">
+                    <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                }
+                renderAnnotationLayer={false}
+                renderTextLayer={false}
+              />
+            </Document>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
-export default BibliotecaPDFViewer;

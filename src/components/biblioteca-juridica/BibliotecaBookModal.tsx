@@ -1,155 +1,155 @@
 
 import React, { useState } from 'react';
 import { 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Download, Volume2, BookmarkPlus, MessageSquare } from 'lucide-react';
-import { TextToSpeech } from '@/components/biblioteca/TextToSpeech';
+import { BookOpen, Download, BookmarkPlus, BookmarkCheck } from 'lucide-react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
-import { useToast } from '@/hooks/use-toast';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { motion } from 'framer-motion';
 
 interface BibliotecaBookModalProps {
   book: LivroJuridico | null;
+  open: boolean;
   onClose: () => void;
-  onReadBook: () => void;
+  onRead: () => void;
 }
 
 export function BibliotecaBookModal({
   book,
+  open,
   onClose,
-  onReadBook
+  onRead
 }: BibliotecaBookModalProps) {
-  const [showNarration, setShowNarration] = useState(false);
-  const { toast } = useToast();
   const { isFavorite, toggleFavorite } = useBibliotecaProgresso();
+  const [isDownloading, setIsDownloading] = useState(false);
+  
+  if (!book) return null;
   
   const handleDownload = () => {
-    if (!book || !book.pdf_url) {
-      toast({
-        title: "Download indisponível",
-        description: "O PDF não está disponível para download."
-      });
-      return;
-    }
+    setIsDownloading(true);
     
-    // Create PDF URL
+    // Format PDF URL
     const pdfUrl = book.pdf_url.startsWith('http') 
       ? book.pdf_url 
-      : `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${book.pdf_url}`;
+      : `https://yovocuutiwwmbempxcyo.supabase.co/storage/v1/object/public/agoravai/${book.pdf_url}`;
     
-    window.open(pdfUrl, '_blank');
+    // Create download link and click it
+    const link = document.createElement('a');
+    link.href = pdfUrl;
+    link.download = `${book.titulo.replace(/\s+/g, '_')}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setTimeout(() => {
+      setIsDownloading(false);
+    }, 1000);
   };
   
-  const handleToggleFavorite = async () => {
-    if (!book) return;
-    await toggleFavorite(book.id);
+  const handleToggleFavorite = () => {
+    if (book.id) {
+      toggleFavorite(book.id);
+    }
   };
   
-  // Narration toggle
-  const handleToggleNarration = () => {
-    setShowNarration(!showNarration);
-  };
-  
-  // If no book is selected
-  if (!book) {
-    return null;
-  }
-  
-  const isFav = isFavorite(book.id);
-  
-  // Handle book cover
-  const coverUrl = book.capa_url || '/placeholder-book-cover.png';
+  const coverUrl = book.capa_url || '/placeholder-book-cover.jpg';
 
   return (
-    <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="w-full sm:w-1/3 flex justify-center">
-            <div className="relative aspect-[2/3] w-44 rounded-lg overflow-hidden shadow-lg">
-              <img
-                src={coverUrl}
+    <Dialog open={open} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl sm:max-w-[750px]">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold">{book.titulo}</DialogTitle>
+        </DialogHeader>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 py-4">
+          <motion.div 
+            className="flex justify-center"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="relative w-48 h-64 overflow-hidden rounded-lg shadow-lg">
+              <img 
+                src={coverUrl} 
                 alt={book.titulo}
-                className="object-cover w-full h-full"
+                className="w-full h-full object-cover"
                 onError={(e) => {
-                  (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder-book-cover.jpg';
                 }}
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-2">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
+              <div className="absolute bottom-2 left-2">
                 {book.total_paginas && (
-                  <Badge variant="outline" className="bg-primary/90 text-white">
-                    {book.total_paginas} páginas
-                  </Badge>
+                  <Badge variant="secondary">{book.total_paginas} páginas</Badge>
                 )}
               </div>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="w-full sm:w-2/3">
-            <DialogTitle className="text-2xl">
-              {book.titulo}
-            </DialogTitle>
-            
-            <div className="mt-2 flex flex-wrap gap-2">
-              {book.categoria && (
-                <Badge>{book.categoria}</Badge>
-              )}
-              {book.autor && (
-                <Badge variant="outline">{book.autor}</Badge>
-              )}
+          <motion.div 
+            className="col-span-1 md:col-span-2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Badge>{book.categoria}</Badge>
+              {book.autor && <Badge variant="outline">{book.autor}</Badge>}
             </div>
             
-            <div className="mt-4">
-              <h3 className="text-lg font-semibold mb-2">Sobre este livro</h3>
-              <p className="text-muted-foreground">
-                {book.descricao || "Sem descrição disponível para este livro."}
-              </p>
-            </div>
-            
-            {showNarration && book.descricao && (
-              <div className="mt-4 p-3 bg-muted/30 rounded-lg border">
-                <h4 className="text-sm font-semibold mb-2 flex items-center">
-                  <Volume2 className="w-4 h-4 mr-1" /> Narração
-                </h4>
-                <TextToSpeech text={book.descricao} />
-              </div>
-            )}
-          </div>
-        </div>
-      </DialogHeader>
-      
-      <DialogFooter className="sm:justify-between gap-2 flex-wrap">
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="default" onClick={onReadBook}>
-            <BookOpen className="mr-2 h-4 w-4" /> Ler Agora
-          </Button>
-          
-          <Button variant="outline" onClick={handleDownload}>
-            <Download className="mr-2 h-4 w-4" /> Download
-          </Button>
+            <h3 className="text-lg font-semibold mb-2">Sinopse</h3>
+            <p className="text-muted-foreground">
+              {book.descricao || "Nenhuma descrição disponível para este livro."}
+            </p>
+          </motion.div>
         </div>
         
-        <div className="flex gap-2">
+        <DialogFooter className="gap-2 flex-wrap">
           <Button 
-            variant="ghost" 
-            onClick={handleToggleFavorite}
-            className={isFav ? "text-primary" : ""}
+            onClick={onRead}
+            className="transition-all duration-300 hover:scale-105"
           >
-            <BookmarkPlus className="mr-2 h-4 w-4" />
-            {isFav ? "Favoritado" : "Favoritar"}
+            <BookOpen className="mr-2 h-4 w-4" />
+            Ler Agora
           </Button>
           
-          <Button variant="ghost" onClick={handleToggleNarration}>
-            <Volume2 className="mr-2 h-4 w-4" />
-            {showNarration ? "Ocultar Narração" : "Narrar Descrição"}
+          <Button 
+            variant="outline" 
+            onClick={handleDownload}
+            disabled={isDownloading}
+            className="transition-all duration-300 hover:scale-105"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            {isDownloading ? 'Baixando...' : 'Download'}
           </Button>
-        </div>
-      </DialogFooter>
-    </DialogContent>
+          
+          <Button
+            variant="ghost"
+            onClick={handleToggleFavorite}
+            className={`transition-all duration-300 hover:scale-105 ${book.id && isFavorite(book.id) ? 'text-primary' : ''}`}
+          >
+            {book.id && isFavorite(book.id) ? (
+              <>
+                <BookmarkCheck className="mr-2 h-4 w-4" />
+                Favoritado
+              </>
+            ) : (
+              <>
+                <BookmarkPlus className="mr-2 h-4 w-4" />
+                Favoritar
+              </>
+            )}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
