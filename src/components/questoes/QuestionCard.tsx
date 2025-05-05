@@ -74,7 +74,7 @@ export const QuestionCard = ({
         // Check if question is bookmarked
         if (data.user.id) {
           try {
-            // Use a generic approach without type checking
+            // Use a more flexible approach to query the database
             const { data: bookmark, error } = await supabase
               .from('questoes_favoritas')
               .select('*')
@@ -157,10 +157,10 @@ export const QuestionCard = ({
           tempo_segundos: timeSpent
         };
         
-        // Use a more generic approach without strict type checking
+        // Use as any to bypass type checking
         await supabase
           .from('historico_questoes')
-          .insert(historyData);
+          .insert(historyData as any);
       } catch (error) {
         console.error('Error saving question history:', error);
       }
@@ -208,10 +208,10 @@ export const QuestionCard = ({
           data_adicionado: new Date().toISOString()
         };
         
-        // Use a more generic approach without strict type checking
+        // Use as any to bypass type checking
         await supabase
           .from('questoes_favoritas')
-          .insert(bookmarkData);
+          .insert(bookmarkData as any);
       }
 
       setIsBookmarked(!isBookmarked);

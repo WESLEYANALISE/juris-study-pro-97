@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseCategories } from '@/components/cursos/CourseCategories';
@@ -8,6 +9,19 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BookOpen, Star, Clock, TrendingUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+
+interface Course {
+  id: number;
+  titulo: string;
+  descricao: string;
+  categoria: string;
+  autor: string;
+  duracao: string;
+  modulos: number;
+  avaliacao: number;
+  alunos: number;
+  thumbnail: string;
+}
 
 const Cursos = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -36,10 +50,10 @@ const Cursos = () => {
           avaliacao: 4.8,
           alunos: 1250,
           thumbnail: 'https://via.placeholder.com/300x200',
-        }];
+        }] as Course[];
       } catch (error) {
         console.error('Error fetching courses:', error);
-        return [];
+        return [] as Course[];
       }
     },
     enabled: true, // Always fetch some courses, filter on client side
@@ -57,6 +71,10 @@ const Cursos = () => {
     e.preventDefault();
     // Implement search functionality here
     console.log('Searching for:', searchQuery);
+  };
+
+  const handleStartCourse = () => {
+    console.log('Starting course');
   };
   
   return (
@@ -129,7 +147,12 @@ const Cursos = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {courses?.map((course) => (
-                    <CourseMenu key={course.id} />
+                    <CourseMenu 
+                      key={course.id}
+                      title={course.titulo}
+                      description={course.descricao}
+                      onStartCourse={handleStartCourse}
+                    />
                   ))}
                 </div>
               )}

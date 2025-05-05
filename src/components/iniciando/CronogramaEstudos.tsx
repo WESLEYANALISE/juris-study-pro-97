@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,22 +15,22 @@ interface CronogramaEstudosProps {
   userId: string | null;
 }
 
-// Define an interface that matches the actual database structure
+// Define an interface for the DB structure
 interface PlanoEstudoDB {
   id?: string;
   user_id: string;
+  tipo_plano?: string;
+  tempo_disponivel?: string;
   area_interesse?: string[];
   objetivo?: string;
   nivel_atual?: string;
   horas_estudo_semana?: number;
-  tipo_plano: string;
-  tempo_disponivel: string;
   concluido?: boolean;
   progress?: number;
   created_at?: string;
   updated_at?: string;
-  criado_em: string;
-  ultima_atualizacao: string;
+  criado_em?: string;
+  ultima_atualizacao?: string;
 }
 
 // Our component state structure
@@ -65,9 +66,9 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
           .from('plano_estudos')
           .select('*')
           .eq('user_id', userId)
-          .order('criado_em', { ascending: false })
+          .order('created_at', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
           
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching study plan:', error);
@@ -80,7 +81,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
         
         if (data) {
           // Create a properly structured object that matches our expected state
-          const planData = data as any;
+          const planData = data as PlanoEstudoDB;
           setExistingPlan({
             id: planData.id,
             tipo_plano: planData.tipo_plano || 'basico',
@@ -122,10 +123,14 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
     setIsSaving(true);
     
     try {
-      const planoData = {
+      const planoData: PlanoEstudoDB = {
         user_id: userId,
         tipo_plano: tipoPlano,
         tempo_disponivel: tempoDisponivel,
+        objetivo: "Aprender conceitos básicos", // Adding required fields
+        nivel_atual: "Iniciante", // Adding required fields
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
         criado_em: new Date().toISOString(),
         ultima_atualizacao: new Date().toISOString()
       };
@@ -133,7 +138,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
       // Use a more generic approach without strict type checking
       const { error } = await supabase
         .from('plano_estudos')
-        .insert(planoData);
+        .insert(planoData as any);
         
       if (error) {
         console.error('Error saving study plan:', error);
