@@ -1,14 +1,21 @@
 
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+
+// Import and configure PDF.js FIRST, before anything else
+// This ensures PDF.js worker is set up before any components render
+console.log('Initializing PDF.js configuration...');
+import { configurePdfWorker } from '@/lib/pdf-config';
+
+// Try to configure PDF.js again to be extra safe
+configurePdfWorker();
+
+// Now import the rest of the app
 import App from './App'
 import './index.css'
 import { PDFTest } from './components/test/PDFTest';
 
-// Force immediate PDF.js configuration before ANY component renders
-// The import must happen before ReactDOM.createRoot
-import '@/lib/pdf-config';
-console.log('PDF.js configuration loaded in main.tsx');
+console.log('PDF.js configuration completed, starting React render');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

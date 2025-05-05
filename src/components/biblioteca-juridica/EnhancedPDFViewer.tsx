@@ -1,6 +1,5 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import { 
   ChevronLeft, ChevronRight, X, Sun, Moon, Search, 
   BookmarkPlus, BookmarkMinus, Download, Share2,
@@ -23,10 +22,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { pdfjs } from '@/lib/pdf-config'; // Import the configured pdfjs
 import './EnhancedPDFViewer.css';
 
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// No need to set worker source here since it's configured in pdf-config.ts
 
 interface Annotation {
   id: string;
@@ -629,8 +628,8 @@ export const EnhancedPDFViewer: React.FC<EnhancedPDFViewerProps> = ({
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={
-              <div className="flex flex-col items-center justify-center h-full">
-                <div className="h-16 w-16 border-4 border-t-primary rounded-full animate-spin" />
+              <div className="flex items-center justify-center h-[500px] w-full">
+                <div className="h-10 w-10 border-4 border-t-primary rounded-full animate-spin" />
               </div>
             }
             className="pdf-document"
