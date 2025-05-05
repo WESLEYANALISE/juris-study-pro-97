@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 
 export default function Simulados() {
   return (
-    <JuridicalBackground variant="gradient">
+    <JuridicalBackground variant="default">
       <Container className="py-12">
         <div className="space-y-8">
           <motion.div 

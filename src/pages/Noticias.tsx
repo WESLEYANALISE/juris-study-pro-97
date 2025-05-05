@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { Container } from '@/components/ui/container';
@@ -67,7 +68,7 @@ const newsArticles = [
 
 export default function Noticias() {
   return (
-    <JuridicalBackground variant="dots">
+    <JuridicalBackground variant="default">
       <Container className="py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
