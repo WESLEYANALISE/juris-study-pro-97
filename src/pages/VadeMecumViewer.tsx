@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInView } from "react-intersection-observer";
@@ -14,6 +15,9 @@ import { VadeMecumError } from "@/components/vademecum/VadeMecumError";
 import { useVadeMecumArticles } from "@/hooks/useVadeMecumArticles";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { useParams, useNavigate } from "react-router-dom";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BookmarkIcon, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 // Define a type for the supported background variants
 type VadeMecumBackgroundVariant = "scales" | "books" | "constitution";
@@ -145,6 +149,12 @@ const VadeMecumViewer = () => {
   const goToFavorites = useCallback(() => {
     navigate('/vademecum/favoritos');
   }, [navigate]);
+  
+  // Navigate to history page
+  const goToHistory = useCallback(() => {
+    navigate('/vademecum/favoritos');
+  }, [navigate]);
+  
   if (loading) {
     return <div className="flex justify-center items-center min-h-[200px] py-12">
         <div className="text-center">
@@ -156,26 +166,42 @@ const VadeMecumViewer = () => {
   if (error) {
     return <VadeMecumError error={error} onRetry={() => loadArticles()} />;
   }
+  
   return <JuridicalBackground variant={getBgVariant} opacity={0.03}>
       <div className="container mx-auto p-4 px-0">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* For mobile, display sidebar at top when on smaller screens */}
-          {isMobile && <div className="lg:col-span-1 mb-6">
-              <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
-            </div>}
-          
-          <div className="lg:col-span-3 px-[10px]">
+          {/* Main Content */}
+          <div className="lg:col-span-4 px-[10px]">
             <VadeMecumHeader title={decodedLawName} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onReload={() => loadArticles()} />
+            
+            {/* Navigation tabs for library sections */}
+            <div className="mb-6 flex justify-between items-center">
+              <Tabs defaultValue="articles" className="w-full">
+                <TabsList>
+                  <TabsTrigger value="articles">Artigos</TabsTrigger>
+                  <TabsTrigger value="favorites" onClick={goToFavorites}>
+                    <BookmarkIcon className="h-4 w-4 mr-2" />
+                    Favoritos
+                  </TabsTrigger>
+                  <TabsTrigger value="history" onClick={goToHistory}>
+                    <Clock className="h-4 w-4 mr-2" />
+                    Histórico
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              {/* Sidebar toggle button for mobile */}
+              {isMobile && (
+                <Button variant="outline" size="sm" className="ml-2">
+                  Menu
+                </Button>
+              )}
+            </div>
 
             {cachedArticles.length === 0 && !loading ? <div className="text-center py-8">
                 <p className="text-muted-foreground">Nenhum artigo encontrado para esta lei.</p>
               </div> : <VadeMecumArticleList isLoading={loading} data={cachedArticles} filter={searchQuery} tableName={tableName} visibleArticles={visibleArticles} loadMoreRef={setRefs} />}
           </div>
-          
-          {/* Only show sidebar in this position on desktop */}
-          {!isMobile && <div className="lg:col-span-1">
-              <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
-            </div>}
         </div>
 
         {/* Bottom floating controls for font size and back to top */}

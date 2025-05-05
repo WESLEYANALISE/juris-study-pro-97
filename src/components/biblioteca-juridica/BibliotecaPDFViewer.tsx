@@ -13,7 +13,7 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
-import { pdfjs } from '@/lib/pdf-config';
+import { pdfjs, processPdfUrl } from '@/lib/pdf-config';
 import './BibliotecaPDFViewer.css';
 
 // pdfjs worker is now configured in pdf-config.ts
@@ -135,16 +135,6 @@ export function BibliotecaPDFViewer({
       saveReadingProgress(book.id, debouncedPageNumber);
     }
   }, [debouncedPageNumber, book, saveReadingProgress, isLoading, numPages]);
-
-  // Process URL to get full path
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-    if (url.startsWith('http')) {
-      return url;
-    }
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    return `${baseUrl}/storage/v1/object/public/agoravai/${url}`;
-  };
 
   // Calculate buffer of pages to render
   useEffect(() => {
@@ -270,10 +260,15 @@ export function BibliotecaPDFViewer({
   // Handle download
   const handleDownload = useCallback(() => {
     if (pdfUrl) {
+      // Use our utility function to ensure we have the correct URL
+      const processedUrl = processPdfUrl(pdfUrl);
       const link = document.createElement('a');
-      link.href = processUrl(pdfUrl);
+      link.href = processedUrl;
       link.download = bookTitle.replace(/\s+/g, '_') + '.pdf';
       link.click();
+      toast.success("Download iniciado");
+    } else {
+      toast.error("URL do PDF não disponível");
     }
   }, [pdfUrl, bookTitle]);
 
@@ -291,18 +286,12 @@ export function BibliotecaPDFViewer({
 
   // Error display component
   if (isError) {
-    return <motion.div initial={{
-      opacity: 0
-    }} animate={{
-      opacity: 1
-    }} exit={{
-      opacity: 0
-    }} className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
+    return <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-card border rounded-lg shadow-lg p-6 text-center">
           <h2 className="text-2xl font-bold mb-4">Erro ao carregar PDF</h2>
           <p className="mb-4 text-muted-foreground">{errorMessage}</p>
           <p className="text-sm text-muted-foreground mb-4">
-            Tentamos carregar: {processUrl(pdfUrl)}
+            Tentamos carregar: {pdfUrl}
           </p>
           <Button onClick={onClose} variant="default">
             Voltar
@@ -311,17 +300,10 @@ export function BibliotecaPDFViewer({
       </motion.div>;
   }
 
-  // Get processed PDF URL
-  const processedPdfUrl = processUrl(pdfUrl);
-  return <motion.div className="fixed inset-0 bg-black z-50 flex flex-col" initial={{
-    opacity: 0
-  }} animate={{
-    opacity: 1
-  }} exit={{
-    opacity: 0
-  }} transition={{
-    duration: 0.3
-  }} ref={containerRef}>
+  // Get the final PDF URL via our utility
+  const processedPdfUrl = processPdfUrl(pdfUrl);
+  
+  return <motion.div className="fixed inset-0 bg-black z-50 flex flex-col" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.3 }} ref={containerRef}>
       {/* Back button header - always visible */}
       <div className="absolute top-0 left-0 z-20 m-4">
         <Button onClick={onClose} variant="outline" size="icon" className="bg-black/50 backdrop-blur-sm border-white/20 text-white hover:bg-black/70">
@@ -344,10 +326,7 @@ export function BibliotecaPDFViewer({
                 <p className="text-sm text-white/60 mt-1">Carregando PDF...</p>
               </div>
             </div>
-          </div> : <Document file={processedPdfUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} onProgress={({
-        loaded,
-        total
-      }) => {
+          </div> : <Document file={processedPdfUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} onProgress={({ loaded, total }) => {
         if (total) {
           const progress = Math.round(loaded / total * 100);
           setLoadProgress(progress);
@@ -376,18 +355,7 @@ export function BibliotecaPDFViewer({
       <AnimatePresence>
         {controlsVisible && <>
             {/* Top bar with title and controls */}
-            <motion.div className="pdf-top-controls" initial={{
-          opacity: 0,
-          y: -20
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} exit={{
-          opacity: 0,
-          y: -20
-        }} transition={{
-          duration: 0.2
-        }}>
+            <motion.div className="pdf-top-controls" initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.2 }}>
               <div className="flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-md border-b border-white/10">
                 <div className="flex-1 min-w-0">
                   <h3 className="text-white text-sm font-medium truncate">{bookTitle}</h3>
@@ -452,7 +420,51 @@ export function BibliotecaPDFViewer({
             </motion.div>
             
             {/* Bottom controls */}
-            
+            <motion.div className="pdf-controls" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} transition={{ duration: 0.2 }}>
+              <div className="flex flex-col px-4 py-3 bg-black/80 backdrop-blur-md border-t border-white/10">
+                {/* Progress bar */}
+                <div className="w-full mb-4">
+                  <Slider value={[progressPercentage]} onValueChange={handleSliderChange} step={1} className="pdf-progress" />
+                </div>
+                
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  {/* Page navigation */}
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => changePage(-1)} disabled={pageNumber <= 1} className="text-white hover:bg-white/10">
+                      <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    
+                    <div className="flex items-center bg-white/10 rounded px-1">
+                      <Input type="number" min={1} max={numPages || 1} value={pageInputValue} onChange={handlePageInputChange} onKeyDown={handlePageInputKeyDown} onBlur={handlePageInputBlur} className="w-12 h-8 text-white text-center border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0" />
+                      <span className="text-white/70 text-sm px-1">/ {numPages || '-'}</span>
+                    </div>
+                    
+                    <Button variant="ghost" size="sm" onClick={() => changePage(1)} disabled={!numPages || pageNumber >= numPages} className="text-white hover:bg-white/10">
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
+                  </div>
+                  
+                  {/* Zoom and rotate controls */}
+                  <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={zoomOut} disabled={scale <= 0.5} className="text-white hover:bg-white/10">
+                      <ZoomOut className="h-5 w-5" />
+                    </Button>
+                    
+                    <span className="text-white/80 text-sm min-w-[40px] text-center">
+                      {Math.round(scale * 100)}%
+                    </span>
+                    
+                    <Button variant="ghost" size="sm" onClick={zoomIn} disabled={scale >= 3} className="text-white hover:bg-white/10">
+                      <ZoomIn className="h-5 w-5" />
+                    </Button>
+                    
+                    <Button variant="ghost" size="sm" onClick={rotate} className="text-white hover:bg-white/10">
+                      <RotateCw className="h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </>}
       </AnimatePresence>
     </motion.div>;

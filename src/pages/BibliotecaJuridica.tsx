@@ -18,6 +18,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { BibliotecaBookList } from '@/components/biblioteca-juridica/BibliotecaBookList';
 import '../styles/biblioteca-juridica.css';
 
+// Import the processPdfUrl utility
+import { processPdfUrl } from '@/lib/pdf-config';
+
 // Import normal components for fallback
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
 import { BibliotecaBookGrid } from '@/components/biblioteca-juridica/BibliotecaBookGrid';
@@ -54,9 +57,10 @@ export default function BibliotecaJuridica() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
-  const [currentTab, setCurrentTab] = useState<string>('todos');
+  const [currentTab, setCurrentTab] = useState<string>('categorias'); // Default to categorias now
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isPDFReady, setIsPDFReady] = useState<boolean>(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   const { isFavorite, getFavorites, getReadingProgress } = useBibliotecaProgresso();
   
@@ -130,10 +134,17 @@ export default function BibliotecaJuridica() {
         livro.categoria.toLowerCase().includes(query) || 
         (livro.descricao && livro.descricao.toLowerCase().includes(query))
       );
+      return result;
+    }
+    
+    // Filter by selected category if one exists
+    if (selectedCategory) {
+      result = result.filter(livro => livro.categoria === selectedCategory);
+      return result;
     }
     
     // Filter by current tab
-    if (currentTab !== 'todos') {
+    if (currentTab !== 'todos' && currentTab !== 'categorias') {
       if (currentTab === 'favoritos') {
         const favorites = getFavorites();
         result = result.filter(livro => favorites.includes(livro.id));
@@ -156,33 +167,15 @@ export default function BibliotecaJuridica() {
     }
     
     return result;
-  }, [livros, searchQuery, currentTab, getFavorites, getReadingProgress]);
+  }, [livros, searchQuery, currentTab, getFavorites, getReadingProgress, selectedCategory]);
   
   // Group books by category with memoization
   const booksByCategory = useMemo(() => {
-    if (!filteredLivros.length) return {};
-    
-    if (currentTab === 'favoritos' || currentTab === 'recentes' || searchQuery) {
-      // For these tabs, return a single group with all filtered books
-      return {
-        [currentTab === 'favoritos' ? 'Favoritos' : 
-         currentTab === 'recentes' ? 'Recentes' : 
-         'Resultados da busca']: filteredLivros
-      };
-    }
-    
-    // Otherwise group by category
-    return filteredLivros.reduce<Record<string, LivroJuridico[]>>((acc, livro) => {
-      const category = livro.categoria || 'Outros';
-      
-      if (!acc[category]) {
-        acc[category] = [];
-      }
-      
-      acc[category].push(livro);
+    return categorias.reduce<Record<string, LivroJuridico[]>>((acc, categoria) => {
+      acc[categoria] = livros.filter(livro => livro.categoria === categoria);
       return acc;
     }, {});
-  }, [filteredLivros, currentTab, searchQuery]);
+  }, [livros, categorias]);
   
   // Favorites and recently accessed books
   const favoriteBooks = useMemo(() => {
@@ -207,9 +200,21 @@ export default function BibliotecaJuridica() {
       .slice(0, 6);
   }, [livros, getReadingProgress]);
 
+  // Handler for category selection
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentTab('todos'); // Switch to "todos" tab to show filtered books
+  };
+
   // Open PDF viewer
   function handleOpenPDF(livro: LivroJuridico) {
     console.log("Opening PDF:", livro);
+    // Process PDF URL through our utility
+    if (livro.pdf_url) {
+      livro.pdf_url = processPdfUrl(livro.pdf_url);
+      console.log("Processed PDF URL:", livro.pdf_url);
+    }
+    
     setSelectedBook(livro);
     
     // Reset PDF ready state
@@ -232,6 +237,11 @@ export default function BibliotecaJuridica() {
     setSelectedBook(null);
     setIsPDFReady(false);
   }
+
+  // Reset category filter
+  const resetCategoryFilter = () => {
+    setSelectedCategory(null);
+  };
 
   // Get the number of books in progress
   const booksInProgressCount = useMemo(() => {
@@ -261,8 +271,13 @@ export default function BibliotecaJuridica() {
               onValueChange={setCurrentTab}
               className="w-full md:w-auto"
             >
-              <TabsList className="grid grid-cols-4 sm:grid-cols-7 w-full">
-                <TabsTrigger value="todos" className="text-xs sm:text-sm">
+              <TabsList className="grid grid-cols-4 sm:grid-cols-5 w-full">
+                <TabsTrigger value="categorias" className="text-xs sm:text-sm">
+                  <BookOpen className="h-4 w-4 mr-1.5 hidden sm:inline" /> 
+                  Categorias
+                </TabsTrigger>
+                
+                <TabsTrigger value="todos" className="text-xs sm:text-sm" onClick={resetCategoryFilter}>
                   <Book className="h-4 w-4 mr-1.5 hidden sm:inline" /> 
                   Todos
                 </TabsTrigger>
@@ -277,22 +292,12 @@ export default function BibliotecaJuridica() {
                   Recentes
                 </TabsTrigger>
                 
-                {categorias.slice(0, 4).map((categoria) => (
-                  <TabsTrigger 
-                    key={categoria} 
-                    value={categoria.toLowerCase()}
-                    className="text-xs sm:text-sm"
-                  >
-                    {categoria === "Doutrinas" ? (
-                      <Book className="h-4 w-4 mr-1.5 hidden sm:inline" />
-                    ) : categoria === "Leis" ? (
-                      <FileText className="h-4 w-4 mr-1.5 hidden sm:inline" />
-                    ) : (
-                      <BookOpen className="h-4 w-4 mr-1.5 hidden sm:inline" />
-                    )}
-                    {categoria}
+                {selectedCategory && (
+                  <TabsTrigger value="categoria" className="text-xs sm:text-sm">
+                    <BookMarked className="h-4 w-4 mr-1.5 hidden sm:inline" /> 
+                    {selectedCategory}
                   </TabsTrigger>
-                ))}
+                )}
               </TabsList>
             </Tabs>
             
@@ -332,107 +337,71 @@ export default function BibliotecaJuridica() {
                 </div>
               </div>
             ) : (
-              <Tabs defaultValue="livros" className="w-full">
-                <TabsList className="mb-6">
-                  <TabsTrigger value="livros">Biblioteca</TabsTrigger>
-                  <TabsTrigger value="categorias">Categorias</TabsTrigger>
-                  <TabsTrigger value="estatisticas">Meu Progresso</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="livros" className="space-y-8">
-                  {filteredLivros.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <Book className="h-16 w-16 text-muted-foreground mb-4" />
-                      <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
-                      <p className="text-muted-foreground max-w-md">
-                        {searchQuery 
-                          ? "Não encontramos nenhum livro correspondente aos seus critérios de busca."
-                          : currentTab === 'favoritos'
-                            ? "Você ainda não adicionou nenhum livro aos favoritos."
-                            : "Não há livros disponíveis nesta categoria."}
-                      </p>
-                      
-                      {(currentTab !== 'todos' || searchQuery) && (
-                        <Button 
-                          variant="outline" 
-                          className="mt-4"
-                          onClick={() => {
-                            setCurrentTab('todos');
-                            setSearchQuery('');
-                          }}
-                        >
-                          Ver todos os livros
-                        </Button>
-                      )}
-                    </div>
-                  ) : viewMode === 'grid' ? (
-                    <Suspense fallback={<BibliotecaBookGrid books={filteredLivros.slice(0, 12)} onSelectBook={handleOpenPDF} />}>
-                      <LazyBookGrid books={filteredLivros} onSelectBook={handleOpenPDF} />
-                    </Suspense>
-                  ) : (
-                    <BibliotecaBookList books={filteredLivros} onSelectBook={handleOpenPDF} />
-                  )}
-                  
-                  {/* Featured Collections */}
-                  {currentTab === 'todos' && !searchQuery && (
-                    <div className="space-y-12 pt-8 border-t">
-                      {recentBooks.length > 0 && (
-                        <Suspense fallback={<LoadingFallback />}>
-                          <LazyKindleBookCarousel
-                            title="Continue Lendo"
-                            description="Retome suas leituras de onde parou"
-                            books={recentBooks}
-                            onSelectBook={handleOpenPDF}
-                            accent={true}
-                          />
-                        </Suspense>
-                      )}
-                      
-                      {favoriteBooks.length > 0 && (
-                        <Suspense fallback={<LoadingFallback />}>
-                          <LazyKindleBookCarousel
-                            title="Seus Favoritos"
-                            description="Livros que você marcou como favoritos"
-                            books={favoriteBooks}
-                            onSelectBook={handleOpenPDF}
-                            accent={false}
-                          />
-                        </Suspense>
-                      )}
-                      
-                      {/* Categories carousels - load only one at a time */}
-                      {Object.entries(booksByCategory)
-                        .filter(([category]) => category !== 'Outros')
-                        .slice(0, 2) // Limit initial categories to 2
-                        .map(([category, books]) => (
-                          <Suspense key={category} fallback={<LoadingFallback />}>
-                            <LazyKindleBookCarousel
-                              title={category}
-                              books={books}
-                              onSelectBook={handleOpenPDF}
-                            />
-                          </Suspense>
-                        ))}
-                    </div>
-                  )}
-                </TabsContent>
-                
-                <TabsContent value="categorias">
-                  <BibliotecaCategoryGrid 
-                    categories={categorias} 
-                    bookCounts={categorias.reduce((acc, cat) => {
-                      acc[cat] = livros.filter(l => l.categoria === cat).length;
-                      return acc;
-                    }, {} as Record<string, number>)}
-                    onSelectCategory={(cat) => setCurrentTab(cat.toLowerCase())}
-                  />
-                </TabsContent>
-                
-                <TabsContent value="estatisticas">
-                  <BibliotecaReadingStats books={livros} />
-                </TabsContent>
-              </Tabs>
+              <TabsContent value="categorias" className="mt-0">
+                <BibliotecaCategoryGrid 
+                  categories={categorias} 
+                  bookCounts={categorias.reduce((acc, cat) => {
+                    acc[cat] = livros.filter(l => l.categoria === cat).length;
+                    return acc;
+                  }, {} as Record<string, number>)}
+                  onSelectCategory={handleCategorySelect}
+                />
+              </TabsContent>
             )}
+            
+            {/* Books by selected category or search */}
+            {(searchQuery || selectedCategory || currentTab === 'todos' || 
+              currentTab === 'favoritos' || currentTab === 'recentes') && !isLoading && (
+              <div className="mt-6">
+                <div className="mb-4 flex justify-between items-center">
+                  <h2 className="text-2xl font-bold">
+                    {searchQuery 
+                      ? `Resultados para "${searchQuery}"` 
+                      : selectedCategory 
+                        ? `Livros de ${selectedCategory}` 
+                        : currentTab === 'favoritos'
+                          ? 'Seus Favoritos'
+                          : currentTab === 'recentes'
+                            ? 'Lidos Recentemente'
+                            : 'Todos os Livros'}
+                  </h2>
+                  {(searchQuery || selectedCategory) && (
+                    <Button variant="outline" size="sm" onClick={() => {
+                      setSearchQuery('');
+                      resetCategoryFilter();
+                      setCurrentTab('categorias');
+                    }}>
+                      Voltar para Categorias
+                    </Button>
+                  )}
+                </div>
+                
+                {filteredLivros.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <Book className="h-16 w-16 text-muted-foreground mb-4" />
+                    <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
+                    <p className="text-muted-foreground max-w-md">
+                      {searchQuery 
+                        ? "Não encontramos nenhum livro correspondente aos seus critérios de busca."
+                        : currentTab === 'favoritos'
+                          ? "Você ainda não adicionou nenhum livro aos favoritos."
+                          : "Não há livros disponíveis nesta categoria."}
+                    </p>
+                  </div>
+                ) : viewMode === 'grid' ? (
+                  <Suspense fallback={<BibliotecaBookGrid books={filteredLivros.slice(0, 12)} onSelectBook={handleOpenPDF} />}>
+                    <LazyBookGrid books={filteredLivros} onSelectBook={handleOpenPDF} />
+                  </Suspense>
+                ) : (
+                  <BibliotecaBookList books={filteredLivros} onSelectBook={handleOpenPDF} />
+                )}
+              </div>
+            )}
+            
+            {/* Stats Tab */}
+            <TabsContent value="estatisticas" className="mt-0">
+              <BibliotecaReadingStats books={livros} />
+            </TabsContent>
           </div>
         </div>
         

@@ -1,148 +1,95 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Article } from '@/components/vademecum/article/Article';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
-import { ArticleCard } from './article/ArticleCard';
-import EmptyState from './EmptyState';
-import { LoadingArticleCard } from './LoadingArticleCard';
-import { BookmarkPlus } from 'lucide-react';
-import { useVadeMecumFavorites } from '@/hooks/useVadeMecumFavorites';
 
 interface VadeMecumArticleListProps {
-  isLoading: boolean;
   data: any[];
   filter: string;
+  isLoading: boolean;
   tableName: string;
   visibleArticles: any[];
-  loadMoreRef: ((node: HTMLDivElement | null) => void);
+  loadMoreRef: (node: HTMLDivElement | null) => void;
 }
 
-export const VadeMecumArticleList: React.FC<VadeMecumArticleListProps> = ({
-  isLoading,
+export function VadeMecumArticleList({
   data,
   filter,
+  isLoading,
   tableName,
   visibleArticles,
   loadMoreRef
-}) => {
-  const { toggleFavorite, isFavorite } = useVadeMecumFavorites();
-
-  // Animation variants for staggered article appearance
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05 
-      }
-    }
+}: VadeMecumArticleListProps) {
+  const [activeArticle, setActiveArticle] = useState<string | null>(null);
+  
+  useEffect(() => {
+    // Reset active article when filter changes
+    setActiveArticle(null);
+  }, [filter]);
+  
+  const toggleArticle = (articleNumber: string) => {
+    setActiveArticle(activeArticle === articleNumber ? null : articleNumber);
   };
   
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { 
-      opacity: 1, 
-      y: 0,
-      transition: {
-        type: "spring",
-        damping: 25,
-        stiffness: 250
-      }
-    }
-  };
-
-  // Return loading state
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        {Array.from({ length: 5 }).map((_, index) => (
-          <LoadingArticleCard key={`loading-${index}`} />
-        ))}
-      </div>
-    );
-  }
-  
-  // Return empty state if no articles match filter
-  if (data.length === 0) {
-    return <EmptyState filter={filter} />;
-  }
-  
-  // No articles visible yet
-  if (visibleArticles.length === 0) {
-    return (
-      <div className="flex justify-center items-center py-12">
+      <div className="flex justify-center items-center min-h-[200px] py-12">
         <div className="text-center">
-          <p className="text-muted-foreground">Nenhum artigo encontrado</p>
+          <LoadingSpinner className="h-8 w-8 mx-auto mb-4" />
+          <p className="text-muted-foreground">Carregando artigos...</p>
         </div>
       </div>
     );
   }
-
-  // Debug: Log the first few articles to see their structure
-  console.log("First few articles:", visibleArticles.slice(0, 3));
-
+  
   return (
-    <motion.div 
-      className="space-y-4"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-    >
-      {visibleArticles.map(article => {
-        if (!article) {
-          console.warn("Received undefined or null article");
-          return null;
-        }
-        
-        // Map database column names directly to component props
-        // Column mapping: numero -> articleNumber, artigo -> articleText, etc.
-        const articleNumber = article.numero || '';
-        const articleText = article.artigo || '';
-        const articleId = article.id ? article.id.toString() : '';
-        const technicalExplanation = article.tecnica || '';
-        const formalExplanation = article.formal || '';
-        const practicalExample = article.exemplo || '';
-        
-        // Check if article has either a number or text to display
-        if (!articleText && !articleNumber) {
-          console.warn("Skipping article without text or number:", article);
-          return null;
-        }
-        
-        // Check if the article is a favorite
-        const isFavorited = isFavorite(articleNumber, tableName);
-        
-        return (
-          <motion.div 
-            key={articleId} 
-            variants={itemVariants}
-          >
-            <ArticleCard
-              articleId={articleId}
-              articleNumber={articleNumber}
-              articleText={articleText}
-              technicalExplanation={technicalExplanation}
-              formalExplanation={formalExplanation}
-              practicalExample={practicalExample}
-              lawName={tableName}
-              isFavorite={isFavorited}
-              onToggleFavorite={() => toggleFavorite({
-                law_name: tableName,
-                article_id: articleId,
-                article_number: articleNumber,
-                article_text: articleText
-              })}
-              favoriteIcon={<BookmarkPlus size={18} />}
-            />
-          </motion.div>
-        );
-      })}
-      
-      {/* Invisible div for infinite scroll observer */}
-      {data.length > visibleArticles.length && (
-        <div ref={loadMoreRef} className="h-4 w-full" />
+    <div className="space-y-6">
+      {/* Show filter message if filtering */}
+      {filter && (
+        <div className="bg-muted/50 px-4 py-3 rounded-lg flex items-center justify-between">
+          <p className="text-sm">
+            Mostrando {data.length} resultado{data.length !== 1 ? 's' : ''} para "{filter}"
+          </p>
+          {data.length > 0 && (
+            <button 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+              className="text-xs text-primary hover:underline"
+            >
+              Voltar ao topo
+            </button>
+          )}
+        </div>
       )}
-    </motion.div>
+      
+      {/* Articles list */}
+      <motion.div 
+        className="space-y-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5 }}
+      >
+        {visibleArticles.map((article, index) => (
+          <Article
+            key={`${article.id}-${index}`}
+            articleNumber={article.numero ?? ""}
+            articleText={article.artigo ?? ""}
+            technicalExplanation={article.tecnica}
+            formalExplanation={article.formal}
+            practicalExample={article.exemplo}
+            isOpen={activeArticle === article.numero}
+            onToggle={() => toggleArticle(article.numero)}
+            lawName={tableName}
+          />
+        ))}
+        
+        {/* Load more trigger element */}
+        {data.length > visibleArticles.length && (
+          <div ref={loadMoreRef} className="h-10 flex justify-center items-center py-8">
+            <LoadingSpinner className="h-6 w-6" />
+          </div>
+        )}
+      </motion.div>
+    </div>
   );
-};
-
-export default VadeMecumArticleList;
+}

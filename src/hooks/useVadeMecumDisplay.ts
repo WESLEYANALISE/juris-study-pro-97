@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useVadeMecumPreferences } from './useVadeMecumPreferences';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,6 +16,9 @@ export const useVadeMecumDisplay = () => {
   useEffect(() => {
     if (!isLoading && savedFontSize) {
       setLocalFontSize(savedFontSize);
+      
+      // Apply font size to article content
+      document.documentElement.style.setProperty('--article-font-size', `${savedFontSize}px`);
     }
   }, [savedFontSize, isLoading]);
 
@@ -33,35 +36,59 @@ export const useVadeMecumDisplay = () => {
   useEffect(() => {
     if (!user && !savedFontSize) {
       setLocalFontSize(16);
+      document.documentElement.style.setProperty('--article-font-size', '16px');
     }
   }, [location.pathname, user, savedFontSize]);
 
-  const increaseFontSize = () => {
-    const newSize = Math.min(fontSize + 2, 32);
-    setLocalFontSize(newSize);
-    if (user) {
-      saveRemoteFontSize(newSize);
-    }
-  };
+  // Increase font size with boundary check
+  const increaseFontSize = useCallback(() => {
+    setLocalFontSize(prev => {
+      const newSize = Math.min(prev + 1, 32);
+      document.documentElement.style.setProperty('--article-font-size', `${newSize}px`);
+      
+      if (user) {
+        saveRemoteFontSize(newSize);
+      }
+      
+      return newSize;
+    });
+  }, [user, saveRemoteFontSize]);
 
-  const decreaseFontSize = () => {
-    const newSize = Math.max(fontSize - 2, 12);
-    setLocalFontSize(newSize);
-    if (user) {
-      saveRemoteFontSize(newSize);
-    }
-  };
+  // Decrease font size with boundary check
+  const decreaseFontSize = useCallback(() => {
+    setLocalFontSize(prev => {
+      const newSize = Math.max(prev - 1, 12);
+      document.documentElement.style.setProperty('--article-font-size', `${newSize}px`);
+      
+      if (user) {
+        saveRemoteFontSize(newSize);
+      }
+      
+      return newSize;
+    });
+  }, [user, saveRemoteFontSize]);
 
-  const scrollToTop = () => {
+  // Direct font size setter with validation
+  const setFontSize = useCallback((newSize: number) => {
+    const validSize = Math.max(12, Math.min(32, newSize));
+    setLocalFontSize(validSize);
+    document.documentElement.style.setProperty('--article-font-size', `${validSize}px`);
+    
+    if (user) {
+      saveRemoteFontSize(validSize);
+    }
+  }, [user, saveRemoteFontSize]);
+
+  const scrollToTop = useCallback(() => {
     window.scrollTo({
       top: 0,
       behavior: 'smooth'
     });
-  };
+  }, []);
 
   return {
     fontSize,
-    setFontSize: setLocalFontSize,
+    setFontSize,
     increaseFontSize,
     decreaseFontSize,
     showBackToTop,

@@ -111,7 +111,7 @@ const JurisFlix = () => {
   };
 
   return (
-    <JuridicalBackground variant="scales" opacity={0.02}>
+    <JuridicalBackground variant="default" opacity={0.02}>
       <div className="container mx-auto px-4 md:p-4 space-y-6 pb-20">
         <motion.header 
           className="space-y-4"
