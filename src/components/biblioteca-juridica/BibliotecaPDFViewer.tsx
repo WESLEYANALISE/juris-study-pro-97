@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -308,7 +307,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
       setPageInputValue(newPage.toString());
     }
   }, [numPages]);
-
+  
   // Error display component
   if (isError) {
     return (
