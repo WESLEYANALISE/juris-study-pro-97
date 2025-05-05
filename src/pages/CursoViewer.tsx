@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -34,10 +35,13 @@ const CursoViewer = () => {
     queryKey: ['curso', cursoId],
     queryFn: async () => {
       try {
+        // Parse the cursoId as a number or use a default fallback
+        const cursoIdNum = cursoId ? parseInt(cursoId, 10) : 0;
+        
         const { data, error } = await supabase
           .from('cursos_narrados')
           .select('*')
-          .eq('id', cursoId)
+          .eq('id', cursoIdNum)
           .single();
         
         if (error) {
@@ -72,8 +76,8 @@ const CursoViewer = () => {
           open={sidebarOpen}
           onOpenChange={setSidebarOpen}
           onStartCourse={handleStartCourse}
-          onBack={() => navigate('/cursos')} // Add back button handler
-          showBackButton={true} // Show the back button
+          onBack={() => navigate('/cursos')} 
+          showBackButton={true}
           title={curso?.titulo || 'Carregando...'}
           description={curso?.descricao || ''}
           alunos={curso?.alunos || 0}

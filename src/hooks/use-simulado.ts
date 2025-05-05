@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SimuladoCategoria, Questao, SimuladoSessao, SimuladoResposta, SimuladoEdicao } from "@/types/simulados";
@@ -42,7 +43,7 @@ export function useSimulado(categoria: SimuladoCategoria) {
         if (!edicao) throw new Error("Edição não encontrada");
         
         // For OAB simulados, always use the simulados_oab table
-        let query = supabase.from('simulados_oab').select('*');
+        let query: any = supabase.from('simulados_oab').select('*');
         
         // Unless it's not OAB, then use the appropriate table based on category
         if (edicao.categoria !== 'OAB') {
@@ -77,8 +78,28 @@ export function useSimulado(categoria: SimuladoCategoria) {
         const { data, error } = await query;
         if (error) throw error;
         
+        // Type cast the data to match our Questao interface
+        const questoes = data.map((q: any) => ({
+          id: q.id,
+          ano: q.ano,
+          banca: q.banca,
+          numero_questao: q.numero_questao,
+          questao: q.questao,
+          alternativa_a: q.alternativa_a,
+          alternativa_b: q.alternativa_b,
+          alternativa_c: q.alternativa_c,
+          alternativa_d: q.alternativa_d,
+          alternativa_e: q.alternativa_e,
+          resposta_correta: q.resposta_correta || q.alternativa_correta,
+          alternativa_correta: q.alternativa_correta,
+          explicacao: q.explicacao,
+          area: q.area,
+          imagem_url: q.imagem_url,
+          edicao_id: q.edicao_id
+        })) as Questao[];
+        
         return {
-          questoes: data as Questao[],
+          questoes,
           edicao: edicao as SimuladoEdicao
         };
       },
@@ -128,7 +149,26 @@ export function useSimulado(categoria: SimuladoCategoria) {
 
         const { data, error } = await query;
         if (error) throw error;
-        return data as Questao[];
+        
+        // Map the data to match our Questao interface
+        return data.map((q: any) => ({
+          id: q.id,
+          ano: q.ano,
+          banca: q.banca,
+          numero_questao: q.numero_questao,
+          questao: q.questao,
+          alternativa_a: q.alternativa_a,
+          alternativa_b: q.alternativa_b,
+          alternativa_c: q.alternativa_c,
+          alternativa_d: q.alternativa_d,
+          alternativa_e: q.alternativa_e,
+          resposta_correta: q.resposta_correta || q.alternativa_correta,
+          alternativa_correta: q.alternativa_correta,
+          explicacao: q.explicacao,
+          area: q.area,
+          imagem_url: q.imagem_url,
+          edicao_id: q.edicao_id
+        })) as Questao[];
       },
     });
   };

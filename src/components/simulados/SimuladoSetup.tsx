@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -60,18 +61,22 @@ export const SimuladoSetup = ({
       try {
         // Consulta específica para exames da OAB
         if (categoria === 'OAB') {
-          // Busca informações na tabela simulados_oab - esta seria a consulta real
+          // Usando uma abordagem diferente para buscar o último exame da OAB
+          // Buscamos o exame mais recente baseado na data
           const { data, error } = await supabase
-            .from('simulados_oab')
-            .select('edicao_info')
-            .order('created_at', { ascending: false })
+            .from('simulado_edicoes')
+            .select('nome, ano, numero')
+            .eq('categoria', 'OAB')
+            .order('ano', { ascending: false })
+            .order('numero', { ascending: false })
             .limit(1);
             
           if (error) throw error;
           
           // Atualizar com dados reais se disponíveis
-          if (data && data.length > 0 && data[0].edicao_info) {
-            setUltimoExame(data[0].edicao_info);
+          if (data && data.length > 0) {
+            const exame = data[0];
+            setUltimoExame(`${exame.nome} (${exame.ano}/${exame.numero}) - Resultado em breve`);
           } else {
             setUltimoExame("XXXVIII Exame de Ordem - Previsto para Agosto 2025");
           }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,14 +14,15 @@ interface QuestionCardProps {
   onFavorite?: (questionId: string, isFavorited: boolean) => void;
 }
 
-const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => {
+// Make sure we're exporting the component with the correct name
+export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
 
   useEffect(() => {
-    checkIfFavorited();
+    checkIfFavorited().then(setIsFavorited);
     trackQuestionView();
   }, [question.id, user]);
 
@@ -28,11 +30,11 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => 
     if (!user) return false;
     
     try {
-      const { data, error } = await (supabase
+      const { data, error } = await supabase
         .from('questoes_favoritas' as any)
         .select('*')
         .eq('user_id', user.id)
-        .eq('questao_id', question.id) as any);
+        .eq('questao_id', question.id);
         
       if (error) throw error;
       return data && data.length > 0;
@@ -46,13 +48,13 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => 
     if (!user) return;
     
     try {
-      await (supabase
+      await supabase
         .from('historico_questoes' as any)
         .insert({
           user_id: user.id,
           questao_id: question.id,
           visualizado_em: new Date().toISOString()
-        }) as any);
+        });
     } catch (error) {
       console.error('Erro ao registrar visualização:', error);
     }
@@ -64,20 +66,20 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => 
     try {
       if (isFavorited) {
         // Remove from favorites
-        await (supabase
+        await supabase
           .from('questoes_favoritas' as any)
           .delete()
           .eq('user_id', user.id)
-          .eq('questao_id', question.id) as any);
+          .eq('questao_id', question.id);
       } else {
         // Add to favorites
-        await (supabase
+        await supabase
           .from('questoes_favoritas' as any)
           .insert({
             user_id: user.id,
             questao_id: question.id,
             favoritado_em: new Date().toISOString()
-          }) as any);
+          });
       }
       
       setIsFavorited(!isFavorited);
@@ -176,4 +178,5 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => 
   );
 };
 
+// Make sure we also have this default export to maintain compatibility
 export default QuestionCard;

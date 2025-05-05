@@ -162,6 +162,9 @@ const Cursos = () => {
                         alunos={course.alunos}
                         duracao={course.duracao}
                         onStartCourse={() => handleStartCourse(course.id)}
+                        // Must provide all required props
+                        open={false}
+                        onOpenChange={() => {}}
                       />
                     ))
                   ) : (
