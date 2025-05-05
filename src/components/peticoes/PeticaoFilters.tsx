@@ -1,4 +1,5 @@
 
+import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -8,6 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Loader2, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface FiltersState {
   area: string;
@@ -20,12 +24,17 @@ interface FiltersState {
 interface PeticaoFiltersProps {
   filters: FiltersState;
   setFilters: (filters: FiltersState) => void;
+  allAreas?: string[]; // Accept pre-loaded areas
 }
 
-export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
-  const { data: areas } = useQuery({
-    queryKey: ["peticoes-areas"],
+export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFiltersProps) {
+  // Use cached areas if provided, otherwise fetch them
+  const { data: areas = allAreas, isLoading: isLoadingAreas } = useQuery({
+    queryKey: ["peticoes-areas-filter"],
     queryFn: async () => {
+      // If we already have areas from the parent, use those
+      if (allAreas.length > 0) return allAreas;
+      
       const { data } = await supabase
         .from("peticoes")
         .select("area")
@@ -33,23 +42,35 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
       
       return [...new Set(data?.map((item) => item.area))];
     },
+    enabled: allAreas.length === 0, // Only fetch if we don't already have areas
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
-  const { data: tipos } = useQuery({
-    queryKey: ["peticoes-tipos"],
+  // Only fetch tipos when an area is selected to reduce queries
+  const { data: tipos = [], isLoading: isLoadingTipos } = useQuery({
+    queryKey: ["peticoes-tipos", filters.area],
     queryFn: async () => {
-      const { data } = await supabase
+      let query = supabase
         .from("peticoes")
-        .select("tipo")
-        .order("tipo");
+        .select("tipo");
+        
+      // Filter by area if selected
+      if (filters.area && filters.area !== "all") {
+        query = query.eq("area", filters.area);
+      }
       
-      return [...new Set(data?.map((item) => item.tipo))];
+      query = query.order("tipo");
+      
+      const { data } = await query;
+      return [...new Set(data?.map((item) => item.tipo).filter(Boolean))];
     },
+    enabled: true, // Always load tipos, but will be filtered by area if selected
+    staleTime: 5 * 60 * 1000,
   });
 
-  // We need to modify this query since sub_area doesn't exist in the peticoes table
-  // We'll use a dummy approach that extracts sub-areas from the tipo field for now
-  const { data: subAreas } = useQuery({
+  // Only extract sub-areas if needed
+  const { data: subAreas = [], isLoading: isLoadingSubAreas } = useQuery({
     queryKey: ["peticoes-subareas", filters.area],
     queryFn: async () => {
       if (!filters.area || filters.area === "all") return [];
@@ -61,7 +82,6 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
         .order("tipo");
       
       // Extract potential sub-areas from the tipo field (this is a workaround)
-      // In a real scenario, you might want to add a sub_area column to your peticoes table
       const subAreaSet = new Set<string>();
       data?.forEach(item => {
         if (item.tipo && item.tipo.includes("-")) {
@@ -75,71 +95,153 @@ export function PeticaoFilters({ filters, setFilters }: PeticaoFiltersProps) {
       return Array.from(subAreaSet);
     },
     enabled: !!filters.area && filters.area !== "all",
+    staleTime: 5 * 60 * 1000,
   });
+  
+  // Memoize filter reset function
+  const clearAllFilters = useCallback(() => {
+    setFilters({
+      area: "",
+      subArea: "",
+      tipo: "",
+      tags: [],
+      search: ""
+    });
+  }, [setFilters]);
+  
+  // Check if any filters are active
+  const hasActiveFilters = useMemo(() => {
+    return filters.area || filters.subArea || filters.tipo || filters.tags.length > 0 || filters.search;
+  }, [filters]);
 
   return (
     <div className="space-y-4">
-      <h3 className="font-semibold mb-4">Filtros</h3>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="font-semibold">Filtros</h3>
+        
+        {hasActiveFilters && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={clearAllFilters}
+            className="text-xs flex items-center gap-1"
+          >
+            <X className="h-3.5 w-3.5" />
+            Limpar filtros
+          </Button>
+        )}
+      </div>
       
       <div className="space-y-4">
-        <Select
-          value={filters.area}
-          onValueChange={(value) =>
-            setFilters({ ...filters, area: value, subArea: "" })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Área do Direito" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as áreas</SelectItem>
-            {areas?.map((area) => (
-              <SelectItem key={area} value={area}>
-                {area}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {filters.area && subAreas?.length ? (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Área do Direito</label>
           <Select
-            value={filters.subArea}
+            value={filters.area}
             onValueChange={(value) =>
-              setFilters({ ...filters, subArea: value })
+              setFilters({ ...filters, area: value, subArea: "" })
             }
+            disabled={isLoadingAreas}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Subárea" />
+            <SelectTrigger className="w-full">
+              {isLoadingAreas ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Carregando...</span>
+                </div>
+              ) : (
+                <SelectValue placeholder="Área do Direito" />
+              )}
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as subáreas</SelectItem>
-              {subAreas?.map((subArea) => (
-                <SelectItem key={subArea} value={subArea}>
-                  {subArea}
+              <SelectItem value="all">Todas as áreas</SelectItem>
+              {areas?.map((area) => (
+                <SelectItem key={area} value={area}>
+                  {area}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-        ) : null}
+          
+          {filters.area && (
+            <Badge variant="outline" className="mt-1 gap-1 cursor-pointer" onClick={() => setFilters({...filters, area: ""})}>
+              {filters.area === "all" ? "Todas as áreas" : filters.area} <X className="h-3 w-3" />
+            </Badge>
+          )}
+        </div>
 
-        <Select
-          value={filters.tipo}
-          onValueChange={(value) =>
-            setFilters({ ...filters, tipo: value })
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Tipo de Petição" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os tipos</SelectItem>
-            {tipos?.map((tipo) => (
-              <SelectItem key={tipo} value={tipo}>
-                {tipo}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {filters.area && subAreas?.length > 0 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Subárea</label>
+            <Select
+              value={filters.subArea}
+              onValueChange={(value) =>
+                setFilters({ ...filters, subArea: value })
+              }
+              disabled={isLoadingSubAreas}
+            >
+              <SelectTrigger>
+                {isLoadingSubAreas ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <span>Carregando...</span>
+                  </div>
+                ) : (
+                  <SelectValue placeholder="Subárea" />
+                )}
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as subáreas</SelectItem>
+                {subAreas?.map((subArea) => (
+                  <SelectItem key={subArea} value={subArea}>
+                    {subArea}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {filters.subArea && (
+              <Badge variant="outline" className="mt-1 gap-1 cursor-pointer" onClick={() => setFilters({...filters, subArea: ""})}>
+                {filters.subArea === "all" ? "Todas as subáreas" : filters.subArea} <X className="h-3 w-3" />
+              </Badge>
+            )}
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Tipo de Petição</label>
+          <Select
+            value={filters.tipo}
+            onValueChange={(value) =>
+              setFilters({ ...filters, tipo: value })
+            }
+            disabled={isLoadingTipos}
+          >
+            <SelectTrigger>
+              {isLoadingTipos ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Carregando...</span>
+                </div>
+              ) : (
+                <SelectValue placeholder="Tipo de Petição" />
+              )}
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os tipos</SelectItem>
+              {tipos?.map((tipo) => (
+                <SelectItem key={tipo} value={tipo}>
+                  {tipo}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          
+          {filters.tipo && (
+            <Badge variant="outline" className="mt-1 gap-1 cursor-pointer" onClick={() => setFilters({...filters, tipo: ""})}>
+              {filters.tipo === "all" ? "Todos os tipos" : filters.tipo} <X className="h-3 w-3" />
+            </Badge>
+          )}
+        </div>
       </div>
     </div>
   );

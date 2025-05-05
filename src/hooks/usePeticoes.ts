@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -51,16 +52,59 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
   const pageSize = options.pageSize || 12;
   
   const [totalCount, setTotalCount] = useState(0);
+  const [uniqueAreas, setUniqueAreas] = useState<string[]>([]);
+
+  // Fetch all unique areas separately to ensure we have the complete list regardless of pagination
+  const { data: allAreas = [] } = useQuery({
+    queryKey: ["peticoes-areas"],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("peticoes")
+          .select("area")
+          .order("area");
+        
+        if (error) throw error;
+        
+        // Extract unique areas
+        const areas = [...new Set(data.map(item => item.area).filter(Boolean))];
+        setUniqueAreas(areas);
+        return areas;
+      } catch (error) {
+        console.error("Error loading areas:", error);
+        return [];
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes cache
+  });
 
   // Use React Query for data fetching with caching
-  const { data: peticoes = [], isLoading, error, refetch, isFetching } = useQuery({
+  const { 
+    data: peticoes = [], 
+    isLoading, 
+    error, 
+    refetch, 
+    isFetching 
+  } = useQuery({
     queryKey: ["peticoes", page, pageSize, filters],
     queryFn: async () => {
       try {
         // First, get the total count for pagination
-        const { count, error: countError } = await supabase
+        let countQuery = supabase
           .from("peticoes")
           .select("*", { count: "exact", head: true });
+          
+        // Apply filters to count query if provided
+        if (filters.area && filters.area !== "all") {
+          countQuery = countQuery.eq("area", filters.area);
+        }
+        
+        if (filters.tipo && filters.tipo !== "all") {
+          countQuery = countQuery.eq("tipo", filters.tipo);
+        }
+        
+        const { count, error: countError } = await countQuery;
         
         if (countError) {
           throw countError;
@@ -118,48 +162,59 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes cache (previously cacheTime)
+    gcTime: 30 * 60 * 1000, // 30 minutes cache
     refetchOnWindowFocus: false,
     refetchOnMount: false
   });
 
-  const filteredPeticoes = peticoes.filter((peticao) => {
-    const matchesSearch = !filters.search || 
-      peticao.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
-      peticao.area.toLowerCase().includes(filters.search.toLowerCase()) ||
-      (peticao.descricao && peticao.descricao.toLowerCase().includes(filters.search.toLowerCase()));
-    
-    const matchesSubArea = !filters.subArea || filters.subArea === "all" || 
-      (peticao.sub_area && peticao.sub_area === filters.subArea);
-    
-    const matchesTags = filters.tags.length === 0 || 
-      (peticao.tags && filters.tags.every(tag => peticao.tags?.includes(tag)));
-    
-    return matchesSearch && matchesSubArea && matchesTags;
-  });
+  const filteredPeticoes = useCallback(() => {
+    return peticoes.filter((peticao) => {
+      const matchesSearch = !filters.search || 
+        peticao.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
+        peticao.area.toLowerCase().includes(filters.search.toLowerCase()) ||
+        (peticao.descricao && peticao.descricao.toLowerCase().includes(filters.search.toLowerCase()));
+      
+      const matchesSubArea = !filters.subArea || filters.subArea === "all" || 
+        (peticao.sub_area && peticao.sub_area === filters.subArea);
+      
+      const matchesTags = filters.tags.length === 0 || 
+        (peticao.tags && filters.tags.every(tag => peticao.tags?.includes(tag)));
+      
+      return matchesSearch && matchesSubArea && matchesTags;
+    });
+  }, [peticoes, filters]);
 
-  // Group petições by area for display efficiently
-  const peticoesByArea: Record<string, Peticao[]> = {};
-  filteredPeticoes.forEach(peticao => {
-    if (!peticoesByArea[peticao.area]) {
-      peticoesByArea[peticao.area] = [];
-    }
-    peticoesByArea[peticao.area].push(peticao);
-  });
+  // Calculate peticoesByArea more efficiently
+  const peticoesByArea = useCallback(() => {
+    const result: Record<string, Peticao[]> = {};
+    const filteredItems = filteredPeticoes();
+    
+    filteredItems.forEach(peticao => {
+      if (!result[peticao.area]) {
+        result[peticao.area] = [];
+      }
+      result[peticao.area].push(peticao);
+    });
+    
+    return result;
+  }, [filteredPeticoes]);
 
-  // Calculate statistics for each area
-  const areaStats = Object.entries(peticoesByArea).map(([area, areaPeticoes]) => ({
-    area,
-    count: areaPeticoes.length
-  }));
+  // Calculate area stats
+  const areaStats = useCallback(() => {
+    const byArea = peticoesByArea();
+    return Object.entries(byArea).map(([area, areaPeticoes]) => ({
+      area,
+      count: areaPeticoes.length
+    }));
+  }, [peticoesByArea]);
 
   // Calculate total pages for pagination
   const totalPages = Math.ceil(totalCount / pageSize);
 
   return {
-    peticoes: filteredPeticoes,
-    peticoesByArea,
-    areaStats,
+    peticoes: filteredPeticoes(),
+    peticoesByArea: peticoesByArea(),
+    areaStats: areaStats(),
     filters,
     setFilters,
     isLoading,
@@ -167,7 +222,8 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
     error,
     refetch,
     totalPeticoes: totalCount,
-    totalAreas: Object.keys(peticoesByArea).length,
+    totalAreas: uniqueAreas.length,
+    allAreas: uniqueAreas,
     // Pagination
     page,
     setPage,

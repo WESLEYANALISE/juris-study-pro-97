@@ -15,7 +15,8 @@ export function DocxViewer({ url, onBack }: DocxViewerProps) {
   
   // Cache the Google Docs Viewer URL to avoid re-encoding
   const googleDocsViewerUrl = React.useMemo(() => {
-    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true`;
+    // Add preview=true parameter to fix Google Drive access issues
+    return `https://docs.google.com/viewer?url=${encodeURIComponent(url)}&embedded=true&preview=true`;
   }, [url]);
   
   // Retry logic for Google Docs Viewer which sometimes fails to load

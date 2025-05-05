@@ -25,7 +25,7 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
                 peticao.link.includes('document/d/');
 
   return (
-    <div className="h-full transition-transform duration-200 hover:scale-[1.01]">
+    <div className="h-full transition-transform hover:scale-[1.01]">
       <Card className="flex flex-col h-full overflow-hidden border border-white/5 bg-gradient-to-br from-background/60 to-background/90 shadow-lg">
         <CardHeader className="pb-2">
           <div className="flex flex-col gap-2">
@@ -45,11 +45,11 @@ export const PeticaoCard = memo(function PeticaoCard({ peticao, onView }: Petica
         </CardHeader>
         
         <CardContent className="flex-1 pt-0">
-          <p className="text-muted-foreground text-sm line-clamp-3">{peticao.descricao}</p>
+          <p className="text-muted-foreground text-sm line-clamp-2">{peticao.descricao}</p>
           
           {peticao.tags && peticao.tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mt-3">
-              {peticao.tags.slice(0, 3).map((tag) => (
+              {peticao.tags.slice(0, 2).map((tag) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
                 </Badge>
