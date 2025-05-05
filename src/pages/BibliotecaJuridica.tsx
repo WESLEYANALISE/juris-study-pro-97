@@ -6,7 +6,7 @@ import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Book, BookOpen, FileText, Search } from 'lucide-react';
+import { Book, BookOpen, FileText, Search, BookMarked, Clock, Bookmark } from 'lucide-react';
 import { toast } from 'sonner';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { Container } from '@/components/ui/container';
@@ -26,7 +26,7 @@ interface Livro extends LivroJuridico {
 }
 
 export default function BibliotecaJuridica() {
-  const [livros, setLivros] = useState<Livro[]>([]);
+  const [livros, setLivros] = useState<LivroJuridico[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -41,9 +41,9 @@ export default function BibliotecaJuridica() {
       setIsLoading(true);
 
       try {
-        // Get books from our library
+        // Get books from bibliotecatop table
         const { data, error } = await supabase
-          .from('biblioteca_juridica10')
+          .from('bibliotecatop')
           .select('*');
 
         if (error) {
@@ -54,15 +54,15 @@ export default function BibliotecaJuridica() {
         if (data && Array.isArray(data)) {
           console.log('Livros carregados:', data.length);
           
-          // Convert the data to our Livro type
-          const convertedData: Livro[] = data.map(item => ({
-            id: item.id,
-            titulo: item.titulo,
-            categoria: item.categoria,
-            pdf_url: item.pdf_url,
-            capa_url: item.capa_url,
-            descricao: item.descricao,
-            total_paginas: item.total_paginas
+          // Convert the data to our LivroJuridico type
+          const convertedData: LivroJuridico[] = data.map(item => ({
+            id: item.id.toString(),
+            titulo: item.titulo || 'Sem título',
+            categoria: item.categoria || 'Geral',
+            pdf_url: item.pdf_url || '',
+            capa_url: item.capa_url || null,
+            descricao: item.descricao || null,
+            total_paginas: item.total_paginas ? parseInt(item.total_paginas) : null
           }));
           
           setLivros(convertedData);
@@ -104,17 +104,39 @@ export default function BibliotecaJuridica() {
     
     // Filter by current tab
     if (currentTab !== 'todos') {
-      result = result.filter(livro => livro.categoria.toLowerCase() === currentTab.toLowerCase());
+      if (currentTab === 'favoritos') {
+        const favorites = getFavorites();
+        result = result.filter(livro => favorites.includes(livro.id));
+      } else if (currentTab === 'recentes') {
+        // Sort by most recently accessed (future enhancement)
+        // For now, just show all books sorted by newest
+        result = [...result].sort((a, b) => {
+          // If we have access to creation dates, use those
+          return 0; // No ordering for now
+        });
+      } else {
+        result = result.filter(livro => livro.categoria?.toLowerCase() === currentTab.toLowerCase());
+      }
     }
     
     return result;
-  }, [livros, searchQuery, currentTab]);
+  }, [livros, searchQuery, currentTab, getFavorites]);
   
   // Group books by category for carousel display
   const booksByCategory = useMemo(() => {
     if (!filteredLivros.length) return {};
     
-    return filteredLivros.reduce<Record<string, Livro[]>>((acc, livro) => {
+    if (currentTab === 'favoritos' || currentTab === 'recentes' || searchQuery) {
+      // For these tabs, return a single group with all filtered books
+      return {
+        [currentTab === 'favoritos' ? 'Favoritos' : 
+         currentTab === 'recentes' ? 'Recentes' : 
+         'Resultados da busca']: filteredLivros
+      };
+    }
+    
+    // Otherwise group by category
+    return filteredLivros.reduce<Record<string, LivroJuridico[]>>((acc, livro) => {
       const category = livro.categoria || 'Outros';
       
       if (!acc[category]) {
@@ -124,7 +146,7 @@ export default function BibliotecaJuridica() {
       acc[category].push(livro);
       return acc;
     }, {});
-  }, [filteredLivros]);
+  }, [filteredLivros, currentTab, searchQuery]);
   
   // Get favorites
   const favoriteBooks = useMemo(() => {
@@ -133,7 +155,7 @@ export default function BibliotecaJuridica() {
   }, [livros, getFavorites]);
 
   // Open PDF viewer
-  function handleOpenPDF(livro: Livro) {
+  function handleOpenPDF(livro: LivroJuridico) {
     console.log("Opening PDF:", livro);
     setSelectedBook(livro);
   }
@@ -153,6 +175,7 @@ export default function BibliotecaJuridica() {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
+              className="w-full md:w-auto"
             >
               <h1 className="text-3xl font-bold">Biblioteca Jurídica</h1>
               <p className="text-muted-foreground">
@@ -183,7 +206,7 @@ export default function BibliotecaJuridica() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.3 }}
-            className="w-full overflow-x-auto pb-2"
+            className="w-full overflow-x-auto scrollbar-hide pb-2"
           >
             <Tabs 
               defaultValue="todos" 
@@ -195,6 +218,16 @@ export default function BibliotecaJuridica() {
                 <TabsTrigger value="todos" className="min-w-fit">
                   <Book className="mr-1 h-4 w-4" />
                   Todos
+                </TabsTrigger>
+                
+                <TabsTrigger value="favoritos" className="min-w-fit">
+                  <Bookmark className="mr-1 h-4 w-4" />
+                  Favoritos
+                </TabsTrigger>
+                
+                <TabsTrigger value="recentes" className="min-w-fit">
+                  <Clock className="mr-1 h-4 w-4" />
+                  Recentes
                 </TabsTrigger>
                 
                 {categorias.map((categoria) => (
@@ -217,53 +250,55 @@ export default function BibliotecaJuridica() {
 
               {/* Main carousel content */}
               <div className="space-y-12">
-                {/* Favorites Section */}
-                {favoriteBooks.length > 0 && (
-                  <KindleBookCarousel
-                    title="Seus Favoritos"
-                    description="Livros que você marcou como favoritos"
-                    books={favoriteBooks}
-                    onSelectBook={handleOpenPDF}
-                    accent={true}
-                  />
-                )}
-                
-                {/* Categories Sections */}
                 {isLoading ? (
-                  <div className="flex flex-col items-center justify-center py-16">
-                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-                    <p className="text-muted-foreground">Carregando biblioteca...</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <div 
+                        key={i} 
+                        className="aspect-[2/3] rounded-lg bg-muted/50 animate-pulse flex items-center justify-center"
+                      >
+                        <BookOpen className="h-10 w-10 text-muted-foreground/20" />
+                      </div>
+                    ))}
                   </div>
-                ) : searchQuery ? (
-                  // Search Results
+                ) : (
                   <>
-                    {filteredLivros.length > 0 ? (
-                      <KindleBookCarousel
-                        title="Resultados da Busca"
-                        books={filteredLivros}
-                        onSelectBook={handleOpenPDF}
-                        showAll={false}
-                      />
-                    ) : (
+                    {/* No results message */}
+                    {Object.keys(booksByCategory).length === 0 && (
                       <div className="flex flex-col items-center justify-center py-16">
                         <Book className="h-16 w-16 text-muted-foreground mb-4" />
                         <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
                         <p className="text-muted-foreground text-center max-w-md">
-                          Não encontramos nenhum livro correspondente aos seus critérios de busca.
+                          {searchQuery 
+                            ? "Não encontramos nenhum livro correspondente aos seus critérios de busca."
+                            : currentTab === 'favoritos'
+                              ? "Você ainda não adicionou nenhum livro aos favoritos."
+                              : "Não há livros disponíveis nesta categoria."}
                         </p>
                       </div>
                     )}
+                    
+                    {/* Favorites Section (always at top when viewing All) */}
+                    {currentTab === 'todos' && favoriteBooks.length > 0 && (
+                      <KindleBookCarousel
+                        title="Seus Favoritos"
+                        description="Livros que você marcou como favoritos"
+                        books={favoriteBooks}
+                        onSelectBook={handleOpenPDF}
+                        accent={true}
+                      />
+                    )}
+                    
+                    {/* Categories Sections */}
+                    {Object.entries(booksByCategory).map(([category, books]) => (
+                      <KindleBookCarousel
+                        key={category}
+                        title={category}
+                        books={books}
+                        onSelectBook={handleOpenPDF}
+                      />
+                    ))}
                   </>
-                ) : (
-                  // Categories
-                  Object.entries(booksByCategory).map(([category, books]) => (
-                    <KindleBookCarousel
-                      key={category}
-                      title={category}
-                      books={books}
-                      onSelectBook={handleOpenPDF}
-                    />
-                  ))
                 )}
               </div>
             </Tabs>
@@ -271,7 +306,7 @@ export default function BibliotecaJuridica() {
         </div>
         
         {/* PDF Viewer */}
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {selectedBook && (
             <BibliotecaPDFViewer
               pdfUrl={selectedBook.pdf_url}

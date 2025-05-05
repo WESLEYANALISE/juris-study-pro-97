@@ -1,10 +1,17 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { LivroJuridico } from '@/types/biblioteca-juridica';
-import { BibliotecaBookCard } from './BibliotecaBookCard';
-import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
+import { LivroJuridico } from '@/types/biblioteca-juridica';
+import { Button } from '@/components/ui/button';
+import { BibliotecaBookCard } from './BibliotecaBookCard';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
 
 interface KindleBookCarouselProps {
   title: string;
@@ -13,6 +20,7 @@ interface KindleBookCarouselProps {
   description?: string;
   showAll?: boolean;
   accent?: boolean;
+  onShowAll?: () => void;
 }
 
 export function KindleBookCarousel({
@@ -21,7 +29,8 @@ export function KindleBookCarousel({
   books,
   onSelectBook,
   showAll = true,
-  accent = false
+  accent = false,
+  onShowAll
 }: KindleBookCarouselProps) {
   // Early return if no books
   if (!books.length) return null;
@@ -59,8 +68,8 @@ export function KindleBookCarousel({
             {title}
           </motion.h2>
           
-          {showAll && books.length > 5 && (
-            <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground">
+          {showAll && books.length > 5 && onShowAll && (
+            <Button variant="ghost" size="sm" className="gap-1 text-muted-foreground" onClick={onShowAll}>
               Ver todos ({books.length})
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -80,35 +89,39 @@ export function KindleBookCarousel({
       </div>
       
       {/* Carousel */}
-      <div className="relative">
-        <motion.div 
-          className="grid grid-flow-col auto-cols-max gap-4 overflow-x-auto pb-4 snap-x snap-mandatory no-scrollbar"
-          variants={containerVariants}
-          initial="hidden"
-          animate="show"
-          style={{
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch'
-          }}
-        >
+      <Carousel
+        opts={{
+          align: "start",
+          loop: books.length > 5,
+        }}
+        className="w-full"
+      >
+        <CarouselContent>
           {books.map((book, i) => (
-            <motion.div 
-              key={book.id || `book-${i}`}
-              variants={itemVariants}
-              className="w-36 md:w-40 lg:w-48 snap-start"
-              style={{ contain: 'paint' }}
+            <CarouselItem 
+              key={book.id || `book-${i}`} 
+              className="basis-1/2 xs:basis-1/3 sm:basis-1/4 md:basis-1/5 lg:basis-1/6 xl:basis-1/7 pl-4"
             >
-              <BibliotecaBookCard 
-                book={book} 
-                onClick={onSelectBook} 
-                showBadge={i < 3} 
-                accent={accent} 
-              />
-            </motion.div>
+              <motion.div
+                variants={itemVariants}
+                initial="hidden"
+                animate="show"
+                className="w-full"
+                style={{ contain: 'paint' }}
+              >
+                <BibliotecaBookCard 
+                  book={book} 
+                  onClick={onSelectBook} 
+                  showBadge={i < 3} 
+                  accent={accent} 
+                />
+              </motion.div>
+            </CarouselItem>
           ))}
-        </motion.div>
-      </div>
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
     </div>
   );
 }

@@ -19,11 +19,11 @@
 }
 
 /* Allow components to opt out of scrollbars */
-.no-scrollbar::-webkit-scrollbar {
+.scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
 
-.no-scrollbar {
+.scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
@@ -32,6 +32,7 @@
 .kindle-carousel {
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
 }
 
 .book-card {
@@ -90,10 +91,10 @@
 /* PDF Reader styles - optimized for performance */
 .pdf-reader-container {
   position: relative;
-  height: calc(100vh - 12rem);
+  height: 100vh;
   overflow: hidden;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.8);
+  border-radius: 0;
+  background: rgba(0, 0, 0, 0.95);
 }
 
 .pdf-controls {
@@ -115,25 +116,6 @@
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
   contain: content;
-}
-
-/* Cinema mode */
-.cinema-mode {
-  position: fixed;
-  inset: 0;
-  background-color: black;
-  z-index: 100;
-}
-
-.cinema-mode .pdf-controls {
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  transform: translateY(100%);
-}
-
-.cinema-mode:hover .pdf-controls {
-  opacity: 1;
-  transform: translateY(0);
 }
 
 /* Performance optimizations */
@@ -170,8 +152,6 @@
 @media (max-width: 768px) {
   .pdf-controls {
     padding-bottom: env(safe-area-inset-bottom, 0.5rem);
-    flex-direction: column;
-    gap: 0.5rem;
   }
   
   .pdf-mobile-controls {
@@ -191,7 +171,7 @@
   }
 }
 
-/* PDF viewer open state */
+/* PDF viewer open state - hide mobile navigation */
 .pdf-viewer-open .mobile-navigation,
 .pdf-viewer-open .mobile-bottom-controls {
   display: none !important;
@@ -213,4 +193,27 @@
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
+}
+
+/* Add this to fix the PDF scrolling issue */
+.pdf-content .react-pdf__Document {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Improve page display */
+.react-pdf__Page {
+  max-width: 100%;
+  box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.3);
+  margin-bottom: 20px;
+}
+
+/* Fix PDF viewing in fullscreen */
+.pdf-viewer-open {
+  position: relative;
+  height: 100% !important;
+  width: 100% !important;
+  overflow: hidden !important;
 }

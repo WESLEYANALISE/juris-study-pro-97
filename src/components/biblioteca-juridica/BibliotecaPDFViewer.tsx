@@ -1,13 +1,14 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { cn } from '@/lib/utils';
 import './BibliotecaPDFViewer.css';
 
 // Configure PDF.js worker
@@ -26,14 +27,14 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const [visiblePages, setVisiblePages] = useState<number[]>([1]);
   const [controlsVisible, setControlsVisible] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true);
   
-  const { saveReadingProgress, getReadingProgress } = useBibliotecaProgresso();
+  const { saveReadingProgress, getReadingProgress, isFavorite, toggleFavorite } = useBibliotecaProgresso();
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
@@ -110,10 +111,10 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   
   // Save reading progress when page changes
   useEffect(() => {
-    if (book?.id && pageNumber > 0 && !isLoading) {
+    if (book?.id && pageNumber > 0 && !isLoading && pageNumber <= (numPages || 1)) {
       saveReadingProgress(book.id, pageNumber);
     }
-  }, [pageNumber, book, saveReadingProgress, isLoading]);
+  }, [pageNumber, book, saveReadingProgress, isLoading, numPages]);
   
   // Process URL to get full path
   const processUrl = (url: string): string => {
@@ -186,6 +187,18 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     setRotation(prev => (prev + 90) % 360);
   }
   
+  // Handle favorite toggle
+  function handleToggleFavorite() {
+    if (book?.id) {
+      toggleFavorite(book.id);
+      toast.success(
+        isFavorite(book.id) 
+          ? "Livro removido dos favoritos" 
+          : "Livro adicionado aos favoritos"
+      );
+    }
+  }
+  
   // Error display component
   if (isError) {
     return (
@@ -218,29 +231,20 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
       ref={containerRef}
     >
-      {/* Minimal back button header */}
-      <AnimatePresence>
-        {controlsVisible && (
-          <motion.div 
-            className="absolute top-0 left-0 z-10 m-4"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-          >
-            <Button 
-              onClick={onClose} 
-              variant="outline" 
-              size="icon" 
-              className="bg-black/50 backdrop-blur-sm border-white/20 text-white hover:bg-black/70"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Back button header - always visible */}
+      <div className="absolute top-0 left-0 z-20 m-4">
+        <Button 
+          onClick={onClose} 
+          variant="outline" 
+          size="icon" 
+          className="bg-black/50 backdrop-blur-sm border-white/20 text-white hover:bg-black/70"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+      </div>
       
       {/* Main PDF content */}
       <div className="flex-1 overflow-auto flex items-center justify-center pdf-content">
@@ -266,7 +270,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
             }
             className="pdf-document max-h-full w-full"
           >
-            {/* Only render pages that are currently visible or in buffer range */}
+            {/* Only render visible pages to improve performance */}
             {visiblePages.map(pageNum => (
               <Page
                 key={`page-${pageNum}`}
@@ -326,12 +330,13 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
                 </Button>
               </div>
               
-              <div className="flex items-center space-x-1">
+              <div className="flex items-center space-x-2">
                 <Button 
                   variant="ghost" 
                   size="icon" 
                   onClick={zoomOut}
                   className="text-white hover:bg-white/10"
+                  title="Diminuir zoom"
                 >
                   <ZoomOut className="h-4 w-4" />
                 </Button>
@@ -345,6 +350,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
                   size="icon" 
                   onClick={zoomIn}
                   className="text-white hover:bg-white/10"
+                  title="Aumentar zoom"
                 >
                   <ZoomIn className="h-4 w-4" />
                 </Button>
@@ -354,19 +360,41 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
                   size="icon" 
                   onClick={rotate}
                   className="text-white hover:bg-white/10"
+                  title="Girar página"
                 >
                   <RotateCw className="h-4 w-4" />
                 </Button>
+                
+                {book && (
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={handleToggleFavorite}
+                    className={cn(
+                      "text-white hover:bg-white/10",
+                      isFavorite(book.id) ? "text-amber-400" : "text-white"
+                    )}
+                    title={isFavorite(book.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  >
+                    {isFavorite(book.id) ? (
+                      <BookmarkCheck className="h-4 w-4" />
+                    ) : (
+                      <BookmarkPlus className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
               </div>
             </div>
             
             {/* Progress bar */}
             {numPages && (
               <div className="w-full bg-gray-900">
-                <div 
+                <motion.div 
                   className="h-0.5 bg-primary transition-all duration-300"
-                  style={{ width: `${(pageNumber / numPages) * 100}%` }}
-                ></div>
+                  initial={{ width: 0 }}
+                  animate={{ width: `${(pageNumber / numPages) * 100}%` }}
+                  transition={{ type: "spring", stiffness: 100 }}
+                ></motion.div>
               </div>
             )}
           </motion.div>

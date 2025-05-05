@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import { BookOpen, BookmarkPlus, BookmarkCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
@@ -15,6 +15,9 @@ interface BibliotecaBookCardProps {
 
 export function BibliotecaBookCard({ book, onClick, showBadge = false, accent = false }: BibliotecaBookCardProps) {
   const { getReadingProgress, isFavorite } = useBibliotecaProgresso();
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
+  
   const progress = book.id ? getReadingProgress(book.id) : null;
   const bookIsFavorite = book.id ? isFavorite(book.id) : false;
   
@@ -23,7 +26,7 @@ export function BibliotecaBookCard({ book, onClick, showBadge = false, accent = 
     : 0;
     
   // Process cover URL to ensure it's valid
-  const coverUrl = useMemo(() => {
+  const getCoverUrl = () => {
     if (!book.capa_url) return '/placeholder-book-cover.png';
     
     if (book.capa_url.startsWith('http')) {
@@ -31,7 +34,7 @@ export function BibliotecaBookCard({ book, onClick, showBadge = false, accent = 
     }
     
     return `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${book.capa_url}`;
-  }, [book.capa_url]);
+  };
 
   return (
     <motion.div
@@ -47,22 +50,42 @@ export function BibliotecaBookCard({ book, onClick, showBadge = false, accent = 
         "shadow-lg transition-all duration-300",
         accent ? "border-primary/30" : "border-border"
       )}
-      style={{ perspective: '1000px' }}
+      style={{ 
+        perspective: '1000px',
+        willChange: 'transform'
+      }}
     >
       {/* Cover image with 3D effect */}
       <div className="book-card-inner h-full w-full absolute inset-0 transition-transform duration-300">
         <div className="absolute inset-0 bg-gradient-to-b from-card/80 to-card">
           <div className="h-full w-full overflow-hidden">
             {/* Image loading skeleton */}
-            <div className="absolute inset-0 bg-muted animate-pulse" />
+            {!imageLoaded && !imageError && (
+              <div className="absolute inset-0 bg-muted animate-pulse flex items-center justify-center">
+                <BookOpen className="h-10 w-10 text-muted-foreground/20" />
+              </div>
+            )}
+            
+            {/* Error placeholder */}
+            {imageError && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-muted/50">
+                <BookOpen className="h-12 w-12 text-muted-foreground/30" />
+                <p className="text-xs text-muted-foreground mt-2">Capa não disponível</p>
+              </div>
+            )}
             
             <img
-              src={coverUrl}
+              src={getCoverUrl()}
               alt={book.titulo}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              className={cn(
+                "h-full w-full object-cover transition-all duration-300 group-hover:scale-105",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
+              onLoad={() => setImageLoaded(true)}
               onError={(e) => {
-                // On error, replace with placeholder
-                (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
+                console.error("Error loading book cover:", book.id, book.capa_url);
+                setImageError(true);
+                setImageLoaded(false);
               }}
               loading="lazy"
             />
