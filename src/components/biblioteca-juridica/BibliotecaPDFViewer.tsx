@@ -1,14 +1,21 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, ZoomIn, ZoomOut, RotateCw } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, 
+  ZoomIn, ZoomOut, RotateCw, Download, Search, Menu
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+import { Slider } from '@/components/ui/slider';
+import { Input } from '@/components/ui/input';
+import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { useDebounce } from '@/hooks/use-debounce';
 import './BibliotecaPDFViewer.css';
 
 // Configure PDF.js worker
@@ -27,15 +34,20 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [initialLoad, setInitialLoad] = useState(true);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [progress, setProgress] = useState(0);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [visiblePages, setVisiblePages] = useState<number[]>([1]);
   const [controlsVisible, setControlsVisible] = useState(true);
+  const [pageInputValue, setPageInputValue] = useState("1");
+  const [showOutline, setShowOutline] = useState(false);
+  const [outline, setOutline] = useState<any[]>([]);
   
   const { saveReadingProgress, getReadingProgress, isFavorite, toggleFavorite } = useBibliotecaProgresso();
+  
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Add body class to prevent scrolling and hide mobile nav
@@ -47,6 +59,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
       const savedProgress = getReadingProgress(book.id);
       if (savedProgress?.pagina_atual && savedProgress.pagina_atual > 1) {
         setPageNumber(savedProgress.pagina_atual);
+        setPageInputValue(savedProgress.pagina_atual.toString());
       }
     }
     
@@ -92,10 +105,17 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     const handleKeyDown = (e: KeyboardEvent) => {
       switch(e.key) {
         case 'ArrowRight':
+        case ' ':
           if (pageNumber < (numPages || 1)) setPageNumber(p => p + 1);
           break;
         case 'ArrowLeft':
           if (pageNumber > 1) setPageNumber(p => p - 1);
+          break;
+        case 'Home':
+          setPageNumber(1);
+          break;
+        case 'End':
+          setPageNumber(numPages || 1);
           break;
         case 'Escape':
           onClose();
@@ -109,12 +129,14 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [pageNumber, numPages, onClose]);
   
-  // Save reading progress when page changes
+  // Debounced save reading progress
+  const debouncedPageNumber = useDebounce(pageNumber, 1000);
+  
   useEffect(() => {
-    if (book?.id && pageNumber > 0 && !isLoading && pageNumber <= (numPages || 1)) {
-      saveReadingProgress(book.id, pageNumber);
+    if (book?.id && debouncedPageNumber > 0 && !isLoading && debouncedPageNumber <= (numPages || 1)) {
+      saveReadingProgress(book.id, debouncedPageNumber);
     }
-  }, [pageNumber, book, saveReadingProgress, isLoading, numPages]);
+  }, [debouncedPageNumber, book, saveReadingProgress, isLoading, numPages]);
   
   // Process URL to get full path
   const processUrl = (url: string): string => {
@@ -128,13 +150,14 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     return `${baseUrl}/storage/v1/object/public/agoravai/${url}`;
   };
   
-  // Calculate visible pages for pagination buffer
+  // Calculate buffer of pages to render
   useEffect(() => {
     const calculateVisiblePages = () => {
-      const buffer = 1; // Number of pages to buffer on each side
+      const pagesToBuffer = 2; // Number of pages to buffer on each side
       const pages = [];
       
-      for (let i = Math.max(1, pageNumber - buffer); i <= Math.min(numPages || 1, pageNumber + buffer); i++) {
+      for (let i = Math.max(1, pageNumber - pagesToBuffer); 
+           i <= Math.min(numPages || 1, pageNumber + pagesToBuffer); i++) {
         pages.push(i);
       }
       
@@ -144,51 +167,116 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     calculateVisiblePages();
   }, [pageNumber, numPages]);
   
+  // Scroll to current page
+  useEffect(() => {
+    const scrollToCurrentPage = () => {
+      const currentPageElement = document.getElementById(`page-${pageNumber}`);
+      
+      if (currentPageElement && contentRef.current) {
+        const containerRect = contentRef.current.getBoundingClientRect();
+        const elementRect = currentPageElement.getBoundingClientRect();
+        
+        // Calculate scroll position to center the page
+        const scrollTop = 
+          elementRect.top - 
+          containerRect.top - 
+          (containerRect.height - elementRect.height) / 2 + 
+          contentRef.current.scrollTop;
+        
+        contentRef.current.scrollTo({
+          top: scrollTop,
+          behavior: isInitialLoad ? 'auto' : 'smooth'
+        });
+      }
+    };
+    
+    if (!isLoading) {
+      scrollToCurrentPage();
+      
+      // After initial load, set to false
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+      }
+    }
+  }, [pageNumber, isLoading, isInitialLoad]);
+  
   // Handle document load success
-  function onDocumentLoadSuccess({ numPages: totalPages }: { numPages: number }) {
+  const onDocumentLoadSuccess = useCallback(({ numPages: totalPages, outline: pdfOutline }: any) => {
     setNumPages(totalPages);
     setIsLoading(false);
-    setInitialLoad(false);
+    
+    if (pdfOutline) {
+      setOutline(pdfOutline);
+    }
     
     // If we're on page 1, no need to notify, otherwise show which page we loaded
     if (pageNumber > 1) {
       toast.success(`PDF carregado: página ${pageNumber} de ${totalPages}`);
     }
-  }
+  }, [pageNumber]);
   
   // Handle document load error
-  function onDocumentLoadError(error: Error) {
+  const onDocumentLoadError = useCallback((error: Error) => {
     console.error('Error loading PDF:', error);
     setIsError(true);
     setIsLoading(false);
     setErrorMessage(error.message || "Não foi possível carregar o arquivo PDF");
     toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
-  }
+  }, []);
   
   // Handle page navigation
-  function changePage(offset: number) {
-    const newPage = pageNumber + offset;
-    if (newPage >= 1 && newPage <= (numPages || 1)) {
-      setPageNumber(newPage);
-    }
-  }
+  const changePage = useCallback((offset: number) => {
+    setPageNumber(prevPage => {
+      const newPage = prevPage + offset;
+      if (newPage >= 1 && newPage <= (numPages || 1)) {
+        setPageInputValue(newPage.toString());
+        return newPage;
+      }
+      return prevPage;
+    });
+  }, [numPages]);
   
   // Handle zoom changes
-  function zoomIn() {
+  const zoomIn = useCallback(() => {
     setScale(prev => Math.min(prev + 0.2, 3));
-  }
+  }, []);
   
-  function zoomOut() {
+  const zoomOut = useCallback(() => {
     setScale(prev => Math.max(prev - 0.2, 0.5));
-  }
+  }, []);
+  
+  // Handle page input change
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInputValue(e.target.value);
+  };
+  
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const pageNum = parseInt(pageInputValue);
+      if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= (numPages || 1)) {
+        setPageNumber(pageNum);
+      } else {
+        setPageInputValue(pageNumber.toString());
+      }
+    }
+  };
+  
+  const handlePageInputBlur = () => {
+    const pageNum = parseInt(pageInputValue);
+    if (!isNaN(pageNum) && pageNum >= 1 && pageNum <= (numPages || 1)) {
+      setPageNumber(pageNum);
+    } else {
+      setPageInputValue(pageNumber.toString());
+    }
+  };
   
   // Handle rotation
-  function rotate() {
+  const rotate = useCallback(() => {
     setRotation(prev => (prev + 90) % 360);
-  }
+  }, []);
   
   // Handle favorite toggle
-  function handleToggleFavorite() {
+  const handleToggleFavorite = useCallback(() => {
     if (book?.id) {
       toggleFavorite(book.id);
       toast.success(
@@ -197,8 +285,30 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
           : "Livro adicionado aos favoritos"
       );
     }
-  }
+  }, [book, toggleFavorite, isFavorite]);
   
+  // Handle download
+  const handleDownload = useCallback(() => {
+    if (pdfUrl) {
+      const link = document.createElement('a');
+      link.href = processUrl(pdfUrl);
+      link.download = bookTitle.replace(/\s+/g, '_') + '.pdf';
+      link.click();
+    }
+  }, [pdfUrl, bookTitle]);
+  
+  // Calculate progress percentage
+  const progressPercentage = numPages ? (pageNumber / numPages) * 100 : 0;
+  
+  // Handle slider change
+  const handleSliderChange = useCallback((value: number[]) => {
+    const newPage = Math.round(value[0] * (numPages || 1) / 100);
+    if (newPage >= 1) {
+      setPageNumber(newPage);
+      setPageInputValue(newPage.toString());
+    }
+  }, [numPages]);
+
   // Error display component
   if (isError) {
     return (
@@ -247,11 +357,26 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
       </div>
       
       {/* Main PDF content */}
-      <div className="flex-1 overflow-auto flex items-center justify-center pdf-content">
-        {isLoading && initialLoad ? (
+      <div 
+        className="flex-1 overflow-auto flex items-center justify-center pdf-content"
+        ref={contentRef}
+      >
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            <p className="mt-4 text-white/80">Carregando livro... {progress}%</p>
+            <div className="flex flex-col items-center justify-center gap-6">
+              <div className="relative h-16 w-16">
+                <div className="absolute inset-0 border-4 border-primary/40 border-t-primary rounded-full animate-spin" />
+                {loadProgress > 0 && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <p className="text-xs font-mono text-white/70">{loadProgress}%</p>
+                  </div>
+                )}
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg text-white/80 font-medium">{bookTitle}</h3>
+                <p className="text-sm text-white/60 mt-1">Carregando PDF...</p>
+              </div>
+            </div>
           </div>
         ) : (
           <Document
@@ -260,7 +385,8 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
             onLoadError={onDocumentLoadError}
             onProgress={({ loaded, total }) => {
               if (total) {
-                setProgress(Math.round((loaded / total) * 100));
+                const progress = Math.round((loaded / total) * 100);
+                setLoadProgress(progress);
               }
             }}
             loading={
@@ -270,22 +396,38 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
             }
             className="pdf-document max-h-full w-full"
           >
-            {/* Only render visible pages to improve performance */}
-            {visiblePages.map(pageNum => (
-              <Page
+            {numPages && visiblePages.map((pageNum) => (
+              <div 
+                id={`page-${pageNum}`}
                 key={`page-${pageNum}`}
-                pageNumber={pageNum}
-                scale={scale}
-                rotate={rotation}
-                className={`pdf-page ${pageNum !== pageNumber ? 'hidden' : ''}`}
-                loading={
-                  <div className="flex justify-center py-10">
-                    <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                className={`pdf-page ${pageNum !== pageNumber ? 'opacity-50' : ''}`}
+              >
+                <Page
+                  pageNumber={pageNum}
+                  scale={scale}
+                  rotate={rotation}
+                  loading={
+                    <div className="flex justify-center py-10">
+                      <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+                    </div>
+                  }
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                  className={cn(
+                    "shadow-2xl mx-auto",
+                    pageNum === pageNumber ? "shadow-xl" : "shadow-md"
+                  )}
+                />
+                
+                {/* Page number indicator */}
+                <div className="w-full flex justify-center mt-2 mb-8">
+                  <div className="bg-black/70 px-3 py-1 rounded-full">
+                    <span className="text-xs text-white/80">
+                      Página {pageNum} de {numPages}
+                    </span>
                   </div>
-                }
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
+                </div>
+              </div>
             ))}
           </Document>
         )}
@@ -294,110 +436,237 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
       {/* Page navigation and controls */}
       <AnimatePresence>
         {controlsVisible && (
-          <motion.div 
-            className="pdf-controls"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.2 }}
-          >
-            <div className="flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-md border-t border-white/10">
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => changePage(-1)} 
-                  disabled={pageNumber <= 1}
-                  className="text-white hover:bg-white/10"
-                >
-                  <ChevronLeft className="h-4 w-4 mr-1" /> 
-                  Anterior
-                </Button>
+          <>
+            {/* Top bar with title and controls */}
+            <motion.div 
+              className="pdf-top-controls"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-md border-b border-white/10">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white text-sm font-medium truncate">{bookTitle}</h3>
+                </div>
                 
-                <span className="text-white/80 text-sm">
-                  {pageNumber} / {numPages || '?'}
-                </span>
-                
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => changePage(1)} 
-                  disabled={pageNumber >= (numPages || 0)}
-                  className="text-white hover:bg-white/10"
-                >
-                  Próxima
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={handleToggleFavorite}
+                        className={cn(
+                          "text-white hover:bg-white/10",
+                          book && isFavorite(book.id) ? "text-amber-400" : "text-white"
+                        )}
+                      >
+                        {book && isFavorite(book.id) ? (
+                          <BookmarkCheck className="h-5 w-5" />
+                        ) : (
+                          <BookmarkPlus className="h-5 w-5" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {book && isFavorite(book.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                    </TooltipContent>
+                  </Tooltip>
+                  
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={handleDownload}
+                        className="text-white hover:bg-white/10"
+                      >
+                        <Download className="h-5 w-5" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Baixar PDF</TooltipContent>
+                  </Tooltip>
+                  
+                  <Drawer>
+                    <DrawerTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-white hover:bg-white/10"
+                      >
+                        <Menu className="h-5 w-5" />
+                      </Button>
+                    </DrawerTrigger>
+                    <DrawerContent>
+                      <div className="p-4 max-h-[80vh] overflow-auto">
+                        <h3 className="text-lg font-bold mb-4">{bookTitle}</h3>
+                        {outline && outline.length > 0 ? (
+                          <div className="space-y-2">
+                            {outline.map((item: any, index: number) => (
+                              <div 
+                                key={`outline-${index}`}
+                                className="cursor-pointer hover:bg-accent p-2 rounded"
+                                onClick={() => {
+                                  if (item.dest) {
+                                    setPageNumber(item.dest[0].num);
+                                    setPageInputValue(item.dest[0].num.toString());
+                                  }
+                                }}
+                              >
+                                <p className="font-medium">{item.title}</p>
+                                {item.items && item.items.length > 0 && (
+                                  <div className="pl-4 mt-1 space-y-1">
+                                    {item.items.map((subitem: any, subindex: number) => (
+                                      <div 
+                                        key={`subitem-${subindex}`}
+                                        className="cursor-pointer hover:bg-accent p-1 rounded text-sm"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          if (subitem.dest) {
+                                            setPageNumber(subitem.dest[0].num);
+                                            setPageInputValue(subitem.dest[0].num.toString());
+                                          }
+                                        }}
+                                      >
+                                        {subitem.title}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">Este documento não possui um índice.</p>
+                        )}
+                      </div>
+                    </DrawerContent>
+                  </Drawer>
+                </div>
               </div>
-              
-              <div className="flex items-center space-x-2">
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={zoomOut}
-                  className="text-white hover:bg-white/10"
-                  title="Diminuir zoom"
-                >
-                  <ZoomOut className="h-4 w-4" />
-                </Button>
-                
-                <span className="text-white/80 text-xs w-12 text-center">
-                  {Math.round(scale * 100)}%
-                </span>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={zoomIn}
-                  className="text-white hover:bg-white/10"
-                  title="Aumentar zoom"
-                >
-                  <ZoomIn className="h-4 w-4" />
-                </Button>
-                
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  onClick={rotate}
-                  className="text-white hover:bg-white/10"
-                  title="Girar página"
-                >
-                  <RotateCw className="h-4 w-4" />
-                </Button>
-                
-                {book && (
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={handleToggleFavorite}
-                    className={cn(
-                      "text-white hover:bg-white/10",
-                      isFavorite(book.id) ? "text-amber-400" : "text-white"
-                    )}
-                    title={isFavorite(book.id) ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                  >
-                    {isFavorite(book.id) ? (
-                      <BookmarkCheck className="h-4 w-4" />
-                    ) : (
-                      <BookmarkPlus className="h-4 w-4" />
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
+            </motion.div>
             
-            {/* Progress bar */}
-            {numPages && (
+            {/* Bottom controls */}
+            <motion.div 
+              className="pdf-controls"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.2 }}
+            >
               <div className="w-full bg-gray-900">
                 <motion.div 
-                  className="h-0.5 bg-primary transition-all duration-300"
+                  className="h-1 bg-primary transition-all duration-300"
                   initial={{ width: 0 }}
-                  animate={{ width: `${(pageNumber / numPages) * 100}%` }}
+                  animate={{ width: `${progressPercentage}%` }}
                   transition={{ type: "spring", stiffness: 100 }}
                 ></motion.div>
               </div>
-            )}
-          </motion.div>
+              
+              <div className="flex flex-wrap items-center justify-between px-4 py-2 bg-black/80 backdrop-blur-md border-t border-white/10">
+                <div className="flex items-center space-x-2">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => changePage(-1)} 
+                    disabled={pageNumber <= 1}
+                    className="text-white hover:bg-white/10"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" /> 
+                    Anterior
+                  </Button>
+                  
+                  <div className="flex items-center">
+                    <Input 
+                      className="w-16 h-8 bg-black/50 text-white text-center border-white/20"
+                      value={pageInputValue}
+                      onChange={handlePageInputChange}
+                      onKeyDown={handlePageInputKeyDown}
+                      onBlur={handlePageInputBlur}
+                    />
+                    <span className="text-white/80 mx-2 text-sm">
+                      / {numPages || '?'}
+                    </span>
+                  </div>
+                  
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => changePage(1)} 
+                    disabled={pageNumber >= (numPages || 0)}
+                    className="text-white hover:bg-white/10"
+                  >
+                    Próxima
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+                
+                <div className="mt-2 sm:mt-0">
+                  <div className="flex items-center space-x-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={zoomOut}
+                          className="text-white hover:bg-white/10 h-8 w-8"
+                        >
+                          <ZoomOut className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Diminuir</TooltipContent>
+                    </Tooltip>
+                    
+                    <span className="text-white/80 text-xs w-12 text-center">
+                      {Math.round(scale * 100)}%
+                    </span>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={zoomIn}
+                          className="text-white hover:bg-white/10 h-8 w-8"
+                        >
+                          <ZoomIn className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Aumentar</TooltipContent>
+                    </Tooltip>
+                    
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={rotate}
+                          className="text-white hover:bg-white/10 h-8 w-8"
+                        >
+                          <RotateCw className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Girar página</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Mobile slider for large documents */}
+              {numPages && numPages > 10 && (
+                <div className="px-4 py-2 bg-black/80 border-t border-white/10 sm:hidden">
+                  <Slider
+                    value={[progressPercentage]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onValueChange={handleSliderChange}
+                  />
+                </div>
+              )}
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
     </motion.div>

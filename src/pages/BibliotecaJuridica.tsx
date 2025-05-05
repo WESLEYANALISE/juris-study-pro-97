@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -5,25 +6,20 @@ import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/Biblioteca
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Book, BookOpen, FileText, Search, BookMarked, Clock, Bookmark } from 'lucide-react';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Book, BookOpen, FileText, Search, BookMarked, Clock, Bookmark, Grid3X3, List } from 'lucide-react';
 import { toast } from 'sonner';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { Container } from '@/components/ui/container';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
+import { BibliotecaHeroSection } from '@/components/biblioteca-juridica/BibliotecaHeroSection';
+import { BibliotecaCategoryGrid } from '@/components/biblioteca-juridica/BibliotecaCategoryGrid';
+import { BibliotecaBookGrid } from '@/components/biblioteca-juridica/BibliotecaBookGrid';
+import { BibliotecaBookList } from '@/components/biblioteca-juridica/BibliotecaBookList';
+import { BibliotecaReadingStats } from '@/components/biblioteca-juridica/BibliotecaReadingStats';
+import { Skeleton } from '@/components/ui/skeleton';
 import '../styles/biblioteca-juridica.css';
-
-// Interface for our application's internal book type
-interface Livro extends LivroJuridico {
-  id: string;
-  titulo: string;
-  categoria: string;
-  pdf_url: string;
-  capa_url: string | null;
-  descricao: string | null;
-  total_paginas: number | null;
-}
 
 export default function BibliotecaJuridica() {
   const [livros, setLivros] = useState<LivroJuridico[]>([]);
@@ -32,8 +28,9 @@ export default function BibliotecaJuridica() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [currentTab, setCurrentTab] = useState<string>('todos');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  const { isFavorite, getFavorites } = useBibliotecaProgresso();
+  const { isFavorite, getFavorites, getReadingProgress } = useBibliotecaProgresso();
   
   // Fetch books from Supabase
   useEffect(() => {
@@ -108,11 +105,17 @@ export default function BibliotecaJuridica() {
         const favorites = getFavorites();
         result = result.filter(livro => favorites.includes(livro.id));
       } else if (currentTab === 'recentes') {
-        // Sort by most recently accessed (future enhancement)
-        // For now, just show all books sorted by newest
-        result = [...result].sort((a, b) => {
-          // If we have access to creation dates, use those
-          return 0; // No ordering for now
+        // Sort by most recently accessed
+        result = result.sort((a, b) => {
+          const progressA = getReadingProgress(a.id);
+          const progressB = getReadingProgress(b.id);
+          
+          if (!progressA && progressB) return 1;
+          if (progressA && !progressB) return -1;
+          if (!progressA && !progressB) return 0;
+          
+          return new Date(progressB!.ultima_leitura).getTime() - 
+                 new Date(progressA!.ultima_leitura).getTime();
         });
       } else {
         result = result.filter(livro => livro.categoria?.toLowerCase() === currentTab.toLowerCase());
@@ -120,7 +123,7 @@ export default function BibliotecaJuridica() {
     }
     
     return result;
-  }, [livros, searchQuery, currentTab, getFavorites]);
+  }, [livros, searchQuery, currentTab, getFavorites, getReadingProgress]);
   
   // Group books by category for carousel display
   const booksByCategory = useMemo(() => {
@@ -154,6 +157,24 @@ export default function BibliotecaJuridica() {
     return livros.filter(livro => favorites.includes(livro.id));
   }, [livros, getFavorites]);
 
+  // Get recently accessed books
+  const recentBooks = useMemo(() => {
+    return livros
+      .filter(livro => getReadingProgress(livro.id))
+      .sort((a, b) => {
+        const progressA = getReadingProgress(a.id);
+        const progressB = getReadingProgress(b.id);
+        
+        if (!progressA && progressB) return 1;
+        if (progressA && !progressB) return -1;
+        if (!progressA && !progressB) return 0;
+        
+        return new Date(progressB!.ultima_leitura).getTime() - 
+               new Date(progressA!.ultima_leitura).getTime();
+      })
+      .slice(0, 6);
+  }, [livros, getReadingProgress]);
+
   // Open PDF viewer
   function handleOpenPDF(livro: LivroJuridico) {
     console.log("Opening PDF:", livro);
@@ -165,144 +186,205 @@ export default function BibliotecaJuridica() {
     setSelectedBook(null);
   }
 
+  // Get the number of books in progress
+  const booksInProgressCount = useMemo(() => {
+    return livros.filter(livro => {
+      const progress = getReadingProgress(livro.id);
+      return progress && progress.pagina_atual > 1;
+    }).length;
+  }, [livros, getReadingProgress]);
+
   return (
     <JuridicalBackground variant="books" opacity={0.03}>
       <Container size="xl" className="py-6">
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="w-full md:w-auto"
-            >
-              <h1 className="text-3xl font-bold">Biblioteca Jurídica</h1>
-              <p className="text-muted-foreground">
-                Explore nossa coleção de livros e documentos jurídicos
-              </p>
-            </motion.div>
-            
-            <motion.div 
-              className="relative w-full md:w-64"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 }}
-            >
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                <Search className="h-4 w-4" />
-              </div>
-              <Input 
-                placeholder="Buscar livros..." 
-                className="pl-9 w-full"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </motion.div>
-          </div>
-
-          {/* Category Tabs */}
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-            className="w-full overflow-x-auto scrollbar-hide pb-2"
-          >
+        {/* Hero Section */}
+        <BibliotecaHeroSection 
+          totalBooks={livros.length} 
+          inProgressCount={booksInProgressCount}
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+        />
+        
+        <div className="space-y-8 mt-8">
+          {/* Navigation and View Controls */}
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
             <Tabs 
-              defaultValue="todos" 
-              className="w-full"
+              defaultValue={currentTab}
               value={currentTab}
               onValueChange={setCurrentTab}
+              className="w-full md:w-auto"
             >
-              <TabsList className="mb-6">
-                <TabsTrigger value="todos" className="min-w-fit">
-                  <Book className="mr-1 h-4 w-4" />
+              <TabsList className="grid grid-cols-4 sm:grid-cols-7 w-full">
+                <TabsTrigger value="todos" className="text-xs sm:text-sm">
+                  <Book className="h-4 w-4 mr-1.5 hidden sm:inline" /> 
                   Todos
                 </TabsTrigger>
                 
-                <TabsTrigger value="favoritos" className="min-w-fit">
-                  <Bookmark className="mr-1 h-4 w-4" />
+                <TabsTrigger value="favoritos" className="text-xs sm:text-sm">
+                  <Bookmark className="h-4 w-4 mr-1.5 hidden sm:inline" /> 
                   Favoritos
                 </TabsTrigger>
                 
-                <TabsTrigger value="recentes" className="min-w-fit">
-                  <Clock className="mr-1 h-4 w-4" />
+                <TabsTrigger value="recentes" className="text-xs sm:text-sm">
+                  <Clock className="h-4 w-4 mr-1.5 hidden sm:inline" /> 
                   Recentes
                 </TabsTrigger>
                 
-                {categorias.map((categoria) => (
+                {categorias.slice(0, 4).map((categoria) => (
                   <TabsTrigger 
                     key={categoria} 
                     value={categoria.toLowerCase()}
-                    className="min-w-fit"
+                    className="text-xs sm:text-sm"
                   >
                     {categoria === "Doutrinas" ? (
-                      <Book className="mr-1 h-4 w-4" />
+                      <Book className="h-4 w-4 mr-1.5 hidden sm:inline" />
                     ) : categoria === "Leis" ? (
-                      <FileText className="mr-1 h-4 w-4" />
+                      <FileText className="h-4 w-4 mr-1.5 hidden sm:inline" />
                     ) : (
-                      <BookOpen className="mr-1 h-4 w-4" />
+                      <BookOpen className="h-4 w-4 mr-1.5 hidden sm:inline" />
                     )}
                     {categoria}
                   </TabsTrigger>
                 ))}
               </TabsList>
+            </Tabs>
+            
+            {/* View mode toggle */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('grid')}
+                className="h-8 w-8 p-0"
+              >
+                <Grid3X3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setViewMode('list')}
+                className="h-8 w-8 p-0"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
 
-              {/* Main carousel content */}
-              <div className="space-y-12">
-                {isLoading ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-4">
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <div 
-                        key={i} 
-                        className="aspect-[2/3] rounded-lg bg-muted/50 animate-pulse flex items-center justify-center"
-                      >
-                        <BookOpen className="h-10 w-10 text-muted-foreground/20" />
-                      </div>
+          {/* Main Content */}
+          <div>
+            {isLoading ? (
+              // Loading skeleton
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <Skeleton className="h-8 w-40" />
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                    {Array.from({ length: 12 }).map((_, i) => (
+                      <Skeleton key={i} className="aspect-[2/3] rounded-lg" />
                     ))}
                   </div>
-                ) : (
-                  <>
-                    {/* No results message */}
-                    {Object.keys(booksByCategory).length === 0 && (
-                      <div className="flex flex-col items-center justify-center py-16">
-                        <Book className="h-16 w-16 text-muted-foreground mb-4" />
-                        <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
-                        <p className="text-muted-foreground text-center max-w-md">
-                          {searchQuery 
-                            ? "Não encontramos nenhum livro correspondente aos seus critérios de busca."
-                            : currentTab === 'favoritos'
-                              ? "Você ainda não adicionou nenhum livro aos favoritos."
-                              : "Não há livros disponíveis nesta categoria."}
-                        </p>
-                      </div>
-                    )}
-                    
-                    {/* Favorites Section (always at top when viewing All) */}
-                    {currentTab === 'todos' && favoriteBooks.length > 0 && (
-                      <KindleBookCarousel
-                        title="Seus Favoritos"
-                        description="Livros que você marcou como favoritos"
-                        books={favoriteBooks}
-                        onSelectBook={handleOpenPDF}
-                        accent={true}
-                      />
-                    )}
-                    
-                    {/* Categories Sections */}
-                    {Object.entries(booksByCategory).map(([category, books]) => (
-                      <KindleBookCarousel
-                        key={category}
-                        title={category}
-                        books={books}
-                        onSelectBook={handleOpenPDF}
-                      />
-                    ))}
-                  </>
-                )}
+                </div>
               </div>
-            </Tabs>
-          </motion.div>
+            ) : (
+              <Tabs defaultValue="livros" className="w-full">
+                <TabsList className="mb-6">
+                  <TabsTrigger value="livros">Biblioteca</TabsTrigger>
+                  <TabsTrigger value="categorias">Categorias</TabsTrigger>
+                  <TabsTrigger value="estatisticas">Meu Progresso</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="livros" className="space-y-8">
+                  {filteredLivros.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <Book className="h-16 w-16 text-muted-foreground mb-4" />
+                      <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
+                      <p className="text-muted-foreground max-w-md">
+                        {searchQuery 
+                          ? "Não encontramos nenhum livro correspondente aos seus critérios de busca."
+                          : currentTab === 'favoritos'
+                            ? "Você ainda não adicionou nenhum livro aos favoritos."
+                            : "Não há livros disponíveis nesta categoria."}
+                      </p>
+                      
+                      {(currentTab !== 'todos' || searchQuery) && (
+                        <Button 
+                          variant="outline" 
+                          className="mt-4"
+                          onClick={() => {
+                            setCurrentTab('todos');
+                            setSearchQuery('');
+                          }}
+                        >
+                          Ver todos os livros
+                        </Button>
+                      )}
+                    </div>
+                  ) : viewMode === 'grid' ? (
+                    <BibliotecaBookGrid 
+                      books={filteredLivros} 
+                      onSelectBook={handleOpenPDF} 
+                    />
+                  ) : (
+                    <BibliotecaBookList 
+                      books={filteredLivros} 
+                      onSelectBook={handleOpenPDF} 
+                    />
+                  )}
+                  
+                  {/* Featured Collections */}
+                  {currentTab === 'todos' && !searchQuery && (
+                    <div className="space-y-12 pt-8 border-t">
+                      {recentBooks.length > 0 && (
+                        <KindleBookCarousel
+                          title="Continue Lendo"
+                          description="Retome suas leituras de onde parou"
+                          books={recentBooks}
+                          onSelectBook={handleOpenPDF}
+                          accent={true}
+                        />
+                      )}
+                      
+                      {favoriteBooks.length > 0 && (
+                        <KindleBookCarousel
+                          title="Seus Favoritos"
+                          description="Livros que você marcou como favoritos"
+                          books={favoriteBooks}
+                          onSelectBook={handleOpenPDF}
+                          accent={false}
+                        />
+                      )}
+                      
+                      {/* Categories carousels */}
+                      {Object.entries(booksByCategory)
+                        .filter(([category]) => category !== 'Outros')
+                        .map(([category, books]) => (
+                          <KindleBookCarousel
+                            key={category}
+                            title={category}
+                            books={books}
+                            onSelectBook={handleOpenPDF}
+                          />
+                        ))}
+                    </div>
+                  )}
+                </TabsContent>
+                
+                <TabsContent value="categorias">
+                  <BibliotecaCategoryGrid 
+                    categories={categorias} 
+                    bookCounts={categorias.reduce((acc, cat) => {
+                      acc[cat] = livros.filter(l => l.categoria === cat).length;
+                      return acc;
+                    }, {} as Record<string, number>)}
+                    onSelectCategory={(cat) => setCurrentTab(cat.toLowerCase())}
+                  />
+                </TabsContent>
+                
+                <TabsContent value="estatisticas">
+                  <BibliotecaReadingStats books={livros} />
+                </TabsContent>
+              </Tabs>
+            )}
+          </div>
         </div>
         
         {/* PDF Viewer */}
