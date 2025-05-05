@@ -1,4 +1,3 @@
-
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { persistQueryClient } from '@tanstack/react-query-persist-client';
