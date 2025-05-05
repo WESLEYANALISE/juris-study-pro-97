@@ -5,8 +5,10 @@ import App from './App'
 import './index.css'
 import { PDFTest } from './components/test/PDFTest';
 
-// Ensure PDF.js is configured early, before any component tries to use it
+// Force immediate PDF.js configuration before ANY component renders
+// The import must happen before ReactDOM.createRoot
 import '@/lib/pdf-config';
+console.log('PDF.js configuration loaded in main.tsx');
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
