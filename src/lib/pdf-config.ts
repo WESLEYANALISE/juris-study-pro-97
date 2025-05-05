@@ -7,54 +7,62 @@ console.log(`PDF.js initialization - Using version ${pdfjsVersion}`);
 
 // Define CDN worker URLs in priority order
 const WORKER_URLS = [
-  // Direct worker specification
-  'pdf.worker.js',
-  // CDN fallbacks
+  // First priority: CDN URLs
   `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`,
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`,
-  // Local fallback
-  `/pdf.worker.min.js`,
+  // Local fallback options
+  '/pdf.worker.min.js',
+  'pdf.worker.js'
 ];
 
 /**
- * Creates and configures the PDF.js worker with better error handling
+ * Creates a global pdfjs object with proper worker configuration
+ * This is critical to make sure PDF.js is available globally
  */
 export function configurePdfWorker() {
   try {
-    // Wait until react-pdf's pdfjs is available
+    // Defensive check - wait until react-pdf's pdfjs is available
     if (!reactPdfJs) {
       console.error('PDF.js not available yet');
       return false;
     }
 
-    // Create GlobalWorkerOptions if needed
+    // Make sure GlobalWorkerOptions exists before trying to set workerSrc
     if (!reactPdfJs.GlobalWorkerOptions) {
       console.log('Creating GlobalWorkerOptions object...');
-      // @ts-ignore - Creating the object since it doesn't exist
+      // @ts-ignore - This is a workaround for when GlobalWorkerOptions is undefined
       reactPdfJs.GlobalWorkerOptions = {};
     }
 
     // Only set workerSrc if not already set
     if (!reactPdfJs.GlobalWorkerOptions.workerSrc) {
-      // Set to the first worker URL from our list
-      reactPdfJs.GlobalWorkerOptions.workerSrc = WORKER_URLS[0];
-      console.log(`PDF.js worker configured: ${reactPdfJs.GlobalWorkerOptions.workerSrc}`);
+      // Try each worker URL in order until one works
+      for (const workerUrl of WORKER_URLS) {
+        try {
+          // Attempt to set the worker source
+          reactPdfJs.GlobalWorkerOptions.workerSrc = workerUrl;
+          console.log(`PDF.js worker configured with: ${workerUrl}`);
+          return true;
+        } catch (innerError) {
+          console.warn(`Failed to set worker URL ${workerUrl}:`, innerError);
+          // Continue to next URL
+        }
+      }
+      console.error('All worker URLs failed');
+      return false;
     } else {
       console.log(`Worker already configured: ${reactPdfJs.GlobalWorkerOptions.workerSrc}`);
       return true;
     }
-
-    return true;
   } catch (error) {
     console.error('Error configuring PDF.js worker:', error);
     return false;
   }
 }
 
-// Try to perform initial configuration when this module loads
+// Immediate initialization attempt
 console.log('Attempting initial PDF worker configuration...');
-const initialConfig = configurePdfWorker();
-console.log('Initial PDF worker configuration result:', initialConfig ? 'success' : 'failed');
+configurePdfWorker();
 
-// Export the pdfjs object and configuration function
+// Export the configured pdfjs object
 export const pdfjs = reactPdfJs;

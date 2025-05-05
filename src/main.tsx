@@ -6,7 +6,7 @@ import ReactDOM from 'react-dom/client';
 import { configurePdfWorker } from '@/lib/pdf-config';
 console.log('Initializing PDF.js in main.tsx...');
 
-// Try to configure the worker
+// Try to configure the worker immediately
 configurePdfWorker();
 
 // Use dynamic imports to ensure PDF.js is configured before React components render
