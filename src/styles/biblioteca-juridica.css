@@ -30,20 +30,22 @@
 
 /* Kindle Book Carousel */
 .kindle-carousel {
-  scrollbar-width: thin;
   scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
-.kindle-book-card {
+.book-card {
   cursor: pointer;
   border-radius: 6px;
   overflow: hidden;
   transform-origin: center bottom;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: all 0.2s ease-in-out;
+  will-change: transform;
+  contain: content;
 }
 
-.kindle-book-card:hover {
+.book-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
 }
@@ -58,6 +60,7 @@
   transition: transform 0.5s ease;
   transform-origin: left center;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  will-change: transform;
 }
 
 .book-3d:hover .book-3d-cover {
@@ -65,22 +68,26 @@
   box-shadow: 20px 4px 20px rgba(0, 0, 0, 0.4);
 }
 
-/* Animated background for category cards */
-.category-card-bg {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(45deg, rgba(139, 92, 246, 0.1), rgba(217, 70, 239, 0.1), rgba(139, 92, 246, 0.1));
-  background-size: 200% 200%;
-  animation: gradient-shift 5s ease infinite;
+/* Card rotation effect */
+.book-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  will-change: transform;
 }
 
-@keyframes gradient-shift {
-  0% { background-position: 0% 50% }
-  50% { background-position: 100% 50% }
-  100% { background-position: 0% 50% }
+.book-card:hover .book-card-inner {
+  transform: rotateY(10deg);
 }
 
-/* PDF Reader styles */
+.book-front, .book-back {
+  backface-visibility: hidden;
+}
+
+.book-back {
+  transform: rotateY(180deg);
+}
+
+/* PDF Reader styles - optimized for performance */
 .pdf-reader-container {
   position: relative;
   height: calc(100vh - 12rem);
@@ -94,11 +101,12 @@
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 1rem;
+  padding: 0.5rem;
   background: rgba(0, 0, 0, 0.75);
   backdrop-filter: blur(10px);
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   z-index: 10;
+  contain: layout;
 }
 
 .pdf-page {
@@ -106,6 +114,7 @@
   margin: 0 auto;
   box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
   transition: all 0.3s ease;
+  contain: content;
 }
 
 /* Cinema mode */
@@ -119,23 +128,24 @@
 .cinema-mode .pdf-controls {
   opacity: 0;
   transition: opacity 0.3s ease;
+  transform: translateY(100%);
 }
 
 .cinema-mode:hover .pdf-controls {
   opacity: 1;
+  transform: translateY(0);
 }
 
-/* Perspective for book cards */
+/* Performance optimizations */
 .perspective-1000 {
   perspective: 1000px;
 }
 
-/* Backface visibility utilities */
 .backface-hidden {
   backface-visibility: hidden;
 }
 
-/* Animations */
+/* GPU-accelerated animations */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
@@ -148,24 +158,18 @@
 
 .animate-fadeIn {
   animation: fadeIn 0.5s ease forwards;
+  will-change: opacity, transform;
 }
 
 .animate-scaleIn {
   animation: scaleIn 0.3s ease forwards;
-}
-
-/* Progress bar customization */
-.progress-bar-amber::-webkit-progress-value {
-  background-color: #fbbf24;
-}
-
-.progress-bar-amber::-moz-progress-bar {
-  background-color: #fbbf24;
+  will-change: opacity, transform;
 }
 
 /* Mobile optimization */
 @media (max-width: 768px) {
   .pdf-controls {
+    padding-bottom: env(safe-area-inset-bottom, 0.5rem);
     flex-direction: column;
     gap: 0.5rem;
   }
@@ -183,34 +187,30 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    transform: translateZ(0); /* Force GPU acceleration */
   }
 }
 
-/* Custom book styling */
-.book-card {
-  position: relative;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+/* PDF viewer open state */
+.pdf-viewer-open .mobile-navigation,
+.pdf-viewer-open .mobile-bottom-controls {
+  display: none !important;
 }
 
-.book-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+/* Loading state optimization */
+.loading-skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0.05)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  will-change: background-position;
 }
 
-/* Card rotation effect */
-.book-card-inner {
-  transition: transform 0.6s;
-  transform-style: preserve-3d;
-}
-
-.book-card:hover .book-card-inner {
-  transform: rotateY(10deg);
-}
-
-.book-front, .book-back {
-  backface-visibility: hidden;
-}
-
-.book-back {
-  transform: rotateY(180deg);
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
 }

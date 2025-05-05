@@ -1,15 +1,21 @@
 
-/* PDF Viewer Styles */
+/* PDF Viewer Styles - Optimized for Performance */
+.pdf-viewer-open {
+  overflow: hidden;
+}
+
 .pdf-container {
   height: 100vh;
   width: 100%;
   display: flex;
   flex-direction: column;
-  background-color: rgb(22, 22, 22);
+  background-color: rgb(10, 10, 10);
 }
 
 .pdf-content {
-  flex: 1;
+  height: 100%;
+  width: 100%;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -18,110 +24,86 @@
 }
 
 /* PDF.js specific styles */
-.react-pdf__Document {
+.pdf-document {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 0 auto;
   max-height: 100%;
+  margin: 0 auto;
+  width: 100%;
 }
 
-.react-pdf__Page {
-  margin: 0.5rem 0;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-  border-radius: 4px;
-  overflow: hidden;
+.pdf-page {
+  margin: 0;
+  border-radius: 2px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease;
+  will-change: transform;
 }
 
-.react-pdf__Page__canvas {
+.pdf-page canvas {
   max-width: 100% !important;
   height: auto !important;
-  width: auto !important;
-  max-height: calc(100vh - 120px) !important;
-  border-radius: 4px;
-  background-color: white;
-  display: block;
+  max-height: calc(100vh - 80px) !important;
   margin: 0 auto;
+  display: block;
+  border-radius: 2px;
+  background-color: white;
 }
 
-/* Simplified header for PDF viewer */
-.pdf-header {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 1rem;
-  background-color: hsl(var(--background));
-  border-bottom: 1px solid hsl(var(--border));
-}
-
-/* Back button styling */
-.back-button {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  color: hsl(var(--foreground));
-}
-
-.back-button:hover {
-  background-color: hsl(var(--secondary)/0.3);
-}
-
-/* Mobile controls */
-.pdf-mobile-controls {
-  position: sticky;
+/* Controls for PDF viewer */
+.pdf-controls {
+  position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: hsla(var(--background)/.9);
-  backdrop-filter: blur(4px);
-  border-top: 1px solid hsl(var(--border));
-  padding: 0.5rem;
   z-index: 10;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  width: 100%;
 }
 
-.pdf-mobile-controls-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.pdf-mobile-button-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 0.5rem;
-}
-
-/* Helper to prevent scrolling when PDF is open */
-body.pdf-viewer-open {
-  overflow: hidden;
-}
-
-/* Disable default PDF.js buttons */
+/* Disable default PDF.js buttons and overlays */
 .react-pdf__Page__annotations.annotationLayer,
 .react-pdf__Page__textContent.textLayer {
   display: none;
 }
 
-/* Loading spinner */
-@keyframes spin {
-  to { transform: rotate(360deg); }
+/* Performance optimizations */
+.pdf-page {
+  contain: content;
+  will-change: transform, opacity;
 }
 
-/* Mobile optimization */
+/* Page turning animation */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pageOut {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-20px); }
+}
+
+.page-enter {
+  animation: pageIn 0.2s ease forwards;
+}
+
+.page-exit {
+  animation: pageOut 0.2s ease forwards;
+  position: absolute;
+}
+
+/* Mobile optimizations */
 @media (max-width: 640px) {
   .pdf-content {
     padding: 0;
   }
   
-  .react-pdf__Page {
-    margin: 0;
+  .pdf-page canvas {
+    max-height: calc(100vh - 100px) !important;
+  }
+  
+  .pdf-controls {
+    padding-bottom: env(safe-area-inset-bottom, 0);
   }
 }
