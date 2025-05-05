@@ -3,7 +3,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { configurePdfWorker } from './lib/pdf-config';
 import { registerSW } from './registerSW';
-import { queryClient } from './lib/query-client';
 import App from './App';
 import './index.css';
 
