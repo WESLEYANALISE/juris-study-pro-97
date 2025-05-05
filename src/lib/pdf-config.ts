@@ -4,8 +4,10 @@ import { pdfjs as reactPdfJs } from 'react-pdf';
 // Define the PDF.js version - use only one consistent version
 const pdfjsVersion = '3.11.174';
 
-// Direct import of the worker
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.js?url';
+// Use CDN URL for the worker in production, local for development
+const workerSrc = import.meta.env.PROD 
+  ? `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`
+  : '/pdf.worker.js';
 
 /**
  * Configures the PDF.js worker globally to ensure consistent behavior
@@ -16,7 +18,7 @@ export function configurePdfWorker() {
     console.log('Configuring PDF worker with version:', pdfjsVersion);
     
     // Set worker URL for react-pdf
-    reactPdfJs.GlobalWorkerOptions.workerSrc = pdfWorker;
+    reactPdfJs.GlobalWorkerOptions.workerSrc = workerSrc;
     
     // Also set on window object for redundancy and global access
     if (typeof window !== 'undefined') {
@@ -25,7 +27,7 @@ export function configurePdfWorker() {
       }
       
       if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
       }
     }
     

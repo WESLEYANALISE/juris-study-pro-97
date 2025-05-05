@@ -8,7 +8,7 @@ import { registerSW } from './registerSW';
 
 console.log('Initializing application in main.tsx');
 
-// Configure worker immediately and repeatedly to ensure it's set
+// Configure worker immediately 
 configurePdfWorker();
 
 // Add PDF.js to window to ensure it's available globally
@@ -30,9 +30,6 @@ const renderApp = async () => {
   const { default: App } = await import('./App');
   await import('./index.css');
   
-  // One final configuration before render
-  configurePdfWorker();
-  
   console.log('Rendering React application');
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
@@ -41,9 +38,7 @@ const renderApp = async () => {
   );
 };
 
-// Delay rendering slightly to ensure PDF.js is fully loaded
-setTimeout(() => {
-  renderApp().catch(error => {
-    console.error('Failed to render app:', error);
-  });
-}, 100);
+// Render app immediately (removed delay to simplify startup)
+renderApp().catch(error => {
+  console.error('Failed to render app:', error);
+});
