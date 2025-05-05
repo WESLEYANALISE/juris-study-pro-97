@@ -41,8 +41,7 @@ export async function fetchPDFAreas(): Promise<PDFArea[]> {
   try {
     const { data, error } = await supabase
       .from('pdf_links_by_area')
-      .select('area')
-      .order('area');
+      .select('area');
     
     if (error) {
       toast.error('Error fetching PDF areas: ' + error.message);

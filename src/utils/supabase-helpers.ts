@@ -1,14 +1,5 @@
 
-import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { supabase } from '@/integrations/supabase/client';
-
-// Ensure we can safely query any table without TypeScript errors
-export const safeQueryFrom = <T = any>(
-  tableName: string
-): PostgrestFilterBuilder<any, any, T[], unknown> => {
-  // Use type assertion to safely work with dynamic table names
-  return supabase.from(tableName) as any as PostgrestFilterBuilder<any, any, T[], unknown>;
-};
 
 /**
  * Helper function to handle common error patterns in Supabase queries
@@ -23,10 +14,10 @@ export const handleSupabaseError = (error: any, operation: string): void => {
 export async function safeSelect<T = any>(
   tableName: string,
   columns = '*',
-  queryBuilder?: (query: PostgrestFilterBuilder<any, any, T[], unknown>) => PostgrestFilterBuilder<any, any, T[], unknown>
+  queryBuilder?: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    let query = safeQueryFrom<T>(tableName).select(columns);
+    let query = supabase.from(tableName).select(columns);
     
     if (queryBuilder) {
       query = queryBuilder(query);
@@ -55,9 +46,8 @@ export async function safeInsert<T = any>(
   options?: { returning?: string }
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = safeQueryFrom<T>(tableName);
-    // Using type assertion to access insert method
-    const { data, error } = await (query as any).insert(values, options);
+    const query = supabase.from(tableName);
+    const { data, error } = await query.insert(values, options);
     
     if (error) {
       handleSupabaseError(error, `insert into ${tableName}`);
@@ -77,13 +67,12 @@ export async function safeInsert<T = any>(
 export async function safeUpdate<T = any>(
   tableName: string,
   values: any,
-  queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], unknown>) => PostgrestFilterBuilder<any, any, T[], unknown>
+  queryBuilder: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = safeQueryFrom<T>(tableName);
-    // Using type assertion to access update method
-    const updateQuery = (query as any).update(values);
-    const filteredQuery = queryBuilder(updateQuery as any);
+    const query = supabase.from(tableName);
+    const updateQuery = query.update(values);
+    const filteredQuery = queryBuilder(updateQuery);
     
     const { data, error } = await filteredQuery;
     
@@ -104,13 +93,12 @@ export async function safeUpdate<T = any>(
  */
 export async function safeDelete<T = any>(
   tableName: string,
-  queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], unknown>) => PostgrestFilterBuilder<any, any, T[], unknown>
+  queryBuilder: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = safeQueryFrom<T>(tableName);
-    // Using type assertion to access delete method
-    const deleteQuery = (query as any).delete();
-    const filteredQuery = queryBuilder(deleteQuery as any);
+    const query = supabase.from(tableName);
+    const deleteQuery = query.delete();
+    const filteredQuery = queryBuilder(deleteQuery);
     
     const { data, error } = await filteredQuery;
     

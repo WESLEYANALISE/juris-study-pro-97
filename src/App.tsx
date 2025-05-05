@@ -26,6 +26,7 @@ import Peticoes from "@/pages/Peticoes";
 import AssistenteJuridico from "@/pages/AssistenteJuridico";
 import Perfil from "@/pages/Perfil";
 import IniciandoNoDireito from "@/pages/IniciandoNoDireito";
+import PDFLinksPage from "@/pages/PDFLinksPage";
 import NotFound from "@/pages/NotFound";
 import VerTudo from "@/pages/VerTudo";
 import Cursos from "@/pages/Cursos";
@@ -58,6 +59,9 @@ function App() {
               <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
               <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
+              
+              {/* New PDF Links page */}
+              <Route path="/pdf-links" element={<Layout><PDFLinksPage /></Layout>} />
               
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
