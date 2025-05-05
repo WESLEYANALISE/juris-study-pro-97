@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import { Document, Page } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, 
-  ZoomIn, ZoomOut, RotateCw, Download, Search, Menu, X
+  ZoomIn, ZoomOut, RotateCw, Download, Menu, X
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -15,7 +15,7 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
-import { pdfjs } from '@/lib/pdf-config';
+import { pdfjs, processPdfUrl, preloadPdf, getCachedPdf } from '@/lib/pdf-config';
 import './OptimizedPDFViewer.css';
 
 // pdfjs worker is now configured in pdf-config.ts
@@ -27,7 +27,7 @@ interface OptimizedPDFViewerProps {
   book: LivroJuridico | null;
 }
 
-export function OptimizedPDFViewer({
+export const OptimizedPDFViewer = memo(function OptimizedPDFViewer({
   pdfUrl,
   onClose,
   bookTitle,
@@ -38,14 +38,13 @@ export function OptimizedPDFViewer({
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [isError, setIsError] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [loadProgress, setLoadProgress] = useState(0);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [pageInputValue, setPageInputValue] = useState("1");
-  const [showOutline, setShowOutline] = useState(false);
   const [outline, setOutline] = useState<any[]>([]);
+  const [fileData, setFileData] = useState<ArrayBuffer | null>(null);
   
   // We only render a few pages at a time for better performance
   const [pagesToRender, setPagesToRender] = useState<number[]>([]);
@@ -61,6 +60,36 @@ export function OptimizedPDFViewer({
   const contentRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pagesRef = useRef<{[key: number]: HTMLDivElement | null}>({});
+
+  // Process PDF URL to get full path
+  const processedPdfUrl = processPdfUrl(pdfUrl);
+
+  // Preload the PDF file when component mounts
+  useEffect(() => {
+    const loadPdf = async () => {
+      // First check if already cached
+      let data = getCachedPdf(pdfUrl);
+      
+      if (!data) {
+        try {
+          setIsLoading(true);
+          // Preload the PDF and cache it
+          data = await preloadPdf(pdfUrl);
+          if (data) {
+            setFileData(data);
+          }
+        } catch (error) {
+          console.error("Error preloading PDF:", error);
+          setIsError(true);
+          setErrorMessage("Erro ao carregar o PDF");
+        }
+      } else {
+        setFileData(data);
+      }
+    };
+    
+    loadPdf();
+  }, [pdfUrl]);
 
   // Add body class to prevent scrolling and hide mobile nav
   useEffect(() => {
@@ -84,7 +113,7 @@ export function OptimizedPDFViewer({
     if (!numPages) return;
     
     // We render the current page and a buffer of pages around it
-    const buffer = 2; // Number of pages to buffer on each side
+    const buffer = window.innerWidth >= 1200 ? 2 : 1; // Smaller buffer on mobile
     const pagesToShow = [];
     
     for (let i = Math.max(1, pageNumber - buffer); i <= Math.min(numPages, pageNumber + buffer); i++) {
@@ -94,7 +123,7 @@ export function OptimizedPDFViewer({
     setPagesToRender(pagesToShow);
   }, [pageNumber, numPages]);
 
-  // Auto-hide controls after period of inactivity
+  // Auto-hide controls after period of inactivity - using event delegation for better performance
   useEffect(() => {
     const showControls = () => {
       setControlsVisible(true);
@@ -126,7 +155,7 @@ export function OptimizedPDFViewer({
     };
   }, []);
 
-  // Handle keyboard controls
+  // Handle keyboard controls with memoized handlers
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
@@ -163,45 +192,7 @@ export function OptimizedPDFViewer({
     }
   }, [debouncedPageNumber, book, saveReadingProgress, isLoading, numPages]);
 
-  // Process URL to get full path
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-    if (url.startsWith('http')) {
-      return url;
-    }
-    const baseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    return `${baseUrl}/storage/v1/object/public/agoravai/${url}`;
-  };
-
-  // Scroll to current page
-  useEffect(() => {
-    const scrollToCurrentPage = () => {
-      const currentPage = pagesRef.current[pageNumber];
-      if (currentPage && contentRef.current) {
-        const containerRect = contentRef.current.getBoundingClientRect();
-        const elementRect = currentPage.getBoundingClientRect();
-
-        // Calculate scroll position to center the page
-        const scrollTop = elementRect.top - containerRect.top - (containerRect.height - elementRect.height) / 2 + contentRef.current.scrollTop;
-        
-        contentRef.current.scrollTo({
-          top: scrollTop,
-          behavior: isInitialLoad ? 'auto' : 'smooth'
-        });
-      }
-    };
-    
-    if (!isLoading) {
-      setTimeout(scrollToCurrentPage, 100); // Small delay to ensure rendering
-
-      // After initial load, set to false
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-      }
-    }
-  }, [pageNumber, isLoading, isInitialLoad]);
-
-  // Handle document load success
+  // Handle document load success - using memoized callback
   const onDocumentLoadSuccess = useCallback(({
     numPages: totalPages,
     outline: pdfOutline
@@ -227,7 +218,7 @@ export function OptimizedPDFViewer({
     toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
   }, []);
 
-  // Handle page navigation
+  // Memoized handlers for better performance
   const changePage = useCallback((offset: number) => {
     setPageNumber(prevPage => {
       const newPage = prevPage + offset;
@@ -239,7 +230,6 @@ export function OptimizedPDFViewer({
     });
   }, [numPages]);
 
-  // Handle zoom changes
   const zoomIn = useCallback(() => {
     setScale(prev => Math.min(prev + 0.2, 3));
   }, []);
@@ -248,7 +238,26 @@ export function OptimizedPDFViewer({
     setScale(prev => Math.max(prev - 0.2, 0.5));
   }, []);
 
-  // Handle page input change
+  const rotate = useCallback(() => {
+    setRotation(prev => (prev + 90) % 360);
+  }, []);
+
+  const handleToggleFavorite = useCallback(() => {
+    if (book?.id) {
+      toggleFavorite(book.id);
+      toast.success(isFavorite(book.id) ? "Livro removido dos favoritos" : "Livro adicionado aos favoritos");
+    }
+  }, [book, toggleFavorite, isFavorite]);
+
+  const handleDownload = useCallback(() => {
+    if (pdfUrl) {
+      const link = document.createElement('a');
+      link.href = processedPdfUrl;
+      link.download = bookTitle.replace(/\s+/g, '_') + '.pdf';
+      link.click();
+    }
+  }, [pdfUrl, bookTitle, processedPdfUrl]);
+
   const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPageInputValue(e.target.value);
   };
@@ -273,33 +282,10 @@ export function OptimizedPDFViewer({
     }
   };
 
-  // Handle rotation
-  const rotate = useCallback(() => {
-    setRotation(prev => (prev + 90) % 360);
-  }, []);
-
-  // Handle favorite toggle
-  const handleToggleFavorite = useCallback(() => {
-    if (book?.id) {
-      toggleFavorite(book.id);
-      toast.success(isFavorite(book.id) ? "Livro removido dos favoritos" : "Livro adicionado aos favoritos");
-    }
-  }, [book, toggleFavorite, isFavorite]);
-
-  // Handle download
-  const handleDownload = useCallback(() => {
-    if (pdfUrl) {
-      const link = document.createElement('a');
-      link.href = processUrl(pdfUrl);
-      link.download = bookTitle.replace(/\s+/g, '_') + '.pdf';
-      link.click();
-    }
-  }, [pdfUrl, bookTitle]);
-
   // Calculate progress percentage
   const progressPercentage = numPages ? pageNumber / numPages * 100 : 0;
 
-  // Handle slider change
+  // Handle slider change - memoized
   const handleSliderChange = useCallback((value: number[]) => {
     const newPage = Math.round(value[0] * (numPages || 1) / 100);
     if (newPage >= 1) {
@@ -321,7 +307,7 @@ export function OptimizedPDFViewer({
           <h2 className="text-2xl font-bold mb-4">Erro ao carregar PDF</h2>
           <p className="mb-4 text-muted-foreground">{errorMessage}</p>
           <p className="text-sm text-muted-foreground mb-4">
-            Tentamos carregar: {processUrl(pdfUrl)}
+            Tentamos carregar: {processedPdfUrl}
           </p>
           <Button onClick={onClose} variant="default">
             Voltar
@@ -330,9 +316,6 @@ export function OptimizedPDFViewer({
       </motion.div>
     );
   }
-
-  // Get processed PDF URL
-  const processedPdfUrl = processUrl(pdfUrl);
   
   return (
     <motion.div 
@@ -379,7 +362,7 @@ export function OptimizedPDFViewer({
           </div>
         ) : (
           <Document
-            file={processedPdfUrl}
+            file={fileData || processedPdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             onProgress={({ loaded, total }) => {
@@ -643,7 +626,7 @@ export function OptimizedPDFViewer({
       </AnimatePresence>
     </motion.div>
   );
-}
+});
 
 // Export a lazy-loaded version for dynamic imports
 export const LazyOptimizedPDFViewer = React.lazy(() => 

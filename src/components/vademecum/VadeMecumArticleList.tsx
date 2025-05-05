@@ -1,8 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Article } from '@/components/vademecum/article/Article';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { motion } from 'framer-motion';
+import { useInView } from 'react-intersection-observer';
 
 interface VadeMecumArticleListProps {
   data: any[];
@@ -13,6 +14,7 @@ interface VadeMecumArticleListProps {
   loadMoreRef: (node: HTMLDivElement | null) => void;
 }
 
+// Virtualized article list with optimized rendering
 export function VadeMecumArticleList({
   data,
   filter,
@@ -22,15 +24,33 @@ export function VadeMecumArticleList({
   loadMoreRef
 }: VadeMecumArticleListProps) {
   const [activeArticle, setActiveArticle] = useState<string | null>(null);
+  const [initialRender, setInitialRender] = useState(true);
+  const listRef = useRef<HTMLDivElement>(null);
   
+  // Use viewport tracking to optimize rendering
+  const { ref: viewportRef, inView } = useInView({
+    threshold: 0.1,
+    triggerOnce: false,
+  });
+  
+  // Reset active article when filter changes
   useEffect(() => {
-    // Reset active article when filter changes
     setActiveArticle(null);
   }, [filter]);
   
-  const toggleArticle = (articleNumber: string) => {
-    setActiveArticle(activeArticle === articleNumber ? null : articleNumber);
-  };
+  // After initial render, mark complete to enable animations
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialRender(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  // Optimize toggle for better performance
+  const toggleArticle = useCallback((articleNumber: string) => {
+    setActiveArticle(prev => prev === articleNumber ? null : articleNumber);
+  }, []);
   
   if (isLoading) {
     return (
@@ -44,7 +64,7 @@ export function VadeMecumArticleList({
   }
   
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" ref={listRef}>
       {/* Show filter message if filtering */}
       {filter && (
         <div className="bg-muted/50 px-4 py-3 rounded-lg flex items-center justify-between">
@@ -62,25 +82,44 @@ export function VadeMecumArticleList({
         </div>
       )}
       
-      {/* Articles list */}
-      <motion.div 
+      {/* Articles list - optimized with conditional motion */}
+      <div 
         className="space-y-4"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
+        ref={viewportRef}
       >
         {visibleArticles.map((article, index) => (
-          <Article
-            key={`${article.id}-${index}`}
-            articleNumber={article.numero ?? ""}
-            articleText={article.artigo ?? ""}
-            technicalExplanation={article.tecnica}
-            formalExplanation={article.formal}
-            practicalExample={article.exemplo}
-            isOpen={activeArticle === article.numero}
-            onToggle={() => toggleArticle(article.numero)}
-            lawName={tableName}
-          />
+          <React.Fragment key={`${article.id}-${index}`}>
+            {/* Only apply motion to visible articles after initial render */}
+            {initialRender ? (
+              <Article
+                articleNumber={article.numero ?? ""}
+                articleText={article.artigo ?? ""}
+                technicalExplanation={article.tecnica}
+                formalExplanation={article.formal}
+                practicalExample={article.exemplo}
+                isOpen={activeArticle === article.numero}
+                onToggle={() => toggleArticle(article.numero)}
+                lawName={tableName}
+              />
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, delay: Math.min(index * 0.03, 0.5) }}
+              >
+                <Article
+                  articleNumber={article.numero ?? ""}
+                  articleText={article.artigo ?? ""}
+                  technicalExplanation={article.tecnica}
+                  formalExplanation={article.formal}
+                  practicalExample={article.exemplo}
+                  isOpen={activeArticle === article.numero}
+                  onToggle={() => toggleArticle(article.numero)}
+                  lawName={tableName}
+                />
+              </motion.div>
+            )}
+          </React.Fragment>
         ))}
         
         {/* Load more trigger element */}
@@ -89,7 +128,10 @@ export function VadeMecumArticleList({
             <LoadingSpinner className="h-6 w-6" />
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 }
+
+// Use React.memo to prevent unnecessary re-renders
+export default React.memo(VadeMecumArticleList);

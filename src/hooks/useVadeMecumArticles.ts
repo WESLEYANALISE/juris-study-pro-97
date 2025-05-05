@@ -1,7 +1,7 @@
-
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 // Lista de tabelas permitidas para prevenir SQL injection e type errors
@@ -30,7 +30,7 @@ const ALLOWED_TABLES = [
   "Constituição_Federal"
 ]; 
 
-// Interface para representar os artigos de leis usando os nomes de colunas do banco de dados
+// Interface para representar os artigos de leis
 interface LawArticle {
   id: string;
   law_name: string;
@@ -50,12 +50,11 @@ interface DataStats {
   withExemplo: number;
 }
 
+// Create a cache for already processed articles
+const articlesCache = new Map<string, LawArticle[]>();
+
 export const useVadeMecumArticles = (searchQuery: string) => {
   const { lawId } = useParams<{ lawId: string; }>();
-  const [articles, setArticles] = useState<LawArticle[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<LawArticle[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [dataStats, setDataStats] = useState<DataStats>({
     total: 0,
     withNumero: 0,
@@ -88,13 +87,11 @@ export const useVadeMecumArticles = (searchQuery: string) => {
   }, []);
 
   // Processa os dados brutos do banco para o formato correto
-  const processRawData = (data: any[]): LawArticle[] => {
+  const processRawData = useCallback((data: any[]): LawArticle[] => {
     if (!data || !Array.isArray(data)) {
       console.error("Dados inválidos recebidos:", data);
       return [];
     }
-
-    console.log("Raw data sample (first 2 items):", data.slice(0, 2));
 
     // Mapear e transformar os dados - mantendo os nomes originais das colunas
     const mappedData = data.map((item: any) => {
@@ -121,132 +118,88 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       withExemplo: mappedData.filter(a => !!a.exemplo?.trim()).length
     };
     
-    console.log("Mapped data sample (first 2 items):", mappedData.slice(0, 2));
-    console.log("Dados processados:", {
-      tableName: getTableName(lawId),
-      totalRecords: mappedData.length,
-      stats
-    });
-    
     setDataStats(stats);
 
-    // Manter a ordenação original do banco de dados
+    // Save to cache for future use
+    if (lawId) {
+      articlesCache.set(lawId, mappedData);
+    }
+
     return mappedData;
-  };
+  }, [lawId, getTableName]);
 
-  // Carregar artigos com retry automático
-  const loadArticles = useCallback(async (retryCount = 0) => {
-    setLoading(true);
-    setError(null);
+  // Use React Query for caching instead of useState + useEffect
+  const { 
+    data: articles = [], 
+    isLoading: loading, 
+    error, 
+    refetch 
+  } = useQuery({
+    queryKey: ['vademecum-articles', lawId],
+    queryFn: async () => {
+      // First check if we have a cached version
+      if (lawId && articlesCache.has(lawId)) {
+        return articlesCache.get(lawId) || [];
+      }
 
-    try {
-      // Obter e verificar o nome da tabela
       const tableName = getTableName(lawId);
       if (!tableName) {
-        setError("Lei não encontrada ou não disponível");
-        setArticles([]);
-        setLoading(false);
-        return;
+        throw new Error("Lei não encontrada ou não disponível");
       }
-      console.log(`Carregando dados da tabela: ${tableName}`);
 
-      // Tentativa 1: Chamada para a edge function com o nome da tabela
-      console.log("Tentativa de carregamento via Edge Function");
-      const response = await supabase.functions.invoke("query-vademecum-table", {
-        body: { table_name: tableName }
-      });
+      try {
+        // Try edge function first
+        const response = await supabase.functions.invoke("query-vademecum-table", {
+          body: { table_name: tableName }
+        });
 
-      // Verificar se há erro na chamada da função
-      if (response.error) {
-        console.error(`Erro ao carregar artigos via Edge Function (tentativa ${retryCount + 1}):`, response.error);
+        if (response.error) {
+          throw response.error;
+        }
 
-        // Tentativa 2: Fallback para consulta direta
-        console.log("Tentando consulta direta como fallback");
+        if (!response.data || !Array.isArray(response.data)) {
+          throw new Error("Dados inválidos recebidos");
+        }
+
+        return processRawData(response.data);
+      } catch (edgeFnError) {
+        console.error("Edge function error, falling back to direct query:", edgeFnError);
+        
+        // Fallback to direct query
         const { data: directData, error: directError } = await supabase
           .from(tableName as any)
           .select('*');
         
-        if (directError) {
-          console.error("Falha na consulta direta:", directError);
-          
-          if (retryCount < 3) {
-            console.log(`Tentando novamente (${retryCount + 1}/3)...`);
-            setTimeout(() => loadArticles(retryCount + 1), 1000 * (retryCount + 1));
-            return;
-          }
-          
-          setError(`Erro ao carregar artigos: ${directError.message}`);
-          setLoading(false);
-          return;
-        }
+        if (directError) throw directError;
+        if (!directData) throw new Error("Nenhum dado encontrado");
         
-        if (directData && Array.isArray(directData)) {
-          console.log(`Dados recebidos via consulta direta: ${directData.length} registros`);
-          console.log("Primeiros registros:", directData.slice(0, 3));
-          
-          const processedArticles = processRawData(directData);
-          setArticles(processedArticles);
-          setFilteredArticles(processedArticles);
-          setLoading(false);
-          return;
-        } else {
-          console.error("Consulta direta retornou dados vazios ou inválidos");
-          setArticles([]);
-          setFilteredArticles([]);
-          setLoading(false);
-          return;
-        }
+        return processRawData(directData);
       }
-      
-      // Tentativa 1 bem-sucedida: processar dados da Edge Function
-      const responseData = response.data;
-      console.log(`Dados recebidos da Edge Function para ${tableName}:`, 
-        Array.isArray(responseData) ? `${responseData.length} registros` : 'não é um array');
-      
-      if (!responseData || !Array.isArray(responseData) || responseData.length === 0) {
-        console.error("Edge function retornou dados vazios ou inválidos");
-        setArticles([]);
-        setFilteredArticles([]);
-        setLoading(false);
-        return;
-      }
-      
-      // Processar e validar os dados recebidos
-      const processedArticles = processRawData(responseData);
-      setArticles(processedArticles);
-      setFilteredArticles(processedArticles);
-
-    } catch (err) {
-      console.error("Erro inesperado em loadArticles:", err);
-      setError("Ocorreu um erro inesperado ao carregar os artigos");
-    } finally {
-      setLoading(false);
+    },
+    staleTime: 30 * 60 * 1000, // 30 minutes - law content rarely changes
+    cacheTime: 60 * 60 * 1000, // 1 hour
+    retry: 1,
+    refetchOnWindowFocus: false,
+    onError: (err) => {
+      console.error("Error fetching articles:", err);
+      toast.error("Erro ao carregar artigos. Tente novamente.");
     }
-  }, [lawId, getTableName]);
+  });
 
-  // Efeito para carregar artigos quando o ID da lei mudar
-  useEffect(() => {
-    console.log("lawId mudou, carregando artigos:", lawId);
-    loadArticles();
-  }, [loadArticles]);
-
-  // Efeito para filtrar artigos com base na pesquisa
-  useEffect(() => {
+  // Filtered articles with memoization
+  const filteredArticles = useMemo(() => {
     if (searchQuery.trim() === "") {
-      setFilteredArticles(articles);
-      console.log(`Mostrando todos os ${articles.length} artigos`);
-    } else {
-      const lowerQuery = searchQuery.toLowerCase();
-      const filtered = articles.filter(article => {
-        if (!article.artigo && !article.numero) return false;
-        return (
-          article.artigo?.toLowerCase().includes(lowerQuery) || 
-          article.numero?.toLowerCase().includes(lowerQuery)
-        );
-      });
-      console.log(`Filtro aplicado: ${filtered.length}/${articles.length} artigos correspondem a "${searchQuery}"`);
-      setFilteredArticles(filtered);
+      return articles;
     }
+    
+    const lowerQuery = searchQuery.toLowerCase();
+    return articles.filter(article => {
+      if (!article.artigo && !article.numero) return false;
+      return (
+        article.artigo?.toLowerCase().includes(lowerQuery) || 
+        article.numero?.toLowerCase().includes(lowerQuery)
+      );
+    });
   }, [searchQuery, articles]);
 
   const decodedLawName = lawId ? decodeURIComponent(lawId).replace(/_/g, ' ') : '';
@@ -255,9 +208,9 @@ export const useVadeMecumArticles = (searchQuery: string) => {
     articles,
     filteredArticles,
     loading,
-    error,
+    error: error ? (error as Error).message : null,
     dataStats,
-    loadArticles,
+    loadArticles: refetch,
     decodedLawName,
     tableName: lawId ? decodeURIComponent(lawId) : ''
   };

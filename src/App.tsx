@@ -1,26 +1,25 @@
-
-import { useState, lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/theme-provider';
-import { PDFTest } from './components/test/PDFTest';
 import Layout from './components/Layout';
 import { AuthProvider } from './hooks/use-auth';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { LoadingState } from '@/components/ui/loading-state';
 import { lazyLoad } from './lib/code-splitting';
+import { queryClient } from './lib/query-client';
 import { configurePdfWorker } from './lib/pdf-config';
+
+// Eagerly load critical components
+import NotFound from './pages/NotFound';
 import { PDFConfigValidator } from '@/components/pdf/PDFConfigValidator';
 
-// Eagerly load common components
-import NotFound from './pages/NotFound';
-
-// Lazily load page components for better performance
-const Index = lazyLoad(() => import('./pages/Index'));
-const VadeMecum = lazyLoad(() => import('./pages/VadeMecum'));
-const VadeMecumViewer = lazyLoad(() => import('./pages/VadeMecumViewer'));
-const VadeMecumFavorites = lazyLoad(() => import('./pages/VadeMecumFavorites'));
-const BibliotecaJuridica = lazyLoad(() => import('./pages/BibliotecaJuridica'));
+// Lazily load page components with improved loading
+const Index = lazyLoad(() => import('./pages/Index'), 'home');
+const VadeMecum = lazyLoad(() => import('./pages/VadeMecum'), 'vademecum');
+const VadeMecumViewer = lazyLoad(() => import('./pages/VadeMecumViewer'), 'vademecum-viewer');
+const VadeMecumFavorites = lazyLoad(() => import('./pages/VadeMecumFavorites'), 'vademecum-fav');
+const BibliotecaJuridica = lazyLoad(() => import('./pages/BibliotecaJuridica'), 'biblioteca');
 const Podcasts = lazyLoad(() => import('./pages/Podcasts'));
 const Questoes = lazyLoad(() => import('./pages/Questoes'));
 const JogosJuridicos = lazyLoad(() => import('./pages/JogosJuridicos'));
@@ -39,60 +38,26 @@ const CursoViewer = lazyLoad(() => import('./pages/CursoViewer'));
 const Simulados = lazyLoad(() => import('./pages/Simulados'));
 const Noticias = lazyLoad(() => import('./pages/Noticias'));
 
-// Create a client with optimized settings
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 60 * 1000, // 1 minute
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 // Loading component for suspense fallback
 const PageLoader = () => (
-  <div className="flex items-center justify-center h-screen">
-    <LoadingSpinner className="h-12 w-12 text-primary" />
-  </div>
+  <LoadingState
+    variant="skeleton"
+    count={3}
+    height="h-32"
+    className="max-w-4xl mx-auto mt-8"
+  />
 );
 
 function App() {
-  // Track initial loading state
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Set initial load to false after a short delay
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsInitialLoad(false);
-    }, 2000);
-    
-    return () => clearTimeout(timer);
-  }, []);
-
   useEffect(() => {
     // Configure PDF.js worker when App mounts
     configurePdfWorker();
-    
-    // Add PDF.js configuration validator to ensure proper setup
-    const pdf = document.createElement('div');
-    pdf.id = 'pdf-config-validator';
-    document.body.appendChild(pdf);
-    
-    return () => {
-      if (pdf.parentElement) {
-        pdf.parentElement.removeChild(pdf);
-      }
-    };
   }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider storageKey="vite-ui-theme">
-        {/* Wrap the application with AuthProvider */}
         <AuthProvider>
-          {/* PDFTest component for PDF.js configuration debugging */}
-          <PDFTest />
           <PDFConfigValidator />
           
           <Router>

@@ -6,31 +6,69 @@ import { componentTagger } from 'lovable-tagger';
 
 export default defineConfig(({ mode }) => ({
   plugins: [
-    react(),
+    react({
+      // Improve performance by using babel's runtime JSX transform
+      babel: {
+        plugins: [
+          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
+        ]
+      }
+    }),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
+  
   resolve: {
     alias: {
       '@': resolve(__dirname, './src'),
     },
   },
+  
+  // Optimize dependency pre-bundling
   optimizeDeps: {
-    include: ['react-pdf'],
+    include: [
+      'react-pdf', 
+      'pdfjs-dist', 
+      'react-router-dom', 
+      'framer-motion', 
+      '@tanstack/react-query'
+    ],
+    esbuildOptions: {
+      // Improve tree-shaking
+      treeShaking: true,
+    }
   },
+  
   build: {
+    // Use faster minification
+    minify: 'esbuild',
+    
+    // Generate separate chunks for better caching
     rollupOptions: {
       output: {
         manualChunks: {
           // Split PDF.js into a separate chunk to manage its size
           pdfjs: ['react-pdf', 'pdfjs-dist'],
+          
           // Split other large dependencies
-          vendor: [
+          core: [
             'react', 
             'react-dom', 
             'react-router-dom',
-            'framer-motion',
-            '@tanstack/react-query'
           ],
+          
+          // Separate state management
+          state: [
+            '@tanstack/react-query',
+            '@tanstack/react-query-persist-client',
+            '@tanstack/query-sync-storage-persister'
+          ],
+          
+          // Animations
+          animation: [
+            'framer-motion',
+          ],
+          
+          // UI libraries
           ui: [
             '@radix-ui/react-accordion',
             '@radix-ui/react-alert-dialog',
@@ -65,12 +103,36 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    sourcemap: true, // Enable sourcemaps for easier debugging
+    
+    // Generate source maps for better debugging
+    sourcemap: mode === 'development',
+    
+    // Target modern browsers for smaller bundles
     target: 'esnext',
-    minify: 'esbuild', // Change from terser to esbuild for faster builds
-    chunkSizeWarningLimit: 1000, // Increase the warning limit
+    
+    // Increase the warning limit to avoid noise
+    chunkSizeWarningLimit: 1000,
   },
+  
   server: {
+    port: 8080,
+    host: '::',
+    // Improve hot module replacement performance
+    hmr: {
+      overlay: true,
+    },
+  },
+  
+  // Cache dependencies during development
+  cacheDir: '.vite_cache',
+  
+  // Improve CSS handling
+  css: {
+    devSourcemap: true, // Enable CSS source maps
+  },
+  
+  // Improve previews
+  preview: {
     port: 8080,
     host: '::',
   }

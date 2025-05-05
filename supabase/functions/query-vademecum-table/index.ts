@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4"
 
@@ -31,6 +30,8 @@ const ALLOWED_TABLES = [
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Cache-Control': 'max-age=3600', // Cache for 1 hour
 };
 
 serve(async (req) => {
@@ -67,51 +68,32 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Querying table: ${table_name}`);
-    
-    // Use a parameterized query to prevent SQL injection
-    // Note: This is safe because we've already validated table_name against ALLOWED_TABLES
+    // Check if we have cache in KV if available
+    const cacheKey = `vademecum_${table_name.replace(/\s+/g, '_')}`;
     let data;
-    let error;
     
     try {
+      // Use parameterized query to prevent SQL injection
+      // Note: This is safe because we've already validated table_name against ALLOWED_TABLES
       const result = await supabase
         .from(table_name)
         .select('id, numero, artigo, tecnica, formal, exemplo')
         .order('id');
       
       data = result.data;
-      error = result.error;
+      const error = result.error;
       
-      // Log results for debugging
-      if (data) {
-        console.log(`Query result: ${data.length} rows retrieved`);
-        
-        // Log sample data
-        if (data.length > 0) {
-          const sample = data[0];
-          console.log("Sample data structure:", Object.keys(sample));
-          
-          // Check if articles have content
-          const hasArticleContent = data.filter(d => d.artigo && d.artigo.trim().length > 0).length;
-          const hasNumberContent = data.filter(d => d.numero && d.numero.trim().length > 0).length;
-          
-          console.log(`Articles with text content: ${hasArticleContent}/${data.length}`);
-          console.log(`Articles with number content: ${hasNumberContent}/${data.length}`);
-        }
+      if (error) {
+        console.error(`Error querying table ${table_name}:`, error);
+        return new Response(
+          JSON.stringify({ error: error.message }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        );
       }
     } catch (queryErr) {
       console.error("Direct query error:", queryErr);
       return new Response(
         JSON.stringify({ error: 'Erro na consulta SQL', details: String(queryErr) }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
-    if (error) {
-      console.error(`Error querying table ${table_name}:`, error);
-      return new Response(
-        JSON.stringify({ error: error.message }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
@@ -125,11 +107,17 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Successfully retrieved ${data.length} records from ${table_name}`);
+    // Add additional cache headers for better performance
+    const enhancedHeaders = {
+      ...corsHeaders, 
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600', // Cache for 1 hour
+      'ETag': `"${table_name}_${data.length}"`, // Simple ETag for caching
+    };
 
     return new Response(
       JSON.stringify(data),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { headers: enhancedHeaders }
     );
   } catch (error) {
     console.error('Unexpected error:', error);

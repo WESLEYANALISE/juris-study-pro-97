@@ -1,62 +1,72 @@
 
-import React, { Suspense } from 'react';
-import { Card } from '@/components/ui/card';
-import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import React, { lazy, Suspense } from 'react';
+import { LoadingState } from '@/components/ui/loading-state';
+
+// Preload map to track which modules have been requested for preloading
+const preloadMap = new Map<string, Promise<any>>();
 
 /**
- * Higher order component for lazy loading components with Suspense
- * @param importFn Function that imports the component
- * @returns Lazy loaded component with loading state
+ * Enhanced lazy loading utility with named routes for better debugging
+ * and preloading capabilities
  */
-export function lazyLoad<T extends React.ComponentType<any>>(
-  importFn: () => Promise<{ default: T }>
+export function lazyLoad(
+  importFn: () => Promise<{ default: React.ComponentType<any> }>,
+  routeName: string = 'unnamed'
 ) {
-  const LazyComponent = React.lazy(importFn);
+  // Store the import function for potential preloading
+  if (!preloadMap.has(routeName)) {
+    preloadMap.set(routeName, importFn());
+  }
   
-  return (props: React.ComponentProps<T>) => (
-    <Suspense 
-      fallback={
-        <Card className="p-6 flex items-center justify-center min-h-[200px]">
-          <LoadingSpinner />
-        </Card>
-      }
-    >
-      <LazyComponent {...props} />
-    </Suspense>
-  );
+  // Create the lazy component
+  const LazyComponent = lazy(() => {
+    console.log(`Loading route: ${routeName}`);
+    // Use the cached promise if available
+    return preloadMap.get(routeName) || importFn();
+  });
+  
+  // Return the component with its own suspense boundary
+  return function WrappedLazyComponent(props: any) {
+    return (
+      <Suspense fallback={
+        <LoadingState 
+          variant="skeleton" 
+          count={2} 
+          height="h-24" 
+          className="max-w-3xl mx-auto mt-4"
+        />
+      }>
+        <LazyComponent {...props} />
+      </Suspense>
+    );
+  };
 }
 
 /**
- * Utility for prefetching components before they're needed
- * @param importFn Function that imports the component
+ * Utility to preload specific routes in the background
  */
-export function prefetchComponent(importFn: () => Promise<any>) {
-  // This starts loading the component in the background
-  importFn();
+export function preloadRoute(routeName: string) {
+  const importFn = preloadMap.get(routeName);
+  if (importFn) {
+    // The import is already being loaded, no need to trigger again
+    return importFn;
+  }
+  return null;
 }
 
 /**
- * Routes manager for preloading and code splitting
- * Helps manage which routes to preload based on user navigation patterns
+ * Preload the most common routes on idle time
  */
-export class RoutePreloader {
-  private static preloadedRoutes = new Set<string>();
-  
-  /**
-   * Preload a route's components
-   */
-  static preloadRoute(routePath: string, importFn: () => Promise<any>) {
-    if (!this.preloadedRoutes.has(routePath)) {
-      console.log(`Preloading route: ${routePath}`);
-      prefetchComponent(importFn);
-      this.preloadedRoutes.add(routePath);
-    }
-  }
-  
-  /**
-   * Check if a route has been preloaded
-   */
-  static isRoutePreloaded(routePath: string): boolean {
-    return this.preloadedRoutes.has(routePath);
+export function preloadCommonRoutes() {
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => {
+      // Preload the most common routes in order of likely usage
+      preloadRoute('home');
+      preloadRoute('vademecum');
+      preloadRoute('biblioteca');
+    }, { timeout: 2000 });
   }
 }
+
+// Start preloading common routes
+preloadCommonRoutes();

@@ -1,39 +1,11 @@
 
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-
-// Load PDF.js worker script directly to ensure it's available
-document.addEventListener('DOMContentLoaded', () => {
-  const script = document.createElement('script');
-  script.src = import.meta.env.PROD 
-    ? 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
-    : '/pdf.worker.min.js';
-  script.async = false;
-  script.defer = false;
-  document.head.appendChild(script);
-});
-
-// Configure PDF.js worker
-import { configurePdfWorker } from '@/lib/pdf-config';
+import { configurePdfWorker } from './lib/pdf-config';
 import { registerSW } from './registerSW';
 
-console.log('Initializing application in main.tsx');
-
-// Configure worker immediately 
+// Initialize essential services immediately
 configurePdfWorker();
-
-// Add PDF.js to window to ensure it's available globally
-import { pdfjs } from 'react-pdf';
-if (typeof window !== 'undefined') {
-  window.pdfjsLib = pdfjs;
-  
-  // Set workerSrc property directly, not trying to assign to GlobalWorkerOptions
-  if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
-    window.pdfjsLib.GlobalWorkerOptions.workerSrc = import.meta.env.PROD 
-      ? 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
-      : '/pdf.worker.min.js';
-  }
-}
 
 // Register service worker in production
 if (import.meta.env.PROD) {
@@ -42,23 +14,37 @@ if (import.meta.env.PROD) {
 
 // Create a function for rendering the app
 const renderApp = async () => {
-  // Configure again before rendering to ensure it's done
-  configurePdfWorker();
+  // Dynamically import components for code splitting
+  const [{ default: App }, { queryClient }] = await Promise.all([
+    import('./App'),
+    import('./lib/query-client'), // Import the optimized query client
+    import('./index.css')
+  ]);
   
-  const { default: App } = await import('./App');
-  await import('./index.css');
+  // Set up any missing PDF.js configurations if needed
+  const { pdfjs } = await import('react-pdf');
+  if (typeof window !== 'undefined' && window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+    const workerSrc = import.meta.env.PROD 
+      ? 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+      : '/pdf.worker.min.js';
+    window.pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc;
+  }
   
-  console.log('Rendering React application');
-  ReactDOM.createRoot(document.getElementById('root')!).render(
+  const rootElement = document.getElementById('root');
+  if (!rootElement) {
+    console.error('Root element not found');
+    return;
+  }
+  
+  // Render the app with query client
+  ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
       <App />
     </React.StrictMode>
   );
 };
 
-// Render app with a small delay to ensure PDF.js worker is loaded
-setTimeout(() => {
-  renderApp().catch(error => {
-    console.error('Failed to render app:', error);
-  });
-}, 100);
+// Render app immediately without delay
+renderApp().catch(error => {
+  console.error('Failed to render app:', error);
+});
