@@ -1,66 +1,149 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowUp, ZoomIn, ZoomOut, X } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { 
+  ArrowUp, 
+  ZoomIn, 
+  ZoomOut, 
+  Type, 
+  Settings, 
+  X,
+  Moon,
+  Sun
+} from 'lucide-react';
+import { useIsMobile } from "@/hooks/use-mobile";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 interface FloatingControlsProps {
   fontSize: number;
   increaseFontSize: () => void;
   decreaseFontSize: () => void;
   showBackToTop: boolean;
   scrollToTop: () => void;
-  onClose?: () => void;
 }
-export const FloatingControls = ({
+
+export const FloatingControls: React.FC<FloatingControlsProps> = ({
   fontSize,
   increaseFontSize,
   decreaseFontSize,
   showBackToTop,
-  scrollToTop,
-  onClose
-}: FloatingControlsProps) => {
-  return <>
-      {/* Font size controls (bottom left) */}
-      <motion.div initial={{
-      opacity: 0,
-      y: 20
-    }} animate={{
-      opacity: 0.95,
-      y: 0
-    }} whileHover={{
-      opacity: 1
-    }} className="fixed left-4 bottom-16 z-50">
-        
-      </motion.div>
-      
-      {/* Back to top button (right side) */}
-      {showBackToTop && <motion.div initial={{
-      opacity: 0,
-      y: 20
-    }} animate={{
-      opacity: 0.95,
-      y: 0
-    }} whileHover={{
-      opacity: 1
-    }} className="fixed right-4 bottom-16 z-50">
-          <Button variant="outline" size="sm" onClick={scrollToTop} title="Voltar ao topo" className="rounded-full h-10 w-10 shadow-md bg-[#9b87f5]/20 backdrop-blur mx-[13px] border border-[#9b87f5]/30 text-[#9b87f5] my-[55px]">
-            <ArrowUp size={16} />
-          </Button>
-        </motion.div>}
-      
-      {/* Close button (top right) */}
-      {onClose && <motion.div initial={{
-      opacity: 0,
-      y: -20
-    }} animate={{
-      opacity: 0.95,
-      y: 0
-    }} whileHover={{
-      opacity: 1
-    }} className="fixed right-4 top-4 z-50">
-          <Button variant="outline" size="sm" onClick={onClose} title="Fechar" className="rounded-full h-10 w-10 shadow-md bg-[#9b87f5]/20 backdrop-blur border border-[#9b87f5]/30 text-[#9b87f5]">
-            <X size={16} />
-          </Button>
-        </motion.div>}
-    </>;
+  scrollToTop
+}) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const isMobile = useIsMobile();
+  
+  // Fixed position based on screen size
+  const position = isMobile 
+    ? "fixed bottom-20 right-4 z-50" 
+    : "fixed bottom-8 right-8 z-50";
+
+  return (
+    <>
+      {/* Back to top button - shows when scrolled down */}
+      <AnimatePresence>
+        {showBackToTop && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
+            className={`${isMobile ? "fixed bottom-[90px] right-4" : "fixed bottom-24 right-8"} z-50`}
+          >
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={scrollToTop}
+                    className="rounded-full shadow-lg hover:shadow-xl hover:bg-primary hover:text-primary-foreground"
+                  >
+                    <ArrowUp className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <p>Voltar ao topo</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Controls panel */}
+      <div className={position}>
+        <AnimatePresence>
+          {isExpanded && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="mb-3 flex flex-col items-center gap-2"
+            >
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={increaseFontSize}
+                      className="rounded-full shadow-md"
+                    >
+                      <ZoomIn className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>Aumentar texto</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+
+              <div className="bg-card p-1 px-2 rounded-full text-sm font-medium border">
+                {fontSize}px
+              </div>
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      onClick={decreaseFontSize}
+                      className="rounded-full shadow-md"
+                    >
+                      <ZoomOut className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="left">
+                    <p>Diminuir texto</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Toggle button */}
+        <Button
+          size="icon"
+          variant={isExpanded ? "default" : "secondary"}
+          className="rounded-full shadow-lg hover:shadow-xl"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? (
+            <X className="h-5 w-5" />
+          ) : (
+            <Type className="h-5 w-5" />
+          )}
+        </Button>
+      </div>
+    </>
+  );
 };
+
 export default FloatingControls;
