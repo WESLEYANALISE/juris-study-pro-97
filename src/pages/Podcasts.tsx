@@ -300,21 +300,7 @@ const Podcasts = () => {
         )}
       </AnimatePresence>
       
-      <div className={`container mx-auto px-4 py-6 pb-24 ${isMobile ? 'pt-20' : ''}`}>
-        {/* Mobile filters bar - always visible at the top on mobile */}
-        {isMobile && (
-          <MobileFiltersBar 
-            categories={categories}
-            selectedCategory={selectedCategory}
-            onCategoryChange={setSelectedCategory}
-            activeFilter={activeFilter}
-            setActiveFilter={setActiveFilter}
-            viewMode={viewMode}
-            setViewMode={setViewMode}
-            resetFilters={resetFilters}
-          />
-        )}
-        
+      <div className={`container mx-auto px-4 py-6 pb-24`}>
         {/* Hero section with parallax effect */}
         <motion.div 
           className="relative h-64 md:h-80 mb-8 rounded-xl overflow-hidden"
@@ -354,6 +340,20 @@ const Podcasts = () => {
             </div>
           </div>
         </motion.div>
+        
+        {/* Mobile filters bar - moved inside container and AFTER hero section */}
+        {isMobile && (
+          <MobileFiltersBar 
+            categories={categories}
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            activeFilter={activeFilter}
+            setActiveFilter={setActiveFilter}
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            resetFilters={resetFilters}
+          />
+        )}
         
         {/* Mobile filter sheet - now hidden since we have the top bar */}
         {!isMobile && (

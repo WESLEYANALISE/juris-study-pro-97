@@ -32,7 +32,7 @@ export function MobileFiltersBar({
 
   return (
     <motion.div
-      className="fixed top-16 left-0 right-0 z-30 bg-black/95 backdrop-blur-md border-b border-purple-900/30 px-3"
+      className="bg-black/95 backdrop-blur-md border-b border-purple-900/30 px-3 mb-4 relative"
       initial={{ height: 60 }}
       animate={{ height: isExpanded ? 160 : 60 }}
       transition={{ duration: 0.3 }}

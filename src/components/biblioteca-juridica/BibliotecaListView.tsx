@@ -1,142 +1,133 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { BookOpen, BookMarked, Clock } from 'lucide-react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Heart, BookOpen, Calendar } from 'lucide-react';
+import { BookCover } from './BookCover';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 interface BibliotecaListViewProps {
-  books: LivroJuridico[];
+  livros: LivroJuridico[];
   onSelectBook: (book: LivroJuridico) => void;
+  isLoading: boolean;
 }
 
-export const BibliotecaListView = ({
-  books,
-  onSelectBook
-}: BibliotecaListViewProps) => {
+export function BibliotecaListView({ livros, onSelectBook, isLoading }: BibliotecaListViewProps) {
   const { getReadingProgress, isFavorite } = useBibliotecaProgresso();
 
-  // Animations
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.05
-      }
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div key={i} className="animate-pulse flex gap-4 p-4 bg-muted/10 rounded-lg">
+            <div className="w-16 h-24 bg-muted rounded"></div>
+            <div className="flex-1 space-y-2">
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+              <div className="h-3 bg-muted rounded w-1/2"></div>
+              <div className="h-3 bg-muted rounded w-1/3"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
 
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    show: { 
-      opacity: 1, 
-      x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 100
-      }
-    }
-  };
+  if (livros.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-muted-foreground">Nenhum livro encontrado.</p>
+      </div>
+    );
+  }
 
   return (
-    <motion.div 
-      className="space-y-3"
-      variants={containerVariants}
-      initial="hidden"
-      animate="show"
-    >
-      {books.map((book) => {
-        const progress = book.id ? getReadingProgress(book.id) : null;
-        const progressPercentage = progress?.pagina_atual && book.total_paginas
-          ? Math.round((progress.pagina_atual / book.total_paginas) * 100)
-          : 0;
+    <div className="space-y-4">
+      {livros.map((livro) => {
+        const progresso = getReadingProgress(livro.id);
+        const isFavorited = isFavorite(livro.id);
         
-        const bookIsFavorite = book.id ? isFavorite(book.id) : false;
-        
+        // Format last read date if available
+        const lastReadFormatted = progresso?.ultima_leitura 
+          ? formatDistanceToNow(new Date(progresso.ultima_leitura), { 
+              addSuffix: true, 
+              locale: ptBR 
+            })
+          : null;
+
         return (
           <motion.div
-            key={book.id}
-            variants={itemVariants}
-            whileHover={{ y: -2, transition: { duration: 0.2 } }}
-            className="border rounded-lg bg-card hover:bg-card/80 transition-colors overflow-hidden shadow-sm hover:shadow"
+            key={livro.id}
+            className="flex gap-4 p-4 bg-card/30 rounded-lg hover:bg-card/50 cursor-pointer transition-colors"
+            onClick={() => onSelectBook(livro)}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
           >
-            <div className="flex p-3 gap-4 items-center" onClick={() => onSelectBook(book)}>
-              {/* Book Cover Thumbnail */}
-              <div className="shrink-0 w-16 h-24 md:w-20 md:h-28 bg-muted rounded overflow-hidden">
-                {book.capa_url ? (
-                  <img
-                    src={book.capa_url}
-                    alt={book.titulo}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
-                    }}
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-muted/50">
-                    <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+            {/* Book Cover */}
+            <div className="w-16 h-24 md:w-20 md:h-28 flex-shrink-0">
+              <BookCover book={livro} className="w-full h-full" />
+            </div>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-medium line-clamp-2">{livro.titulo}</h3>
+                
+                {isFavorited && (
+                  <Heart className="h-4 w-4 text-red-500 flex-shrink-0 fill-current" />
+                )}
+              </div>
+              
+              {livro.autor && (
+                <p className="text-sm text-muted-foreground mt-1 line-clamp-1">por {livro.autor}</p>
+              )}
+              
+              <div className="flex flex-wrap gap-2 mt-2">
+                {livro.categoria && (
+                  <Badge variant="outline" className="text-xs">
+                    {livro.categoria}
+                  </Badge>
+                )}
+                
+                {livro.total_paginas && (
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <BookOpen className="h-3 w-3 mr-1" />
+                    {livro.total_paginas} páginas
+                  </div>
+                )}
+                
+                {lastReadFormatted && (
+                  <div className="flex items-center text-xs text-muted-foreground">
+                    <Calendar className="h-3 w-3 mr-1" />
+                    {lastReadFormatted}
                   </div>
                 )}
               </div>
               
-              {/* Book Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-base md:text-lg line-clamp-2">{book.titulo}</h3>
-                  {bookIsFavorite && (
-                    <BookMarked className="h-5 w-5 text-primary ml-2 shrink-0" />
-                  )}
-                </div>
-                
-                {book.autor && (
-                  <p className="text-sm text-muted-foreground mt-1">{book.autor}</p>
-                )}
-                
-                <div className="flex items-center mt-2">
-                  <Badge variant="outline" className="text-xs">{book.categoria}</Badge>
-                  
-                  {book.total_paginas && (
-                    <span className="flex items-center text-xs text-muted-foreground ml-2">
-                      <Clock className="h-3 w-3 mr-1" /> {book.total_paginas} páginas
-                    </span>
-                  )}
-                </div>
-                
-                {/* Progress bar */}
-                {progressPercentage > 0 && (
-                  <div className="mt-2">
-                    <div className="text-xs text-muted-foreground mb-1">
-                      Progresso: {progressPercentage}%
-                    </div>
-                    <div className="h-1.5 w-full bg-muted rounded-full">
-                      <div 
-                        className="h-full bg-primary rounded-full"
-                        style={{ width: `${progressPercentage}%` }}
-                      />
-                    </div>
+              {/* Reading Progress */}
+              {progresso && progresso.pagina_atual > 1 && (
+                <div className="mt-2">
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-primary rounded-full"
+                      style={{ 
+                        width: `${Math.min(Math.floor((progresso.pagina_atual / (livro.total_paginas || 100)) * 100), 100)}%` 
+                      }}
+                    />
                   </div>
-                )}
-              </div>
-              
-              {/* Action Button for larger screens */}
-              <div className="hidden md:block">
-                <Button 
-                  size="sm" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelectBook(book);
-                  }}
-                >
-                  <BookOpen className="mr-2 h-4 w-4" /> Ler
-                </Button>
-              </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Página {progresso.pagina_atual} de {livro.total_paginas || '?'}
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         );
       })}
-    </motion.div>
+    </div>
   );
-};
+}
+
+export default BibliotecaListView;

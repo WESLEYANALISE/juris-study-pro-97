@@ -1,130 +1,141 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { 
-  ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, 
-  Bookmark, Download, Moon, Sun, ArrowLeft
-} from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
-import { cn } from '@/lib/utils';
-import './BibliotecaPDFViewer.css';
+import { toast } from 'sonner';
+import './EnhancedPDFViewer.css';
 
-// Set worker for PDF.js
+// Set PDF.js worker source
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface EnhancedPDFViewerProps {
   pdfUrl: string;
-  bookTitle: string;
   onClose: () => void;
-  book: LivroJuridico;
+  bookTitle: string;
+  book: LivroJuridico | null;
 }
 
-export function EnhancedPDFViewer({ 
-  pdfUrl, 
-  bookTitle, 
-  onClose, 
-  book 
-}: EnhancedPDFViewerProps) {
+export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: EnhancedPDFViewerProps) {
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.0);
   const [rotation, setRotation] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [showControls, setShowControls] = useState(true);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   
-  const { saveReadingProgress, getReadingProgress } = useBibliotecaProgresso();
+  const { saveReadingProgress } = useBibliotecaProgresso();
   const containerRef = useRef<HTMLDivElement>(null);
-  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const documentRef = useRef<any>(null);
   
-  // Format the PDF URL
-  const formattedPdfUrl = pdfUrl.startsWith('http') 
-    ? pdfUrl 
-    : `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${pdfUrl}`;
-  
-  // Load saved page if available
+  // Handle viewport resize for responsive display
   useEffect(() => {
-    if (book?.id) {
-      const savedProgress = getReadingProgress(book.id);
-      if (savedProgress && savedProgress.pagina_atual > 1) {
-        setPageNumber(savedProgress.pagina_atual);
-      }
-    }
-  }, [book, getReadingProgress]);
-  
-  // Show/hide controls on mouse movement
-  useEffect(() => {
-    const handleMouseMove = () => {
-      setShowControls(true);
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
       
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
+      // Adjust scale for small screens
+      if (window.innerWidth < 640) {
+        setScale(0.8);
+      } else {
+        setScale(1.0);
       }
-      
-      controlsTimeoutRef.current = setTimeout(() => {
-        setShowControls(false);
-      }, 3000);
     };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('click', handleMouseMove);
+    window.addEventListener('resize', handleResize);
+    handleResize(); // Initial call
     
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('click', handleMouseMove);
-      
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
   
-  // Save reading progress when changing pages
-  useEffect(() => {
-    if (book?.id && pageNumber > 0) {
-      saveReadingProgress(book.id, pageNumber);
-    }
-  }, [pageNumber, book, saveReadingProgress]);
-  
-  // Set body class for PDF viewer
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
+    
+    // Force reload PDF when URL changes
+    setIsLoaded(false);
+    setIsLoading(true);
+    setPageNumber(1);
+    
+    console.log("Loading PDF from URL:", pdfUrl);
     
     return () => {
       document.body.classList.remove('pdf-viewer-open');
     };
-  }, []);
+  }, [pdfUrl]);
   
-  // Handle document load success
-  function onDocumentLoadSuccess({ numPages: totalPages }: { numPages: number }) {
+  useEffect(() => {
+    if (book && pageNumber > 0 && isLoaded) {
+      saveReadingProgress(book.id, pageNumber);
+    }
+  }, [pageNumber, book, saveReadingProgress, isLoaded]);
+
+  // Process the URL to ensure it's a full URL
+  const processUrl = (url: string): string => {
+    if (!url) return '';
+    
+    // Already a full URL
+    if (url.startsWith('http')) {
+      console.log("URL is already complete:", url);
+      return url;
+    }
+    
+    // Add the Supabase storage URL prefix if it's just a path
+    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
+    console.log("Converted URL:", fullUrl);
+    return fullUrl;
+  };
+
+  function onDocumentLoadSuccess({ numPages: totalPages }) {
+    console.log("PDF loaded successfully. Total pages:", totalPages);
     setNumPages(totalPages);
     setIsLoading(false);
+    setIsLoaded(true);
+    toast.success(`PDF carregado: ${totalPages} páginas`);
+    
+    // Try to get the document object for better page navigation
+    if (documentRef.current) {
+      console.log("Document ref available:", documentRef.current);
+    }
   }
   
-  // Handle document load error
   function onDocumentLoadError(error: any) {
     console.error('Error loading PDF:', error);
     setIsLoading(false);
     setIsError(true);
+    setErrorMessage(`Erro ao carregar PDF: ${error.message || "Verifique se o arquivo existe"}`);
+    toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
   }
   
-  // Navigate to next/previous page
   function changePage(amount: number) {
     setPageNumber((prevPageNumber) => {
       const newPageNumber = prevPageNumber + amount;
       if (newPageNumber >= 1 && newPageNumber <= (numPages || 1)) {
         return newPageNumber;
+      } else {
+        return prevPageNumber;
       }
-      return prevPageNumber;
     });
   }
   
-  // Zoom controls
+  // Manual page input handler
+  function handlePageInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = parseInt(e.target.value);
+    if (!isNaN(value) && value >= 1 && value <= (numPages || 1)) {
+      setPageNumber(value);
+    }
+  }
+  
   function zoomIn() {
     setScale((prevScale) => Math.min(prevScale + 0.25, 3.0));
   }
@@ -133,172 +144,262 @@ export function EnhancedPDFViewer({
     setScale((prevScale) => Math.max(prevScale - 0.25, 0.5));
   }
   
-  // Rotate document
   function rotate() {
     setRotation((prevRotation) => (prevRotation + 90) % 360);
   }
   
-  // Toggle dark mode
-  function toggleDarkMode() {
-    setDarkMode(!darkMode);
-  }
-
-  return (
-    <div 
-      className={cn("fixed inset-0 flex flex-col", 
-        darkMode ? "bg-black" : "bg-white"
-      )}
-      ref={containerRef}
-    >
-      {/* Top controls */}
-      <AnimatePresence>
-        {showControls && (
-          <motion.div 
-            initial={{ opacity: 0, y: -50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -50 }}
-            className={cn(
-              "flex items-center justify-between p-4 shadow-md z-10",
-              darkMode ? "bg-black/90 text-white" : "bg-white text-black"
-            )}
-          >
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={onClose}
-                className="text-primary"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <h2 className="text-xl font-bold truncate max-w-[200px] sm:max-w-md">
-                {bookTitle}
-              </h2>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={zoomIn}
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={zoomOut}
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={rotate}
-              >
-                <RotateCw className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={toggleDarkMode}
-              >
-                {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+  const toggleFullScreen = () => {
+    if (containerRef.current) {
+      if (!isFullScreen) {
+        if (containerRef.current.requestFullscreen) {
+          containerRef.current.requestFullscreen();
+        } else if ((containerRef.current as any).mozRequestFullScreen) {
+          (containerRef.current as any).mozRequestFullScreen();
+        } else if ((containerRef.current as any).webkitRequestFullscreen) {
+          (containerRef.current as any).webkitRequestFullscreen();
+        } else if ((containerRef.current as any).msRequestFullscreen) {
+          (containerRef.current as any).msRequestFullscreen();
+        }
+      } else {
+        if (document.exitFullscreen) {
+          document.exitFullscreen();
+        } else if ((document as any).mozCancelFullScreen) {
+          (document as any).mozCancelFullScreen();
+        } else if ((document as any).webkitExitFullscreen) {
+          (document as any).webkitExitFullscreen();
+        } else if ((document as any).msExitFullscreen) {
+          (document as any).msExitFullscreen();
+        }
+      }
+      setIsFullScreen(!isFullScreen);
+    }
+  };
+  
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+    
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+    document.addEventListener('msfullscreenchange', handleFullScreenChange);
+    
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullScreenChange);
+    };
+  }, []);
+  
+  // Add keyboard event listeners for navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        changePage(1);
+      } else if (e.key === 'ArrowLeft') {
+        changePage(-1);
+      }
+    };
+    
+    window.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [numPages]);
+  
+  // Handle touch events for mobile navigation
+  useEffect(() => {
+    let touchStartX = 0;
+    
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartX = e.touches[0].clientX;
+    };
+    
+    const handleTouchEnd = (e: TouchEvent) => {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchStartX - touchEndX;
       
-      {/* PDF content */}
-      <div className="flex-grow overflow-auto pdf-container">
-        <div className="pdf-content">
-          {isLoading && (
-            <div className="flex items-center justify-center h-full w-full">
-              <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          )}
-          
+      // Detect swipe (with a threshold)
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) {
+          // Swipe left, go to next page
+          changePage(1);
+        } else {
+          // Swipe right, go to previous page
+          changePage(-1);
+        }
+      }
+    };
+    
+    const element = containerRef.current;
+    if (element) {
+      element.addEventListener('touchstart', handleTouchStart, { passive: true });
+      element.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+    
+    return () => {
+      if (element) {
+        element.removeEventListener('touchstart', handleTouchStart);
+        element.removeEventListener('touchend', handleTouchEnd);
+      }
+    };
+  }, []);
+  
+  if (isError) {
+    return (
+      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
+          <AlertCircle className="h-16 w-16 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
+          <p className="text-muted-foreground mb-6">
+            {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
+          </p>
+          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+            <code className="break-all whitespace-pre-wrap">{processUrl(pdfUrl)}</code>
+          </div>
+          <Button onClick={onClose} className="mt-4">
+            Fechar
+          </Button>
+        </div>
+      </div>
+    );
+  }
+  
+  // Use the processed URL for the PDF
+  const processedPdfUrl = processUrl(pdfUrl);
+  
+  return (
+    <div className="fixed inset-0 bg-background z-50">
+      <div className="enhanced-pdf-container flex flex-col h-full" ref={containerRef}>
+        {/* Header with title and close button */}
+        <div className="px-4 py-3 border-b bg-secondary/80 backdrop-blur-sm sticky top-0 z-40">
+          <div className="container max-w-5xl mx-auto flex items-center justify-between">
+            <h2 className="text-lg font-semibold truncate">{bookTitle}</h2>
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar visualizador">
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Loading indicator */}
+        {isLoading && (
+          <div className="flex flex-col items-center justify-center h-full p-4">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className="text-lg text-muted-foreground">Carregando livro... {progress}%</p>
+            <p className="text-xs text-muted-foreground mt-2 max-w-md text-center">
+              Se o livro não carregar, verifique se o PDF está disponível no servidor.
+            </p>
+          </div>
+        )}
+        
+        {/* PDF Viewer Content */}
+        <div className="enhanced-pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
           <Document
-            file={formattedPdfUrl}
+            file={processedPdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
-            className="pdf-document-container"
+            onProgress={({ loaded, total }) => {
+              if (total) {
+                setProgress(Math.round((loaded / total) * 100));
+              }
+            }}
             loading={
-              <div className="flex items-center justify-center h-40 w-full">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <div className="flex flex-col items-center justify-center py-20">
+                <Skeleton className="h-[500px] w-full max-w-lg" />
+                <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
               </div>
             }
+            error={
+              <div className="text-center text-red-500 py-20">
+                <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                <p>Erro ao carregar PDF</p>
+              </div>
+            }
+            inputRef={documentRef}
+            className="enhanced-pdf-document"
           >
-            {!isLoading && !isError && (
+            {isLoaded && (
               <Page 
                 pageNumber={pageNumber} 
                 scale={scale} 
                 rotate={rotation} 
-                className={cn(
-                  "pdf-page", 
-                  darkMode ? "pdf-page-dark" : "pdf-page-light"
-                )}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
+                width={viewportWidth < 640 ? viewportWidth - 32 : undefined}
+                height={viewportWidth < 640 ? undefined : undefined}
+                renderMode="canvas"
+                className="enhanced-pdf-page"
+                error={
+                  <div className="text-center text-red-500 p-4">
+                    <p>Erro ao renderizar página {pageNumber}</p>
+                  </div>
+                }
               />
             )}
           </Document>
-          
-          {isError && (
-            <div className="flex flex-col items-center justify-center p-8 bg-red-50 rounded-lg border border-red-200">
-              <X className="h-12 w-12 text-red-500 mb-4" />
-              <h3 className="text-xl font-bold text-red-700">Erro ao carregar o PDF</h3>
-              <p className="text-red-600 mb-4">Não foi possível carregar o documento.</p>
-              <Button onClick={onClose} variant="destructive">Voltar</Button>
-            </div>
-          )}
         </div>
-      </div>
-      
-      {/* Bottom controls */}
-      <AnimatePresence>
-        {showControls && numPages && (
-          <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className={cn(
-              "p-4 shadow-inner z-10",
-              darkMode ? "bg-black/90 text-white" : "bg-white text-black"
-            )}
-          >
-            <div className="flex flex-col items-center gap-4">
-              <div className="flex items-center justify-between w-full max-w-md">
-                <Button 
-                  variant="outline" 
-                  onClick={() => changePage(-1)} 
-                  disabled={pageNumber <= 1}
-                >
-                  <ChevronLeft className="h-5 w-5 mr-1" /> Anterior
-                </Button>
-                
-                <span className="text-center">
-                  Página {pageNumber} de {numPages}
-                </span>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => changePage(1)} 
-                  disabled={pageNumber >= numPages}
-                >
-                  Próxima <ChevronRight className="h-5 w-5 ml-1" />
-                </Button>
+        
+        {/* Mobile Controls */}
+        <div className="enhanced-pdf-controls">
+          <div className="enhanced-pdf-controls-row">
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => changePage(-1)} 
+                disabled={pageNumber <= 1}
+                className="h-8 px-2"
+              >
+                <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
+              </Button>
+              
+              <div className="flex items-center gap-1 bg-background/80 backdrop-blur px-2 py-1 rounded">
+                <input 
+                  type="number" 
+                  min={1} 
+                  max={numPages || 1} 
+                  value={pageNumber} 
+                  onChange={handlePageInput}
+                  className="w-12 h-6 bg-transparent text-center p-0 border-none text-sm"
+                />
+                <span className="text-sm text-muted-foreground">/ {numPages || '-'}</span>
               </div>
               
-              <Progress 
-                value={(pageNumber / numPages) * 100} 
-                className="w-full max-w-md" 
-              />
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => changePage(1)} 
+                disabled={pageNumber >= (numPages || 0)}
+                className="h-8 px-2"
+              >
+                Próximo <ChevronRight className="h-4 w-4 ml-1" />
+              </Button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            
+            <div className="flex items-center gap-1">
+              <Button variant="outline" size="sm" onClick={zoomOut} className="h-8 w-8 p-0">
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="text-xs bg-background/80 backdrop-blur px-2 py-1 rounded">
+                {Math.round(scale * 100)}%
+              </span>
+              <Button variant="outline" size="sm" onClick={zoomIn} className="h-8 w-8 p-0">
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" onClick={rotate} className="h-8 w-8 p-0">
+                <RotateCw className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+          
+          <div className="text-center text-xs text-muted-foreground mt-2">
+            Deslize para esquerda ou direita para mudar de página
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
+
+export default EnhancedPDFViewer;
