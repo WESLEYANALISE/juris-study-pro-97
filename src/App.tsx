@@ -22,6 +22,10 @@ import Peticoes from './pages/Peticoes';
 import AssistenteJuridico from './pages/AssistenteJuridico';
 import IniciandoNoDireito from './pages/IniciandoNoDireito';
 import VideoAulas from './pages/VideoAulas';
+import Flashcards from './pages/Flashcards';
+import Dicionario from './pages/Dicionario';
+import Anotacoes from './pages/Anotacoes';
+import Bloger from './pages/Bloger';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -128,6 +132,34 @@ function App() {
               <Route path="/videoaulas" element={
                 <Layout>
                   <VideoAulas />
+                </Layout>
+              } />
+
+              {/* Flashcards route */}
+              <Route path="/flashcards" element={
+                <Layout>
+                  <Flashcards />
+                </Layout>
+              } />
+              
+              {/* Dicionário Jurídico route */}
+              <Route path="/dicionario" element={
+                <Layout>
+                  <Dicionario />
+                </Layout>
+              } />
+              
+              {/* Anotações route */}
+              <Route path="/anotacoes" element={
+                <Layout>
+                  <Anotacoes />
+                </Layout>
+              } />
+              
+              {/* Blog Jurídico route */}
+              <Route path="/blog" element={
+                <Layout>
+                  <Bloger />
                 </Layout>
               } />
 
