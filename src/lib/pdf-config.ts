@@ -1,44 +1,58 @@
 
-// Import directly from the library
-import { pdfjs as pdfjsLib } from 'react-pdf';
+import * as PDFJS from 'pdfjs-dist';
+import { pdfjs } from 'react-pdf';
 
-// Make a safe copy of pdfjs that we'll export
-let pdfjs = pdfjsLib;
+// Make sure we're using consistent PDF.js instance
+const pdfjsVersion = pdfjs.version || '3.4.120';
+console.log(`PDF.js version available in react-pdf: ${pdfjsVersion}`);
 
-// Ensure PDF.js worker is properly configured
+// Create a function that properly configures the PDF.js worker
 export function configurePdfWorker() {
   try {
-    // Make sure pdfjs is loaded first
-    if (!pdfjs) {
-      console.error('PDF.js is not loaded');
+    console.log('Configuring PDF.js worker...');
+
+    // Try to use the CDN worker version that matches our PDF.js version
+    const cdnWorkerUrl = `https://unpkg.com/pdfjs-dist@${pdfjsVersion}/build/pdf.worker.min.js`;
+    
+    // Local fallback if we're running in development
+    const localWorkerUrl = `/pdf.worker.min.js`;
+    
+    // Try different worker sources if the main one fails
+    const workerUrls = [
+      cdnWorkerUrl,
+      `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsVersion}/pdf.worker.min.js`,
+      localWorkerUrl
+    ];
+    
+    // Directly check if pdfjs exists and has GlobalWorkerOptions
+    if (!pdfjs || !pdfjs.GlobalWorkerOptions) {
+      console.error('PDF.js or GlobalWorkerOptions is not available yet');
+      
+      // Create GlobalWorkerOptions if it doesn't exist
+      if (pdfjs && !pdfjs.GlobalWorkerOptions) {
+        console.warn('Creating missing GlobalWorkerOptions object');
+        // @ts-ignore - We need to create this object if it doesn't exist
+        pdfjs.GlobalWorkerOptions = {};
+      }
+    }
+
+    // Set the worker source if we have access to GlobalWorkerOptions
+    if (pdfjs && pdfjs.GlobalWorkerOptions) {
+      pdfjs.GlobalWorkerOptions.workerSrc = workerUrls[0];
+      console.log(`PDF.js worker configured: ${pdfjs.GlobalWorkerOptions.workerSrc}`);
+      return true;
+    } else {
+      console.error('Could not configure PDF.js worker - GlobalWorkerOptions not available');
       return false;
     }
-    
-    // Create a global workerSrc that won't fail
-    const workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
-    
-    // Handle the case where GlobalWorkerOptions doesn't exist yet
-    if (!pdfjs.GlobalWorkerOptions) {
-      console.warn('PDF.js GlobalWorkerOptions not found, creating a new object');
-      // Create the object if it doesn't exist
-      // @ts-ignore - We need to create this object if it doesn't exist
-      pdfjs.GlobalWorkerOptions = {};
-    }
-    
-    // Now set the workerSrc
-    pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
-    
-    console.log('PDF.js worker configured successfully:', workerSrc);
-    return true;
   } catch (error) {
-    console.error('Failed to configure PDF.js worker:', error);
+    console.error('Error configuring PDF.js worker:', error);
     return false;
   }
 }
 
-// Try to initialize immediately
-const configured = configurePdfWorker();
-console.log('PDF.js worker initialization result:', configured);
+// Immediately try to configure the worker when this module loads
+configurePdfWorker();
 
-// Export configured pdfjs for use elsewhere
+// Export for use elsewhere
 export { pdfjs };

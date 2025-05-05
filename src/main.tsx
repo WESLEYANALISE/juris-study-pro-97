@@ -1,25 +1,38 @@
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+// Import React first
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 
-// Import and configure PDF.js FIRST, before anything else
-// This ensures PDF.js worker is set up before any components render
+// PDF.js setup must happen before any component imports
 console.log('Initializing PDF.js configuration...');
-import { configurePdfWorker } from '@/lib/pdf-config';
+import { pdfjs, configurePdfWorker } from '@/lib/pdf-config';
 
-// Try to configure PDF.js again to be extra safe
-configurePdfWorker();
+// Ensure the worker is configured
+const workerConfigured = configurePdfWorker();
+console.log('Initial PDF.js worker configuration result:', workerConfigured);
 
-// Now import the rest of the app
-import App from './App'
-import './index.css'
-import { PDFTest } from './components/test/PDFTest';
-
-console.log('PDF.js configuration completed, starting React render');
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <PDFTest /> {/* Test component to ensure PDF.js is configured */}
-    <App />
-  </React.StrictMode>,
-)
+// Delay React initialization slightly to ensure PDF.js configuration completes
+setTimeout(() => {
+  console.log('Starting React application initialization');
+  
+  // Now import the rest of the app
+  import('./App').then(({ default: App }) => {
+    import('./index.css').then(() => {
+      // Import test component
+      import('./components/test/PDFTest').then(({ PDFTest }) => {
+        console.log('All modules loaded, starting React render');
+        
+        // Try configuring PDF.js one more time before render
+        configurePdfWorker();
+        
+        // Render the React application
+        ReactDOM.createRoot(document.getElementById('root')!).render(
+          <React.StrictMode>
+            <PDFTest /> {/* Test component to ensure PDF.js is configured */}
+            <App />
+          </React.StrictMode>,
+        );
+      });
+    });
+  });
+}, 100); // Small delay to allow PDF.js initialization to complete

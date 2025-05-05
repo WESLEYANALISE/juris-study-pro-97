@@ -25,7 +25,7 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { pdfjs } from '@/lib/pdf-config'; // Import the configured pdfjs
 import './EnhancedPDFViewer.css';
 
-// No need to set worker source here since it's configured in pdf-config.ts
+// Worker source configured in pdf-config.ts
 
 interface Annotation {
   id: string;
