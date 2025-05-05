@@ -1,6 +1,8 @@
 
 import { QueryClient, QueryCache, MutationCache } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { persistQueryClient } from '@tanstack/react-query-persist-client';
 
 // Create a client with optimized cache settings
 export const queryClient = new QueryClient({
@@ -26,5 +28,18 @@ export const queryClient = new QueryClient({
     },
   }),
 });
+
+// Setup persistence
+if (typeof window !== 'undefined') {
+  const localStoragePersister = createSyncStoragePersister({
+    storage: window.localStorage,
+  });
+
+  persistQueryClient({
+    queryClient,
+    persister: localStoragePersister,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  });
+}
 
 export default queryClient;
