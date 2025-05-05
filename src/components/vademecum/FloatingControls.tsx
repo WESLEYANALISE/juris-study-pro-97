@@ -18,25 +18,7 @@ export const FloatingControls = ({
 }: FloatingControlsProps) => {
   return <>
       {/* Font size controls (bottom left) - purple transparent background */}
-      <motion.div initial={{
-      opacity: 0,
-      x: -20
-    }} animate={{
-      opacity: 0.95,
-      x: 0
-    }} whileHover={{
-      opacity: 1
-    }} className="fixed left-4 bottom-16 z-50 bg-[#9b87f5]/20 backdrop-blur shadow-lg rounded-full p-1 flex items-center gap-1 px-[3px] mx-0 border border-[#9b87f5]/30 my-[55px]">
-        <Button variant="ghost" size="icon" onClick={decreaseFontSize} className="h-8 w-8 rounded-full text-[#9b87f5]" title="Diminuir fonte">
-          <ZoomOut size={16} />
-        </Button>
-        
-        <span className="text-xs font-medium px-1 text-[#9b87f5] dark:text-[#b5a6f7]">{fontSize}px</span>
-        
-        <Button variant="ghost" size="icon" onClick={increaseFontSize} className="h-8 w-8 rounded-full text-[#9b87f5]" title="Aumentar fonte">
-          <ZoomIn size={16} />
-        </Button>
-      </motion.div>
+      
       
       {/* Back to top button (right side) - purple transparent */}
       {showBackToTop && <motion.div initial={{
