@@ -27,5 +27,4 @@ export const queryClient = new QueryClient({
   }),
 });
 
-// We'll setup persistence in main.tsx when needed to ensure proper order
 export default queryClient;
