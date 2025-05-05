@@ -20,16 +20,26 @@
   margin: 0 auto;
 }
 
-.react-pdf__Page {
+.pdf-document-container {
+  max-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pdf-page {
   margin: 1rem 0;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   border-radius: 4px;
   overflow: hidden;
+  background-color: white;
 }
 
 .react-pdf__Page__canvas {
   border-radius: 4px;
   background-color: white;
+  max-width: 100%;
+  height: auto !important;
 }
 
 /* Mobile controls */
@@ -91,8 +101,30 @@ body.pdf-viewer-open {
   }
 }
 
-/* Make sure PDF page is responsive */
-.react-pdf__Page__canvas {
-  max-width: 100%;
-  height: auto !important;
+/* Dark mode colors for PDF viewer */
+.pdf-page-dark canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+/* PDF page transition animations */
+.pdf-page-enter {
+  opacity: 0;
+  transform: translateX(20px);
+}
+
+.pdf-page-enter-active {
+  opacity: 1;
+  transform: translateX(0);
+  transition: opacity 300ms, transform 300ms;
+}
+
+.pdf-page-exit {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.pdf-page-exit-active {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: opacity 300ms, transform 300ms;
 }
