@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -92,17 +91,20 @@ const SimuladoSessao = () => {
           edicao_id: sessionData.edicao_id
         });
         
-        // Now fetch questions from the appropriate table based on categoria
+        // Now fetch questions from the appropriate table based on categoria, ensuring OAB uses simulados_oab
         let tableName;
-        switch(categoriaUpper) {
-          case 'OAB': tableName = 'simulados_oab'; break;
-          case 'PRF': tableName = 'simulados_prf'; break;
-          case 'PF': tableName = 'simulados_pf'; break;
-          case 'TJSP': tableName = 'simulados_tjsp'; break;
-          case 'JUIZ': tableName = 'simulados_juiz'; break;
-          case 'PROMOTOR': tableName = 'simulados_promotor'; break;
-          case 'DELEGADO': tableName = 'simulados_delegado'; break;
-          default: tableName = 'simulados_oab';
+        if (categoriaUpper === 'OAB') {
+          tableName = 'simulados_oab';
+        } else {
+          switch(categoriaUpper) {
+            case 'PRF': tableName = 'simulados_prf'; break;
+            case 'PF': tableName = 'simulados_pf'; break;
+            case 'TJSP': tableName = 'simulados_tjsp'; break;
+            case 'JUIZ': tableName = 'simulados_juiz'; break;
+            case 'PROMOTOR': tableName = 'simulados_promotor'; break;
+            case 'DELEGADO': tableName = 'simulados_delegado'; break;
+            default: tableName = 'simulados_oab';
+          }
         }
         
         // Fetch questions specific to this edition

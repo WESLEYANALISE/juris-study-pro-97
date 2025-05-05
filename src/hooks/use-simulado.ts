@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { SimuladoCategoria, Questao, SimuladoSessao, SimuladoResposta, SimuladoEdicao } from "@/types/simulados";
@@ -26,7 +25,7 @@ export function useSimulado(categoria: SimuladoCategoria) {
     });
   };
 
-  // Fetch questions for a specific edition
+  // Fetch questions for a specific edition - ensures we're using simulados_oab for OAB category
   const useQuestoesEdicao = (edicaoId: string) => {
     return useQuery({
       queryKey: ['simulados', 'edicao', edicaoId, 'questoes'],
@@ -42,32 +41,34 @@ export function useSimulado(categoria: SimuladoCategoria) {
         
         if (!edicao) throw new Error("Edição não encontrada");
         
-        // Use hard-coded table name based on categoria instead of template literals
-        let query;
-        switch(edicao.categoria) {
-          case 'OAB':
-            query = supabase.from('simulados_oab').select('*');
-            break;
-          case 'PRF':
-            query = supabase.from('simulados_prf').select('*');
-            break;
-          case 'PF':
-            query = supabase.from('simulados_pf').select('*');
-            break;
-          case 'TJSP':
-            query = supabase.from('simulados_tjsp').select('*');
-            break;
-          case 'JUIZ':
-            query = supabase.from('simulados_juiz').select('*');
-            break;
-          case 'PROMOTOR':
-            query = supabase.from('simulados_promotor').select('*');
-            break;
-          case 'DELEGADO':
-            query = supabase.from('simulados_delegado').select('*');
-            break;
-          default:
-            throw new Error(`Categoria inválida: ${edicao.categoria}`);
+        // For OAB simulados, always use the simulados_oab table
+        let query = supabase.from('simulados_oab').select('*');
+        
+        // Unless it's not OAB, then use the appropriate table based on category
+        if (edicao.categoria !== 'OAB') {
+          switch(edicao.categoria) {
+            case 'PRF':
+              query = supabase.from('simulados_prf').select('*');
+              break;
+            case 'PF':
+              query = supabase.from('simulados_pf').select('*');
+              break;
+            case 'TJSP':
+              query = supabase.from('simulados_tjsp').select('*');
+              break;
+            case 'JUIZ':
+              query = supabase.from('simulados_juiz').select('*');
+              break;
+            case 'PROMOTOR':
+              query = supabase.from('simulados_promotor').select('*');
+              break;
+            case 'DELEGADO':
+              query = supabase.from('simulados_delegado').select('*');
+              break;
+            default:
+              // Default to OAB if no match (redundant but safe)
+              query = supabase.from('simulados_oab').select('*');
+          }
         }
 
         // Add edition filter

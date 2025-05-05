@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -56,23 +55,37 @@ export const SimuladoSetup = ({
       }
     };
     
-    // Tentativa de buscar informações sobre o último exame da OAB
+    // Buscar informações sobre o último exame da OAB
     const fetchUltimoExame = async () => {
       try {
-        // Esta seria uma integração real com dados da OAB
-        // Por enquanto, usamos um valor estático
-        setUltimoExame("XXXVIII Exame de Ordem - Previsto para Agosto 2025");
+        // Consulta específica para exames da OAB
+        if (categoria === 'OAB') {
+          // Busca informações na tabela simulados_oab - esta seria a consulta real
+          const { data, error } = await supabase
+            .from('simulados_oab')
+            .select('edicao_info')
+            .order('created_at', { ascending: false })
+            .limit(1);
+            
+          if (error) throw error;
+          
+          // Atualizar com dados reais se disponíveis
+          if (data && data.length > 0 && data[0].edicao_info) {
+            setUltimoExame(data[0].edicao_info);
+          } else {
+            setUltimoExame("XXXVIII Exame de Ordem - Previsto para Agosto 2025");
+          }
+        } else {
+          setUltimoExame(null);
+        }
       } catch (error) {
         console.error("Erro ao buscar informações do último exame:", error);
+        setUltimoExame("Informações sobre o próximo exame não disponíveis");
       }
     };
     
     fetchEdicoes();
-    if (categoria === "OAB") {
-      fetchUltimoExame();
-    } else {
-      setUltimoExame(null);
-    }
+    fetchUltimoExame();
   }, [categoria]);
 
   const selectedEdicao = edicoes.find(e => e.id === edicaoId);

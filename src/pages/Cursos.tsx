@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CourseCategories } from '@/components/cursos/CourseCategories';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
@@ -9,6 +9,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BookOpen, Star, Clock, TrendingUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useNavigate } from 'react-router-dom';
+import { useDebounce } from '@/hooks/use-debounce';
 
 interface Course {
   id: number;
@@ -24,33 +26,39 @@ interface Course {
 }
 
 const Cursos = () => {
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   
-  // Optional: Replace with actual course data from Supabase when available
+  // Fetch courses from cursos_narrados table
   const { data: courses, isLoading } = useQuery({
-    queryKey: ['courses', selectedCategory],
+    queryKey: ['courses', selectedCategory, debouncedSearchQuery],
     queryFn: async () => {
       try {
-        // This is a placeholder - replace with actual Supabase query
-        // const { data, error } = await supabase
-        //   .from('cursos')
-        //   .select('*')
-        //   .eq('categoria', selectedCategory);
+        let query = supabase
+          .from('cursos_narrados')
+          .select('*');
         
-        // Placeholder data
-        return [{
-          id: 1,
-          titulo: 'Introdução ao Direito Civil',
-          descricao: 'Conceitos fundamentais de Direito Civil',
-          categoria: 'direito-civil',
-          autor: 'Dr. Paulo Santos',
-          duracao: '10h',
-          modulos: 8,
-          avaliacao: 4.8,
-          alunos: 1250,
-          thumbnail: 'https://via.placeholder.com/300x200',
-        }] as Course[];
+        // Apply category filter if selected
+        if (selectedCategory) {
+          query = query.eq('categoria', selectedCategory);
+        }
+        
+        // Apply search filter if there's a search query
+        if (debouncedSearchQuery) {
+          query = query.or(
+            `titulo.ilike.%${debouncedSearchQuery}%,descricao.ilike.%${debouncedSearchQuery}%,autor.ilike.%${debouncedSearchQuery}%`
+          );
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          throw error;
+        }
+        
+        return (data || []) as Course[];
       } catch (error) {
         console.error('Error fetching courses:', error);
         return [] as Course[];
@@ -69,12 +77,11 @@ const Cursos = () => {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement search functionality here
-    console.log('Searching for:', searchQuery);
+    // Search is already handled by the debounced query
   };
 
-  const handleStartCourse = () => {
-    console.log('Starting course');
+  const handleStartCourse = (courseId: number) => {
+    navigate(`/cursos/viewer/${courseId}`);
   };
   
   return (
@@ -146,14 +153,22 @@ const Cursos = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {courses?.map((course) => (
-                    <CourseMenu 
-                      key={course.id}
-                      title={course.titulo}
-                      description={course.descricao}
-                      onStartCourse={handleStartCourse}
-                    />
-                  ))}
+                  {courses && courses.length > 0 ? (
+                    courses.map((course) => (
+                      <CourseMenu 
+                        key={course.id}
+                        title={course.titulo}
+                        description={course.descricao}
+                        alunos={course.alunos}
+                        duracao={course.duracao}
+                        onStartCourse={() => handleStartCourse(course.id)}
+                      />
+                    ))
+                  ) : (
+                    <div className="col-span-3 text-center py-12">
+                      <p>Nenhum curso encontrado nesta categoria.</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
