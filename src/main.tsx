@@ -5,11 +5,10 @@ import ReactDOM from 'react-dom/client';
 
 // PDF.js setup must happen before any component imports
 console.log('Initializing PDF.js configuration...');
-import { pdfjs, configurePdfWorker } from '@/lib/pdf-config';
+import { configurePdfWorker } from '@/lib/pdf-config';
 
-// Ensure the worker is configured
-const workerConfigured = configurePdfWorker();
-console.log('Initial PDF.js worker configuration result:', workerConfigured);
+// Make sure the worker is configured
+configurePdfWorker();
 
 // Delay React initialization slightly to ensure PDF.js configuration completes
 setTimeout(() => {
@@ -18,21 +17,17 @@ setTimeout(() => {
   // Now import the rest of the app
   import('./App').then(({ default: App }) => {
     import('./index.css').then(() => {
-      // Import test component
-      import('./components/test/PDFTest').then(({ PDFTest }) => {
-        console.log('All modules loaded, starting React render');
-        
-        // Try configuring PDF.js one more time before render
-        configurePdfWorker();
-        
-        // Render the React application
-        ReactDOM.createRoot(document.getElementById('root')!).render(
-          <React.StrictMode>
-            <PDFTest /> {/* Test component to ensure PDF.js is configured */}
-            <App />
-          </React.StrictMode>,
-        );
-      });
+      console.log('All modules loaded, starting React render');
+      
+      // Try configuring PDF.js one more time before render
+      configurePdfWorker();
+      
+      // Render the React application
+      ReactDOM.createRoot(document.getElementById('root')!).render(
+        <React.StrictMode>
+          <App />
+        </React.StrictMode>,
+      );
     });
   });
-}, 100); // Small delay to allow PDF.js initialization to complete
+}, 200); // Slightly longer delay to ensure PDF.js initialization completes

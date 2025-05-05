@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Document, Page } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, ZoomIn, ZoomOut, RotateCw, Download, Search, Menu } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, ZoomIn, ZoomOut, RotateCw, Download, Search, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Input } from '@/components/ui/input';

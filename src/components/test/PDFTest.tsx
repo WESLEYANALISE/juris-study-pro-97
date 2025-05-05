@@ -21,8 +21,8 @@ export function PDFTest() {
         
         // Retry after a delay if still not configured
         if (!success || !pdfjs?.GlobalWorkerOptions?.workerSrc) {
-          console.log("Scheduling another configuration attempt in 200ms...");
-          setTimeout(checkPdfJsConfiguration, 200);
+          console.log("Scheduling another configuration attempt in 500ms...");
+          setTimeout(checkPdfJsConfiguration, 500);
         }
       }
     };
@@ -34,7 +34,7 @@ export function PDFTest() {
     const timer = setTimeout(() => {
       console.log("Follow-up PDF.js configuration check:");
       checkPdfJsConfiguration();
-    }, 1000);
+    }, 1500);
     
     return () => {
       clearTimeout(timer);
@@ -44,7 +44,7 @@ export function PDFTest() {
   
   return (
     <div className="hidden">
-      {/* Test component for PDF.js configuration */}
+      {/* This component is only for PDF.js configuration debugging */}
     </div>
   );
 }
