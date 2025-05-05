@@ -1,21 +1,23 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
+import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Card, CardContent } from '@/components/ui/card';
-import { Book, BookOpen, FileText, LibraryBig } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
-import { JuridicalBackground } from '@/components/ui/juridical-background';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Book, BookOpen, FileText, Search } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/hooks/use-auth';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
+import { Container } from '@/components/ui/container';
+import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
+import '../styles/biblioteca-juridica.css';
 
-// Define interface for our application's internal book type
-interface Livro {
-  id: string; // Changed from number to string to match the database
+// Interface for our application's internal book type
+interface Livro extends LivroJuridico {
+  id: string;
   titulo: string;
   categoria: string;
   pdf_url: string;
@@ -27,13 +29,12 @@ interface Livro {
 export default function BibliotecaJuridica() {
   const [livros, setLivros] = useState<Livro[]>([]);
   const [categorias, setCategorias] = useState<string[]>([]);
-  const [selectedCategoria, setSelectedCategoria] = useState<string>('');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [currentTab, setCurrentTab] = useState<string>('todos');
 
-  const { user } = useAuth();
+  const { isFavorite, getFavorites } = useBibliotecaProgresso();
   
   // Fetch books from Supabase
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function BibliotecaJuridica() {
       try {
         // Get books from our library
         const { data, error } = await supabase
-          .from('biblioteca_juridica10') // Using the table name
+          .from('biblioteca_juridica10')
           .select('*');
 
         if (error) {
@@ -88,14 +89,9 @@ export default function BibliotecaJuridica() {
     fetchLivros();
   }, []);
 
-  // Get filtered books based on category and search query
+  // Filter books based on search query and current tab
   const filteredLivros = useMemo(() => {
     let result = [...livros];
-    
-    // Filter by category if one is selected
-    if (selectedCategoria) {
-      result = result.filter(livro => livro.categoria === selectedCategoria);
-    }
     
     // Filter by search query if one exists
     if (searchQuery.trim()) {
@@ -113,51 +109,57 @@ export default function BibliotecaJuridica() {
     }
     
     return result;
-  }, [livros, selectedCategoria, searchQuery, currentTab]);
+  }, [livros, searchQuery, currentTab]);
+  
+  // Group books by category for carousel display
+  const booksByCategory = useMemo(() => {
+    if (!filteredLivros.length) return {};
+    
+    return filteredLivros.reduce<Record<string, Livro[]>>((acc, livro) => {
+      const category = livro.categoria || 'Outros';
+      
+      if (!acc[category]) {
+        acc[category] = [];
+      }
+      
+      acc[category].push(livro);
+      return acc;
+    }, {});
+  }, [filteredLivros]);
+  
+  // Get favorites
+  const favoriteBooks = useMemo(() => {
+    const favorites = getFavorites();
+    return livros.filter(livro => favorites.includes(livro.id));
+  }, [livros, getFavorites]);
 
+  // Open PDF viewer
   function handleOpenPDF(livro: Livro) {
     console.log("Opening PDF:", livro);
-    // Convert Livro to LivroJuridico when passing to PDF viewer
-    const livroJuridico: LivroJuridico = {
-      id: livro.id,
-      titulo: livro.titulo,
-      categoria: livro.categoria,
-      pdf_url: livro.pdf_url,
-      capa_url: livro.capa_url,
-      descricao: livro.descricao || undefined,
-      total_paginas: livro.total_paginas || undefined
-    };
-    setSelectedBook(livroJuridico);
+    setSelectedBook(livro);
   }
   
+  // Close PDF viewer
   function handleClosePDF() {
     setSelectedBook(null);
   }
 
   return (
-    <JuridicalBackground variant="books" opacity={0.05}>
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col space-y-6">
+    <JuridicalBackground variant="books" opacity={0.03}>
+      <Container size="xl" className="py-6">
+        <div className="space-y-8">
           {/* Header */}
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div>
-              <motion.h1 
-                className="text-3xl font-bold"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                Biblioteca Jurídica
-              </motion.h1>
-              <motion.p 
-                className="text-muted-foreground"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-              >
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="text-3xl font-bold">Biblioteca Jurídica</h1>
+              <p className="text-muted-foreground">
                 Explore nossa coleção de livros e documentos jurídicos
-              </motion.p>
-            </div>
+              </p>
+            </motion.div>
             
             <motion.div 
               className="relative w-full md:w-64"
@@ -166,7 +168,7 @@ export default function BibliotecaJuridica() {
               transition={{ duration: 0.3, delay: 0.2 }}
             >
               <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-search h-4 w-4"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                <Search className="h-4 w-4" />
               </div>
               <Input 
                 placeholder="Buscar livros..." 
@@ -177,7 +179,7 @@ export default function BibliotecaJuridica() {
             </motion.div>
           </div>
 
-          {/* Categorias em abas */}
+          {/* Category Tabs */}
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -190,13 +192,13 @@ export default function BibliotecaJuridica() {
               value={currentTab}
               onValueChange={setCurrentTab}
             >
-              <TabsList className="mb-4">
+              <TabsList className="mb-6">
                 <TabsTrigger value="todos" className="min-w-fit">
-                  <LibraryBig className="mr-1 h-4 w-4" />
+                  <Book className="mr-1 h-4 w-4" />
                   Todos
                 </TabsTrigger>
                 
-                {categorias.slice(0, 5).map((categoria) => (
+                {categorias.map((categoria) => (
                   <TabsTrigger 
                     key={categoria} 
                     value={categoria.toLowerCase()}
@@ -214,29 +216,57 @@ export default function BibliotecaJuridica() {
                 ))}
               </TabsList>
 
-              {/* Main content area */}
-              <TabsContent value="todos" className="mt-0">
-                <BookGrid 
-                  livros={filteredLivros} 
-                  isLoading={isLoading} 
-                  onOpenBook={handleOpenPDF}
-                />
-              </TabsContent>
-              
-              {/* Category specific content */}
-              {categorias.map((categoria) => (
-                <TabsContent 
-                  key={categoria} 
-                  value={categoria.toLowerCase()}
-                  className="mt-0"
-                >
-                  <BookGrid 
-                    livros={filteredLivros} 
-                    isLoading={isLoading} 
-                    onOpenBook={handleOpenPDF}
+              {/* Main carousel content */}
+              <div className="space-y-12">
+                {/* Favorites Section */}
+                {favoriteBooks.length > 0 && (
+                  <KindleBookCarousel
+                    title="Seus Favoritos"
+                    description="Livros que você marcou como favoritos"
+                    books={favoriteBooks}
+                    onSelectBook={handleOpenPDF}
+                    accent={true}
                   />
-                </TabsContent>
-              ))}
+                )}
+                
+                {/* Categories Sections */}
+                {isLoading ? (
+                  <div className="flex flex-col items-center justify-center py-16">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <p className="text-muted-foreground">Carregando biblioteca...</p>
+                  </div>
+                ) : searchQuery ? (
+                  // Search Results
+                  <>
+                    {filteredLivros.length > 0 ? (
+                      <KindleBookCarousel
+                        title="Resultados da Busca"
+                        books={filteredLivros}
+                        onSelectBook={handleOpenPDF}
+                        showAll={false}
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-16">
+                        <Book className="h-16 w-16 text-muted-foreground mb-4" />
+                        <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
+                        <p className="text-muted-foreground text-center max-w-md">
+                          Não encontramos nenhum livro correspondente aos seus critérios de busca.
+                        </p>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  // Categories
+                  Object.entries(booksByCategory).map(([category, books]) => (
+                    <KindleBookCarousel
+                      key={category}
+                      title={category}
+                      books={books}
+                      onSelectBook={handleOpenPDF}
+                    />
+                  ))
+                )}
+              </div>
             </Tabs>
           </motion.div>
         </div>
@@ -252,108 +282,7 @@ export default function BibliotecaJuridica() {
             />
           )}
         </AnimatePresence>
-      </div>
+      </Container>
     </JuridicalBackground>
   );
 }
-
-interface BookGridProps {
-  livros: Livro[];
-  isLoading: boolean;
-  onOpenBook: (livro: Livro) => void;
-}
-
-const BookGrid: React.FC<BookGridProps> = ({ livros, isLoading, onOpenBook }) => {
-  if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <BookSkeleton key={index} />
-        ))}
-      </div>
-    );
-  }
-
-  if (livros.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16">
-        <Book className="h-16 w-16 text-muted-foreground mb-4" />
-        <h3 className="text-xl font-semibold mb-2">Nenhum livro encontrado</h3>
-        <p className="text-muted-foreground text-center max-w-md">
-          Não encontramos nenhum livro correspondente aos seus critérios de busca.
-        </p>
-      </div>
-    );
-  }
-
-  // Using a 5-column grid where each book takes 2 columns (making 2.5 books per row)
-  return (
-    <div className="grid grid-cols-5 gap-4">
-      {livros.map((livro, index) => (
-        <motion.div
-          key={livro.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: index * 0.05 }}
-          whileHover={{ y: -5, transition: { duration: 0.2 } }}
-          className="book-card col-span-2"
-          style={{ marginBottom: '20px' }}
-        >
-          <Card 
-            className="overflow-hidden h-full hover:shadow-lg transition-shadow cursor-pointer border-t-4 border-t-primary" 
-            onClick={() => onOpenBook(livro)}
-          >
-            <div className="aspect-[3/4] relative overflow-hidden bg-muted">
-              {livro.capa_url ? (
-                <img
-                  src={livro.capa_url}
-                  alt={livro.titulo}
-                  className="object-cover w-full h-full"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
-                  }}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-full bg-gradient-to-br from-primary/20 to-secondary/20 p-4">
-                  <div className="text-center">
-                    <Book className="h-12 w-12 mx-auto mb-2 text-primary/60" />
-                    <h3 className="font-medium text-sm line-clamp-3">{livro.titulo}</h3>
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            <CardContent className="p-4">
-              <Badge variant="outline" className="mb-2">
-                {livro.categoria}
-              </Badge>
-              <h3 className="font-semibold line-clamp-2 mb-1">{livro.titulo}</h3>
-              <p className="text-xs text-muted-foreground">
-                {livro.total_paginas ? `${livro.total_paginas} páginas` : 'Sem informação de páginas'}
-              </p>
-              
-              <Button variant="default" size="sm" className="w-full mt-3">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Ler agora
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
-    </div>
-  );
-};
-
-const BookSkeleton: React.FC = () => {
-  return (
-    <Card className="overflow-hidden h-full col-span-2">
-      <div className="aspect-[3/4] bg-muted animate-pulse" />
-      <CardContent className="p-4">
-        <div className="h-5 w-16 bg-muted animate-pulse rounded mb-2" />
-        <div className="h-6 bg-muted animate-pulse rounded mb-2" />
-        <div className="h-4 w-24 bg-muted animate-pulse rounded mb-4" />
-        <div className="h-8 bg-muted animate-pulse rounded" />
-      </CardContent>
-    </Card>
-  );
-};

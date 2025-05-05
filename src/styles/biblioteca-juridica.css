@@ -1,3 +1,4 @@
+
 /* Reset global scrollbar appearance */
 ::-webkit-scrollbar {
   width: 6px;
@@ -124,9 +125,14 @@
   opacity: 1;
 }
 
-/* Text shadow for better readability on dark backgrounds */
-.text-shadow {
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+/* Perspective for book cards */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+/* Backface visibility utilities */
+.backface-hidden {
+  backface-visibility: hidden;
 }
 
 /* Animations */
@@ -148,50 +154,13 @@
   animation: scaleIn 0.3s ease forwards;
 }
 
-/* Highlight text animations and styles */
-.highlight-text {
-  border-radius: 2px;
-  transition: all 0.2s ease;
-  cursor: default;
+/* Progress bar customization */
+.progress-bar-amber::-webkit-progress-value {
+  background-color: #fbbf24;
 }
 
-.highlight-text:hover {
-  filter: brightness(1.1);
-}
-
-/* Custom scrollbar for the VadeMecum mobile view */
-@media (max-width: 768px) {
-  .vademecum-content::-webkit-scrollbar {
-    width: 3px;
-  }
-
-  .vademecum-content::-webkit-scrollbar-track {
-    background: rgba(20, 20, 40, 0.1);
-  }
-
-  .vademecum-content::-webkit-scrollbar-thumb {
-    background: rgba(139, 92, 246, 0.3);
-    border-radius: 20px;
-  }
-}
-
-/* Immersive reader mode */
-.immersive-reader {
-  max-width: 800px;
-  margin: 0 auto;
-  line-height: 1.8;
-  font-size: 1.1rem;
-  padding: 2rem;
-}
-
-.dark-mode {
-  background-color: #121212;
-  color: #e0e0e0;
-}
-
-.light-mode {
-  background-color: #f8f8f8;
-  color: #333;
+.progress-bar-amber::-moz-progress-bar {
+  background-color: #fbbf24;
 }
 
 /* Mobile optimization */
@@ -211,63 +180,37 @@
     border-top: 1px solid rgba(255, 255, 255, 0.1);
     padding: 0.5rem;
     z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
   }
 }
 
-/* Progress bar customization */
-.progress-bar-amber::-webkit-progress-value {
-  background-color: #fbbf24;
-}
-
-.progress-bar-amber::-moz-progress-bar {
-  background-color: #fbbf24;
-}
-
-/* Bookmark animation */
-@keyframes bookmark-pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-.bookmark-added {
-  animation: bookmark-pulse 0.5s ease;
-}
-
-/* Elegant card transitions */
-.article-card {
-  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
-}
-
-.article-card:hover {
-  transform: translateY(-2px);
-}
-
-/* Button animations */
-.action-button {
-  transition: all 0.2s ease;
-}
-
-.action-button:hover {
-  transform: translateY(-1px);
-}
-
-.action-button:active {
-  transform: translateY(0);
-}
-
-/* Annotation indicator */
-.has-annotation {
+/* Custom book styling */
+.book-card {
   position: relative;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.has-annotation::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 6px;
-  height: 6px;
-  background-color: #9b87f5;
-  border-radius: 50%;
+.book-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Card rotation effect */
+.book-card-inner {
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+}
+
+.book-card:hover .book-card-inner {
+  transform: rotateY(10deg);
+}
+
+.book-front, .book-back {
+  backface-visibility: hidden;
+}
+
+.book-back {
+  transform: rotateY(180deg);
 }

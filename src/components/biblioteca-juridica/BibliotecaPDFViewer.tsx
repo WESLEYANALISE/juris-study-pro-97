@@ -37,9 +37,12 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
     
-    // Process PDF URL to ensure it's a full URL
-    const processedUrl = processUrl(pdfUrl);
-    console.log("Loading PDF from URL:", processedUrl);
+    // Force reload PDF when URL changes
+    setIsLoaded(false);
+    setIsLoading(true);
+    setPageNumber(1);
+    
+    console.log("Loading PDF from URL:", pdfUrl);
     
     return () => {
       document.body.classList.remove('pdf-viewer-open');
@@ -54,19 +57,34 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
 
   // Process the URL to ensure it's a full URL
   const processUrl = (url: string): string => {
+    if (!url) return '';
+    
+    // Already a full URL
     if (url.startsWith('http')) {
-      return url; // Already a full URL
+      console.log("URL is already complete:", url);
+      return url;
     }
     
     // Add the Supabase storage URL prefix if it's just a path
-    const storageUrl = `${import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co"}/storage/v1/object/public/agoravai/${url}`;
-    return storageUrl;
+    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
+    console.log("Converted URL:", fullUrl);
+    return fullUrl;
   };
 
-  const verifyPdfUrl = () => {
+  // Verify the URL is valid
+  const verifyPdfUrl = (url: string): boolean => {
+    // Empty URL
+    if (!url) {
+      setErrorMessage("URL do PDF não fornecida");
+      setIsError(true);
+      setIsLoading(false);
+      return false;
+    }
+    
     // Check if URL is valid
     try {
-      const processedUrl = processUrl(pdfUrl);
+      const processedUrl = processUrl(url);
       new URL(processedUrl);
       return true;
     } catch (e) {
@@ -79,7 +97,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   };
   
   useEffect(() => {
-    verifyPdfUrl();
+    verifyPdfUrl(pdfUrl);
   }, [pdfUrl]);
   
   function onDocumentLoadSuccess({ numPages: totalPages }) {
