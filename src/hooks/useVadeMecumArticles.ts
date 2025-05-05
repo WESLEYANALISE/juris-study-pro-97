@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
@@ -177,7 +178,7 @@ export const useVadeMecumArticles = (searchQuery: string) => {
       }
     },
     staleTime: 30 * 60 * 1000, // 30 minutes - law content rarely changes
-    cacheTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 60 * 60 * 1000, // 1 hour (antigo cacheTime)
     retry: 1,
     refetchOnWindowFocus: false,
     onError: (err) => {

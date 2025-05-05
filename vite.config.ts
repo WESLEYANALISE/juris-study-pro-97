@@ -7,11 +7,9 @@ import { componentTagger } from 'lovable-tagger';
 export default defineConfig(({ mode }) => ({
   plugins: [
     react({
-      // Improve performance by using babel's runtime JSX transform
+      // Usar configuração de babel mais simples para evitar problemas de compatibilidade
       babel: {
-        plugins: [
-          ['@babel/plugin-transform-react-jsx', { runtime: 'automatic' }]
-        ]
+        plugins: []
       }
     }),
     mode === 'development' && componentTagger(),
