@@ -1,7 +1,7 @@
 
 .enhanced-pdf-container {
-  background-color: #F5F5F7;
-  color: #333;
+  background-color: #121212;
+  color: #eee;
 }
 
 .enhanced-pdf-content {
@@ -22,9 +22,10 @@
 
 .enhanced-pdf-page {
   margin-bottom: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
   border-radius: 4px;
   background-color: white;
+  max-width: 100%;
 }
 
 .enhanced-pdf-controls {
@@ -32,9 +33,9 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(255, 255, 255, 0.95);
+  background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(8px);
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #333;
   padding: 0.75rem 1rem;
   z-index: 40;
 }
@@ -142,4 +143,21 @@
 .pdf-toast.show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Dark mode specific styles */
+.pdf-viewer-open {
+  background-color: #121212;
+}
+
+/* Fix PDF pagination issues */
+.react-pdf__Page__annotations {
+  display: none; /* Hide annotations to prevent page bugs */
+}
+
+/* Make the PDF page container look better */
+.react-pdf__Page {
+  margin: 0 auto;
+  padding: 0;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
 }

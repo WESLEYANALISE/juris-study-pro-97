@@ -33,7 +33,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   
-  const { saveReadingProgress } = useBibliotecaProgresso();
+  const { saveReadingProgress, isFavorite, toggleFavorite } = useBibliotecaProgresso();
   const containerRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<any>(null);
   
@@ -60,6 +60,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
   
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
+    document.body.style.backgroundColor = '#121212'; // Dark background
     
     // Force reload PDF when URL changes
     setIsLoaded(false);
@@ -70,6 +71,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
     
     return () => {
       document.body.classList.remove('pdf-viewer-open');
+      document.body.style.backgroundColor = ''; // Reset background
     };
   }, [pdfUrl]);
   
@@ -148,50 +150,22 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
     setRotation((prevRotation) => (prevRotation + 90) % 360);
   }
   
-  const toggleFullScreen = () => {
-    if (containerRef.current) {
-      if (!isFullScreen) {
-        if (containerRef.current.requestFullscreen) {
-          containerRef.current.requestFullscreen();
-        } else if ((containerRef.current as any).mozRequestFullScreen) {
-          (containerRef.current as any).mozRequestFullScreen();
-        } else if ((containerRef.current as any).webkitRequestFullscreen) {
-          (containerRef.current as any).webkitRequestFullscreen();
-        } else if ((containerRef.current as any).msRequestFullscreen) {
-          (containerRef.current as any).msRequestFullscreen();
-        }
-      } else {
-        if (document.exitFullscreen) {
-          document.exitFullscreen();
-        } else if ((document as any).mozCancelFullScreen) {
-          (document as any).mozCancelFullScreen();
-        } else if ((document as any).webkitExitFullscreen) {
-          (document as any).webkitExitFullscreen();
-        } else if ((document as any).msExitFullscreen) {
-          (document as any).msExitFullscreen();
-        }
-      }
-      setIsFullScreen(!isFullScreen);
+  // Handle favorites toggle
+  const handleToggleFavorite = () => {
+    if (book) {
+      toggleFavorite(book.id);
+      toast.success(isFavorite(book.id) ? 'Removido dos favoritos' : 'Adicionado aos favoritos');
     }
   };
   
-  useEffect(() => {
-    const handleFullScreenChange = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-    };
-    
-    document.addEventListener('fullscreenchange', handleFullScreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullScreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
-    document.addEventListener('msfullscreenchange', handleFullScreenChange);
-    
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullScreenChange);
-      document.removeEventListener('mozfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullScreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullScreenChange);
-    };
-  }, []);
+  // Handle download
+  const handleDownload = () => {
+    if (pdfUrl) {
+      const processedUrl = processUrl(pdfUrl);
+      window.open(processedUrl, '_blank');
+      toast.success('Download iniciado');
+    }
+  };
   
   // Add keyboard event listeners for navigation
   useEffect(() => {
@@ -200,6 +174,8 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
         changePage(1);
       } else if (e.key === 'ArrowLeft') {
         changePage(-1);
+      } else if (e.key === 'Escape') {
+        onClose();
       }
     };
     
@@ -208,7 +184,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [numPages]);
+  }, [numPages, onClose]);
   
   // Handle touch events for mobile navigation
   useEffect(() => {
@@ -250,7 +226,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
   
   if (isError) {
     return (
-      <div className="fixed inset-0 bg-background z-50 flex flex-col items-center justify-center p-4">
+      <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
         <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
           <AlertCircle className="h-16 w-16 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
@@ -272,15 +248,47 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
   const processedPdfUrl = processUrl(pdfUrl);
   
   return (
-    <div className="fixed inset-0 bg-background z-50">
+    <div className="fixed inset-0 bg-gray-900 z-50">
+      {/* Large close button in the top-left corner */}
+      <Button 
+        variant="outline" 
+        size="icon" 
+        className="absolute top-4 left-4 z-50 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border-white/20 text-white"
+        onClick={onClose}
+      >
+        <X className="h-5 w-5" />
+      </Button>
+      
       <div className="enhanced-pdf-container flex flex-col h-full" ref={containerRef}>
-        {/* Header with title and close button */}
-        <div className="px-4 py-3 border-b bg-secondary/80 backdrop-blur-sm sticky top-0 z-40">
+        {/* Header with title */}
+        <div className="px-4 py-3 border-b border-gray-800 bg-black/80 backdrop-blur-sm sticky top-0 z-40">
           <div className="container max-w-5xl mx-auto flex items-center justify-between">
-            <h2 className="text-lg font-semibold truncate">{bookTitle}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar visualizador">
-              <X className="h-5 w-5" />
-            </Button>
+            <h2 className="text-lg font-semibold truncate text-white">{bookTitle}</h2>
+            
+            {/* Favorite and download buttons */}
+            <div className="flex items-center gap-2">
+              {book && (
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleToggleFavorite}
+                  className="text-white hover:bg-gray-800"
+                >
+                  <Heart className={`h-4 w-4 mr-2 ${isFavorite(book.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                  {isFavorite(book.id) ? 'Favorito' : 'Favoritar'}
+                </Button>
+              )}
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleDownload}
+                className="text-white hover:bg-gray-800"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+            </div>
           </div>
         </div>
         
@@ -288,15 +296,15 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
         {isLoading && (
           <div className="flex flex-col items-center justify-center h-full p-4">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-lg text-muted-foreground">Carregando livro... {progress}%</p>
-            <p className="text-xs text-muted-foreground mt-2 max-w-md text-center">
+            <p className="text-lg text-white">Carregando livro... {progress}%</p>
+            <p className="text-xs text-gray-400 mt-2 max-w-md text-center">
               Se o livro não carregar, verifique se o PDF está disponível no servidor.
             </p>
           </div>
         )}
         
         {/* PDF Viewer Content */}
-        <div className="enhanced-pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
+        <div className="enhanced-pdf-content container max-w-4xl mx-auto flex-grow overflow-auto">
           <Document
             file={processedPdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -308,8 +316,8 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
             }}
             loading={
               <div className="flex flex-col items-center justify-center py-20">
-                <Skeleton className="h-[500px] w-full max-w-lg" />
-                <p className="mt-4 text-muted-foreground">Carregando PDF...</p>
+                <Skeleton className="h-[500px] w-full max-w-lg bg-gray-800" />
+                <p className="mt-4 text-gray-400">Carregando PDF...</p>
               </div>
             }
             error={
@@ -329,7 +337,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
                 width={viewportWidth < 640 ? viewportWidth - 32 : undefined}
                 height={viewportWidth < 640 ? undefined : undefined}
                 renderMode="canvas"
-                className="enhanced-pdf-page"
+                className="enhanced-pdf-page mx-auto"
                 error={
                   <div className="text-center text-red-500 p-4">
                     <p>Erro ao renderizar página {pageNumber}</p>
@@ -340,8 +348,8 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
           </Document>
         </div>
         
-        {/* Mobile Controls */}
-        <div className="enhanced-pdf-controls">
+        {/* Navigation controls */}
+        <div className="enhanced-pdf-controls bg-gray-900 border-t border-gray-800">
           <div className="enhanced-pdf-controls-row">
             <div className="flex items-center gap-2">
               <Button 
@@ -349,12 +357,12 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
                 size="sm" 
                 onClick={() => changePage(-1)} 
                 disabled={pageNumber <= 1}
-                className="h-8 px-2"
+                className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700"
               >
                 <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
               </Button>
               
-              <div className="flex items-center gap-1 bg-background/80 backdrop-blur px-2 py-1 rounded">
+              <div className="flex items-center gap-1 bg-gray-800 backdrop-blur px-2 py-1 rounded text-white">
                 <input 
                   type="number" 
                   min={1} 
@@ -363,7 +371,7 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
                   onChange={handlePageInput}
                   className="w-12 h-6 bg-transparent text-center p-0 border-none text-sm"
                 />
-                <span className="text-sm text-muted-foreground">/ {numPages || '-'}</span>
+                <span className="text-sm text-gray-400">/ {numPages || '-'}</span>
               </div>
               
               <Button 
@@ -371,29 +379,29 @@ export function EnhancedPDFViewer({ pdfUrl, onClose, bookTitle, book }: Enhanced
                 size="sm" 
                 onClick={() => changePage(1)} 
                 disabled={pageNumber >= (numPages || 0)}
-                className="h-8 px-2"
+                className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700"
               >
                 Próximo <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
             
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={zoomOut} className="h-8 w-8 p-0">
+              <Button variant="outline" size="sm" onClick={zoomOut} className="h-8 w-8 p-0 border-gray-700 text-white">
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <span className="text-xs bg-background/80 backdrop-blur px-2 py-1 rounded">
+              <span className="text-xs bg-gray-800 px-2 py-1 rounded text-white">
                 {Math.round(scale * 100)}%
               </span>
-              <Button variant="outline" size="sm" onClick={zoomIn} className="h-8 w-8 p-0">
+              <Button variant="outline" size="sm" onClick={zoomIn} className="h-8 w-8 p-0 border-gray-700 text-white">
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={rotate} className="h-8 w-8 p-0">
+              <Button variant="outline" size="sm" onClick={rotate} className="h-8 w-8 p-0 border-gray-700 text-white">
                 <RotateCw className="h-4 w-4" />
               </Button>
             </div>
           </div>
           
-          <div className="text-center text-xs text-muted-foreground mt-2">
+          <div className="text-center text-xs text-gray-400 mt-2">
             Deslize para esquerda ou direita para mudar de página
           </div>
         </div>

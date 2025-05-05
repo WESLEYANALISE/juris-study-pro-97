@@ -1,10 +1,12 @@
+
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Filter, LayoutList, LayoutGrid, Library, Heart, Clock } from 'lucide-react';
+import { Filter, LayoutList, LayoutGrid, Library, Heart, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
 interface MobileFiltersBarProps {
   categories: {
     name: string;
@@ -18,6 +20,7 @@ interface MobileFiltersBarProps {
   setViewMode: (mode: 'grid' | 'list') => void;
   resetFilters: () => void;
 }
+
 export function MobileFiltersBar({
   categories,
   selectedCategory,
@@ -29,16 +32,28 @@ export function MobileFiltersBar({
   resetFilters
 }: MobileFiltersBarProps) {
   const [isExpanded, setIsExpanded] = React.useState(false);
-  return <motion.div className="bg-black/95 backdrop-blur-md border-b border-purple-900/30 px-3 mb-4 relative" initial={{
-    height: 60
-  }} animate={{
-    height: isExpanded ? 160 : 60
-  }} transition={{
-    duration: 0.3
-  }}>
+  
+  return (
+    <motion.div 
+      className="bg-black/95 backdrop-blur-md border-b border-purple-900/30 px-3 mb-4 relative" 
+      initial={{ height: 60 }}
+      animate={{ height: isExpanded ? 160 : 60 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Toggle button */}
       <div className="absolute -bottom-4 left-1/2 transform -translate-x-1/2">
-        
+        <Button 
+          variant="secondary" 
+          size="sm" 
+          className="h-8 w-8 rounded-full p-0 shadow-lg border border-purple-900/50"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4" />
+          ) : (
+            <ChevronDown className="h-4 w-4" />
+          )}
+        </Button>
       </div>
 
       {/* Horizontal category scroller (always visible) */}
@@ -92,6 +107,8 @@ export function MobileFiltersBar({
           </Button>
         </div>
       </div>
-    </motion.div>;
+    </motion.div>
+  );
 }
+
 export default MobileFiltersBar;
