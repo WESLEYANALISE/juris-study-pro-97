@@ -411,7 +411,7 @@ const Podcasts = () => {
           </div>
           
           {/* Main content */}
-          <div className="flex-1">
+          <div className="flex-1 my-[36px]">
             <AnimatePresence mode="wait">
               <motion.div key={`${activeFilter}-${selectedCategory}-${searchTerm}-${sortBy}-${viewMode}`} initial={{
               opacity: 0,
