@@ -1,4 +1,3 @@
-
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Header } from "@/components/Header";
@@ -14,6 +13,7 @@ import MobileNavigation from "@/components/MobileNavigation";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { motion } from "framer-motion";
+import { type ProfileType } from "@/components/WelcomeModal";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -45,8 +45,8 @@ const Layout = ({ children }: LayoutProps) => {
     }
   });
 
-  // Default profile for all users - fixed as "tudo" (complete access)
-  const userProfile = "tudo";
+  // Default profile for all users - update to "tudo" which is a valid ProfileType
+  const userProfile: ProfileType = "tudo";
 
   // Fetch user data
   useEffect(() => {

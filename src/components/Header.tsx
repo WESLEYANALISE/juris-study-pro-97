@@ -9,12 +9,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MobileMenu from "./MobileMenu";
 import { motion } from "framer-motion";
+import { type ProfileType } from "@/components/WelcomeModal";
 
 interface HeaderProps {
-  userProfile?: "basic" | "premium" | "admin";
+  userProfile?: ProfileType;
 }
 
-export function Header({ userProfile = "basic" }: HeaderProps) {
+export function Header({ userProfile = "concurseiro" }: HeaderProps) {
   const sidebar = useSidebar();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
@@ -51,7 +52,7 @@ export function Header({ userProfile = "basic" }: HeaderProps) {
           )}
 
           {isMobile ? (
-            <MobileMenu userProfile={userProfile as "basic" | "premium" | "admin"} />
+            <MobileMenu userProfile={userProfile} />
           ) : null}
 
           <Link to="/" className="flex items-center gap-2">
