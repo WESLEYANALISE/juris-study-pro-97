@@ -2,7 +2,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Landmark, Book, Scale, LucideIcon } from "lucide-react";
+import { Landmark, Book, Scale } from "lucide-react";
 
 interface JuridicalCardProps extends React.HTMLAttributes<HTMLDivElement> {
   title: string;
@@ -44,6 +44,7 @@ export function JuridicalCard({
     secondary: "from-indigo-900/30 to-indigo-900/10 border-indigo-700/20 hover:border-indigo-700/40",
   };
 
+  // Create a div element with motion features instead of passing all props directly
   return (
     <motion.div
       whileHover={{ y: -5, boxShadow: "0 15px 30px -8px rgba(0,0,0,0.3), 0 0 15px -3px rgba(139,92,246,0.2)" }}
@@ -55,9 +56,8 @@ export function JuridicalCard({
         variants[variant],
         className
       )}
-      {...props}
     >
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4" {...props}>
         <div className="flex justify-between items-center">
           <h3 className="font-semibold text-lg">{title}</h3>
           <div className={cn(
