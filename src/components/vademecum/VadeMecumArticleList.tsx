@@ -3,13 +3,14 @@ import React from 'react';
 import { ArticleCard } from './article/ArticleCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
+import { SupabaseArticle } from '@/types/supabase';
 
 interface VadeMecumArticleListProps {
   isLoading: boolean;
-  data: any[];
+  data: SupabaseArticle[];
   filter: string;
   tableName: string;
-  visibleArticles: any[];
+  visibleArticles: SupabaseArticle[];
   loadMoreRef: (node: HTMLDivElement | null) => void;
 }
 

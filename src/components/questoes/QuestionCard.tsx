@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { safeSelect, safeInsert, safeDelete } from "@/utils/supabase-helpers";
 
 export interface QuestionCardProps {
   question?: any; // Question object from the original implementation
@@ -43,12 +43,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     if (!user || !question) return false;
     
     try {
-      // Use type assertion to resolve TypeScript errors
-      const { data, error } = await (supabase
-        .from('questoes_favoritas' as any)
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('questao_id', question.id) as any);
+      const { data, error } = await safeSelect(
+        'questoes_favoritas', 
+        '*', 
+        query => query.eq('user_id', user.id).eq('questao_id', question.id)
+      );
         
       if (error) throw error;
       return data && data.length > 0;
@@ -62,14 +61,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     if (!user || !question) return;
     
     try {
-      // Use type assertion to resolve TypeScript errors
-      await (supabase
-        .from('historico_questoes' as any)
-        .insert({
+      await safeInsert(
+        'historico_questoes',
+        {
           user_id: user.id,
           questao_id: question.id,
           visualizado_em: new Date().toISOString()
-        }) as any);
+        }
+      );
     } catch (error) {
       console.error('Erro ao registrar visualização:', error);
     }
@@ -79,28 +78,31 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     if (!user || !question) return;
     
     try {
+      setLoadingFavorite(true);
       if (isFavorited) {
-        // Remove from favorites with type assertion
-        await (supabase
-          .from('questoes_favoritas' as any)
-          .delete()
-          .eq('user_id', user.id)
-          .eq('questao_id', question.id) as any);
+        // Remove from favorites
+        await safeDelete(
+          'questoes_favoritas',
+          query => query.eq('user_id', user.id).eq('questao_id', question.id)
+        );
       } else {
-        // Add to favorites with type assertion
-        await (supabase
-          .from('questoes_favoritas' as any)
-          .insert({
+        // Add to favorites
+        await safeInsert(
+          'questoes_favoritas',
+          {
             user_id: user.id,
             questao_id: question.id,
             favoritado_em: new Date().toISOString()
-          }) as any);
+          }
+        );
       }
       
       setIsFavorited(!isFavorited);
+      setLoadingFavorite(false);
       return !isFavorited;
     } catch (error) {
       console.error('Erro ao favoritar questão:', error);
+      setLoadingFavorite(false);
       return isFavorited;
     }
   };

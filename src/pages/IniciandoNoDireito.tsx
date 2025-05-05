@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
 import { Curso } from '@/types/curso';
+import { SupabaseHistoryEntry, SupabaseUserProgress } from '@/types/supabase';
 
 interface HistoricoQuestao {
   questao_id: string;
@@ -39,7 +40,7 @@ const IniciandoNoDireito = () => {
       try {
         // Fetch courses
         const { data: coursesData, error: coursesError } = await supabase
-          .from('cursos_narrados')
+          .from('cursos_narrados' as any)
           .select('*')
           .limit(3);
 
@@ -55,7 +56,7 @@ const IniciandoNoDireito = () => {
           
           try {
             const { data, error } = await supabase
-              .from('progresso_usuario')
+              .from('progresso_usuario' as any)
               .select('*')
               .eq('user_id', user.id)
               .single();
@@ -78,7 +79,7 @@ const IniciandoNoDireito = () => {
           
           try {
             const { data, error } = await supabase
-              .from('historico_questoes')
+              .from('historico_questoes' as any)
               .select('questao_id, visualizado_em')
               .eq('user_id', user.id)
               .order('visualizado_em', { ascending: false })
@@ -100,7 +101,7 @@ const IniciandoNoDireito = () => {
         setUserProgress(progress);
 
         const questions = await fetchRecentQuestions();
-        setRecentQuestions(questions);
+        setRecentQuestions(questions || []);
 
       } catch (error) {
         console.error('Erro ao carregar dados:', error);

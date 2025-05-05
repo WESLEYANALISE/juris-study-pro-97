@@ -1,5 +1,5 @@
 
-import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
+import { PostgrestFilterBuilder, PostgrestQueryBuilder } from '@supabase/postgrest-js';
 import { supabase } from '@/integrations/supabase/client';
 
 /**
@@ -58,7 +58,8 @@ export async function safeInsert<T = any>(
   options?: { returning?: string }
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const { data, error } = await safeQueryFrom<T>(tableName)
+    // Using 'as any' to bypass TypeScript errors with Supabase client
+    const { data, error } = await (safeQueryFrom(tableName) as any)
       .insert(values, options);
     
     if (error) {
@@ -82,7 +83,8 @@ export async function safeUpdate<T = any>(
   queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], any>) => PostgrestFilterBuilder<any, any, T[], any>
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    let query = safeQueryFrom<T>(tableName).update(values);
+    // Using 'as any' to bypass TypeScript errors with Supabase client
+    let query = (safeQueryFrom(tableName) as any).update(values);
     query = queryBuilder(query);
     
     const { data, error } = await query;
@@ -107,7 +109,8 @@ export async function safeDelete<T = any>(
   queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], any>) => PostgrestFilterBuilder<any, any, T[], any>
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    let query = safeQueryFrom<T>(tableName).delete();
+    // Using 'as any' to bypass TypeScript errors with Supabase client
+    let query = (safeQueryFrom(tableName) as any).delete();
     query = queryBuilder(query);
     
     const { data, error } = await query;

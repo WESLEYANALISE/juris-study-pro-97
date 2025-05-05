@@ -51,3 +51,11 @@ export interface SupabaseUserProgress {
   concluido: boolean;
   ultimo_acesso: string;
 }
+
+// Tables that exist in the database but might not be in the generated types
+export interface SupabaseDatabaseTables {
+  questoes_favoritas: SupabaseFavorite;
+  historico_questoes: SupabaseHistoryEntry;
+  progresso_usuario: SupabaseUserProgress;
+  cursos_narrados: any;
+}

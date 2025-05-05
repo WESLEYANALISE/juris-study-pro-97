@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Curso } from '@/types/curso';
+import { safeSelect } from '@/utils/supabase-helpers';
 
 const Cursos = () => {
   const navigate = useNavigate();
@@ -24,8 +25,9 @@ const Cursos = () => {
     queryKey: ['courses', selectedCategory, debouncedSearchQuery],
     queryFn: async () => {
       try {
+        // Using type assertion to avoid TypeScript errors with Supabase client
         let query = supabase
-          .from('cursos_narrados')
+          .from('cursos_narrados' as any)
           .select('*');
         
         // Apply category filter if selected
