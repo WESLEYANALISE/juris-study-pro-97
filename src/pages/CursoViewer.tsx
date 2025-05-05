@@ -10,21 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from "@/components/ui/scroll-area"
-
-interface Curso {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  autor: string;
-  duracao: string;
-  modulos: number;
-  avaliacao: number;
-  alunos: number;
-  thumbnail: string;
-  conteudo: any;
-}
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Curso } from '@/types/curso';
 
 const CursoViewer = () => {
   const { cursoId } = useParams<{ cursoId: string }>();
@@ -69,6 +56,19 @@ const CursoViewer = () => {
     return <div className="container mx-auto py-8">Curso não encontrado.</div>;
   }
 
+  // Function to map database fields to what the CourseMenu expects
+  const mapCursoToCourseMenu = (curso: Curso) => {
+    return {
+      title: curso.titulo || curso.materia || 'Curso sem título',
+      description: curso.descricao || curso.sobre || '',
+      alunos: curso.alunos || 0,
+      duracao: curso.duracao || '1h',
+      certificado: true,
+    };
+  };
+
+  const courseMenuProps = mapCursoToCourseMenu(curso);
+
   return (
     <div className="container mx-auto py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
       <div className="md:col-span-1">
@@ -78,24 +78,20 @@ const CursoViewer = () => {
           onStartCourse={handleStartCourse}
           onBack={() => navigate('/cursos')} 
           showBackButton={true}
-          title={curso?.titulo || 'Carregando...'}
-          description={curso?.descricao || ''}
-          alunos={curso?.alunos || 0}
-          duracao={curso?.duracao || ''}
-          certificado={true}
+          {...courseMenuProps}
         />
       </div>
 
       <div className="md:col-span-3 space-y-6">
         <Card className="shadow-md">
           <CardHeader>
-            <CardTitle className="text-2xl">{curso.titulo}</CardTitle>
-            <CardDescription>{curso.descricao}</CardDescription>
+            <CardTitle className="text-2xl">{courseMenuProps.title}</CardTitle>
+            <CardDescription>{courseMenuProps.description}</CardDescription>
           </CardHeader>
           <CardContent>
-            <img src={curso.thumbnail} alt={curso.titulo} className="rounded-md mb-4 w-full" />
-            <p>Autor: {curso.autor}</p>
-            <p>Categoria: {curso.categoria}</p>
+            <img src={curso.thumbnail || curso.capa} alt={courseMenuProps.title} className="rounded-md mb-4 w-full" />
+            <p>Autor: {curso.autor || 'Não informado'}</p>
+            <p>Categoria: {curso.categoria || curso.area || 'Não informada'}</p>
           </CardContent>
         </Card>
 

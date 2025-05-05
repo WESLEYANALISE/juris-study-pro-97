@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,7 @@ import { SearchBar } from "@/components/biblioteca/SearchBar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Film, Tv, Star, TrendingUp, History, Bookmark, Gavel } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Search as SearchIcon } from 'lucide-react';
 
 interface JurisFlixItem {
   id: number;
@@ -255,7 +255,7 @@ const JurisFlix = () => {
               className="w-full h-12 px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-gray-600 bg-card focus:ring-2 focus:ring-primary focus:border-transparent"
             />
             <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-              <SearchBar.SearchIcon className="h-5 w-5 text-muted-foreground" />
+              <SearchIcon className="h-5 w-5 text-muted-foreground" />
             </div>
           </div>
           

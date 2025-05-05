@@ -9,29 +9,42 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-interface QuestionCardProps {
+export interface QuestionCardProps {
   question: any; // Replace 'any' with the actual type of your question object
   onFavorite?: (questionId: string, isFavorited: boolean) => void;
+  // Added properties for the newer version of QuestionCard used in Questoes.tsx
+  id?: number;
+  area?: string;
+  tema?: string;
+  pergunta?: string;
+  respostas?: { A: string; B: string; C: string; D: string; };
+  respostaCorreta?: string;
+  comentario?: string;
+  percentualAcertos?: string;
+  onAnswer?: (questionId: number, answer: string, correct: boolean) => void;
+  onNext?: () => void;
 }
 
 // Make sure we're exporting the component with the correct name
-export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite }) => {
+export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite, ...props }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
 
   useEffect(() => {
-    checkIfFavorited().then(setIsFavorited);
-    trackQuestionView();
-  }, [question.id, user]);
+    if (question) {
+      checkIfFavorited().then(setIsFavorited);
+      trackQuestionView();
+    }
+  }, [question?.id, user]);
 
   const checkIfFavorited = async () => {
-    if (!user) return false;
+    if (!user || !question) return false;
     
     try {
       const { data, error } = await supabase
-        .from('questoes_favoritas' as any)
+        .from('questoes_favoritas')
         .select('*')
         .eq('user_id', user.id)
         .eq('questao_id', question.id);
@@ -45,11 +58,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   };
 
   const trackQuestionView = async () => {
-    if (!user) return;
+    if (!user || !question) return;
     
     try {
       await supabase
-        .from('historico_questoes' as any)
+        .from('historico_questoes')
         .insert({
           user_id: user.id,
           questao_id: question.id,
@@ -61,20 +74,20 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   };
 
   const toggleFavorite = async () => {
-    if (!user) return;
+    if (!user || !question) return;
     
     try {
       if (isFavorited) {
         // Remove from favorites
         await supabase
-          .from('questoes_favoritas' as any)
+          .from('questoes_favoritas')
           .delete()
           .eq('user_id', user.id)
           .eq('questao_id', question.id);
       } else {
         // Add to favorites
         await supabase
-          .from('questoes_favoritas' as any)
+          .from('questoes_favoritas')
           .insert({
             user_id: user.id,
             questao_id: question.id,
@@ -90,20 +103,72 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     }
   };
 
+  // Handle the newer version of QuestionCard used in Questoes.tsx
+  if (props.id) {
+    // This is an implementation that matches how it's used in Questoes.tsx
+    // Implementation details would go here
+    return <Card>
+      {/* Implementation for the newer QuestionCard version */}
+      <CardHeader>
+        <CardTitle>Questão</CardTitle>
+        <CardDescription>{props.area} - {props.tema}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div className="text-base">{props.pergunta}</div>
+          
+          <div className="space-y-2 mt-4">
+            {props.respostas && Object.entries(props.respostas).map(([key, value]) => (
+              <Button 
+                key={key}
+                variant="outline" 
+                className="w-full justify-start text-left"
+                onClick={() => props.onAnswer && props.onAnswer(props.id!, key, key === props.respostaCorreta)}
+              >
+                <span className="font-bold mr-2">{key})</span> {value}
+              </Button>
+            ))}
+          </div>
+          
+          {props.comentario && (
+            <div className="mt-6 p-4 bg-muted rounded-md">
+              <h4 className="font-medium mb-2">Explicação:</h4>
+              <p>{props.comentario}</p>
+            </div>
+          )}
+          
+          {props.percentualAcertos && (
+            <div className="mt-2 text-sm text-muted-foreground">
+              Taxa de acertos: {props.percentualAcertos}%
+            </div>
+          )}
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-end">
+        {props.onNext && (
+          <Button onClick={props.onNext}>
+            Próxima Questão
+          </Button>
+        )}
+      </CardFooter>
+    </Card>;
+  }
+
+  // Original QuestionCard implementation
   return (
     <Card className="w-full border">
       <CardHeader>
         <CardTitle>Questão</CardTitle>
         <CardDescription>
-          {question.area} - {question.ano} - {question.banca}
+          {question?.area} - {question?.ano} - {question?.banca}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <ScrollArea className="h-[300px] w-full rounded-md">
-          <div className="mb-4">{question.questao}</div>
+          <div className="mb-4">{question?.questao}</div>
         </ScrollArea>
         
-        {question.imagem_url && (
+        {question?.imagem_url && (
           <div className="flex justify-center my-4">
             <img
               src={question.imagem_url}
@@ -115,20 +180,20 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
         
         <div className="space-y-2">
           <div>
-            <strong>A)</strong> {question.alternativa_a}
+            <strong>A)</strong> {question?.alternativa_a}
           </div>
           <div>
-            <strong>B)</strong> {question.alternativa_b}
+            <strong>B)</strong> {question?.alternativa_b}
           </div>
           <div>
-            <strong>C)</strong> {question.alternativa_c}
+            <strong>C)</strong> {question?.alternativa_c}
           </div>
           <div>
-            <strong>D)</strong> {question.alternativa_d}
+            <strong>D)</strong> {question?.alternativa_d}
           </div>
-          {question.alternativa_e && (
+          {question?.alternativa_e && (
             <div>
-              <strong>E)</strong> {question.alternativa_e}
+              <strong>E)</strong> {question?.alternativa_e}
             </div>
           )}
         </div>

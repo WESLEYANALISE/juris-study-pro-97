@@ -11,19 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/use-debounce';
-
-interface Course {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  autor: string;
-  duracao: string;
-  modulos: number;
-  avaliacao: number;
-  alunos: number;
-  thumbnail: string;
-}
+import { Curso } from '@/types/curso';
 
 const Cursos = () => {
   const navigate = useNavigate();
@@ -32,7 +20,7 @@ const Cursos = () => {
   const debouncedSearchQuery = useDebounce(searchQuery, 500);
   
   // Fetch courses from cursos_narrados table
-  const { data: courses, isLoading } = useQuery({
+  const { data: courses = [], isLoading } = useQuery({
     queryKey: ['courses', selectedCategory, debouncedSearchQuery],
     queryFn: async () => {
       try {
@@ -48,7 +36,7 @@ const Cursos = () => {
         // Apply search filter if there's a search query
         if (debouncedSearchQuery) {
           query = query.or(
-            `titulo.ilike.%${debouncedSearchQuery}%,descricao.ilike.%${debouncedSearchQuery}%,autor.ilike.%${debouncedSearchQuery}%`
+            `titulo.ilike.%${debouncedSearchQuery}%,descricao.ilike.%${debouncedSearchQuery}%,autor.ilike.%${debouncedSearchQuery}%,materia.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
           );
         }
         
@@ -58,10 +46,10 @@ const Cursos = () => {
           throw error;
         }
         
-        return (data || []) as Course[];
+        return (data || []) as Curso[];
       } catch (error) {
         console.error('Error fetching courses:', error);
-        return [] as Course[];
+        return [] as Curso[];
       }
     },
     enabled: true, // Always fetch some courses, filter on client side
@@ -82,6 +70,16 @@ const Cursos = () => {
 
   const handleStartCourse = (courseId: number) => {
     navigate(`/cursos/viewer/${courseId}`);
+  };
+
+  // Function to map database fields to what the CourseMenu expects
+  const mapCursoToCourseMenu = (curso: Curso) => {
+    return {
+      title: curso.titulo || curso.materia || 'Curso sem título',
+      description: curso.descricao || curso.sobre || '',
+      alunos: curso.alunos || 0,
+      duracao: curso.duracao || '1h',
+    };
   };
   
   return (
@@ -154,19 +152,19 @@ const Cursos = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {courses && courses.length > 0 ? (
-                    courses.map((course) => (
-                      <CourseMenu 
-                        key={course.id}
-                        title={course.titulo}
-                        description={course.descricao}
-                        alunos={course.alunos}
-                        duracao={course.duracao}
-                        onStartCourse={() => handleStartCourse(course.id)}
-                        // Must provide all required props
-                        open={false}
-                        onOpenChange={() => {}}
-                      />
-                    ))
+                    courses.map((course) => {
+                      const courseMenuProps = mapCursoToCourseMenu(course);
+                      return (
+                        <CourseMenu 
+                          key={course.id}
+                          {...courseMenuProps}
+                          onStartCourse={() => handleStartCourse(course.id)}
+                          // Required props
+                          open={false}
+                          onOpenChange={() => {}}
+                        />
+                      );
+                    })
                   ) : (
                     <div className="col-span-3 text-center py-12">
                       <p>Nenhum curso encontrado nesta categoria.</p>

@@ -236,7 +236,19 @@ const Questoes = () => {
       <div className={cn("grid gap-6", isMobile ? "grid-cols-1" : "md:grid-cols-[1fr_300px]")}>
         <div className="space-y-6">
           {/* We add a key prop to force component re-mount when question changes */}
-          <QuestionCard key={`question-${currentQuestion.id}-${currentQuestionIndex}`} id={currentQuestion.id} area={currentQuestion.Area} tema={currentQuestion.Tema} pergunta={currentQuestion.QuestionText || ""} respostas={respostas} respostaCorreta={currentQuestion.CorrectAnswers} comentario={currentQuestion.CorrectAnswerInfo} percentualAcertos={percentualAcertos} onAnswer={handleAnswer} onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined} />
+          <QuestionCard 
+            key={`question-${currentQuestion.id}-${currentQuestionIndex}`} 
+            id={currentQuestion.id}
+            area={currentQuestion.Area}
+            tema={currentQuestion.Tema}
+            pergunta={currentQuestion.QuestionText || ""}
+            respostas={respostas}
+            respostaCorreta={currentQuestion.CorrectAnswers}
+            comentario={currentQuestion.CorrectAnswerInfo}
+            percentualAcertos={percentualAcertos}
+            onAnswer={handleAnswer}
+            onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined}
+          />
           
           <div className="flex justify-between items-center">
             <Button variant="outline" onClick={handlePrevious} disabled={currentQuestionIndex === 0} className="flex items-center">

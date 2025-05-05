@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
@@ -8,26 +9,23 @@ import { BookOpen, GraduationCap, Lightbulb, Search, Sparkles, Star } from 'luci
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { supabase } from '@/integrations/supabase/client';
+import { Curso } from '@/types/curso';
 
-interface Course {
-  id: number;
-  titulo: string;
-  descricao: string;
-  categoria: string;
-  autor: string;
-  duracao: string;
-  modulos: number;
-  avaliacao: number;
-  alunos: number;
-  thumbnail: string;
+interface HistoricoQuestao {
+  questao_id: string;
+  visualizado_em: string;
+}
+
+interface ProgressoUsuario {
+  progresso: number;
 }
 
 const IniciandoNoDireito = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [recentQuestions, setRecentQuestions] = useState<any[]>([]);
-  const [userProgress, setUserProgress] = useState<any | null>(null);
+  const [courses, setCourses] = useState<Curso[]>([]);
+  const [recentQuestions, setRecentQuestions] = useState<HistoricoQuestao[]>([]);
+  const [userProgress, setUserProgress] = useState<ProgressoUsuario | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -48,7 +46,7 @@ const IniciandoNoDireito = () => {
         if (coursesError) {
           console.error('Erro ao buscar cursos:', coursesError);
         } else {
-          setCourses((coursesData || []) as Course[]);
+          setCourses((coursesData || []) as Curso[]);
         }
 
         // For user progress
@@ -56,18 +54,18 @@ const IniciandoNoDireito = () => {
           if (!user) return null;
           
           try {
-            const { data, error } = await (supabase
-              .from('progresso_usuario' as any)
+            const { data, error } = await supabase
+              .from('progresso_usuario')
               .select('*')
               .eq('user_id', user.id)
-              .single() as any);
+              .single();
               
             if (error && error.code !== 'PGRST116') {
               console.error('Erro ao buscar progresso:', error);
               return null;
             }
             
-            return data;
+            return data as ProgressoUsuario;
           } catch (error) {
             console.error('Erro ao buscar progresso:', error);
             return null;
@@ -79,19 +77,19 @@ const IniciandoNoDireito = () => {
           if (!user) return [];
           
           try {
-            const { data, error } = await (supabase
-              .from('historico_questoes' as any)
+            const { data, error } = await supabase
+              .from('historico_questoes')
               .select('questao_id, visualizado_em')
               .eq('user_id', user.id)
               .order('visualizado_em', { ascending: false })
-              .limit(5) as any);
+              .limit(5);
               
             if (error) {
               console.error('Erro ao buscar questões recentes:', error);
               return [];
             }
             
-            return data || [];
+            return data as HistoricoQuestao[];
           } catch (error) {
             console.error('Erro ao buscar questões recentes:', error);
             return [];
@@ -113,6 +111,16 @@ const IniciandoNoDireito = () => {
 
     fetchData();
   }, [user, navigate]);
+
+  // Function to map database fields to what the CourseMenu expects
+  const mapCursoToCourseMenu = (curso: Curso) => {
+    return {
+      title: curso.titulo || curso.materia || 'Curso sem título',
+      description: curso.descricao || curso.sobre || '',
+      alunos: curso.alunos || 0,
+      duracao: curso.duracao || '1h',
+    };
+  };
 
   return (
     <div className="container mx-auto py-8 px-4 space-y-6">
@@ -152,8 +160,8 @@ const IniciandoNoDireito = () => {
                   <div key={course.id} className="flex items-center space-x-4">
                     <BookOpen className="h-5 w-5 text-muted-foreground" />
                     <div className="space-y-1">
-                      <p className="text-sm font-medium leading-none">{course.titulo}</p>
-                      <p className="text-sm text-muted-foreground">{course.descricao}</p>
+                      <p className="text-sm font-medium leading-none">{course.titulo || course.materia || 'Curso sem título'}</p>
+                      <p className="text-sm text-muted-foreground">{course.descricao || course.sobre || ''}</p>
                     </div>
                   </div>
                 ))
