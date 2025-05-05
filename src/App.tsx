@@ -12,7 +12,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+      <ThemeProvider storageKey="vite-ui-theme">
         {/* PDFTest component for PDF.js configuration debugging */}
         <PDFTest />
         
