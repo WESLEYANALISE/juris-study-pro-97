@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseCategories } from '@/components/cursos/CourseCategories';
@@ -51,7 +50,7 @@ const Cursos = () => {
           throw error;
         }
         
-        // Handle and return the data safely
+        // Return data safely, ensuring we don't return undefined
         return data || [];
       } catch (error) {
         console.error('Error fetching courses:', error);

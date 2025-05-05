@@ -2,15 +2,11 @@
 import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * A utility function to safely query Supabase tables with proper type handling
- * This helps bypass TypeScript errors when tables are not strictly typed
- */
+// Ensure 'any' is used consistently for table access to avoid TypeScript errors
 export const safeQueryFrom = <T = any>(
   tableName: string
-): PostgrestFilterBuilder<any, any, T[], any> => {
-  // Using a type assertion to handle dynamic table names
-  return supabase.from(tableName as any) as unknown as PostgrestFilterBuilder<any, any, T[], any>;
+): PostgrestFilterBuilder<any, any, T[], unknown> => {
+  return supabase.from(tableName) as unknown as PostgrestFilterBuilder<any, any, T[], unknown>;
 };
 
 /**
@@ -26,7 +22,7 @@ export const handleSupabaseError = (error: any, operation: string): void => {
 export async function safeSelect<T = any>(
   tableName: string,
   columns = '*',
-  queryBuilder?: (query: PostgrestFilterBuilder<any, any, T[], any>) => PostgrestFilterBuilder<any, any, T[], any>
+  queryBuilder?: (query: PostgrestFilterBuilder<any, any, T[], unknown>) => PostgrestFilterBuilder<any, any, T[], unknown>
 ): Promise<{ data: T[] | null; error: any }> {
   try {
     let query = safeQueryFrom<T>(tableName).select(columns);
@@ -80,7 +76,7 @@ export async function safeInsert<T = any>(
 export async function safeUpdate<T = any>(
   tableName: string,
   values: any,
-  queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], any>) => PostgrestFilterBuilder<any, any, T[], any>
+  queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], unknown>) => PostgrestFilterBuilder<any, any, T[], unknown>
 ): Promise<{ data: T[] | null; error: any }> {
   try {
     const query = safeQueryFrom<T>(tableName);
@@ -107,7 +103,7 @@ export async function safeUpdate<T = any>(
  */
 export async function safeDelete<T = any>(
   tableName: string,
-  queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], any>) => PostgrestFilterBuilder<any, any, T[], any>
+  queryBuilder: (query: PostgrestFilterBuilder<any, any, T[], unknown>) => PostgrestFilterBuilder<any, any, T[], unknown>
 ): Promise<{ data: T[] | null; error: any }> {
   try {
     const query = safeQueryFrom<T>(tableName);

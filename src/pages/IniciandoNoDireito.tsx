@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
@@ -12,17 +11,17 @@ import { Curso } from '@/types/curso';
 import { SupabaseHistoryEntry, SupabaseUserProgress } from '@/types/supabase';
 import { safeSelect } from '@/utils/supabase-helpers';
 
-// Use specific types for local data representations
-type HistoricoQuestaoItem = {
+// Define local interfaces to avoid collision with imported types
+interface HistoricoQuestaoItem {
   questao_id: string;
   visualizado_em: string;
-};
+}
 
-type ProgressoUsuarioItem = {
+interface ProgressoUsuarioItem {
   progresso: number;
   concluido?: boolean;
   ultimo_acesso?: string;
-};
+}
 
 const IniciandoNoDireito = () => {
   const { user } = useAuth();
@@ -41,7 +40,7 @@ const IniciandoNoDireito = () => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch courses using direct supabase client to avoid type issues
+        // Fetch courses
         const { data: coursesData, error: coursesError } = await safeSelect<Curso>(
           'cursos_narrados',
           '*',
@@ -54,12 +53,12 @@ const IniciandoNoDireito = () => {
           setCourses(coursesData);
         }
 
-        // For user progress - using direct client for safety
+        // For user progress
         if (user) {
           const { data: progressData, error: progressError } = await safeSelect<SupabaseUserProgress>(
             'progresso_usuario',
             '*',
-            query => query.eq('user_id', user.id).single()
+            query => query.eq('user_id', user.id).limit(1)
           );
           
           if (progressError && progressError.code !== 'PGRST116') {
@@ -73,7 +72,7 @@ const IniciandoNoDireito = () => {
           }
         }
 
-        // For question history - using direct client for safety
+        // For question history
         if (user) {
           const { data: questionsData, error: questionsError } = await safeSelect<SupabaseHistoryEntry>(
             'historico_questoes',
