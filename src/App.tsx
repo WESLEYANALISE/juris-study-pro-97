@@ -5,6 +5,8 @@ import { QueryClientProvider, QueryClient } from '@tanstack/react-query';
 import { Toaster } from '@/components/ui/sonner';
 import { ThemeProvider } from './components/theme-provider';
 import { PDFTest } from './components/test/PDFTest';
+import Index from './pages/Index';
+import Layout from './components/Layout';
 
 // Create a client
 const queryClient = new QueryClient();
@@ -18,7 +20,11 @@ function App() {
         
         <Router>
           <Routes>
-            <Route path="/" element={<div>Home Page</div>} />
+            <Route path="/" element={
+              <Layout>
+                <Index />
+              </Layout>
+            } />
           </Routes>
         </Router>
         <Toaster />

@@ -1,49 +1,41 @@
 
 import { useEffect } from 'react';
-import { pdfjs, configurePdfWorker } from '@/lib/pdf-config';
+import { pdfjs } from 'react-pdf';
+import { configurePdfWorker } from '@/lib/pdf-config';
 
 export function PDFTest() {
   useEffect(() => {
-    console.log("PDFTest component mounted - PDF.js status check");
+    // Check PDF.js configuration on component mount
+    console.log('PDFTest component mounted - PDF.js status check');
     
-    // Verify PDF.js configuration
-    const checkPdfJsConfiguration = () => {
-      console.log("PDF.js version:", pdfjs?.version || 'not loaded');
+    try {
+      console.log('PDF.js version:', pdfjs.version);
       
-      // Check if worker is configured
-      const workerSrc = pdfjs?.GlobalWorkerOptions?.workerSrc;
-      if (workerSrc) {
-        console.log("✅ PDF.js worker is configured:", workerSrc);
+      if (pdfjs.GlobalWorkerOptions && pdfjs.GlobalWorkerOptions.workerSrc) {
+        console.log('✅ PDF.js worker is configured:', pdfjs.GlobalWorkerOptions.workerSrc);
       } else {
-        console.warn("❌ PDF.js worker not configured! Attempting to configure now...");
-        const success = configurePdfWorker();
-        console.log("Configuration attempt result:", success ? "success" : "failed");
-        
-        // Retry after a delay if still not configured
-        if (!success || !pdfjs?.GlobalWorkerOptions?.workerSrc) {
-          console.log("Scheduling another configuration attempt in 500ms...");
-          setTimeout(checkPdfJsConfiguration, 500);
-        }
+        console.warn('⚠️ PDF.js worker not configured, attempting to configure now');
+        configurePdfWorker();
       }
-    };
-    
-    // First check
-    checkPdfJsConfiguration();
-    
-    // Additional check after a delay
-    const timer = setTimeout(() => {
-      console.log("Follow-up PDF.js configuration check:");
-      checkPdfJsConfiguration();
-    }, 1500);
-    
-    return () => {
-      clearTimeout(timer);
-    };
+      
+      // Verify configuration after a short delay
+      setTimeout(() => {
+        console.log('Follow-up PDF.js configuration check:');
+        console.log('PDF.js version:', pdfjs.version);
+        
+        if (pdfjs.GlobalWorkerOptions && pdfjs.GlobalWorkerOptions.workerSrc) {
+          console.log('✅ PDF.js worker is configured:', pdfjs.GlobalWorkerOptions.workerSrc);
+        } else {
+          console.error('❌ PDF.js worker still not configured after retry');
+          // Try one more time with direct approach
+          pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.js';
+        }
+      }, 1000);
+    } catch (err) {
+      console.error('Error in PDFTest component:', err);
+    }
   }, []);
-  
-  return (
-    <div className="pdf-test-component">
-      {/* Hidden component for PDF.js configuration debugging */}
-    </div>
-  );
+
+  // This is just a diagnostic component, no visible UI
+  return null;
 }
