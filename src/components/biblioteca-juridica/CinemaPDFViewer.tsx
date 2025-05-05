@@ -34,7 +34,7 @@ export function CinemaPDFViewer({ pdfUrl, onClose, bookTitle, book }: CinemaPDFV
   const [isError, setIsError] = useState(false);
   const [progress, setProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isFullScreen, setIsFullScreen] useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [showControls, setShowControls] = useState(true);
   const [showNotes, setShowNotes] = useState(false);

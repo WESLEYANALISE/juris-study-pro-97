@@ -5,7 +5,7 @@ import App from './App'
 import './index.css'
 import { PDFTest } from './components/test/PDFTest';
 
-// Initialize PDF.js configuration early
+// Ensure PDF.js is configured early, before any component tries to use it
 import '@/lib/pdf-config';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
