@@ -8,8 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { BookOpen, Download, Volume2, BookmarkPlus, MessageSquare } from 'lucide-react';
-import { TextToSpeech } from '@/components/biblioteca/TextToSpeech';
+import { BookOpen, Download, Volume2, BookmarkPlus } from 'lucide-react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useToast } from '@/hooks/use-toast';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
@@ -25,7 +24,6 @@ export function BibliotecaBookModal({
   onClose,
   onReadBook
 }: BibliotecaBookModalProps) {
-  const [showNarration, setShowNarration] = useState(false);
   const { toast } = useToast();
   const { isFavorite, toggleFavorite } = useBibliotecaProgresso();
   
@@ -49,11 +47,6 @@ export function BibliotecaBookModal({
   const handleToggleFavorite = async () => {
     if (!book) return;
     await toggleFavorite(book.id);
-  };
-  
-  // Narration toggle
-  const handleToggleNarration = () => {
-    setShowNarration(!showNarration);
   };
   
   // If no book is selected
@@ -110,15 +103,6 @@ export function BibliotecaBookModal({
                 {book.descricao || "Sem descrição disponível para este livro."}
               </p>
             </div>
-            
-            {showNarration && book.descricao && (
-              <div className="mt-4 p-3 bg-muted/30 rounded-lg border">
-                <h4 className="text-sm font-semibold mb-2 flex items-center">
-                  <Volume2 className="w-4 h-4 mr-1" /> Narração
-                </h4>
-                <TextToSpeech text={book.descricao} />
-              </div>
-            )}
           </div>
         </div>
       </DialogHeader>
@@ -142,11 +126,6 @@ export function BibliotecaBookModal({
           >
             <BookmarkPlus className="mr-2 h-4 w-4" />
             {isFav ? "Favoritado" : "Favoritar"}
-          </Button>
-          
-          <Button variant="ghost" onClick={handleToggleNarration}>
-            <Volume2 className="mr-2 h-4 w-4" />
-            {showNarration ? "Ocultar Narração" : "Narrar Descrição"}
           </Button>
         </div>
       </DialogFooter>

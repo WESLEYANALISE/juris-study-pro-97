@@ -1,12 +1,13 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Download, Share2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
 import './BibliotecaPDFViewer.css';
 
 // Set PDF.js worker source
@@ -61,14 +62,12 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
     
     // Already a full URL
     if (url.startsWith('http')) {
-      console.log("URL is already complete:", url);
       return url;
     }
     
     // Add the Supabase storage URL prefix if it's just a path
     const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
     const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
-    console.log("Converted URL:", fullUrl);
     return fullUrl;
   };
 
@@ -208,16 +207,24 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
   const processedPdfUrl = processUrl(pdfUrl);
   
   return (
-    <div className="fixed inset-0 bg-background z-50">
-      <div className="pdf-container flex flex-col h-full" ref={containerRef}>
-        {/* Header with title and close button */}
-        <div className="px-4 py-3 border-b bg-secondary/80 backdrop-blur-sm sticky top-0 z-40">
-          <div className="container max-w-5xl mx-auto flex items-center justify-between">
-            <h2 className="text-lg font-semibold truncate">{bookTitle}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fechar visualizador">
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+    <motion.div 
+      className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <div className="pdf-container" ref={containerRef}>
+        {/* Simplified header with back button */}
+        <div className="pdf-header">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="mr-2" 
+            onClick={onClose}
+          >
+            <X className="h-4 w-4 mr-2" /> Voltar
+          </Button>
+          <h2 className="text-lg font-medium flex-1 truncate">{bookTitle}</h2>
         </div>
         
         {/* Loading indicator */}
@@ -232,7 +239,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
         )}
         
         {/* PDF Viewer Content */}
-        <div className="pdf-content container max-w-5xl mx-auto flex-grow overflow-auto">
+        <div className="pdf-content">
           <Document
             file={processedPdfUrl}
             onLoadSuccess={onDocumentLoadSuccess}
@@ -259,7 +266,9 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
               <Page 
                 pageNumber={pageNumber} 
                 scale={scale} 
-                rotate={rotation} 
+                rotate={rotation}
+                renderTextLayer={false}
+                renderAnnotationLayer={false}
                 error={
                   <div className="text-center text-red-500 p-4">
                     <p>Erro ao renderizar página {pageNumber}</p>
@@ -300,7 +309,7 @@ export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: Biblio
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
