@@ -426,7 +426,7 @@ const Podcasts = () => {
               duration: 0.3
             }} className="space-y-10 mx-0 my-[28px]">
                 {/* Filter status */}
-                {(selectedCategory || searchTerm || activeFilter !== 'all') && <div className="flex flex-wrap items-center justify-between gap-2 bg-purple-900/20 p-3 rounded-md border border-purple-800/30 my-[49px] mx-[24px] px-0">
+                {(selectedCategory || searchTerm || activeFilter !== 'all') && <div className="flex flex-wrap items-center justify-between gap-2 bg-purple-900/20 p-3 rounded-md border border-purple-800/30 my-[49px] px-0 mx-[4px]">
                     <div className="flex flex-wrap items-center gap-2">
                       {selectedCategory && <Badge variant="outline" className="bg-purple-900/40 text-purple-300">
                           Categoria: {selectedCategory}
