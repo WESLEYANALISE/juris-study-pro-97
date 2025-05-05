@@ -14,10 +14,27 @@ interface CronogramaEstudosProps {
   userId: string | null;
 }
 
-// Define interfaces for our data
-interface PlanoEstudo {
+// Define an interface that matches the actual database structure
+interface PlanoEstudoDB {
   id?: string;
   user_id: string;
+  area_interesse?: string[];
+  objetivo?: string;
+  nivel_atual?: string;
+  horas_estudo_semana?: number;
+  tipo_plano: string;
+  tempo_disponivel: string;
+  concluido?: boolean;
+  progress?: number;
+  created_at?: string;
+  updated_at?: string;
+  criado_em: string;
+  ultima_atualizacao: string;
+}
+
+// Our component state structure
+interface PlanoEstudoState {
+  id?: string;
   tipo_plano: string;
   tempo_disponivel: string;
   criado_em: string;
@@ -30,7 +47,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
   const [planoGerado, setPlanoGerado] = useState(false);
   const [planoSalvo, setPlanoSalvo] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [existingPlan, setExistingPlan] = useState<PlanoEstudo | null>(null);
+  const [existingPlan, setExistingPlan] = useState<PlanoEstudoState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -43,7 +60,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
       }
       
       try {
-        // Use a more generic query approach without type checking
+        // Use a generic query approach with proper casting
         const { data, error } = await supabase
           .from('plano_estudos')
           .select('*')
@@ -62,9 +79,18 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
         }
         
         if (data) {
-          setExistingPlan(data as PlanoEstudo);
-          setTipoPlano(data.tipo_plano || 'basico');
-          setTempoDisponivel(data.tempo_disponivel || 'pouco');
+          // Create a properly structured object that matches our expected state
+          const planData = data as any;
+          setExistingPlan({
+            id: planData.id,
+            tipo_plano: planData.tipo_plano || 'basico',
+            tempo_disponivel: planData.tempo_disponivel || 'pouco',
+            criado_em: planData.criado_em || planData.created_at || new Date().toISOString(),
+            ultima_atualizacao: planData.ultima_atualizacao || planData.updated_at || new Date().toISOString()
+          });
+          
+          setTipoPlano(planData.tipo_plano || 'basico');
+          setTempoDisponivel(planData.tempo_disponivel || 'pouco');
           setPlanoGerado(true);
           setPlanoSalvo(true);
         }
@@ -96,7 +122,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
     setIsSaving(true);
     
     try {
-      const planoData: PlanoEstudo = {
+      const planoData = {
         user_id: userId,
         tipo_plano: tipoPlano,
         tempo_disponivel: tempoDisponivel,

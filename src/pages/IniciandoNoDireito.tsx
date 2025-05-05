@@ -38,7 +38,7 @@ const IniciandoNoDireito = () => {
       if (!userId) return null;
       
       try {
-        // Get all the study data for this user
+        // Get all the study data for this user using a generic approach
         const { data: progressData, error } = await supabase
           .from('progresso_usuario')
           .select('*')
@@ -71,7 +71,7 @@ const IniciandoNoDireito = () => {
       if (!userId) return null;
       
       try {
-        // Get statistics about questions answered
+        // Get statistics about questions answered using a generic approach
         const { data: questoesStats, error: questoesError } = await supabase
           .from('historico_questoes')
           .select('*', { count: 'exact' })
@@ -81,7 +81,7 @@ const IniciandoNoDireito = () => {
           console.error('Error fetching questions history:', questoesError);
         }
         
-        // Get flashcard stats
+        // Get flashcard stats using a generic approach
         const { data: flashcardStats, error: flashcardError } = await supabase
           .from('user_flashcards')
           .select('*', { count: 'exact' })
@@ -91,7 +91,7 @@ const IniciandoNoDireito = () => {
           console.error('Error fetching flashcard stats:', flashcardError);
         }
         
-        // Study time from study sessions
+        // Study time from study sessions using a generic approach
         const { data: studySessions, error: sessionsError } = await supabase
           .from('sessoes_estudo')
           .select('duracao_minutos')
