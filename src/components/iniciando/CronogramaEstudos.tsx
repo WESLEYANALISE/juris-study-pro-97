@@ -1,20 +1,138 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from '@/components/ui/label';
-import { CalendarDays, CalendarClock, Calendar, Download, Check } from 'lucide-react';
+import { CalendarDays, CalendarClock, Calendar, Download, Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-export const CronogramaEstudos = () => {
+interface CronogramaEstudosProps {
+  userId: string | null;
+}
+
+export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
   const [tipoPlano, setTipoPlano] = useState('basico');
   const [tempoDisponivel, setTempoDisponivel] = useState('pouco');
   const [planoGerado, setPlanoGerado] = useState(false);
+  const [planoSalvo, setPlanoSalvo] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [existingPlan, setExistingPlan] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  // Fetch user's existing plan if available
+  useEffect(() => {
+    const fetchExistingPlan = async () => {
+      if (!userId) {
+        setIsLoading(false);
+        return;
+      }
+      
+      try {
+        const { data, error } = await supabase
+          .from('planos_estudo')
+          .select('*')
+          .eq('user_id', userId)
+          .order('criado_em', { ascending: false })
+          .limit(1)
+          .single();
+          
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching study plan:', error);
+          toast({
+            title: 'Erro',
+            description: 'Não foi possível carregar seu plano de estudos',
+            variant: 'destructive'
+          });
+        }
+        
+        if (data) {
+          setExistingPlan(data);
+          setTipoPlano(data.tipo_plano || 'basico');
+          setTempoDisponivel(data.tempo_disponivel || 'pouco');
+          setPlanoGerado(true);
+          setPlanoSalvo(true);
+        }
+      } catch (error) {
+        console.error('Error in fetchExistingPlan:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchExistingPlan();
+  }, [userId, toast]);
 
   const handleGerarPlano = () => {
     setPlanoGerado(true);
+    setPlanoSalvo(false);
   };
+  
+  const handleSalvarPlano = async () => {
+    if (!userId) {
+      toast({
+        title: 'É necessário estar logado',
+        description: 'Faça login para salvar seu plano de estudos',
+        variant: 'default'
+      });
+      return;
+    }
+    
+    setIsSaving(true);
+    
+    try {
+      const planoData = {
+        user_id: userId,
+        tipo_plano: tipoPlano,
+        tempo_disponivel: tempoDisponivel,
+        criado_em: new Date().toISOString(),
+        ultima_atualizacao: new Date().toISOString()
+      };
+      
+      const { error } = await supabase
+        .from('planos_estudo')
+        .insert(planoData);
+        
+      if (error) {
+        console.error('Error saving study plan:', error);
+        toast({
+          title: 'Erro',
+          description: 'Não foi possível salvar seu plano de estudos',
+          variant: 'destructive'
+        });
+        return;
+      }
+      
+      setPlanoSalvo(true);
+      toast({
+        title: 'Plano salvo',
+        description: 'Seu plano de estudos foi salvo com sucesso',
+        variant: 'default'
+      });
+    } catch (error) {
+      console.error('Error in handleSalvarPlano:', error);
+      toast({
+        title: 'Erro',
+        description: 'Ocorreu um erro ao salvar seu plano',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -93,8 +211,13 @@ export const CronogramaEstudos = () => {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle>Seu Plano de Estudos Personalizado</CardTitle>
-                <Check className="h-5 w-5 text-green-500" />
+                {planoSalvo && <Check className="h-5 w-5 text-green-500" />}
               </div>
+              {existingPlan && (
+                <p className="text-sm text-muted-foreground">
+                  Criado em {format(new Date(existingPlan.criado_em), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                </p>
+              )}
             </CardHeader>
             <CardContent>
               <div className="py-2 px-4 bg-primary/10 rounded-md mb-4">
@@ -181,14 +304,39 @@ export const CronogramaEstudos = () => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                disabled={!userId}
+              >
                 <CalendarClock className="h-4 w-4" />
                 Adicionar ao Cronograma
               </Button>
-              <Button className="flex items-center gap-2">
-                <Download className="h-4 w-4" />
-                Baixar Plano PDF
-              </Button>
+              
+              {!planoSalvo ? (
+                <Button 
+                  className="flex items-center gap-2"
+                  onClick={handleSalvarPlano}
+                  disabled={isSaving || !userId}
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      Salvar Plano
+                    </>
+                  )}
+                </Button>
+              ) : (
+                <Button className="flex items-center gap-2">
+                  <Download className="h-4 w-4" />
+                  Baixar PDF
+                </Button>
+              )}
             </CardFooter>
           </Card>
 

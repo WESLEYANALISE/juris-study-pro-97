@@ -22,7 +22,6 @@ import SimuladoSessao from "@/pages/SimuladoSessao";
 import SimuladoResultado from "@/pages/SimuladoResultado";
 import Flashcards from "@/pages/Flashcards";
 import MapasMentais from "@/pages/MapasMentais";
-import Noticias from "@/pages/Noticias";
 import Peticoes from "@/pages/Peticoes";
 import AssistenteJuridico from "@/pages/AssistenteJuridico";
 import Perfil from "@/pages/Perfil";
@@ -71,7 +70,7 @@ function App() {
               <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
               <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
               <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />
-              <Route path="/noticias" element={<Layout><Noticias /></Layout>} />
+              {/* Removed Noticias route as requested */}
               <Route path="/peticoes" element={<Layout><Peticoes /></Layout>} />
               <Route path="/assistente" element={<Layout><AssistenteJuridico /></Layout>} />
               <Route path="/perfil" element={<Layout><Perfil /></Layout>} />
@@ -85,8 +84,10 @@ function App() {
               <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
               <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
               <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
+              {/* Kept JogosJuridicos but removed gamification */}
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
+              {/* Ensure JurisFlix route is present and properly configured */}
               <Route path="/jurisflix" element={<Layout><JurisFlix /></Layout>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>

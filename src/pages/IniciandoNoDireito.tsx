@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookOpen, GraduationCap, PlayCircle, Sparkles, FileQuestion, FileText, Calendar, Users, Trophy, LineChart, Heart } from 'lucide-react';
@@ -12,8 +12,111 @@ import { MateriaisEssenciais } from '@/components/iniciando/MateriaisEssenciais'
 import { CronogramaEstudos } from '@/components/iniciando/CronogramaEstudos';
 import { PerfilEvolucao } from '@/components/iniciando/PerfilEvolucao';
 import { MotivacionalSucesso } from '@/components/iniciando/MotivacionalSucesso';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/components/ui/use-toast';
 
 const IniciandoNoDireito = () => {
+  const [userId, setUserId] = useState<string | null>(null);
+  const { toast } = useToast();
+  
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+      }
+    };
+    
+    getUser();
+  }, []);
+  
+  // Query to get the user's progress data
+  const { data: userProgress, isLoading: loadingProgress } = useQuery({
+    queryKey: ['user-progress', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      try {
+        // Get all the study data for this user
+        const { data: progressData, error } = await supabase
+          .from('progresso_usuario')
+          .select('*')
+          .eq('user_id', userId)
+          .single();
+          
+        if (error) {
+          console.error('Error fetching user progress:', error);
+          return null;
+        }
+        
+        return progressData;
+      } catch (error) {
+        console.error('Error in progress query:', error);
+        toast({
+          title: 'Erro ao carregar progresso',
+          description: 'Não foi possível carregar seu progresso. Usando dados padrão.',
+          variant: 'destructive'
+        });
+        return null;
+      }
+    },
+    enabled: !!userId
+  });
+  
+  // Query to get the study stats for this user
+  const { data: studyStats, isLoading: loadingStats } = useQuery({
+    queryKey: ['study-stats', userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      
+      try {
+        // Get statistics about questions answered
+        const { data: questoesStats, error: questoesError } = await supabase
+          .from('historico_questoes')
+          .select('*', { count: 'exact' })
+          .eq('user_id', userId);
+          
+        if (questoesError) {
+          console.error('Error fetching questions history:', questoesError);
+        }
+        
+        // Get flashcard stats
+        const { data: flashcardStats, error: flashcardError } = await supabase
+          .from('user_flashcards')
+          .select('*', { count: 'exact' })
+          .eq('user_id', userId);
+          
+        if (flashcardError) {
+          console.error('Error fetching flashcard stats:', flashcardError);
+        }
+        
+        // Study time from study sessions
+        const { data: studySessions, error: sessionsError } = await supabase
+          .from('sessoes_estudo')
+          .select('duracao_minutos')
+          .eq('user_id', userId);
+          
+        if (sessionsError) {
+          console.error('Error fetching study sessions:', sessionsError);
+        }
+        
+        const totalStudyTime = studySessions?.reduce((sum, session) => sum + (session.duracao_minutos || 0), 0) || 0;
+        
+        return {
+          questoesRespondidas: questoesStats?.length || 0,
+          questoesCorretas: questoesStats?.filter(q => q.correta)?.length || 0,
+          flashcardsRevisados: flashcardStats?.length || 0,
+          tempoEstudoTotal: totalStudyTime,
+        };
+      } catch (error) {
+        console.error('Error in stats query:', error);
+        return null;
+      }
+    },
+    enabled: !!userId
+  });
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-7xl">
       <motion.div
@@ -81,7 +184,7 @@ const IniciandoNoDireito = () => {
 
         <div className="pb-20 md:pb-6 pt-4">
           <TabsContent value="trilha">
-            <EstudoTrilha />
+            <EstudoTrilha userProgress={userProgress} />
           </TabsContent>
           
           <TabsContent value="glossario">
@@ -97,7 +200,7 @@ const IniciandoNoDireito = () => {
           </TabsContent>
           
           <TabsContent value="simulados">
-            <SimuladosIniciantes />
+            <SimuladosIniciantes stats={studyStats} />
           </TabsContent>
           
           <TabsContent value="materiais">
@@ -105,7 +208,7 @@ const IniciandoNoDireito = () => {
           </TabsContent>
           
           <TabsContent value="cronograma">
-            <CronogramaEstudos />
+            <CronogramaEstudos userId={userId} />
           </TabsContent>
           
           <TabsContent value="comunidade">
@@ -128,7 +231,7 @@ const IniciandoNoDireito = () => {
           </TabsContent>
           
           <TabsContent value="evolucao">
-            <PerfilEvolucao />
+            <PerfilEvolucao stats={studyStats} isLoading={loadingStats} />
           </TabsContent>
           
           <TabsContent value="motivacional">

@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -9,6 +10,8 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+
 interface QuestionCardProps {
   id: number;
   area: string | null;
@@ -23,6 +26,7 @@ interface QuestionCardProps {
   onAnswer: (questionId: number, answer: string, correct: boolean) => void;
   onNext?: () => void;
 }
+
 export const QuestionCard = ({
   id,
   area,
@@ -39,11 +43,33 @@ export const QuestionCard = ({
   const [hasAnswered, setHasAnswered] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [timeSpent, setTimeSpent] = useState(0);
+  const [userId, setUserId] = useState<string | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  // Get current user ID
+  useEffect(() => {
+    const getUserId = async () => {
+      const { data } = await supabase.auth.getUser();
+      if (data?.user) {
+        setUserId(data.user.id);
+        // Check if question is bookmarked
+        if (data.user.id) {
+          const { data: bookmark } = await supabase
+            .from('questoes_favoritas')
+            .select('*')
+            .eq('user_id', data.user.id)
+            .eq('questao_id', id)
+            .single();
+          
+          setIsBookmarked(!!bookmark);
+        }
+      }
+    };
+    
+    getUserId();
+  }, [id]);
 
   // Fix: Using useEffect with proper cleanup for timer
   useEffect(() => {
@@ -82,7 +108,8 @@ export const QuestionCard = ({
       }
     };
   }, [id]);
-  const handleSubmit = () => {
+
+  const handleSubmit = async () => {
     if (!selectedAnswer || hasAnswered) return;
 
     // Stop timer
@@ -90,9 +117,21 @@ export const QuestionCard = ({
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+    
     const isCorrect = selectedAnswer === respostaCorreta;
     setHasAnswered(true);
     onAnswer(id, selectedAnswer, isCorrect);
+
+    // Save answer history to database if user is logged in
+    if (userId) {
+      await supabase.from('historico_questoes').insert({
+        user_id: userId,
+        questao_id: id,
+        resposta: selectedAnswer,
+        correta: isCorrect,
+        tempo_segundos: timeSpent
+      });
+    }
 
     // Show success/error toast
     if (isCorrect) {
@@ -109,18 +148,48 @@ export const QuestionCard = ({
       });
     }
   };
-  const handleBookmark = () => {
+
+  const handleBookmark = async () => {
+    if (!userId) {
+      toast({
+        title: "É necessário estar logado",
+        description: "Faça login para salvar questões favoritas",
+        variant: "default"
+      });
+      return;
+    }
+
+    if (isBookmarked) {
+      // Remove from bookmarks
+      await supabase
+        .from('questoes_favoritas')
+        .delete()
+        .eq('user_id', userId)
+        .eq('questao_id', id);
+    } else {
+      // Add to bookmarks
+      await supabase
+        .from('questoes_favoritas')
+        .insert({
+          user_id: userId,
+          questao_id: id,
+          data_adicionado: new Date().toISOString()
+        });
+    }
+
     setIsBookmarked(!isBookmarked);
     toast({
       title: isBookmarked ? "Questão removida dos favoritos" : "Questão adicionada aos favoritos",
       variant: "default"
     });
   };
+
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
+
   const getAnswerStyle = (answer: string) => {
     if (!hasAnswered) return "";
     if (answer === respostaCorreta) return "border-success text-success";
@@ -140,6 +209,7 @@ export const QuestionCard = ({
       scale: 1
     }
   };
+  
   return <motion.div initial={{
     opacity: 0,
     y: 20
@@ -237,9 +307,19 @@ export const QuestionCard = ({
               </Button>}
             
             {!isMobile && <>
+                <Button variant="outline" size="icon" onClick={handleBookmark} title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}>
+                  {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
+                </Button>
                 
-                
-                
+                <Button variant="outline" size="icon" onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  toast({
+                    title: "Link copiado!",
+                    description: "Link para esta questão copiado para a área de transferência"
+                  });
+                }} title="Compartilhar esta questão">
+                  <Share2 className="h-4 w-4" />
+                </Button>
               </>}
             
             {isMobile && <div className="flex justify-between w-full">
@@ -248,12 +328,12 @@ export const QuestionCard = ({
                 </Button>
                 
                 <Button variant="outline" size="icon" onClick={() => {
-              navigator.clipboard.writeText(window.location.href);
-              toast({
-                title: "Link copiado!",
-                description: "Link para esta questão copiado para a área de transferência"
-              });
-            }} title="Compartilhar esta questão">
+                  navigator.clipboard.writeText(window.location.href);
+                  toast({
+                    title: "Link copiado!",
+                    description: "Link para esta questão copiado para a área de transferência"
+                  });
+                }} title="Compartilhar esta questão">
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>}
