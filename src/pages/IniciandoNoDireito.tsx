@@ -1,10 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
 import { useAuth } from '@/hooks/use-auth';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BookOpen, GraduationCap, Lightbulb, Search, Sparkles, Star } from 'lucide-react';
+import { BookOpen, GraduationCap, Lightbulb, Search, Sparkles, Star, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Curso } from '@/types/curso';
@@ -201,28 +202,30 @@ const IniciandoNoDireito = () => {
           </CardContent>
         </Card>
 
-        {/* Progresso do Usuário */}
+        {/* PDFs por Área - New Card */}
         <Card className="shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
-              Seu Progresso
+              <FileText className="h-4 w-4" />
+              PDFs por Área Jurídica
             </CardTitle>
-            <Button variant="secondary" size="sm">
-              Detalhes
+            <Button variant="secondary" size="sm" onClick={() => navigate('/pdf-links')}>
+              Explorar
             </Button>
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <Skeleton className="h-12 w-full rounded-md" />
-            ) : userProgress ? (
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Progresso Total: {userProgress.progresso}%</p>
-                <p className="text-sm text-muted-foreground">Continue aprendendo!</p>
-              </div>
-            ) : (
-              <p className="text-muted-foreground">Nenhum progresso registrado ainda.</p>
-            )}
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                Acesse nossa coleção de PDFs jurídicos organizados por área de conhecimento.
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full mt-2"
+                onClick={() => navigate('/pdf-links')}
+              >
+                Ver Biblioteca de PDFs
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -238,12 +241,15 @@ const IniciandoNoDireito = () => {
         <p className="text-lg text-muted-foreground mb-6">
           Explore nossos cursos, resolva questões e acompanhe seu progresso.
         </p>
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-wrap justify-center gap-4">
           <Button size="lg" onClick={() => navigate('/cursos')}>
             Explorar Cursos
           </Button>
           <Button variant="outline" size="lg" onClick={() => navigate('/questoes')}>
             Resolver Questões
+          </Button>
+          <Button variant="secondary" size="lg" onClick={() => navigate('/pdf-links')}>
+            Biblioteca de PDFs
           </Button>
         </div>
       </motion.div>

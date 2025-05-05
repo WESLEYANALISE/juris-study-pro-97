@@ -2,11 +2,12 @@
 import { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 import { supabase } from '@/integrations/supabase/client';
 
-// Ensure 'any' is used consistently for table access to avoid TypeScript errors
+// Ensure we can safely query any table without TypeScript errors
 export const safeQueryFrom = <T = any>(
   tableName: string
 ): PostgrestFilterBuilder<any, any, T[], unknown> => {
-  return supabase.from(tableName) as unknown as PostgrestFilterBuilder<any, any, T[], unknown>;
+  // Use type assertion to safely work with dynamic table names
+  return supabase.from(tableName) as any as PostgrestFilterBuilder<any, any, T[], unknown>;
 };
 
 /**
