@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, 
@@ -16,10 +15,10 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { pdfjs } from '@/lib/pdf-config';
 import './OptimizedPDFViewer.css';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// pdfjs worker is now configured in pdf-config.ts
 
 interface OptimizedPDFViewerProps {
   pdfUrl: string;

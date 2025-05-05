@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Document, Page } from 'react-pdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowLeft, ChevronLeft, ChevronRight, BookmarkPlus, BookmarkCheck, ZoomIn, ZoomOut, RotateCw, Download, Search, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,16 +12,18 @@ import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { useDebounce } from '@/hooks/use-debounce';
+import { pdfjs } from '@/lib/pdf-config';
 import './BibliotecaPDFViewer.css';
 
-// Configure PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// pdfjs worker is now configured in pdf-config.ts
+
 interface BibliotecaPDFViewerProps {
   pdfUrl: string;
   onClose: () => void;
   bookTitle: string;
   book: LivroJuridico | null;
 }
+
 export function BibliotecaPDFViewer({
   pdfUrl,
   onClose,
