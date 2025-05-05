@@ -27,6 +27,23 @@ interface QuestionCardProps {
   onNext?: () => void;
 }
 
+// Define interfaces for our data
+interface QuestionBookmark {
+  id?: string;
+  user_id: string;
+  questao_id: number;
+  data_adicionado: string;
+}
+
+interface QuestionHistory {
+  id?: string;
+  user_id: string;
+  questao_id: number;
+  resposta: string;
+  correta: boolean;
+  tempo_segundos: number;
+}
+
 export const QuestionCard = ({
   id,
   area,
@@ -56,14 +73,20 @@ export const QuestionCard = ({
         setUserId(data.user.id);
         // Check if question is bookmarked
         if (data.user.id) {
-          const { data: bookmark } = await supabase
-            .from('questoes_favoritas')
-            .select('*')
-            .eq('user_id', data.user.id)
-            .eq('questao_id', id)
-            .single();
-          
-          setIsBookmarked(!!bookmark);
+          try {
+            const { data: bookmark, error } = await supabase
+              .from('questoes_favoritas')
+              .select('*')
+              .eq('user_id', data.user.id)
+              .eq('questao_id', id)
+              .maybeSingle();
+            
+            if (!error && bookmark) {
+              setIsBookmarked(true);
+            }
+          } catch (error) {
+            console.error('Error checking bookmark:', error);
+          }
         }
       }
     };
@@ -124,13 +147,18 @@ export const QuestionCard = ({
 
     // Save answer history to database if user is logged in
     if (userId) {
-      await supabase.from('historico_questoes').insert({
-        user_id: userId,
-        questao_id: id,
-        resposta: selectedAnswer,
-        correta: isCorrect,
-        tempo_segundos: timeSpent
-      });
+      try {
+        const historyData: QuestionHistory = {
+          user_id: userId,
+          questao_id: id,
+          resposta: selectedAnswer,
+          correta: isCorrect,
+          tempo_segundos: timeSpent
+        };
+        await supabase.from('historico_questoes').insert(historyData);
+      } catch (error) {
+        console.error('Error saving question history:', error);
+      }
     }
 
     // Show success/error toast
@@ -159,29 +187,39 @@ export const QuestionCard = ({
       return;
     }
 
-    if (isBookmarked) {
-      // Remove from bookmarks
-      await supabase
-        .from('questoes_favoritas')
-        .delete()
-        .eq('user_id', userId)
-        .eq('questao_id', id);
-    } else {
-      // Add to bookmarks
-      await supabase
-        .from('questoes_favoritas')
-        .insert({
+    try {
+      if (isBookmarked) {
+        // Remove from bookmarks
+        await supabase
+          .from('questoes_favoritas')
+          .delete()
+          .eq('user_id', userId)
+          .eq('questao_id', id);
+      } else {
+        // Add to bookmarks
+        const bookmarkData: QuestionBookmark = {
           user_id: userId,
           questao_id: id,
           data_adicionado: new Date().toISOString()
-        });
-    }
+        };
+        await supabase
+          .from('questoes_favoritas')
+          .insert(bookmarkData);
+      }
 
-    setIsBookmarked(!isBookmarked);
-    toast({
-      title: isBookmarked ? "Questão removida dos favoritos" : "Questão adicionada aos favoritos",
-      variant: "default"
-    });
+      setIsBookmarked(!isBookmarked);
+      toast({
+        title: isBookmarked ? "Questão removida dos favoritos" : "Questão adicionada aos favoritos",
+        variant: "default"
+      });
+    } catch (error) {
+      console.error('Error handling bookmark:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível processar sua solicitação",
+        variant: "destructive"
+      });
+    }
   };
 
   const formatTime = (seconds: number) => {

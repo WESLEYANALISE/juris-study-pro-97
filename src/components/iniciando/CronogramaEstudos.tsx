@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,13 +14,23 @@ interface CronogramaEstudosProps {
   userId: string | null;
 }
 
+// Define interfaces for our data
+interface PlanoEstudo {
+  id?: string;
+  user_id: string;
+  tipo_plano: string;
+  tempo_disponivel: string;
+  criado_em: string;
+  ultima_atualizacao: string;
+}
+
 export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
   const [tipoPlano, setTipoPlano] = useState('basico');
   const [tempoDisponivel, setTempoDisponivel] = useState('pouco');
   const [planoGerado, setPlanoGerado] = useState(false);
   const [planoSalvo, setPlanoSalvo] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [existingPlan, setExistingPlan] = useState<any>(null);
+  const [existingPlan, setExistingPlan] = useState<PlanoEstudo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
@@ -34,8 +43,9 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
       }
       
       try {
+        // Use a more generic query approach without type checking
         const { data, error } = await supabase
-          .from('planos_estudo')
+          .from('plano_estudos')
           .select('*')
           .eq('user_id', userId)
           .order('criado_em', { ascending: false })
@@ -52,7 +62,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
         }
         
         if (data) {
-          setExistingPlan(data);
+          setExistingPlan(data as PlanoEstudo);
           setTipoPlano(data.tipo_plano || 'basico');
           setTempoDisponivel(data.tempo_disponivel || 'pouco');
           setPlanoGerado(true);
@@ -86,7 +96,7 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
     setIsSaving(true);
     
     try {
-      const planoData = {
+      const planoData: PlanoEstudo = {
         user_id: userId,
         tipo_plano: tipoPlano,
         tempo_disponivel: tempoDisponivel,
@@ -94,8 +104,9 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
         ultima_atualizacao: new Date().toISOString()
       };
       
+      // Use a more generic approach without strict type checking
       const { error } = await supabase
-        .from('planos_estudo')
+        .from('plano_estudos')
         .insert(planoData);
         
       if (error) {
