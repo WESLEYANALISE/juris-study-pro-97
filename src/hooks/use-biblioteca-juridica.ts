@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { LivroJuridico } from '@/types/biblioteca-juridica';
 
 // Define interfaces for the hook
 interface ReadingProgress {
@@ -42,7 +43,7 @@ export function useBibliotecaProgresso() {
         if (user) {
           // Load from database if user is logged in
           const { data: progressData, error: progressError } = await supabase
-            .from('biblioteca_progresso')
+            .from('biblioteca_leitura_progresso')
             .select('*')
             .eq('user_id', user.id);
           
@@ -116,7 +117,7 @@ export function useBibliotecaProgresso() {
       
       if (user) {
         const { error } = await supabase
-          .from('biblioteca_progresso')
+          .from('biblioteca_leitura_progresso')
           .upsert({
             user_id: user.id,
             livro_id: livroId,
@@ -183,7 +184,7 @@ export function useBibliotecaProgresso() {
       
       if (user) {
         const { error } = await supabase
-          .from('biblioteca_progresso')
+          .from('biblioteca_leitura_progresso')
           .upsert({
             user_id: user.id,
             livro_id: livroId,
@@ -222,15 +223,4 @@ export function useBibliotecaProgresso() {
     toggleFavorite,
     getFavorites
   };
-}
-
-// Define the LivroJuridico interface if it doesn't exist yet
-export interface LivroJuridico {
-  id: string;
-  titulo: string;
-  categoria: string;
-  pdf_url: string;
-  capa_url?: string | null;
-  descricao?: string | null;
-  total_paginas?: number | null;
 }
