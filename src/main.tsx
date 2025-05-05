@@ -2,34 +2,42 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
-// CRITICAL: Import and configure PDF.js before importing any components that might use it
+// Load PDF.js worker configuration first
 import { configurePdfWorker } from '@/lib/pdf-config';
-console.log('Initializing PDF.js in main.tsx...');
 
-// Try to configure the worker immediately
+console.log('Initializing application in main.tsx');
+
+// Configure worker immediately and repeatedly to ensure it's set
 configurePdfWorker();
 
-// Use dynamic imports to ensure PDF.js is configured before React components render
-const renderApp = () => {
-  // Configure PDF.js again just to be safe
+// Add PDF.js to window to ensure it's available globally
+import { pdfjs } from 'react-pdf';
+if (typeof window !== 'undefined') {
+  window.pdfjsLib = pdfjs;
+}
+
+// Create a function for rendering the app
+const renderApp = async () => {
+  // Configure again before rendering
   configurePdfWorker();
   
-  import('./App').then(({ default: App }) => {
-    import('./index.css').then(() => {
-      console.log('All modules loaded, starting React render');
-      
-      // Configure one last time right before render
-      configurePdfWorker();
-      
-      // Render the React application
-      ReactDOM.createRoot(document.getElementById('root')!).render(
-        <React.StrictMode>
-          <App />
-        </React.StrictMode>
-      );
-    });
-  });
+  const { default: App } = await import('./App');
+  await import('./index.css');
+  
+  // One final configuration before render
+  configurePdfWorker();
+  
+  console.log('Rendering React application');
+  ReactDOM.createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
 };
 
-// Small delay to ensure PDF.js has time to initialize
-setTimeout(renderApp, 100);
+// Delay rendering slightly to ensure PDF.js is fully loaded
+setTimeout(() => {
+  renderApp().catch(error => {
+    console.error('Failed to render app:', error);
+  });
+}, 100);
