@@ -306,7 +306,7 @@ export function ImmersivePodcastPlayer({
     }} transition={{
       delay: 0.3
     }}>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full my-0 mx-[15px]">
           <TabsList className="mx-auto w-auto mt-2 bg-white/10 border border-white/5">
             <TabsTrigger value="visualizer" className="data-[state=active]:bg-purple-800/50">Visualização</TabsTrigger>
             <TabsTrigger value="info" className="data-[state=active]:bg-purple-800/50">Detalhes</TabsTrigger>
