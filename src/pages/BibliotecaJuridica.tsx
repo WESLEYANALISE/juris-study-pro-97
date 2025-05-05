@@ -1,8 +1,7 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
-import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
 import { JuridicalBackground } from '@/components/ui/juridical-background';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,14 +11,42 @@ import { toast } from 'sonner';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { Container } from '@/components/ui/container';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
-import { KindleBookCarousel } from '@/components/biblioteca-juridica/KindleBookCarousel';
 import { BibliotecaHeroSection } from '@/components/biblioteca-juridica/BibliotecaHeroSection';
 import { BibliotecaCategoryGrid } from '@/components/biblioteca-juridica/BibliotecaCategoryGrid';
-import { BibliotecaBookGrid } from '@/components/biblioteca-juridica/BibliotecaBookGrid';
-import { BibliotecaBookList } from '@/components/biblioteca-juridica/BibliotecaBookList';
 import { BibliotecaReadingStats } from '@/components/biblioteca-juridica/BibliotecaReadingStats';
 import { Skeleton } from '@/components/ui/skeleton';
+import { BibliotecaBookList } from '@/components/biblioteca-juridica/BibliotecaBookList';
 import '../styles/biblioteca-juridica.css';
+
+// Import normal components for fallback
+import { BibliotecaPDFViewer } from '@/components/biblioteca-juridica/BibliotecaPDFViewer';
+import { BibliotecaBookGrid } from '@/components/biblioteca-juridica/BibliotecaBookGrid';
+
+// Lazy load optimized components
+const LazyOptimizedPDFViewer = React.lazy(() => 
+  import('../components/biblioteca-juridica/OptimizedPDFViewer').then(module => 
+    ({ default: module.OptimizedPDFViewer })
+  )
+);
+
+const LazyBookGrid = React.lazy(() => 
+  import('../components/biblioteca-juridica/LazyBibliotecaBookGrid').then(module => 
+    ({ default: module.LazyBibliotecaBookGrid })
+  )
+);
+
+const LazyKindleBookCarousel = React.lazy(() => 
+  import('../components/biblioteca-juridica/KindleBookCarousel').then(module => 
+    ({ default: module.KindleBookCarousel })
+  )
+);
+
+// Loading fallback component
+const LoadingFallback = () => (
+  <div className="w-full flex justify-center py-12">
+    <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+  </div>
+);
 
 export default function BibliotecaJuridica() {
   const [livros, setLivros] = useState<LivroJuridico[]>([]);
@@ -29,29 +56,29 @@ export default function BibliotecaJuridica() {
   const [selectedBook, setSelectedBook] = useState<LivroJuridico | null>(null);
   const [currentTab, setCurrentTab] = useState<string>('todos');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [isPDFReady, setIsPDFReady] = useState<boolean>(false);
 
   const { isFavorite, getFavorites, getReadingProgress } = useBibliotecaProgresso();
   
-  // Fetch books from Supabase
+  // Optimized data loading with fewer re-renders
   useEffect(() => {
+    let isMounted = true;
+    
     async function fetchLivros() {
       setIsLoading(true);
 
       try {
-        // Get books from bibliotecatop table
         const { data, error } = await supabase
           .from('bibliotecatop')
           .select('*');
 
         if (error) {
-          toast.error('Erro ao carregar biblioteca: ' + error.message);
           throw error;
         }
 
-        if (data && Array.isArray(data)) {
+        if (data && Array.isArray(data) && isMounted) {
           console.log('Livros carregados:', data.length);
           
-          // Convert the data to our LivroJuridico type
           const convertedData: LivroJuridico[] = data.map(item => ({
             id: item.id.toString(),
             titulo: item.titulo || 'Sem título',
@@ -70,22 +97,28 @@ export default function BibliotecaJuridica() {
           ).filter(Boolean) as string[];
           
           setCategorias(allCategories);
-        } else {
-          setLivros([]);
-          setCategorias([]);
         }
       } catch (error) {
         console.error('Erro ao buscar livros:', error);
-        toast.error('Erro ao carregar a biblioteca');
+        if (isMounted) {
+          toast.error('Erro ao carregar a biblioteca');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     }
 
     fetchLivros();
+    
+    // Cleanup function to prevent state updates on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Filter books based on search query and current tab
+  // Filtered books with memoization for performance
   const filteredLivros = useMemo(() => {
     let result = [...livros];
     
@@ -125,7 +158,7 @@ export default function BibliotecaJuridica() {
     return result;
   }, [livros, searchQuery, currentTab, getFavorites, getReadingProgress]);
   
-  // Group books by category for carousel display
+  // Group books by category with memoization
   const booksByCategory = useMemo(() => {
     if (!filteredLivros.length) return {};
     
@@ -151,13 +184,12 @@ export default function BibliotecaJuridica() {
     }, {});
   }, [filteredLivros, currentTab, searchQuery]);
   
-  // Get favorites
+  // Favorites and recently accessed books
   const favoriteBooks = useMemo(() => {
     const favorites = getFavorites();
     return livros.filter(livro => favorites.includes(livro.id));
   }, [livros, getFavorites]);
 
-  // Get recently accessed books
   const recentBooks = useMemo(() => {
     return livros
       .filter(livro => getReadingProgress(livro.id))
@@ -179,11 +211,26 @@ export default function BibliotecaJuridica() {
   function handleOpenPDF(livro: LivroJuridico) {
     console.log("Opening PDF:", livro);
     setSelectedBook(livro);
+    
+    // Reset PDF ready state
+    setIsPDFReady(false);
+    
+    // Start preloading the PDF viewer
+    const img = new Image();
+    if (livro.capa_url) {
+      img.src = livro.capa_url;
+    }
+    
+    // Mark PDF as ready after a small delay
+    setTimeout(() => {
+      setIsPDFReady(true);
+    }, 200);
   }
   
   // Close PDF viewer
   function handleClosePDF() {
     setSelectedBook(null);
+    setIsPDFReady(false);
   }
 
   // Get the number of books in progress
@@ -319,50 +366,52 @@ export default function BibliotecaJuridica() {
                       )}
                     </div>
                   ) : viewMode === 'grid' ? (
-                    <BibliotecaBookGrid 
-                      books={filteredLivros} 
-                      onSelectBook={handleOpenPDF} 
-                    />
+                    <Suspense fallback={<BibliotecaBookGrid books={filteredLivros.slice(0, 12)} onSelectBook={handleOpenPDF} />}>
+                      <LazyBookGrid books={filteredLivros} onSelectBook={handleOpenPDF} />
+                    </Suspense>
                   ) : (
-                    <BibliotecaBookList 
-                      books={filteredLivros} 
-                      onSelectBook={handleOpenPDF} 
-                    />
+                    <BibliotecaBookList books={filteredLivros} onSelectBook={handleOpenPDF} />
                   )}
                   
                   {/* Featured Collections */}
                   {currentTab === 'todos' && !searchQuery && (
                     <div className="space-y-12 pt-8 border-t">
                       {recentBooks.length > 0 && (
-                        <KindleBookCarousel
-                          title="Continue Lendo"
-                          description="Retome suas leituras de onde parou"
-                          books={recentBooks}
-                          onSelectBook={handleOpenPDF}
-                          accent={true}
-                        />
+                        <Suspense fallback={<LoadingFallback />}>
+                          <LazyKindleBookCarousel
+                            title="Continue Lendo"
+                            description="Retome suas leituras de onde parou"
+                            books={recentBooks}
+                            onSelectBook={handleOpenPDF}
+                            accent={true}
+                          />
+                        </Suspense>
                       )}
                       
                       {favoriteBooks.length > 0 && (
-                        <KindleBookCarousel
-                          title="Seus Favoritos"
-                          description="Livros que você marcou como favoritos"
-                          books={favoriteBooks}
-                          onSelectBook={handleOpenPDF}
-                          accent={false}
-                        />
+                        <Suspense fallback={<LoadingFallback />}>
+                          <LazyKindleBookCarousel
+                            title="Seus Favoritos"
+                            description="Livros que você marcou como favoritos"
+                            books={favoriteBooks}
+                            onSelectBook={handleOpenPDF}
+                            accent={false}
+                          />
+                        </Suspense>
                       )}
                       
-                      {/* Categories carousels */}
+                      {/* Categories carousels - load only one at a time */}
                       {Object.entries(booksByCategory)
                         .filter(([category]) => category !== 'Outros')
+                        .slice(0, 2) // Limit initial categories to 2
                         .map(([category, books]) => (
-                          <KindleBookCarousel
-                            key={category}
-                            title={category}
-                            books={books}
-                            onSelectBook={handleOpenPDF}
-                          />
+                          <Suspense key={category} fallback={<LoadingFallback />}>
+                            <LazyKindleBookCarousel
+                              title={category}
+                              books={books}
+                              onSelectBook={handleOpenPDF}
+                            />
+                          </Suspense>
                         ))}
                     </div>
                   )}
@@ -387,15 +436,24 @@ export default function BibliotecaJuridica() {
           </div>
         </div>
         
-        {/* PDF Viewer */}
+        {/* PDF Viewer - use lazy loaded optimized version */}
         <AnimatePresence mode="wait">
           {selectedBook && (
-            <BibliotecaPDFViewer
-              pdfUrl={selectedBook.pdf_url}
-              bookTitle={selectedBook.titulo}
-              onClose={handleClosePDF}
-              book={selectedBook}
-            />
+            <Suspense fallback={
+              <BibliotecaPDFViewer
+                pdfUrl={selectedBook.pdf_url}
+                bookTitle={selectedBook.titulo}
+                onClose={handleClosePDF}
+                book={selectedBook}
+              />
+            }>
+              <LazyOptimizedPDFViewer
+                pdfUrl={selectedBook.pdf_url}
+                bookTitle={selectedBook.titulo}
+                onClose={handleClosePDF}
+                book={selectedBook}
+              />
+            </Suspense>
           )}
         </AnimatePresence>
       </Container>
