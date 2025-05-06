@@ -27,6 +27,7 @@ import AssistenteJuridico from "@/pages/AssistenteJuridico";
 import Perfil from "@/pages/Perfil";
 import IniciandoNoDireito from "@/pages/IniciandoNoDireito";
 import PDFLinksPage from "@/pages/PDFLinksPage";
+import Livro9Page from "@/pages/Livro9Page";
 import NotFound from "@/pages/NotFound";
 import VerTudo from "@/pages/VerTudo";
 import Cursos from "@/pages/Cursos";
@@ -60,8 +61,9 @@ function App() {
               <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
               
-              {/* New PDF Links page */}
+              {/* New PDF Links and Livro9 pages */}
               <Route path="/pdf-links" element={<Layout><PDFLinksPage /></Layout>} />
+              <Route path="/livro9" element={<Layout><Livro9Page /></Layout>} />
               
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
