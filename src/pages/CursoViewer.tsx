@@ -140,7 +140,7 @@ const CursoViewer = () => {
             </div>
 
             {!curso.link && (
-              <Alert variant="warning" className="mb-4">
+              <Alert variant="default" className="mb-4">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>Este curso não possui um link de conteúdo válido.</AlertDescription>
               </Alert>
