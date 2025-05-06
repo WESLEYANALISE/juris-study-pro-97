@@ -30,6 +30,9 @@ interface UserDataType {
   };
 }
 
+// Define the BackgroundVariant type to match the JuridicalBackground component
+type BackgroundVariant = 'default' | 'books' | 'scales' | 'gavel' | 'constitution';
+
 // Memoized Main Content component
 const MainContent = React.memo(({ 
   children, 
@@ -40,7 +43,7 @@ const MainContent = React.memo(({
   shouldReduceMotion
 }: { 
   children: React.ReactNode;
-  backgroundVariant: string;
+  backgroundVariant: BackgroundVariant;
   showWelcomeCard: boolean;
   userData: UserDataType;
   user: any;
@@ -160,7 +163,7 @@ const OptimizedLayout = ({ children }: LayoutProps) => {
   }, [user?.id]);
 
   // Memoize the background variant calculation to prevent unnecessary recalculations
-  const backgroundVariant = useMemo(() => {
+  const backgroundVariant = useMemo((): BackgroundVariant => {
     const path = location.pathname;
     
     if (path.includes('/vademecum')) return 'books';

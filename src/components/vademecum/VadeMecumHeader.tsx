@@ -1,8 +1,7 @@
+
 import React from 'react';
 import { Search, Heart, BookOpen, Volume } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-
-// Fixed by replacing VolumeMedium with Volume which is available in lucide-react
 
 interface VadeMecumHeaderProps {
   title: string;
@@ -12,6 +11,9 @@ interface VadeMecumHeaderProps {
   showSearch?: boolean;
   showFavorites?: boolean;
   showVoice?: boolean;
+  searchQuery?: string; // Add searchQuery prop
+  setSearchQuery?: React.Dispatch<React.SetStateAction<string>>; // Add setSearchQuery prop
+  onReload?: () => Promise<void> | void; // Add onReload prop
 }
 
 export function VadeMecumHeader({
@@ -21,7 +23,10 @@ export function VadeMecumHeader({
   showBackButton = false,
   showSearch = true,
   showFavorites = true,
-  showVoice = false
+  showVoice = false,
+  searchQuery, // Add to function parameters
+  setSearchQuery, // Add to function parameters 
+  onReload // Add to function parameters
 }: VadeMecumHeaderProps) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-border">

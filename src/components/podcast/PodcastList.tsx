@@ -110,7 +110,6 @@ export function PodcastList({
           case 'popular':
             query = query.order('id', { ascending: false });
             break;
-          case 'alphabetical':
           case 'title':
             query = query.order('titulo', { ascending: true });
             break;
