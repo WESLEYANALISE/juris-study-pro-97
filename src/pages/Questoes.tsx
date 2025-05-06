@@ -23,6 +23,12 @@ interface QuestionConfig {
   quantidade: number;
 }
 
+interface CompletionStatus {
+  answered: number;
+  total: number;
+  percentage: number;
+}
+
 // Add this CSS for mobile navigation hiding during questions
 const addQuestionsStyleToHead = () => {
   const styleId = 'questoes-mobile-style';
@@ -247,8 +253,14 @@ const Questoes = () => {
     setCurrentQuestionIndex(0);
   };
 
-  const getCompletionStatus = () => {
-    if (!questions) return 0;
+  const getCompletionStatus = (): CompletionStatus => {
+    if (!questions || !questions.length) {
+      return {
+        answered: 0,
+        total: 0,
+        percentage: 0
+      };
+    }
     
     const answeredCount = questions.filter(q => q.respondida).length;
     return {
@@ -429,7 +441,7 @@ const Questoes = () => {
                     <div className="flex justify-between text-sm">
                       <span className="text-muted-foreground">Respondidas:</span>
                       <span className="font-medium">
-                        <Badge variant="outline" className="bg-primary/10">{completion.answered}</Badge> de {questions.length}
+                        <Badge variant="outline" className="bg-primary/10">{completion.answered}</Badge> de {completion.total}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
@@ -477,7 +489,7 @@ const Questoes = () => {
                 }} />
                   </div>
                   <div className="flex justify-between text-xs pt-1">
-                    <span className="text-muted-foreground">Respondidas: {completion.answered}/{questions.length}</span>
+                    <span className="text-muted-foreground">Respondidas: {completion.answered}/{completion.total}</span>
                     <span className="text-muted-foreground">{currentQuestion.respondida ? "✓" : "Aguardando resposta"}</span>
                   </div>
                 </div>
@@ -512,7 +524,7 @@ const Questoes = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Encerrar Sessão de Estudo?</AlertDialogTitle>
             <AlertDialogDescription>
-              Você respondeu {completion.answered} de {questions.length} questões. 
+              Você respondeu {completion.answered} de {completion.total} questões. 
               Tem certeza que deseja sair?
             </AlertDialogDescription>
           </AlertDialogHeader>

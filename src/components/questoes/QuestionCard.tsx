@@ -413,10 +413,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
                 onFavorite(question.id, newFavoritedState);
               }
               
-              toast({
-                title: newFavoritedState ? "Questão favoritada" : "Questão removida dos favoritos",
-                description: newFavoritedState ? "A questão foi adicionada aos seus favoritos." : "A questão foi removida dos seus favoritos.",
-              });
+              if (newFavoritedState) {
+                toast.success("Questão favoritada");
+              } else {
+                toast.error("Questão removida dos favoritos");
+              }
             }}
             disabled={loadingFavorite}
             className="hover:bg-primary/10"
