@@ -75,8 +75,10 @@ export function VadeMecumDrawer({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          
-          <Tabs defaultValue="favorites" value={activeTab} onValueChange={setActiveTab}>
+        </DrawerHeader>
+        
+        <div className="p-4">
+          <Tabs defaultValue={activeTab} value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="favorites" className="flex items-center gap-2">
                 <BookmarkIcon className="h-4 w-4" />
@@ -87,71 +89,69 @@ export function VadeMecumDrawer({
                 <span>Histórico</span>
               </TabsTrigger>
             </TabsList>
+            
+            <TabsContent value="favorites" className="mt-4">
+              <ScrollArea className="h-[60vh] pr-4">
+                {filteredFavorites.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredFavorites.map((item, index) => (
+                      <Card 
+                        key={`fav-${index}`}
+                        className="p-3 hover:bg-muted/30 cursor-pointer"
+                        onClick={() => handleNavigateToArticle(item.law_name, item.article_id)}
+                      >
+                        <div className="font-medium">Art. {item.article_number}</div>
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {item.law_name?.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-sm line-clamp-2">
+                          {item.article_text}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-40 text-center">
+                    <BookmarkIcon className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
+                    <p className="text-muted-foreground">
+                      {searchQuery ? "Nenhum favorito encontrado." : "Você não tem favoritos ainda."}
+                    </p>
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+            
+            <TabsContent value="history" className="mt-4">
+              <ScrollArea className="h-[60vh] pr-4">
+                {filteredHistory.length > 0 ? (
+                  <div className="space-y-2">
+                    {filteredHistory.map((item, index) => (
+                      <Card 
+                        key={`hist-${index}`}
+                        className="p-3 hover:bg-muted/30 cursor-pointer"
+                        onClick={() => handleNavigateToArticle(item.law_name, item.article_id)}
+                      >
+                        <div className="font-medium">Art. {item.article_number}</div>
+                        <div className="text-xs text-muted-foreground mb-1">
+                          {item.law_name?.replace(/_/g, ' ')}
+                        </div>
+                        <div className="text-sm line-clamp-2">
+                          {item.article_text}
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-40 text-center">
+                    <Clock className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
+                    <p className="text-muted-foreground">
+                      {searchQuery ? "Nenhum item encontrado no histórico." : "Seu histórico está vazio."}
+                    </p>
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
           </Tabs>
-        </DrawerHeader>
-        
-        <div className="p-4">
-          <TabsContent value="favorites" className="mt-0">
-            <ScrollArea className="h-[60vh] pr-4">
-              {filteredFavorites.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredFavorites.map((item, index) => (
-                    <Card 
-                      key={`fav-${index}`}
-                      className="p-3 hover:bg-muted/30 cursor-pointer"
-                      onClick={() => handleNavigateToArticle(item.law_name, item.article_id)}
-                    >
-                      <div className="font-medium">Art. {item.article_number}</div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {item.law_name?.replace(/_/g, ' ')}
-                      </div>
-                      <div className="text-sm line-clamp-2">
-                        {item.article_text}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-40 text-center">
-                  <BookmarkIcon className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
-                  <p className="text-muted-foreground">
-                    {searchQuery ? "Nenhum favorito encontrado." : "Você não tem favoritos ainda."}
-                  </p>
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-          
-          <TabsContent value="history" className="mt-0">
-            <ScrollArea className="h-[60vh] pr-4">
-              {filteredHistory.length > 0 ? (
-                <div className="space-y-2">
-                  {filteredHistory.map((item, index) => (
-                    <Card 
-                      key={`hist-${index}`}
-                      className="p-3 hover:bg-muted/30 cursor-pointer"
-                      onClick={() => handleNavigateToArticle(item.law_name, item.article_id)}
-                    >
-                      <div className="font-medium">Art. {item.article_number}</div>
-                      <div className="text-xs text-muted-foreground mb-1">
-                        {item.law_name?.replace(/_/g, ' ')}
-                      </div>
-                      <div className="text-sm line-clamp-2">
-                        {item.article_text}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-40 text-center">
-                  <Clock className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
-                  <p className="text-muted-foreground">
-                    {searchQuery ? "Nenhum item encontrado no histórico." : "Seu histórico está vazio."}
-                  </p>
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
         </div>
       </DrawerContent>
     </Drawer>
