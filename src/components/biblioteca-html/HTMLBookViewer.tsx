@@ -74,10 +74,12 @@ export function HTMLBookViewer({ documentoId, onClose }: HTMLBookViewerProps) {
       }
     } else {
       // Lógica para adicionar marcador
-      const secaoAtual = document.querySelector('.secao-ativa');
-      const tituloSecao = secaoAtual?.getAttribute('data-title') || 'Marcador';
+      const secaoElement = document.querySelector('.secao-ativa');
+      const tituloSecao = secaoElement?.getAttribute('data-title') || 'Marcador';
       
-      await adicionarMarcador(tituloSecao, secaoAtual || 'intro');
+      // Fix: Ensure we're passing a string, not an Element
+      const secaoId = secaoAtual || 'intro';
+      await adicionarMarcador(tituloSecao, secaoId);
     }
   };
 
