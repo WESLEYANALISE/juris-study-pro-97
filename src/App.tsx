@@ -42,6 +42,7 @@ import Anotacoes from "@/pages/Anotacoes";
 import JogosJuridicos from "@/pages/JogosJuridicos";
 import JogoDetalhes from "@/pages/JogoDetalhes";
 import JurisFlix from "@/pages/JurisFlix";
+import CursosV2 from './pages/CursosV2';
 
 function App() {
   return (
@@ -96,6 +97,7 @@ function App() {
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
               <Route path="/jurisflix" element={<Layout><JurisFlix /></Layout>} />
+              <Route path="/cursos-v2" element={<RequireAuth><CursosV2 /></RequireAuth>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>
           </RequireAuth>
