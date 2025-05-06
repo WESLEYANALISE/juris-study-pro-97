@@ -1,26 +1,42 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
 import { 
   BookOpen, 
   Settings, 
   Sparkles, 
-  CheckCircle, 
   Clock, 
   SlidersHorizontal, 
-  LayoutGrid,
-  Lightbulb 
+  Lightbulb,
+  ChevronDown
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Badge } from "@/components/ui/badge";
 
 type FlashcardSetupProps = {
   onStartStudy: (config: {
@@ -42,6 +58,10 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
   const [autoNarrate, setAutoNarrate] = useState(false);
   const [cardCount, setCardCount] = useState<number>(15);
   const [spaceInterval, setSpaceInterval] = useState<"normal" | "short" | "long">("normal");
+  
+  // Dropdown menu state
+  const [isAreasDropdownOpen, setIsAreasDropdownOpen] = useState(false);
+  const [isTemasDropdownOpen, setIsTemasDropdownOpen] = useState(false);
 
   // Fetch available areas and themes
   const { data: areas = [], isLoading: loadingAreas } = useQuery({
@@ -96,6 +116,14 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
     }
   });
 
+  const handleAreaToggle = (area: string) => {
+    setSelectedAreas(prev =>
+      prev.includes(area)
+        ? prev.filter(a => a !== area)
+        : [...prev, area]
+    );
+  };
+
   const handleTemaToggle = (tema: string) => {
     setSelectedTemas(prev => 
       prev.includes(tema) 
@@ -104,12 +132,24 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
     );
   };
 
-  const handleAreaToggle = (area: string) => {
-    setSelectedAreas(prev =>
-      prev.includes(area)
-        ? prev.filter(a => a !== area)
-        : [...prev, area]
-    );
+  const handleSelectAllAreas = () => {
+    setSelectedAreas([...areas]);
+    setIsAreasDropdownOpen(false);
+  };
+
+  const handleClearAreas = () => {
+    setSelectedAreas([]);
+    setIsAreasDropdownOpen(false);
+  };
+
+  const handleSelectAllTemas = () => {
+    setSelectedTemas([...temas]);
+    setIsTemasDropdownOpen(false);
+  };
+
+  const handleClearTemas = () => {
+    setSelectedTemas([]);
+    setIsTemasDropdownOpen(false);
   };
 
   const handleStartStudy = () => {
@@ -154,15 +194,15 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
           </TabsList>
           
           <TabsContent value="content" className="space-y-4">
-            {/* Area selection */}
+            {/* Area selection - Now with dropdown */}
             <motion.div className="space-y-2" {...staggerAnimationProps}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <Label className="text-sm font-medium">Áreas do Direito</Label>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setSelectedAreas(areas)}
+                    onClick={handleSelectAllAreas}
                     disabled={areas.length === 0}
                     className="bg-primary/10 border-primary/20 text-xs"
                   >
@@ -171,7 +211,7 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setSelectedAreas([])}
+                    onClick={handleClearAreas}
                     disabled={selectedAreas.length === 0}
                     className="bg-primary/10 border-primary/20 text-xs"
                   >
@@ -180,39 +220,73 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
                 </div>
               </div>
               
-              <div className="border border-primary/10 rounded-md p-4 h-auto max-h-32 overflow-y-auto flex flex-wrap gap-2 bg-[#1A1633]/50">
-                {loadingAreas ? (
-                  <div className="h-20 flex items-center justify-center w-full">
-                    <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                  </div>
-                ) : (
-                  areas.map((area) => (
+              {/* Areas Dropdown */}
+              <DropdownMenu open={isAreasDropdownOpen} onOpenChange={setIsAreasDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between bg-[#1A1633]/80 border-primary/20 h-auto py-3"
+                  >
+                    <span>
+                      {selectedAreas.length === 0 
+                        ? "Selecione as áreas" 
+                        : `${selectedAreas.length} área${selectedAreas.length > 1 ? 's' : ''} selecionada${selectedAreas.length > 1 ? 's' : ''}`}
+                    </span>
+                    <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-full max-h-[300px] overflow-y-auto bg-[#1A1633] border-primary/20">
+                  <DropdownMenuLabel>Áreas do Direito</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    {loadingAreas ? (
+                      <div className="p-4 text-center">
+                        <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                        <p className="text-sm text-muted-foreground mt-2">Carregando áreas...</p>
+                      </div>
+                    ) : (
+                      areas.map((area) => (
+                        <DropdownMenuItem 
+                          key={area} 
+                          onClick={() => handleAreaToggle(area)}
+                          className="cursor-pointer flex justify-between items-center"
+                        >
+                          <span>{area}</span>
+                          {selectedAreas.includes(area) && 
+                            <Badge className="ml-2 bg-primary">Selecionado</Badge>
+                          }
+                        </DropdownMenuItem>
+                      ))
+                    )}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Selected areas display */}
+              {selectedAreas.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedAreas.map(area => (
                     <Badge 
-                      key={area}
-                      variant={selectedAreas.includes(area) ? "default" : "outline"}
-                      className={cn(
-                        "cursor-pointer hover:bg-primary/20 transition-colors",
-                        selectedAreas.includes(area) ? "bg-primary text-primary-foreground" : "bg-[#1A1633]/80 hover:text-primary"
-                      )}
+                      key={area} 
+                      className="bg-primary cursor-pointer"
                       onClick={() => handleAreaToggle(area)}
                     >
-                      {selectedAreas.includes(area) && <CheckCircle className="mr-1 h-3 w-3" />}
-                      {area}
+                      {area} ✕
                     </Badge>
-                  ))
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </motion.div>
             
-            {/* Temas selection */}
+            {/* Temas selection - Now with dropdown */}
             <motion.div className="space-y-2" {...staggerAnimationProps} transition={{ delay: 0.1 }}>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <Label>Temas</Label>
                 <div className="flex gap-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setSelectedTemas(temas)}
+                    onClick={handleSelectAllTemas}
                     disabled={temas.length === 0}
                     className="bg-primary/10 border-primary/20 text-xs"
                   >
@@ -221,7 +295,7 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    onClick={() => setSelectedTemas([])}
+                    onClick={handleClearTemas}
                     disabled={selectedTemas.length === 0}
                     className="bg-primary/10 border-primary/20 text-xs"
                   >
@@ -230,38 +304,80 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
                 </div>
               </div>
               
-              {loadingTemas ? (
-                <div className="h-48 border border-primary/10 rounded-md flex items-center justify-center">
-                  <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full"></div>
-                </div>
-              ) : (
-                <div className="border border-primary/10 rounded-md p-4 h-48 overflow-y-auto flex flex-wrap gap-2 bg-[#1A1633]/50">
-                  {temas.length > 0 ? (
-                    temas.map((tema) => (
-                      <Badge 
-                        key={tema}
-                        variant={selectedTemas.includes(tema) ? "default" : "outline"}
-                        className={cn(
-                          "cursor-pointer hover:bg-primary/20 transition-colors",
-                          selectedTemas.includes(tema) ? "bg-primary text-primary-foreground" : "bg-[#1A1633]/80 hover:text-primary"
-                        )}
-                        onClick={() => handleTemaToggle(tema)}
-                      >
-                        {selectedTemas.includes(tema) && <CheckCircle className="mr-1 h-3 w-3" />}
-                        {tema}
-                      </Badge>
-                    ))
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                      {selectedAreas.length > 0 ? "Nenhum tema disponível para as áreas selecionadas" : "Selecione uma área para ver os temas"}
-                    </div>
-                  )}
+              {/* Temas Dropdown */}
+              <DropdownMenu open={isTemasDropdownOpen} onOpenChange={setIsTemasDropdownOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-between bg-[#1A1633]/80 border-primary/20 h-auto py-3"
+                    disabled={loadingTemas}
+                  >
+                    {loadingTemas ? (
+                      <span className="flex items-center">
+                        <span className="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full mr-2"></span>
+                        Carregando temas...
+                      </span>
+                    ) : (
+                      <span>
+                        {selectedTemas.length === 0 
+                          ? "Selecione os temas" 
+                          : `${selectedTemas.length} tema${selectedTemas.length > 1 ? 's' : ''} selecionado${selectedTemas.length > 1 ? 's' : ''}`}
+                      </span>
+                    )}
+                    <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-full max-h-[350px] overflow-y-auto bg-[#1A1633] border-primary/20">
+                  <DropdownMenuLabel>Temas</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuGroup>
+                    {loadingTemas ? (
+                      <div className="p-4 text-center">
+                        <div className="animate-spin h-5 w-5 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                        <p className="text-sm text-muted-foreground mt-2">Carregando temas...</p>
+                      </div>
+                    ) : temas.length > 0 ? (
+                      temas.map((tema) => (
+                        <DropdownMenuItem 
+                          key={tema} 
+                          onClick={() => handleTemaToggle(tema)}
+                          className="cursor-pointer flex justify-between items-center"
+                        >
+                          <span className="mr-2 line-clamp-1">{tema}</span>
+                          {selectedTemas.includes(tema) && 
+                            <Badge className="ml-2 bg-primary shrink-0">Selecionado</Badge>
+                          }
+                        </DropdownMenuItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground">
+                        {selectedAreas.length > 0 
+                          ? "Nenhum tema disponível para as áreas selecionadas" 
+                          : "Selecione uma área para ver os temas"}
+                      </div>
+                    )}
+                  </DropdownMenuGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              {/* Selected temas display */}
+              {selectedTemas.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2 max-h-[150px] overflow-y-auto border border-primary/10 p-2 rounded-md">
+                  {selectedTemas.map(tema => (
+                    <Badge 
+                      key={tema} 
+                      className="bg-primary cursor-pointer"
+                      onClick={() => handleTemaToggle(tema)}
+                    >
+                      {tema} ✕
+                    </Badge>
+                  ))}
                 </div>
               )}
             </motion.div>
 
             {/* Card count */}
-            <motion.div className="mt-4 pt-4 border-t border-primary/10" {...staggerAnimationProps} transition={{ delay: 0.2 }}>
+            <motion.div className="mt-6 pt-4 border-t border-primary/10" {...staggerAnimationProps} transition={{ delay: 0.2 }}>
               <div className="flex items-center justify-between">
                 <div>
                   <Label>Quantidade de cartões</Label>
@@ -454,8 +570,9 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
         </Tabs>
       </CardContent>
 
-      <div className="px-6 pb-6 pt-2">
+      <CardFooter className="px-6 pb-6 pt-2">
         <motion.div
+          className="w-full"
           whileHover={{ scale: isStartDisabled ? 1 : 1.02 }}
           whileTap={{ scale: isStartDisabled ? 1 : 0.98 }}
         >
@@ -463,7 +580,7 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
             onClick={handleStartStudy} 
             disabled={isStartDisabled}
             size="lg"
-            className="w-full bg-gradient-to-r from-primary/90 via-purple-600/90 to-primary/90 shadow-lg hover:shadow-purple/20 border border-primary/20 transition-all duration-300"
+            className="w-full bg-gradient-to-r from-primary/90 via-purple-600/90 to-primary/90 shadow-lg hover:shadow-purple-600/20 border border-primary/20 transition-all duration-300"
           >
             <Sparkles className="mr-2 h-5 w-5" />
             Iniciar Estudo
@@ -471,11 +588,11 @@ export function FlashcardSetup({ onStartStudy }: FlashcardSetupProps) {
         </motion.div>
         
         {isStartDisabled && selectedAreas.length > 0 && selectedTemas.length > 0 && (
-          <p className="text-sm text-destructive mt-2 text-center">
+          <p className="text-sm text-destructive mt-2 text-center w-full">
             Nenhum flashcard disponível com os filtros selecionados.
           </p>
         )}
-      </div>
+      </CardFooter>
     </Card>
   );
 }

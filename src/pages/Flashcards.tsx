@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { FlashcardSetup } from "@/components/flashcards/FlashcardSetup";
 import { FlashcardSession } from "@/components/flashcards/FlashcardSession";
 import { FlashcardExtendedStats } from "@/components/flashcards/FlashcardExtendedStats";
+import { FlashcardHeader } from "@/components/flashcards/FlashcardHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Brain, Info, Sparkles, Award, BarChart } from "lucide-react";
 import { motion } from "framer-motion";
@@ -113,43 +114,11 @@ export default function Flashcards() {
       <div className="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-purple-900/20 to-transparent -z-10 pointer-events-none" />
       
       {/* Header with stats toggle */}
-      <div className="flex justify-between items-center mb-6">
-        <motion.div 
-          className="flex items-center gap-2" 
-          initial={{ opacity: 0, x: -20 }} 
-          animate={{ opacity: 1, x: 0 }} 
-          transition={{ duration: 0.3 }}
-        >
-          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
-            <Brain className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold">Flashcards</h1>
-          
-          {userStats && !studyConfig && (
-            <Badge 
-              variant="outline" 
-              className="ml-2 bg-primary/10 border-primary/20 text-muted-foreground"
-            >
-              Sequência: {userStats.streak} dias
-            </Badge>
-          )}
-        </motion.div>
-        
-        {!isMobile && !studyConfig && (
-          <motion.button 
-            onClick={() => setShowStats(!showStats)} 
-            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors" 
-            initial={{ opacity: 0, x: 20 }} 
-            animate={{ opacity: 1, x: 0 }} 
-            transition={{ duration: 0.3, delay: 0.1 }} 
-            whileHover={{ scale: 1.05 }} 
-            whileTap={{ scale: 0.95 }}
-          >
-            <BarChart className="h-4 w-4" />
-            {showStats ? "Ocultar estatísticas" : "Ver estatísticas"}
-          </motion.button>
-        )}
-      </div>
+      <FlashcardHeader 
+        userStats={userStats} 
+        onShowStats={() => setShowStats(!showStats)} 
+        isMobile={isMobile} 
+      />
       
       {/* Quick stats row (when not in study session) */}
       {!studyConfig && userStats && (
@@ -204,7 +173,7 @@ export default function Flashcards() {
       {/* Stats and Setup layout */}
       {!studyConfig && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* On mobile, show stats toggle and drawer */}
+          {/* Main setup area */}
           <motion.div 
             className="md:col-span-2" 
             initial={{ opacity: 0, y: 20 }} 

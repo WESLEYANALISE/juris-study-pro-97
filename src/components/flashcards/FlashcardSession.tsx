@@ -1,11 +1,12 @@
 
 import { useState, useEffect } from "react";
 import { FlashcardStudySession } from "./FlashcardStudySession";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Award, BookOpen, CheckCircle2, PartyPopper } from "lucide-react";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
-import confetti from 'canvas-confetti';
+import { Check, Clock, PartyPopper, Trophy } from "lucide-react";
+import confetti from "canvas-confetti";
 
 type FlashCard = {
   id: string | number;
@@ -18,124 +19,144 @@ type FlashCard = {
 
 interface FlashcardSessionProps {
   cards: FlashCard[];
-  showAnswers: boolean;
-  studyMode: "manual" | "auto";
+  showAnswers?: boolean;
+  studyMode?: "manual" | "auto";
   autoNarrate?: boolean;
   autoSpeed?: number;
-  onExit: () => void;
+  onExit?: () => void;
 }
 
-export function FlashcardSession({ 
-  cards, 
-  showAnswers, 
-  studyMode, 
+export function FlashcardSession({
+  cards,
+  showAnswers = false,
+  studyMode = "manual",
   autoNarrate = false,
-  autoSpeed = 3500, 
-  onExit 
+  autoSpeed = 3500,
+  onExit
 }: FlashcardSessionProps) {
-  const [sessionComplete, setSessionComplete] = useState(false);
-  const [showStats, setShowStats] = useState(false);
-
-  const handleComplete = () => {
-    setSessionComplete(true);
+  const [sessionCompleted, setSessionCompleted] = useState(false);
+  const [sessionStats, setSessionStats] = useState({
+    totalCards: cards.length,
+    timeSpent: 0,
+    reviewedCards: 0
+  });
+  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
+  
+  // Start timer when session begins
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSessionStats(prev => ({
+        ...prev,
+        timeSpent: prev.timeSpent + 1
+      }));
+    }, 1000);
     
-    // Trigger confetti effect
-    const colors = ['#9b87f5', '#7c68e3', '#6d56cc'];
+    setTimer(interval);
+    
+    // Clean up on unmount
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+  
+  // Handle session completion
+  const handleSessionComplete = () => {
+    // Stop the timer
+    if (timer) clearInterval(timer);
+    
+    // Show success animation
     confetti({
       particleCount: 100,
       spread: 70,
-      origin: { y: 0.6 },
-      colors: colors,
+      origin: { y: 0.6 }
     });
     
-    // Second confetti burst after a delay
-    setTimeout(() => {
-      confetti({
-        particleCount: 60,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0 },
-        colors: colors,
-      });
-      
-      confetti({
-        particleCount: 60,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1 },
-        colors: colors,
-      });
-    }, 500);
+    // Update stats
+    setSessionStats(prev => ({
+      ...prev,
+      reviewedCards: cards.length
+    }));
+    
+    // Show completion screen
+    setSessionCompleted(true);
+    
+    // Show toast notification
+    toast.success("Sessão de estudo concluída!");
+  };
+  
+  // Format time from seconds to mm:ss
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  if (sessionComplete) {
+  if (sessionCompleted) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="w-full max-w-md mx-auto bg-gradient-to-br from-[#1A1633] via-[#262051] to-[#1A1633] shadow-lg border border-primary/20">
-          <CardHeader>
-            <div className="flex justify-center mb-4">
-              <motion.div
-                initial={{ scale: 0 }}
-                animate={{ scale: 1, rotate: [0, 10, -10, 0] }}
-                transition={{ duration: 0.7, delay: 0.2 }}
-                className="w-16 h-16 rounded-full bg-green-900/30 flex items-center justify-center text-green-400"
-              >
-                <PartyPopper className="h-8 w-8" />
-              </motion.div>
+        <Card className="border-primary/20 bg-gradient-to-br from-[#1A1633] via-[#262051] to-[#1A1633] shadow-xl">
+          <CardHeader className="text-center pb-2">
+            <div className="mx-auto bg-primary/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
+              <Trophy className="h-8 w-8 text-primary" />
             </div>
-            <CardTitle className="text-2xl text-center">Sessão Concluída!</CardTitle>
-            <CardDescription className="text-center">
-              Você estudou {cards.length} flashcards
-            </CardDescription>
+            <CardTitle className="text-2xl">Sessão Concluída!</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <motion.div 
-                className="flex flex-col items-center p-3 rounded-lg bg-[#1A1633]/50 border border-primary/10" 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3, duration: 0.3 }}
-              >
-                <BookOpen className="h-5 w-5 text-primary mb-1" />
-                <div className="text-lg font-semibold">{cards.length}</div>
-                <div className="text-xs text-muted-foreground">Cards Estudados</div>
-              </motion.div>
-              <motion.div 
-                className="flex flex-col items-center p-3 rounded-lg bg-[#1A1633]/50 border border-primary/10"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4, duration: 0.3 }}
-              >
-                <Award className="h-5 w-5 text-amber-500 mb-1" />
-                <div className="text-lg font-semibold">+{cards.length * 5}</div>
-                <div className="text-xs text-muted-foreground">Pontos Ganhos</div>
-              </motion.div>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-3 gap-4 mt-6">
+              <div className="border border-primary/20 rounded-lg p-4 text-center bg-card/50">
+                <div className="text-2xl font-bold mb-1">{sessionStats.totalCards}</div>
+                <div className="text-xs text-muted-foreground">Cartões</div>
+              </div>
+              <div className="border border-primary/20 rounded-lg p-4 text-center bg-card/50">
+                <div className="text-2xl font-bold mb-1">{formatTime(sessionStats.timeSpent)}</div>
+                <div className="text-xs text-muted-foreground">Tempo total</div>
+              </div>
+              <div className="border border-primary/20 rounded-lg p-4 text-center bg-card/50">
+                <div className="text-2xl font-bold mb-1">
+                  {Math.round((sessionStats.totalCards / sessionStats.timeSpent) * 60)}
+                </div>
+                <div className="text-xs text-muted-foreground">Cards/min</div>
+              </div>
             </div>
             
-            <motion.div 
-              className="border-t border-primary/10 pt-4"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.3 }}
-            >
-              <p className="text-sm text-center text-muted-foreground mb-4">
-                Continue estudando para manter sua sequência!
+            <div className="flex flex-col gap-4 items-center">
+              <p className="text-center text-muted-foreground">
+                Continue estudando regularmente para melhorar seu conhecimento.
               </p>
               
               <div className="flex gap-3">
-                <Button
-                  variant="default"
-                  className="w-full bg-gradient-to-r from-primary/90 to-purple-600/90 shadow-lg hover:shadow-purple/20 border border-primary/20 transition-all duration-300"
-                  onClick={onExit}
+                <Button 
+                  variant="outline" 
+                  onClick={onExit} 
+                  className="border-primary/20 hover:bg-primary/10"
                 >
-                  <CheckCircle2 className="mr-1 h-4 w-4" /> Concluir
+                  Finalizar
+                </Button>
+                <Button
+                  onClick={() => {
+                    setSessionCompleted(false);
+                    setSessionStats(prev => ({ ...prev, timeSpent: 0, reviewedCards: 0 }));
+                    
+                    // Restart timer
+                    const interval = setInterval(() => {
+                      setSessionStats(prev => ({
+                        ...prev,
+                        timeSpent: prev.timeSpent + 1
+                      }));
+                    }, 1000);
+                    
+                    setTimer(interval);
+                  }}
+                  className="bg-gradient-to-r from-primary/90 via-purple-600/90 to-primary/90 gap-2"
+                >
+                  <PartyPopper className="h-4 w-4" /> Estudar novamente
                 </Button>
               </div>
-            </motion.div>
+            </div>
           </CardContent>
         </Card>
       </motion.div>
@@ -143,14 +164,21 @@ export function FlashcardSession({
   }
 
   return (
-    <FlashcardStudySession
-      cards={cards}
-      showAnswers={showAnswers}
-      studyMode={studyMode}
-      autoNarrate={autoNarrate}
-      autoSpeed={autoSpeed}
-      onComplete={handleComplete}
-      onExit={onExit}
-    />
+    <div className="relative">
+      <div className="absolute top-0 right-0 flex items-center gap-2 text-sm text-muted-foreground p-1">
+        <Clock className="h-4 w-4" />
+        <span>{formatTime(sessionStats.timeSpent)}</span>
+      </div>
+      
+      <FlashcardStudySession 
+        cards={cards}
+        showAnswers={showAnswers}
+        studyMode={studyMode}
+        autoNarrate={autoNarrate}
+        autoSpeed={autoSpeed}
+        onComplete={handleSessionComplete}
+        onExit={onExit}
+      />
+    </div>
   );
 }

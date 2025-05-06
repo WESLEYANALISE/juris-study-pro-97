@@ -1,63 +1,55 @@
 
-import { useState } from 'react';
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { 
-  ThumbsUp, 
-  ThumbsDown,
-  Frown,
-  Meh,
-  Smile,
-  Award
-} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
-type KnowledgeLevel = 0 | 1 | 2 | 3 | 4 | 5;
-
 interface FlashcardRatingProps {
-  onRate: (level: KnowledgeLevel) => void;
+  onRate: (level: 0 | 1 | 2 | 3 | 4 | 5) => void;
   className?: string;
 }
 
 export function FlashcardRating({ onRate, className }: FlashcardRatingProps) {
-  const [selectedLevel, setSelectedLevel] = useState<KnowledgeLevel | null>(null);
+  const [hoveredLevel, setHoveredLevel] = useState<number | null>(null);
   
-  const ratingOptions: {level: KnowledgeLevel, label: string, icon: React.ReactNode, color: string}[] = [
-    { level: 1, label: "Não sei", icon: <Frown className="h-5 w-5" />, color: "bg-red-600 bg-opacity-90 text-white hover:bg-red-700" },
-    { level: 2, label: "Difícil", icon: <ThumbsDown className="h-5 w-5" />, color: "bg-orange-500 bg-opacity-90 text-white hover:bg-orange-600" },
-    { level: 3, label: "Regular", icon: <Meh className="h-5 w-5" />, color: "bg-yellow-500 bg-opacity-90 text-white hover:bg-yellow-600" },
-    { level: 4, label: "Bom", icon: <Smile className="h-5 w-5" />, color: "bg-green-500 bg-opacity-90 text-white hover:bg-green-600" },
-    { level: 5, label: "Fácil", icon: <ThumbsUp className="h-5 w-5" />, color: "bg-emerald-500 bg-opacity-90 text-white hover:bg-emerald-600" },
+  const levels = [
+    { value: 0, label: "Não sei", color: "bg-red-500/20 border-red-500/30 hover:bg-red-500/30" },
+    { value: 1, label: "Reconheço", color: "bg-orange-500/20 border-orange-500/30 hover:bg-orange-500/30" },
+    { value: 2, label: "Difícil", color: "bg-amber-500/20 border-amber-500/30 hover:bg-amber-500/30" },
+    { value: 3, label: "Bom", color: "bg-lime-500/20 border-lime-500/30 hover:bg-lime-500/30" },
+    { value: 4, label: "Fácil", color: "bg-green-500/20 border-green-500/30 hover:bg-green-500/30" },
+    { value: 5, label: "Domino", color: "bg-emerald-500/20 border-emerald-500/30 hover:bg-emerald-500/30" },
   ];
-
-  const handleRate = (level: KnowledgeLevel) => {
-    setSelectedLevel(level);
-    onRate(level);
-  };
-
+  
   return (
-    <div className={cn("flex flex-wrap gap-2 justify-center", className)}>
-      {ratingOptions.map((option) => (
-        <motion.div
-          key={option.level}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <Button
-            variant="outline"
-            size="lg"
-            className={cn(
-              option.color,
-              selectedLevel === option.level ? "ring-2 ring-offset-2 ring-white/20" : "",
-              "border-0 shadow-md transition-all flex-1"
-            )}
-            onClick={() => handleRate(option.level)}
+    <div className={cn("w-full space-y-3", className)}>
+      <p className="text-sm text-muted-foreground text-center mb-4">
+        Sua avaliação ajuda a determinar quando você verá este cartão novamente.
+      </p>
+      <div className="grid grid-cols-3 gap-2">
+        {levels.map((level) => (
+          <motion.div 
+            key={level.value}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            {option.icon}
-            <span className="ml-2">{option.label}</span>
-          </Button>
-        </motion.div>
-      ))}
+            <Button
+              variant="outline"
+              onClick={() => onRate(level.value as 0 | 1 | 2 | 3 | 4 | 5)}
+              className={cn(
+                "w-full h-16 flex flex-col border", 
+                level.color,
+                hoveredLevel !== null && hoveredLevel >= level.value ? level.color : ""
+              )}
+              onMouseEnter={() => setHoveredLevel(level.value)}
+              onMouseLeave={() => setHoveredLevel(null)}
+            >
+              <span className="text-base">{level.label}</span>
+              <span className="text-xs text-muted-foreground mt-1">{level.value}</span>
+            </Button>
+          </motion.div>
+        ))}
+      </div>
     </div>
   );
 }
