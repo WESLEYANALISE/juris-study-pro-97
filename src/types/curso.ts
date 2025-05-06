@@ -10,9 +10,9 @@ export interface Curso {
   avaliacao?: number;
   alunos?: number;
   thumbnail?: string;
-  conteudo?: any;
+  conteudo?: Record<string, Array<{titulo: string, duracao?: string}>>;
   
-  // New fields from the actual database
+  // Fields from the cursos_narrados table
   area?: string;
   capa?: string;
   dificuldade?: string;

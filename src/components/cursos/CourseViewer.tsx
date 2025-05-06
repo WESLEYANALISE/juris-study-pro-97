@@ -12,6 +12,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 interface CourseViewerProps {
   title: string;
@@ -53,6 +54,15 @@ export function CourseViewer({
   const notesTimeoutRef = useRef<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const isMobile = useIsMobile();
+  
+  useEffect(() => {
+    // Hide mobile navigation when course is active
+    document.body.classList.add('course-viewer-active');
+    
+    return () => {
+      document.body.classList.remove('course-viewer-active');
+    };
+  }, []);
   
   // Handle initial notes panel visibility
   useEffect(() => {
@@ -129,6 +139,12 @@ export function CourseViewer({
     const currentIndex = volumes.findIndex(v => v === volume);
     const nextIndex = (currentIndex + 1) % volumes.length;
     setVolume(volumes[nextIndex]);
+    
+    // Apply volume settings to the iframe if possible
+    // Note: YouTube iframe API doesn't allow direct volume control through the iframe
+    toast(`Volume alterado para ${volumes[nextIndex]}`, {
+      description: "Esta configuração afeta apenas o elemento de interface e não o volume real do vídeo."
+    });
   };
   
   const VolumeIcon = volume === "muted" ? VolumeX : volume === "low" ? Volume1 : Volume2;
@@ -138,8 +154,8 @@ export function CourseViewer({
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-black">
-      {/* Simplified header - just a close button */}
+    <div className="fixed inset-0 flex flex-col bg-black z-[100]">
+      {/* Close button in the top right corner as requested */}
       <div className="absolute top-4 right-4 z-50">
         <Button 
           variant="destructive" 
@@ -193,7 +209,7 @@ export function CourseViewer({
       {showControls && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-sm transition-all z-30">
           <div className="flex flex-wrap gap-2 justify-between items-center">
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline" 
                 size={isMobile ? "sm" : "default"}

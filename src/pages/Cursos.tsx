@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { CourseCategories } from '@/components/cursos/CourseCategories';
@@ -32,15 +33,18 @@ const Cursos = () => {
             
             // Apply category filter if selected
             if (selectedCategory) {
-              result = result.eq('categoria', selectedCategory);
+              result = result.eq('area', selectedCategory);
             }
             
             // Apply search filter if there's a search query
             if (debouncedSearchQuery) {
               result = result.or(
-                `titulo.ilike.%${debouncedSearchQuery}%,descricao.ilike.%${debouncedSearchQuery}%,autor.ilike.%${debouncedSearchQuery}%,materia.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
+                `materia.ilike.%${debouncedSearchQuery}%,sobre.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
               );
             }
+            
+            // Sort by area and then by sequencia
+            result = result.order('area').order('sequencia');
             
             return result;
           }
@@ -74,7 +78,7 @@ const Cursos = () => {
   };
 
   const handleStartCourse = (courseId: number) => {
-    navigate(`/cursos/viewer/${courseId}`);
+    navigate(`/curso/${courseId}`);
   };
 
   // Function to map database fields to what the CourseMenu expects
@@ -86,6 +90,20 @@ const Cursos = () => {
       duracao: curso.duracao || '1h',
     };
   };
+
+  // Group courses by area
+  const coursesByArea = React.useMemo(() => {
+    if (!courses || courses.length === 0) return {};
+    
+    return courses.reduce<Record<string, Curso[]>>((acc, course) => {
+      const area = course.area || 'Sem Categoria';
+      if (!acc[area]) {
+        acc[area] = [];
+      }
+      acc[area].push(course);
+      return acc;
+    }, {});
+  }, [courses]);
   
   return (
     <div className="container mx-auto py-8 px-4">
@@ -184,11 +202,34 @@ const Cursos = () => {
         </TabsContent>
         
         <TabsContent value="populares">
-          <div className="py-12 text-center">
-            <h3 className="text-xl font-medium mb-2">Cursos Mais Populares</h3>
-            <p className="text-muted-foreground">
-              Os cursos com melhor avaliação e maior número de alunos.
-            </p>
+          <div className="space-y-8">
+            {Object.entries(coursesByArea).map(([area, areaCourses]) => (
+              <div key={area} className="space-y-4">
+                <h3 className="text-xl font-medium border-b pb-2">{area}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {areaCourses.map((course) => {
+                    const courseMenuProps = mapCursoToCourseMenu(course);
+                    return (
+                      <CourseMenu 
+                        key={course.id}
+                        {...courseMenuProps}
+                        onStartCourse={() => handleStartCourse(course.id)}
+                        open={false}
+                        onOpenChange={() => {}}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            
+            {Object.keys(coursesByArea).length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Nenhum curso disponível no momento.
+                </p>
+              </div>
+            )}
           </div>
         </TabsContent>
         

@@ -21,14 +21,18 @@ export default function MobileNavigation() {
   const { state } = useSidebar();
   const [isPdfViewerOpen, setIsPdfViewerOpen] = React.useState(false);
   const [isQuestionMode, setIsQuestionMode] = React.useState(false);
+  const [isCourseViewer, setIsCourseViewer] = React.useState(false);
   
   React.useEffect(() => {
-    // Enhanced PDF viewer and question mode detection
+    // Enhanced PDF viewer, question mode and course viewer detection
     const checkScreenMode = () => {
       const isPdfOpen = document.body.classList.contains('pdf-viewer-open');
       const isInQuestionMode = document.body.classList.contains('questions-active');
+      const isInCourseViewer = document.body.classList.contains('course-viewer-active');
+      
       setIsPdfViewerOpen(isPdfOpen);
       setIsQuestionMode(isInQuestionMode);
+      setIsCourseViewer(isInCourseViewer);
     };
     
     // Initial check
@@ -44,8 +48,8 @@ export default function MobileNavigation() {
     return () => observer.disconnect();
   }, [location.pathname]);
   
-  // Don't render if PDF viewer is open or in question mode
-  if (isPdfViewerOpen || isQuestionMode) {
+  // Don't render if PDF viewer is open, in question mode, or in course viewer mode
+  if (isPdfViewerOpen || isQuestionMode || isCourseViewer) {
     return null;
   }
   

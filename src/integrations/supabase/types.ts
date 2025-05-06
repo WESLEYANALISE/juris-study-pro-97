@@ -936,9 +936,8 @@ export type Database = {
           id: number
           link: string | null
           materia: string | null
-          sequencia: number | null
+          sequencia: string | null
           sobre: string | null
-          tipo_acesso: string | null
         }
         Insert: {
           area?: string | null
@@ -948,9 +947,8 @@ export type Database = {
           id?: number
           link?: string | null
           materia?: string | null
-          sequencia?: number | null
+          sequencia?: string | null
           sobre?: string | null
-          tipo_acesso?: string | null
         }
         Update: {
           area?: string | null
@@ -960,9 +958,8 @@ export type Database = {
           id?: number
           link?: string | null
           materia?: string | null
-          sequencia?: number | null
+          sequencia?: string | null
           sobre?: string | null
-          tipo_acesso?: string | null
         }
         Relationships: []
       }

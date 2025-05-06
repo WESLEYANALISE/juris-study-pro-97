@@ -1,59 +1,70 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
+import { CourseViewer } from '@/components/cursos/CourseViewer';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { BookOpen, PlayCircle, CheckCircle, Lock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Curso } from '@/types/curso';
+import { useCursoViewer } from '@/hooks/use-curso-viewer';
+import { toast } from 'sonner';
 
 const CursoViewer = () => {
-  const { cursoId } = useParams<{ cursoId: string }>();
-  const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { 
+    curso, 
+    loading, 
+    showCourse, 
+    menuOpen, 
+    setMenuOpen,
+    handleStartCourse, 
+    handleBack,
+    handleNavigateBack,
+    updateProgress,
+    progress,
+    saveNotes,
+    notes,
+    isBookmarked,
+    toggleBookmark,
+    videoRef
+  } = useCursoViewer();
 
-  const { data: curso, isLoading } = useQuery({
-    queryKey: ['curso', cursoId],
-    queryFn: async () => {
-      try {
-        // Parse the cursoId as a number or use a default fallback
-        const cursoIdNum = cursoId ? parseInt(cursoId, 10) : 0;
-        
-        const { data, error } = await supabase
-          .from('cursos_narrados')
-          .select('*')
-          .eq('id', cursoIdNum)
-          .single();
-        
-        if (error) {
-          throw error;
-        }
-        
-        return data as Curso;
-      } catch (error) {
-        console.error('Error fetching course:', error);
-        return null;
-      }
-    },
-    enabled: !!cursoId,
-  });
+  // If in course view mode, show the CourseViewer component
+  if (showCourse && curso) {
+    return (
+      <CourseViewer
+        title={curso.materia || curso.titulo || ''}
+        videoUrl={curso.link || ''}
+        onBack={handleBack}
+        progress={progress}
+        updateProgress={updateProgress}
+        downloadUrl={curso.download}
+        savedNotes={notes}
+        onSaveNotes={saveNotes}
+        isBookmarked={isBookmarked}
+        onToggleBookmark={toggleBookmark}
+        videoRef={videoRef}
+      />
+    );
+  }
 
-  const handleStartCourse = () => {
-    console.log('Starting course');
-  };
-
-  if (isLoading) {
+  if (loading) {
     return <div className="container mx-auto py-8">Carregando curso...</div>;
   }
 
   if (!curso) {
-    return <div className="container mx-auto py-8">Curso não encontrado.</div>;
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <h2 className="text-xl font-semibold mb-4">Curso não encontrado</h2>
+        <p className="text-muted-foreground mb-6">O curso solicitado não está disponível.</p>
+        <Button onClick={handleNavigateBack}>Voltar para Cursos</Button>
+      </div>
+    );
   }
 
   // Function to map database fields to what the CourseMenu expects
@@ -73,10 +84,10 @@ const CursoViewer = () => {
     <div className="container mx-auto py-8 grid grid-cols-1 md:grid-cols-4 gap-6">
       <div className="md:col-span-1">
         <CourseMenu 
-          open={sidebarOpen}
-          onOpenChange={setSidebarOpen}
+          open={menuOpen}
+          onOpenChange={setMenuOpen}
           onStartCourse={handleStartCourse}
-          onBack={() => navigate('/cursos')} 
+          onBack={handleNavigateBack} 
           showBackButton={true}
           {...courseMenuProps}
         />
@@ -89,9 +100,30 @@ const CursoViewer = () => {
             <CardDescription>{courseMenuProps.description}</CardDescription>
           </CardHeader>
           <CardContent>
-            <img src={curso.thumbnail || curso.capa} alt={courseMenuProps.title} className="rounded-md mb-4 w-full" />
-            <p>Autor: {curso.autor || 'Não informado'}</p>
-            <p>Categoria: {curso.categoria || curso.area || 'Não informada'}</p>
+            <img src={curso.thumbnail || curso.capa} alt={courseMenuProps.title} className="rounded-md mb-4 w-full h-[240px] object-cover" />
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Autor:</p>
+                <p>{curso.autor || 'Não informado'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Categoria:</p>
+                <p>{curso.categoria || curso.area || 'Não informada'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Dificuldade:</p>
+                <p>{curso.dificuldade || 'Iniciante'}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Tipo de acesso:</p>
+                <p>{curso.tipo_acesso || 'Gratuito'}</p>
+              </div>
+            </div>
+
+            <Button className="w-full" size="lg" onClick={handleStartCourse}>
+              Iniciar Curso
+            </Button>
           </CardContent>
         </Card>
 
@@ -114,9 +146,11 @@ const CursoViewer = () => {
                           {aulas && Array.isArray(aulas) ? (
                             <ul className="list-none space-y-2">
                               {aulas.map((aula, aulaIndex) => (
-                                <li key={aulaIndex} className="flex items-center justify-between">
+                                <li key={aulaIndex} className="flex items-center justify-between p-2 hover:bg-muted/50 rounded-md">
                                   <div className="flex items-center gap-2">
-                                    <PlayCircle className="h-4 w-4 text-gray-500" />
+                                    <div className="w-5 h-5 flex items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-medium">
+                                      {aulaIndex + 1}
+                                    </div>
                                     <span>{aula.titulo}</span>
                                   </div>
                                   <Badge variant="outline">Gratuito</Badge>
@@ -133,9 +167,11 @@ const CursoViewer = () => {
                 ))}
               </Accordion>
             ) : (
-              <div className="text-center py-4 text-muted-foreground">
-                <AlertTriangle className="inline-block h-6 w-6 mr-2" />
-                Conteúdo do curso não disponível.
+              <div className="text-center py-4">
+                <p className="text-muted-foreground">Este curso não possui módulos definidos.</p>
+                <Button variant="outline" className="mt-4" onClick={handleStartCourse}>
+                  Ir direto para o conteúdo
+                </Button>
               </div>
             )}
           </CardContent>
