@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
@@ -14,9 +15,11 @@ import { Input } from "@/components/ui/input";
 import { useState as useStateSafe } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalSearch } from "@/hooks/use-global-search";
+
 interface HeaderProps {
   userProfile?: ProfileType;
 }
+
 export function Header({
   userProfile = "concurseiro"
 }: HeaderProps) {
@@ -32,8 +35,11 @@ export function Header({
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const {
-    globalSearchResults,
-    handleGlobalSearch
+    search,
+    results: searchResults,
+    isSearching,
+    hasSearched,
+    clearResults
   } = useGlobalSearch();
 
   // Function to handle sidebar toggle, checking if toggle exists first
@@ -42,6 +48,7 @@ export function Header({
       sidebar.toggleSidebar();
     }
   };
+  
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
@@ -67,6 +74,17 @@ export function Header({
       setIsSearchOpen(false);
     }
   };
+
+  // Perform live search as user types
+  const handleSearchInput = (value: string) => {
+    setSearchQuery(value);
+    if (value.trim().length >= 2) {
+      search(value);
+    } else {
+      clearResults();
+    }
+  };
+
   return <>
       <motion.header initial={{
       y: -20,
@@ -135,7 +153,13 @@ export function Header({
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input placeholder="O que você procura?" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" autoFocus />
+                <Input 
+                  placeholder="O que você procura?" 
+                  value={searchQuery} 
+                  onChange={e => handleSearchInput(e.target.value)} 
+                  className="pl-9" 
+                  autoFocus 
+                />
               </div>
               <Button type="submit">Buscar</Button>
             </div>
@@ -162,38 +186,49 @@ export function Header({
             </div>
 
             {/* Add results preview here if search has query */}
-            {searchQuery.trim().length > 2 && <div className="mt-4 space-y-2">
-                <p className="text-sm font-medium">Resultados:</p>
+            {searchQuery.trim().length >= 2 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium flex items-center gap-2">
+                  {isSearching ? 'Buscando...' : 'Resultados:'}
+                  {isSearching && <span className="inline-block w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>}
+                </p>
                 <div className="max-h-60 overflow-y-auto space-y-2">
-                  <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-blue-500">Questões</Badge>
-                      <span className="text-sm line-clamp-1">Questão sobre {searchQuery}</span>
+                  {searchResults && searchResults.length > 0 ? (
+                    searchResults.map((result, index) => (
+                      <div 
+                        key={`${result.type}-${result.id}-${index}`}
+                        className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer"
+                        onClick={() => {
+                          navigate(result.url);
+                          setIsSearchOpen(false);
+                          clearResults();
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge className={`${
+                            result.type === 'questao' ? 'bg-blue-500' : 
+                            result.type === 'livro' ? 'bg-green-500' : 
+                            'bg-purple-500'
+                          }`}>
+                            {result.type === 'questao' ? 'Questões' : 
+                             result.type === 'livro' ? 'Biblioteca' : 
+                             'Vade Mecum'}
+                          </Badge>
+                          <span className="text-sm line-clamp-1">{result.title}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {result.description}
+                        </p>
+                      </div>
+                    ))
+                  ) : hasSearched && !isSearching ? (
+                    <div className="p-3 text-center text-muted-foreground">
+                      Nenhum resultado encontrado para "{searchQuery}"
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      Área: Direito Penal
-                    </p>
-                  </div>
-                  <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-green-500">Biblioteca</Badge>
-                      <span className="text-sm line-clamp-1">Livro relacionado a {searchQuery}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      Área: Direito Civil
-                    </p>
-                  </div>
-                  <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
-                    <div className="flex items-center gap-2">
-                      <Badge className="bg-purple-500">Vade Mecum</Badge>
-                      <span className="text-sm line-clamp-1">Artigo sobre {searchQuery}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      Código Penal - Art. 121
-                    </p>
-                  </div>
+                  ) : null}
                 </div>
-              </div>}
+              </div>
+            )}
           </form>
         </DialogContent>
       </Dialog>

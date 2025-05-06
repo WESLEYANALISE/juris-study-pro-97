@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { safeSelect, safeInsert, safeDelete } from "@/utils/supabase-helpers";
 import { SupabaseFavorite, SupabaseHistoryEntry } from "@/types/supabase";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export interface QuestionCardProps {
   question?: any; // Question object from the original implementation
@@ -30,11 +31,23 @@ export interface QuestionCardProps {
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite, ...props }) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [answerSubmitError, setAnswerSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Add body class to hide mobile navigation when in question mode
+    document.body.classList.add('questions-active');
+    
+    return () => {
+      // Clean up by removing the class when component unmounts
+      document.body.classList.remove('questions-active');
+    };
+  }, []);
 
   useEffect(() => {
     if (question) {
@@ -48,6 +61,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     setSelectedAnswer(null);
     setIsAnswerCorrect(null);
     setShowExplanation(false);
+    setAnswerSubmitError(null);
   }, [props.id, question?.id]);
 
   const checkIfFavorited = async () => {
@@ -118,7 +132,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     }
   };
 
-  const handleAnswerSelection = (key: string) => {
+  const handleAnswerSelection = async (key: string) => {
     if (selectedAnswer) return; // Prevent multiple answers
     
     setSelectedAnswer(key);
@@ -127,7 +141,24 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     setShowExplanation(true);
     
     if (props.onAnswer && props.id) {
-      props.onAnswer(props.id, key, correct);
+      try {
+        setAnswerSubmitError(null);
+        await props.onAnswer(props.id, key, correct);
+      } catch (error) {
+        console.error("Erro ao registrar resposta:", error);
+        setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
+      }
+    }
+  };
+
+  const retryAnswerSubmission = () => {
+    if (selectedAnswer && props.onAnswer && props.id) {
+      const correct = selectedAnswer === props.respostaCorreta;
+      props.onAnswer(props.id, selectedAnswer, correct)
+        .then(() => setAnswerSubmitError(null))
+        .catch(() => {
+          setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
+        });
     }
   };
 
@@ -135,7 +166,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   if (props.id) {
     return (
       <Card className="w-full border shadow-md hover:shadow-lg transition-all duration-300 bg-card/90 backdrop-blur-sm">
-        <CardHeader className="pb-2">
+        <CardHeader className={`${isMobile ? 'pb-1 p-4' : 'pb-2'}`}>
           <div className="flex justify-between items-center">
             <Badge variant="outline" className="text-xs bg-primary/10 hover:bg-primary/20">
               {props.area}
@@ -144,17 +175,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
               {props.tema}
             </Badge>
           </div>
-          <CardTitle className="text-xl mt-2">Questão</CardTitle>
+          <CardTitle className={`${isMobile ? 'text-lg' : 'text-xl'} mt-2`}>Questão</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="text-base leading-relaxed">{props.pergunta}</div>
+        <CardContent className={isMobile ? 'p-4 pt-0' : ''}>
+          <div className="space-y-3">
+            <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-relaxed`}>{props.pergunta}</div>
             
-            <div className="space-y-3 mt-6">
+            <div className="space-y-2 mt-4">
               {props.respostas && Object.entries(props.respostas).map(([key, value]) => {
                 const isSelected = selectedAnswer === key;
                 const isCorrect = props.respostaCorreta === key;
-                let buttonClassName = "w-full justify-start text-left py-3 hover:bg-primary/10 hover:border-primary/40 transition-colors";
+                let buttonClassName = `w-full justify-start text-left ${isMobile ? 'py-2 text-xs' : 'py-3 text-sm'} hover:bg-primary/10 hover:border-primary/40 transition-colors`;
                 
                 // Add styling based on selection and correctness
                 if (isSelected) {
@@ -174,32 +205,42 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
                     onClick={() => handleAnswerSelection(key)}
                     disabled={!!selectedAnswer}
                   >
-                    <span className="font-bold mr-2">{key})</span> {value}
+                    <span className="font-bold mr-2 min-w-[20px]">{key})</span> 
+                    <span className="line-clamp-3">{value}</span>
                     {isSelected && (
                       isCorrect 
-                        ? <CheckCircle className="ml-auto h-5 w-5 text-green-500" /> 
-                        : <XCircle className="ml-auto h-5 w-5 text-red-500" />
+                        ? <CheckCircle className="ml-auto h-4 w-4 flex-shrink-0 text-green-500" /> 
+                        : <XCircle className="ml-auto h-4 w-4 flex-shrink-0 text-red-500" />
                     )}
                     {!isSelected && selectedAnswer && isCorrect && (
-                      <CheckCircle className="ml-auto h-5 w-5 text-green-500" />
+                      <CheckCircle className="ml-auto h-4 w-4 flex-shrink-0 text-green-500" />
                     )}
                   </Button>
                 );
               })}
             </div>
             
+            {answerSubmitError && (
+              <div 
+                className="p-2 bg-red-500/10 text-red-500 text-xs rounded-md text-center cursor-pointer"
+                onClick={retryAnswerSubmission}
+              >
+                {answerSubmitError}
+              </div>
+            )}
+            
             {showExplanation && props.comentario && (
-              <div className="mt-6 p-4 bg-muted/40 rounded-md border border-muted">
-                <h4 className="font-medium mb-2 flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
+              <div className={`mt-4 p-3 bg-muted/40 rounded-md border border-muted ${isMobile ? 'text-xs' : 'text-sm'}`}>
+                <h4 className="font-medium mb-1 flex items-center gap-1">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
                   Explicação:
                 </h4>
-                <p className="text-sm">{props.comentario}</p>
+                <p className={isMobile ? 'text-xs' : 'text-sm'}>{props.comentario}</p>
               </div>
             )}
             
             {props.percentualAcertos && (
-              <div className="mt-2 text-sm text-muted-foreground flex items-center gap-1">
+              <div className={`mt-2 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex items-center gap-1`}>
                 <span>Taxa de acertos:</span>
                 <Badge variant="outline" className="text-xs">
                   {props.percentualAcertos}%
@@ -208,14 +249,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
             )}
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
+        <CardFooter className={`flex justify-between ${isMobile ? 'p-4 pt-2' : ''}`}>
           <Button variant="ghost" size="sm" className="text-muted-foreground">
             <Heart className="h-4 w-4 mr-1" />
-            Favoritar
+            <span className="hidden sm:inline">Favoritar</span>
           </Button>
           {selectedAnswer && props.onNext && (
             <Button onClick={props.onNext} variant="default" size="sm" className="gap-1">
-              Próxima Questão
+              {isMobile ? "Próxima" : "Próxima Questão"}
               <ChevronRight className="h-4 w-4" />
             </Button>
           )}

@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
-interface SearchResult {
+export interface SearchResult {
   id: string;
   title: string;
   description: string;
@@ -45,10 +45,10 @@ export function useGlobalSearch() {
 
       if (livrosError) throw livrosError;
 
-      // Search in vademecum (using fixed table names instead of dynamic ones)
+      // Fixed approach - search in specific vademecum tables
       const vademecumResults: any[] = [];
       
-      // Search in Código_Penal
+      // Search in Código Penal
       const { data: codigoPenal, error: codigoPenalError } = await supabase
         .from('Código_Penal')
         .select('id, artigo, numero')
@@ -62,7 +62,7 @@ export function useGlobalSearch() {
         })));
       }
       
-      // Search in Código_Civil
+      // Search in Código Civil
       const { data: codigoCivil, error: codigoCivilError } = await supabase
         .from('Código_Civil')
         .select('id, artigo, numero')
@@ -76,7 +76,7 @@ export function useGlobalSearch() {
         })));
       }
       
-      // Search in Constituicao_Federal
+      // Search in Constituicao Federal
       const { data: constituicao, error: constituicaoError } = await supabase
         .from('Constituicao_Federal')
         .select('id, artigo, numero')
@@ -108,7 +108,7 @@ export function useGlobalSearch() {
           area: l.categoria || 'Geral',
           url: `/biblioteca-juridica?id=${l.id}`
         })),
-        ...(vademecumResults || []).map(v => ({
+        ...vademecumResults.map(v => ({
           id: String(v.id),
           title: `${v.lawName.replace(/_/g, ' ')} - Art. ${v.numero || ''}`,
           description: v.artigo?.substring(0, 100) + '...' || 'Artigo de lei',
@@ -121,6 +121,7 @@ export function useGlobalSearch() {
       setResults(combinedResults);
     } catch (error) {
       console.error('Erro na busca:', error);
+      setResults([]);
     } finally {
       setIsSearching(false);
     }

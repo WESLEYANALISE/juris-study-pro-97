@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,17 +14,53 @@ import confetti from "canvas-confetti";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTouchGestures } from "@/hooks/use-touch-gestures";
 import { cn } from "@/lib/utils";
+
 interface QuestionConfig {
   area: string;
   temas: string[];
   quantidade: number;
 }
+
+// Add this CSS for mobile navigation hiding during questions
+const addQuestionsStyleToHead = () => {
+  const styleId = 'questoes-mobile-style';
+  if (!document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.innerHTML = `
+      body.questions-active .fixed.bottom-4 { 
+        display: none !important; 
+      }
+      body.questions-active .fixed.bottom-0 {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+};
+
 const Questoes = () => {
   const [config, setConfig] = useState<QuestionConfig | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showBackToTop, setShowBackToTop] = useState(false);
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
+
+  // Add styles for hiding mobile navigation
+  useEffect(() => {
+    addQuestionsStyleToHead();
+    
+    // Add body class to hide mobile navigation when in question mode
+    if (config) {
+      document.body.classList.add('questions-active');
+    } else {
+      document.body.classList.remove('questions-active');
+    }
+    
+    return () => {
+      document.body.classList.remove('questions-active');
+    };
+  }, [config]);
 
   // Handle touch swipe gestures for mobile
   useTouchGestures({
@@ -56,6 +93,7 @@ const Questoes = () => {
       behavior: "smooth"
     });
   };
+  
   const {
     data: questions,
     isLoading: isLoadingQuestions
@@ -75,6 +113,7 @@ const Questoes = () => {
       return data;
     }
   });
+  
   const {
     data: stats,
     isLoading: isLoadingStats
@@ -89,6 +128,7 @@ const Questoes = () => {
       return data;
     }
   });
+  
   const answerMutation = useMutation({
     mutationFn: async ({
       questionId,
@@ -99,14 +139,19 @@ const Questoes = () => {
       answer: string;
       correct: boolean;
     }) => {
-      const {
-        error
-      } = await supabase.from("user_questoes").insert({
-        questao_id: questionId,
-        resposta_selecionada: answer,
-        acertou: correct
-      });
-      if (error) throw error;
+      try {
+        const { error } = await supabase.from("user_questoes").insert({
+          questao_id: questionId,
+          resposta_selecionada: answer,
+          acertou: correct
+        });
+        
+        if (error) throw error;
+        return { success: true };
+      } catch (error) {
+        console.error("Error submitting answer:", error);
+        throw error;
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
@@ -128,13 +173,21 @@ const Questoes = () => {
       toast.error("Erro ao registrar resposta. Tente novamente.");
     }
   });
-  const handleAnswer = (questionId: number, answer: string, correct: boolean) => {
-    answerMutation.mutate({
-      questionId,
-      answer,
-      correct
-    });
+  
+  const handleAnswer = async (questionId: number, answer: string, correct: boolean) => {
+    try {
+      await answerMutation.mutateAsync({
+        questionId,
+        answer,
+        correct
+      });
+      return true;
+    } catch (error) {
+      console.error("Erro ao registrar resposta:", error);
+      throw error;
+    }
   };
+  
   const handleNext = () => {
     if (!questions) return;
     if (currentQuestionIndex < questions.length - 1) {
@@ -147,6 +200,7 @@ const Questoes = () => {
       }, 100);
     }
   };
+  
   const handlePrevious = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(prev => prev - 1);
@@ -158,10 +212,12 @@ const Questoes = () => {
       }, 100);
     }
   };
+  
   const handleReset = () => {
     setConfig(null);
     setCurrentQuestionIndex(0);
   };
+
   if (!config) {
     return <div className="container mx-auto px-4 py-8">
         <motion.h1 className="text-2xl font-bold mb-6 flex items-center" initial={{
@@ -179,11 +235,13 @@ const Questoes = () => {
         <QuestionSetup onStart={setConfig} />
       </div>;
   }
+  
   if (isLoadingQuestions) {
     return <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>;
   }
+  
   if (!questions?.length) {
     return <div className="container mx-auto px-4 py-8">
         <h1 className="text-2xl font-bold mb-4 flex items-center">
@@ -204,6 +262,7 @@ const Questoes = () => {
         </Card>
       </div>;
   }
+
   const currentQuestion = questions[currentQuestionIndex];
   const questionStats = currentQuestion.questao_estatisticas?.[0];
   const percentualAcertos = questionStats?.total_tentativas ? (questionStats.total_acertos / questionStats.total_tentativas * 100).toFixed(1) : null;
@@ -214,8 +273,9 @@ const Questoes = () => {
     'D': currentQuestion.AnswerD
   };
   const progress = (currentQuestionIndex + 1) / questions.length * 100;
-  return <div className="container mx-auto py-8 md:px-6 px-[12px]">
-      <motion.div className="flex items-center justify-between mb-6" initial={{
+
+  return <div className="container mx-auto py-5 md:py-8 md:px-6 px-3">
+      <motion.div className="flex items-center justify-between mb-4 md:mb-6" initial={{
       opacity: 0,
       y: -10
     }} animate={{
@@ -224,31 +284,61 @@ const Questoes = () => {
     }} transition={{
       duration: 0.3
     }}>
-        <h1 className="text-2xl font-bold flex items-center">
-          <BookOpen className="mr-2 h-6 w-6 text-primary" />
+        <h1 className={`${isMobile ? 'text-lg' : 'text-2xl'} font-bold flex items-center`}>
+          <BookOpen className={`mr-2 ${isMobile ? 'h-5 w-5' : 'h-6 w-6'} text-primary`} />
           Banco de Questões
         </h1>
-        <Button variant="outline" onClick={handleReset}>
+        <Button 
+          variant="outline" 
+          onClick={handleReset}
+          size={isMobile ? "sm" : "default"}
+          className={isMobile ? "text-xs" : ""}
+        >
           Voltar ao Menu
         </Button>
       </motion.div>
       
-      <div className={cn("grid gap-6", isMobile ? "grid-cols-1" : "md:grid-cols-[1fr_300px]")}>
-        <div className="space-y-6">
+      <div className={cn("grid gap-4 md:gap-6", isMobile ? "grid-cols-1" : "md:grid-cols-[1fr_300px]")}>
+        <div className="space-y-4 md:space-y-6">
           {/* We add a key prop to force component re-mount when question changes */}
-          <QuestionCard key={`question-${currentQuestion.id}-${currentQuestionIndex}`} id={currentQuestion.id} area={currentQuestion.Area} tema={currentQuestion.Tema} pergunta={currentQuestion.QuestionText || ""} respostas={respostas} respostaCorreta={currentQuestion.CorrectAnswers} comentario={currentQuestion.CorrectAnswerInfo} percentualAcertos={percentualAcertos} onAnswer={handleAnswer} onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined} />
+          <QuestionCard 
+            key={`question-${currentQuestion.id}-${currentQuestionIndex}`} 
+            id={currentQuestion.id} 
+            area={currentQuestion.Area} 
+            tema={currentQuestion.Tema} 
+            pergunta={currentQuestion.QuestionText || ""} 
+            respostas={respostas} 
+            respostaCorreta={currentQuestion.CorrectAnswers} 
+            comentario={currentQuestion.CorrectAnswerInfo} 
+            percentualAcertos={percentualAcertos} 
+            onAnswer={handleAnswer} 
+            onNext={currentQuestionIndex < questions.length - 1 ? handleNext : undefined} 
+          />
           
           <div className="flex justify-between items-center">
-            <Button variant="outline" onClick={handlePrevious} disabled={currentQuestionIndex === 0} className="flex items-center">
-              <ChevronLeft className="mr-1 h-4 w-4" /> Anterior
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious} 
+              disabled={currentQuestionIndex === 0} 
+              size={isMobile ? "sm" : "default"}
+              className={`flex items-center ${isMobile ? "text-xs" : ""}`}
+            >
+              <ChevronLeft className={`mr-1 ${isMobile ? "h-3 w-3" : "h-4 w-4"}`} /> 
+              {isMobile ? "Anterior" : "Anterior"}
             </Button>
             
-            <div className="text-sm text-muted-foreground text-center">
-              Questão {currentQuestionIndex + 1} de {questions.length}
+            <div className={`${isMobile ? "text-xs" : "text-sm"} text-muted-foreground text-center`}>
+              {currentQuestionIndex + 1} / {questions.length}
             </div>
             
-            <Button variant="outline" onClick={handleNext} disabled={currentQuestionIndex === questions.length - 1} className="flex items-center">
-              Próxima <ChevronRight className="ml-1 h-4 w-4" />
+            <Button 
+              variant="outline" 
+              onClick={handleNext} 
+              disabled={currentQuestionIndex === questions.length - 1} 
+              size={isMobile ? "sm" : "default"}
+              className={`flex items-center ${isMobile ? "text-xs" : ""}`}
+            >
+              {isMobile ? "Próxima" : "Próxima"} <ChevronRight className={`ml-1 ${isMobile ? "h-3 w-3" : "h-4 w-4"}`} />
             </Button>
           </div>
         </div>
@@ -316,20 +406,20 @@ const Questoes = () => {
         duration: 0.3,
         delay: 0.2
       }}>
-            <Card className="gradient-card">
-              <CardContent className="py-4">
+            <Card className="gradient-card shadow-sm">
+              <CardContent className="py-3">
                 <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
+                  <div className="flex justify-between text-xs">
                     <span>Progresso</span>
                     <span>{Math.round(progress)}%</span>
                   </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div className="bg-primary h-2 rounded-full transition-all duration-300 ease-in-out" style={{
+                  <div className="w-full bg-muted rounded-full h-1.5">
+                    <div className="bg-primary h-1.5 rounded-full transition-all duration-300 ease-in-out" style={{
                   width: `${progress}%`
                 }} />
                   </div>
-                  <div className="text-xs text-muted-foreground text-center mt-2">
-                    Deslize para o lado para navegar entre as questões
+                  <div className="text-xs text-muted-foreground text-center mt-1">
+                    Deslize para navegar entre as questões
                   </div>
                 </div>
               </CardContent>
@@ -358,4 +448,5 @@ const Questoes = () => {
       </AnimatePresence>
     </div>;
 };
+
 export default Questoes;
