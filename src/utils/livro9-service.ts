@@ -53,7 +53,7 @@ export async function fetchLivro9ByArea(): Promise<{ [key: string]: Livro9Item[]
  */
 export async function fetchLivro9Areas(): Promise<Livro9Area[]> {
   try {
-    const query = supabase.from('livro9' as any) as any;
+    const query = supabase.from('livro9') as any;
     const { data, error } = await query.select('area').order('area');
     
     if (error) {
@@ -87,7 +87,7 @@ export async function fetchLivro9Areas(): Promise<Livro9Area[]> {
  */
 export async function fetchLivro9ByAreaName(area: string): Promise<Livro9Item[]> {
   try {
-    const query = supabase.from('livro9' as any) as any;
+    const query = supabase.from('livro9') as any;
     const builtQuery = area === 'all' 
       ? query.select('*').order('pdf_name')
       : query.select('*').eq('area', area).order('pdf_name');
@@ -112,7 +112,7 @@ export async function fetchLivro9ByAreaName(area: string): Promise<Livro9Item[]>
  */
 export async function searchLivro9(searchQuery: string): Promise<Livro9Item[]> {
   try {
-    const query = supabase.from('livro9' as any) as any;
+    const query = supabase.from('livro9') as any;
     const { data, error } = await query
       .select('*')
       .or(`pdf_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,area.ilike.%${searchQuery}%`)
