@@ -9,31 +9,32 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import MobileMenu from "./MobileMenu";
 import { motion } from "framer-motion";
 import { type ProfileType } from "@/components/WelcomeModal";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle 
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState as useStateSafe } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useGlobalSearch } from "@/hooks/use-global-search";
-
 interface HeaderProps {
   userProfile?: ProfileType;
 }
-
-export function Header({ userProfile = "concurseiro" }: HeaderProps) {
+export function Header({
+  userProfile = "concurseiro"
+}: HeaderProps) {
   const sidebar = useSidebar();
-  const { user, signOut } = useAuth();
+  const {
+    user,
+    signOut
+  } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { globalSearchResults, handleGlobalSearch } = useGlobalSearch();
+  const {
+    globalSearchResults,
+    handleGlobalSearch
+  } = useGlobalSearch();
 
   // Function to handle sidebar toggle, checking if toggle exists first
   const handleSidebarToggle = () => {
@@ -41,12 +42,11 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
       sidebar.toggleSidebar();
     }
   };
-
   const handleSignOut = async () => {
     await signOut();
     navigate("/auth");
   };
-  
+
   // Handle search functionality
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,47 +67,27 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
       setIsSearchOpen(false);
     }
   };
-
-  return (
-    <>
-      <motion.header 
-        initial={{ y: -20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-        className="sticky top-0 z-40 w-full border-b border-gray-800 backdrop-blur-xl bg-gray-900/80"
-      >
+  return <>
+      <motion.header initial={{
+      y: -20,
+      opacity: 0
+    }} animate={{
+      y: 0,
+      opacity: 1
+    }} transition={{
+      duration: 0.3
+    }} className="sticky top-0 z-40 w-full border-b border-gray-800 backdrop-blur-xl bg-gray-900/80">
         <div className="container flex h-16 items-center justify-between px-4">
           <div className="flex items-center gap-2 md:gap-4">
-            {!isMobile && (
-              <Button variant="ghost" size="icon" onClick={handleSidebarToggle} className="shrink-0 text-gray-400 hover:text-white hover:bg-gray-800">
+            {!isMobile && <Button variant="ghost" size="icon" onClick={handleSidebarToggle} className="shrink-0 text-gray-400 hover:text-white hover:bg-gray-800">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle sidebar</span>
-              </Button>
-            )}
+              </Button>}
 
-            {isMobile ? (
-              <MobileMenu userProfile={userProfile} />
-            ) : null}
+            {isMobile ? <MobileMenu userProfile={userProfile} /> : null}
 
             <Link to="/" className="flex items-center gap-2">
-              <motion.div 
-                whileHover={{ rotate: 5 }}
-                transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                className="relative w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-br from-purple-500 to-purple-700 shadow-purple"
-              >
-                <motion.span 
-                  className="font-bold text-white text-lg"
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 3,
-                    repeatType: "reverse", 
-                    ease: "easeInOut" 
-                  }}
-                >
-                  J
-                </motion.span>
-              </motion.div>
+              
               <span className="hidden sm:inline-block font-bold text-xl bg-gradient-to-r from-purple-200 to-purple-400 bg-clip-text text-transparent">
                 JurisStudy
               </span>
@@ -115,12 +95,7 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-gray-400 hover:text-white hover:bg-gray-800"
-              onClick={() => setIsSearchOpen(true)}
-            >
+            <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white hover:bg-gray-800" onClick={() => setIsSearchOpen(true)}>
               <Search className="h-5 w-5" />
               <span className="sr-only">Search</span>
             </Button>
@@ -130,11 +105,11 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
               <span className="sr-only">Notifications</span>
             </Button>
 
-            {user ? (
-              <motion.div 
-                whileHover={{ scale: 1.05 }} 
-                whileTap={{ scale: 0.95 }}
-              >
+            {user ? <motion.div whileHover={{
+            scale: 1.05
+          }} whileTap={{
+            scale: 0.95
+          }}>
                 <Link to="/perfil">
                   <Avatar className="border-2 border-purple-500/30 hover:border-purple-500/60 transition-colors">
                     <AvatarImage src={user.user_metadata?.avatar_url} />
@@ -143,16 +118,9 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
                     </AvatarFallback>
                   </Avatar>
                 </Link>
-              </motion.div>
-            ) : (
-              <Button 
-                variant="default" 
-                onClick={() => navigate("/auth")}
-                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600"
-              >
+              </motion.div> : <Button variant="default" onClick={() => navigate("/auth")} className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600">
                 Login
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
       </motion.header>
@@ -167,56 +135,34 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                <Input
-                  placeholder="O que você procura?"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9"
-                  autoFocus
-                />
+                <Input placeholder="O que você procura?" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-9" autoFocus />
               </div>
               <Button type="submit">Buscar</Button>
             </div>
             
             <div className="grid grid-cols-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigate("/biblioteca-juridica");
-                  setIsSearchOpen(false);
-                }}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+              navigate("/biblioteca-juridica");
+              setIsSearchOpen(false);
+            }}>
                 Biblioteca
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigate("/jurisflix");
-                  setIsSearchOpen(false);
-                }}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+              navigate("/jurisflix");
+              setIsSearchOpen(false);
+            }}>
                 JurisFlix
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  navigate("/vademecum");
-                  setIsSearchOpen(false);
-                }}
-              >
+              <Button type="button" variant="outline" size="sm" onClick={() => {
+              navigate("/vademecum");
+              setIsSearchOpen(false);
+            }}>
                 Vade Mecum
               </Button>
             </div>
 
             {/* Add results preview here if search has query */}
-            {searchQuery.trim().length > 2 && (
-              <div className="mt-4 space-y-2">
+            {searchQuery.trim().length > 2 && <div className="mt-4 space-y-2">
                 <p className="text-sm font-medium">Resultados:</p>
                 <div className="max-h-60 overflow-y-auto space-y-2">
                   <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
@@ -247,11 +193,9 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
                     </p>
                   </div>
                 </div>
-              </div>
-            )}
+              </div>}
           </form>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 }
