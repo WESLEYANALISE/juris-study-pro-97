@@ -32,22 +32,30 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
       transition={{ duration: 0.3 }}
     >
       {articleNumber?.trim() ? (
-        <div className="flex items-center gap-2 mb-2">
-          <h3 className="text-base font-medium bg-primary/10 px-3 py-1 rounded-md inline-block">
+        <motion.div 
+          className="flex items-center gap-2 mb-3"
+          initial={{ y: -10, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <h3 className="text-base font-medium bg-primary/10 px-4 py-1.5 rounded-md inline-block border border-primary/20 backdrop-blur-sm">
             Art. {articleNumber}
           </h3>
-        </div>
+        </motion.div>
       ) : null}
-      <div 
+      <motion.div 
         id={`article-content-${articleNumber}`}
         style={{ fontSize: `${fontSize}px` }} 
         className={cn(
           "prose-sm prose-zinc dark:prose-invert max-w-none",
           "mt-1 whitespace-pre-line px-1 py-2 ml-0 vademecum-content", 
           isHeading 
-            ? "text-center w-full font-semibold text-primary" 
+            ? "text-center w-full font-semibold text-gradient-primary" 
             : "border-l-0 pl-3"
         )}
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.3, delay: 0.1 }}
       >
         {formattedText ? (
           <ReactMarkdown 
@@ -58,7 +66,7 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
         ) : (
           <p className="text-muted-foreground italic">Texto do artigo não disponível</p>
         )}
-      </div>
+      </motion.div>
     </motion.div>
   );
 };

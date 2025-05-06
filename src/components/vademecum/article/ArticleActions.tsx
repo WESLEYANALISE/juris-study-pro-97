@@ -225,16 +225,16 @@ export const ArticleActions = ({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
-          className="mt-4 rounded-md bg-background/50 backdrop-blur-sm border border-muted/30 shadow-sm"
+          className="mt-4 rounded-lg bg-background/50 backdrop-blur-sm border border-primary/20 shadow-sm"
         >
           <div className="px-3 py-2">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-1.5">
               <Button 
-                variant="ghost" 
+                variant="glass" 
                 size="sm" 
                 className={cn(
-                  "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
-                  isExplanationDialogOpen && "bg-primary/10"
+                  "gap-1.5 text-xs font-normal text-primary hover:text-white hover:bg-primary/40",
+                  isExplanationDialogOpen && "bg-primary/20"
                 )}
                 onClick={() => setIsExplanationDialogOpen(true)} 
                 disabled={!technicalExplanation && !formalExplanation}
@@ -244,11 +244,11 @@ export const ArticleActions = ({
               </Button>
 
               {practicalExample && <Button 
-                variant="ghost" 
+                variant="glass" 
                 size="sm" 
                 className={cn(
-                  "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
-                  isPracticalExampleDialogOpen && "bg-primary/10"
+                  "gap-1.5 text-xs font-normal text-primary hover:text-white hover:bg-primary/40",
+                  isPracticalExampleDialogOpen && "bg-primary/20"
                 )}
                 onClick={() => setIsPracticalExampleDialogOpen(true)}
               >
@@ -257,9 +257,9 @@ export const ArticleActions = ({
               </Button>}
 
               <Button 
-                variant="ghost" 
+                variant="glass" 
                 size="sm" 
-                className="gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5"
+                className="gap-1.5 text-xs font-normal text-primary hover:text-white hover:bg-primary/40"
                 onClick={() => handleCopy(articleText)} 
                 disabled={isCopying}
               >
@@ -268,11 +268,11 @@ export const ArticleActions = ({
               </Button>
               
               <Button 
-                variant="ghost" 
+                variant="glass" 
                 size="sm" 
                 className={cn(
-                  "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
-                  isNarrating && "bg-primary/10"
+                  "gap-1.5 text-xs font-normal text-primary hover:text-white hover:bg-primary/40",
+                  isNarrating && "bg-primary/20"
                 )}
                 onClick={handleNarration}
               >
@@ -283,18 +283,18 @@ export const ArticleActions = ({
               <Popover open={isHighlightMode} onOpenChange={setIsHighlightMode}>
                 <PopoverTrigger asChild>
                   <Button 
-                    variant="ghost" 
+                    variant="glass" 
                     size="sm" 
                     className={cn(
-                      "gap-1.5 text-xs font-normal text-primary/80 hover:text-primary hover:bg-primary/5",
-                      isHighlightMode && "bg-primary/10"
+                      "gap-1.5 text-xs font-normal text-primary hover:text-white hover:bg-primary/40",
+                      isHighlightMode && "bg-primary/20"
                     )}
                   >
                     <Highlighter size={14} />
                     <span>Destacar</span>
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-48 p-2">
+                <PopoverContent className="w-48 p-2 bg-background/80 backdrop-blur-lg border border-primary/20">
                   <div className="space-y-2">
                     <h4 className="text-xs font-medium">Escolha a cor:</h4>
                     <div className="grid grid-cols-5 gap-1">
