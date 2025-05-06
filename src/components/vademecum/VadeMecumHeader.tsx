@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Search, RefreshCw, Volume, BookOpen } from 'lucide-react';
+import { Search, RefreshCw, VolumeMedium, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -82,7 +82,7 @@ export function VadeMecumHeader({
               aria-label={isPlaying ? "Pausar áudio" : "Iniciar áudio"}
               className={cn(isPlaying && "text-primary")}
             >
-              <Volume className="h-5 w-5" />
+              <VolumeMedium className="h-5 w-5" />
               {isPlaying && (
                 <div className="absolute -right-1 -top-1">
                   <SoundscapeVisualization isPlaying={true} className="h-3" />
