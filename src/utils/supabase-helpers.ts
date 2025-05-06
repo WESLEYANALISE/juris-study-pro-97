@@ -17,7 +17,8 @@ export async function safeSelect<T = any>(
   queryBuilder?: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    let query = supabase.from(tableName).select(columns);
+    // Using type assertion to overcome TypeScript limitations with dynamic table names
+    let query = (supabase.from(tableName) as any).select(columns);
     
     if (queryBuilder) {
       query = queryBuilder(query);
@@ -46,8 +47,9 @@ export async function safeInsert<T = any>(
   options?: { returning?: string }
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = supabase.from(tableName);
-    const { data, error } = await query.insert(values, options);
+    // Using type assertion to overcome TypeScript limitations with dynamic table names
+    const query = supabase.from(tableName) as any;
+    const { data, error } = await query.insert(values, { returning: options?.returning || 'minimal' });
     
     if (error) {
       handleSupabaseError(error, `insert into ${tableName}`);
@@ -70,7 +72,8 @@ export async function safeUpdate<T = any>(
   queryBuilder: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = supabase.from(tableName);
+    // Using type assertion to overcome TypeScript limitations with dynamic table names
+    const query = supabase.from(tableName) as any;
     const updateQuery = query.update(values);
     const filteredQuery = queryBuilder(updateQuery);
     
@@ -96,7 +99,8 @@ export async function safeDelete<T = any>(
   queryBuilder: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    const query = supabase.from(tableName);
+    // Using type assertion to overcome TypeScript limitations with dynamic table names
+    const query = supabase.from(tableName) as any;
     const deleteQuery = query.delete();
     const filteredQuery = queryBuilder(deleteQuery);
     

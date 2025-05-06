@@ -39,9 +39,10 @@ export async function fetchPDFLinksByArea(): Promise<{ [key: string]: PDFLinkByA
  */
 export async function fetchPDFAreas(): Promise<PDFArea[]> {
   try {
-    const { data, error } = await supabase
-      .from('pdf_links_by_area')
-      .select('area');
+    // Using type assertion to overcome TypeScript limitations with dynamic table names
+    const { data, error } = await (supabase.from('pdf_links_by_area') as any)
+      .select('area')
+      .order('area');
     
     if (error) {
       toast.error('Error fetching PDF areas: ' + error.message);
@@ -50,7 +51,7 @@ export async function fetchPDFAreas(): Promise<PDFArea[]> {
     
     // Count occurrences of each area
     const areaCount: { [area: string]: number } = {};
-    data.forEach(item => {
+    (data as any[]).forEach(item => {
       const area = item.area || 'Sem Categoria';
       areaCount[area] = (areaCount[area] || 0) + 1;
     });
