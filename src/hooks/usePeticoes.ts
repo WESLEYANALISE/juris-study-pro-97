@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -17,12 +16,16 @@ interface Peticao {
   tags?: string[];
 }
 
-// Record from the database
+// Database record from the peticoes table
 interface PeticaoRecord {
   id: string;
   area: string;
-  tipo: string;
-  documento: string;
+  tipo?: string;
+  documento?: string;
+  link?: string; // Google Drive folder link
+  total?: number;
+  icon_color?: string;
+  last_updated?: string;
   // Other fields might be present but not required for our mapping
 }
 
@@ -140,12 +143,12 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         // Map the data to match our interface
         return (data as PeticaoRecord[] || []).map(item => ({
           id: item.id || '',
-          titulo: item.tipo || '',
+          titulo: item.tipo || item.area || '',
           // Since descricao doesn't exist in the database, provide a default value
           descricao: 'Modelo de petição jurídica para uso profissional',
           categoria: item.area || '',
-          arquivo_url: item.documento || '',
-          created_at: new Date().toISOString(),
+          arquivo_url: item.documento || item.link || '',
+          created_at: item.last_updated || new Date().toISOString(),
           area: item.area || '',
           tipo: item.tipo || '',
           // Extract potential sub-area from tipo field if available

@@ -2923,24 +2923,62 @@ export type Database = {
       }
       peticoes: {
         Row: {
-          area: string
-          documento: string
-          id: string
-          tipo: string | null
+          area: string | null
+          created_at: string
+          icon_color: string | null
+          id: number
+          last_updated: string | null
+          link: string | null
+          total: number | null
         }
         Insert: {
-          area: string
-          documento: string
-          id?: string
-          tipo?: string | null
+          area?: string | null
+          created_at?: string
+          icon_color?: string | null
+          id?: number
+          last_updated?: string | null
+          link?: string | null
+          total?: number | null
         }
         Update: {
-          area?: string
-          documento?: string
-          id?: string
-          tipo?: string | null
+          area?: string | null
+          created_at?: string
+          icon_color?: string | null
+          id?: number
+          last_updated?: string | null
+          link?: string | null
+          total?: number | null
         }
         Relationships: []
+      }
+      peticoes_acessos: {
+        Row: {
+          accessed_at: string | null
+          id: string
+          peticao_id: number | null
+          user_id: string | null
+        }
+        Insert: {
+          accessed_at?: string | null
+          id?: string
+          peticao_id?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          accessed_at?: string | null
+          id?: string
+          peticao_id?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "peticoes_acessos_peticao_id_fkey"
+            columns: ["peticao_id"]
+            isOneToOne: false
+            referencedRelation: "peticoes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plano_estudos: {
         Row: {
