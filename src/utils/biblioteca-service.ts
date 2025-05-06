@@ -220,22 +220,27 @@ export async function getFavoriteBooks(): Promise<LivroSupa[]> {
       return [];
     }
     
-    // Extract the IDs as strings for the IN query
+    // Extract the IDs for the query
     const bookIds = data.map(item => item.livro_id);
     
-    // Then get the actual book data - ensure we're using the string "in" filter correctly
+    // Modified: Using a different approach without .in() for type compatibility
+    // We'll manually filter the books after fetching all or use a hack (converting strings to numbers)
     const { data: booksData, error: booksError } = await supabase
       .from('livros_supa')
-      .select('*')
-      .in('id', bookIds);
+      .select('*');
     
     if (booksError) {
       console.error('Error fetching favorite books:', booksError);
       return [];
     }
     
+    // Manually filter the books that match our book IDs
+    const filteredBooks = (booksData || []).filter(book => 
+      bookIds.includes(String(book.id))
+    );
+    
     // Ensure the returned data matches our LivroSupa interface
-    return (booksData || []).map(book => ({
+    return filteredBooks.map(book => ({
       id: String(book.id), // Convert id to string to match our interface
       pdf_name: book.pdf_name,
       area: book.area,
@@ -277,22 +282,27 @@ export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa
       return [];
     }
     
-    // Extract the IDs as strings for the IN query
+    // Extract the IDs for the query
     const bookIds = data.map(item => item.livro_id);
     
-    // Get the actual book details
+    // Modified: Using a different approach without .in() for type compatibility
+    // Get all books and filter manually
     const { data: booksData, error: booksError } = await supabase
       .from('livros_supa')
-      .select('*')
-      .in('id', bookIds);
+      .select('*');
     
     if (booksError) {
       console.error('Error fetching book details:', booksError);
       return [];
     }
     
+    // Filter the books that match our book IDs
+    const relevantBooks = (booksData || []).filter(book => 
+      bookIds.includes(String(book.id))
+    );
+    
     // Combine the books data with reading progress and ensure types match our interface
-    const booksWithProgress: LivroSupa[] = (booksData || []).map(book => {
+    const booksWithProgress: LivroSupa[] = relevantBooks.map(book => {
       const progressItem = data.find(item => item.livro_id === String(book.id));
       return {
         id: String(book.id), // Convert id to string to match our interface
