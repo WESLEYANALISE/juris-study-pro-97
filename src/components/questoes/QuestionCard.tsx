@@ -251,10 +251,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           </div>
         </CardContent>
         <CardFooter className={`flex justify-between border-t border-muted/30 ${isMobile ? 'p-4 pt-3' : ''}`}>
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:bg-primary/5">
-            <Heart className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Favoritar</span>
-          </Button>
+          
           {selectedAnswer && props.onNext && <motion.div initial={{
           opacity: 0,
           y: 10
