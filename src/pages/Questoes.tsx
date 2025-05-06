@@ -174,7 +174,7 @@ const Questoes = () => {
     }
   });
   
-  const handleAnswer = async (questionId: number, answer: string, correct: boolean) => {
+  const handleAnswer = async (questionId: number, answer: string, correct: boolean): Promise<boolean> => {
     try {
       await answerMutation.mutateAsync({
         questionId,

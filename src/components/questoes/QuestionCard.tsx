@@ -23,7 +23,7 @@ export interface QuestionCardProps {
   respostaCorreta?: string;
   comentario?: string;
   percentualAcertos?: string;
-  onAnswer?: (questionId: number, answer: string, correct: boolean) => void;
+  onAnswer?: (questionId: number, answer: string, correct: boolean) => Promise<boolean>; // Updated to Promise<boolean>
   onNext?: () => void;
 }
 
@@ -38,6 +38,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
   const [answerSubmitError, setAnswerSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     // Add body class to hide mobile navigation when in question mode
@@ -62,6 +63,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     setIsAnswerCorrect(null);
     setShowExplanation(false);
     setAnswerSubmitError(null);
+    setIsSubmitting(false);
   }, [props.id, question?.id]);
 
   const checkIfFavorited = async () => {
@@ -133,7 +135,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   };
 
   const handleAnswerSelection = async (key: string) => {
-    if (selectedAnswer) return; // Prevent multiple answers
+    if (selectedAnswer || isSubmitting) return; // Prevent multiple answers or while submitting
     
     setSelectedAnswer(key);
     const correct = key === props.respostaCorreta;
@@ -142,23 +144,31 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     
     if (props.onAnswer && props.id) {
       try {
+        setIsSubmitting(true);
         setAnswerSubmitError(null);
         await props.onAnswer(props.id, key, correct);
+        setIsSubmitting(false);
       } catch (error) {
         console.error("Erro ao registrar resposta:", error);
+        setIsSubmitting(false);
         setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
       }
     }
   };
 
-  const retryAnswerSubmission = () => {
+  const retryAnswerSubmission = async () => {
     if (selectedAnswer && props.onAnswer && props.id) {
       const correct = selectedAnswer === props.respostaCorreta;
-      props.onAnswer(props.id, selectedAnswer, correct)
-        .then(() => setAnswerSubmitError(null))
-        .catch(() => {
-          setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
-        });
+      try {
+        setIsSubmitting(true);
+        await props.onAnswer(props.id, selectedAnswer, correct);
+        setIsSubmitting(false);
+        setAnswerSubmitError(null);
+      } catch (error) {
+        console.error("Erro ao registrar resposta:", error);
+        setIsSubmitting(false);
+        setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
+      }
     }
   };
 
@@ -203,7 +213,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
                     variant="outline" 
                     className={buttonClassName}
                     onClick={() => handleAnswerSelection(key)}
-                    disabled={!!selectedAnswer}
+                    disabled={!!selectedAnswer || isSubmitting}
                   >
                     <span className="font-bold mr-2 min-w-[20px]">{key})</span> 
                     <span className="line-clamp-3">{value}</span>
@@ -214,6 +224,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
                     )}
                     {!isSelected && selectedAnswer && isCorrect && (
                       <CheckCircle className="ml-auto h-4 w-4 flex-shrink-0 text-green-500" />
+                    )}
+                    {isSubmitting && isSelected && (
+                      <Loader2 className="ml-auto h-4 w-4 animate-spin" />
                     )}
                   </Button>
                 );
