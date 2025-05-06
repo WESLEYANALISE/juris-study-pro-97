@@ -2,14 +2,7 @@
 import React from "react";
 import { PeticaoFolder } from "./PeticaoFolder";
 import { ContentGrid } from "@/components/ui/content-grid";
-
-interface Peticao {
-  id: string;
-  area: string;
-  total: number;
-  link: string;
-  icon_color?: string;
-}
+import { Peticao } from "@/hooks/usePeticoes";
 
 interface PeticaoFolderGridProps {
   peticoes: Peticao[];
