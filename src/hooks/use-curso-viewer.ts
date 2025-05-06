@@ -98,9 +98,17 @@ export function useCursoViewer() {
           
           console.log("Curso data received:", data);
           
+          // Convert sequencia from string to number and add it to our curso object
+          const cursoData = {
+            ...data,
+            sequencia: data.sequencia ? parseInt(data.sequencia) : 0,
+            titulo: data.materia, // Map materia to titulo for compatibility
+            thumbnail: data.capa, // Map capa to thumbnail for compatibility
+          };
+          
           // Only update state if component is still mounted
           if (mountedRef.current) {
-            setState(prev => ({ ...prev, curso: data as Curso, loading: false }));
+            setState(prev => ({ ...prev, curso: cursoData as Curso, loading: false }));
           }
         } catch (error) {
           console.error("Error fetching course:", error);
