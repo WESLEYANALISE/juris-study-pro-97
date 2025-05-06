@@ -51,19 +51,31 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
   const { data: tipos = [], isLoading: isLoadingTipos } = useQuery({
     queryKey: ["peticoes-tipos", filters.area],
     queryFn: async () => {
-      let query = supabase
-        .from("peticoes")
-        .select("tipo");
+      try {
+        let query = supabase
+          .from("peticoes")
+          .select("documento");
+          
+        // Filter by area if selected
+        if (filters.area && filters.area !== "all") {
+          query = query.eq("area", filters.area);
+        }
         
-      // Filter by area if selected
-      if (filters.area && filters.area !== "all") {
-        query = query.eq("area", filters.area);
+        query = query.order("documento");
+        
+        const { data, error } = await query;
+        
+        if (error) {
+          console.error("Error fetching tipos:", error);
+          return [];
+        }
+        
+        // Filter out null values and get unique documento values
+        return [...new Set(data?.map((item) => item.documento).filter(Boolean))];
+      } catch (e) {
+        console.error("Exception fetching tipos:", e);
+        return [];
       }
-      
-      query = query.order("tipo");
-      
-      const { data } = await query;
-      return [...new Set(data?.map((item) => item.tipo).filter(Boolean))];
     },
     enabled: true, // Always load tipos, but will be filtered by area if selected
     staleTime: 5 * 60 * 1000,
@@ -77,16 +89,16 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
       
       const { data } = await supabase
         .from("peticoes")
-        .select("tipo")
+        .select("documento")
         .eq("area", filters.area)
-        .order("tipo");
+        .order("documento");
       
-      // Extract potential sub-areas from the tipo field (this is a workaround)
+      // Extract potential sub-areas from the documento field (this is a workaround)
       const subAreaSet = new Set<string>();
       data?.forEach(item => {
-        if (item.tipo && item.tipo.includes("-")) {
-          const potentialSubArea = item.tipo.split("-")[0].trim();
-          if (potentialSubArea && potentialSubArea !== item.tipo) {
+        if (item.documento && item.documento.includes("-")) {
+          const potentialSubArea = item.documento.split("-")[0].trim();
+          if (potentialSubArea && potentialSubArea !== item.documento) {
             subAreaSet.add(potentialSubArea);
           }
         }

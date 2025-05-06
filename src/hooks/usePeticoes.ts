@@ -1,4 +1,3 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
@@ -21,8 +20,8 @@ interface Peticao {
 interface PeticaoRecord {
   id: string;
   area: string;
-  tipo: string;
   documento: string;
+  link: string;
   // Other fields might be present but not required for our mapping
 }
 
@@ -101,7 +100,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         }
         
         if (filters.tipo && filters.tipo !== "all") {
-          countQuery = countQuery.eq("tipo", filters.tipo);
+          countQuery = countQuery.eq("documento", filters.tipo);
         }
         
         const { count, error: countError } = await countQuery;
@@ -123,7 +122,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         }
         
         if (filters.tipo && filters.tipo !== "all") {
-          query = query.eq("tipo", filters.tipo);
+          query = query.eq("documento", filters.tipo);
         }
         
         // Apply pagination
@@ -138,23 +137,23 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         }
 
         // Map the data to match our interface
-        return (data as PeticaoRecord[] || []).map(item => ({
-          id: item.id || '',
-          titulo: item.tipo || '',
+        return (data || []).map(item => ({
+          id: item.id?.toString() || '',
+          titulo: item.documento || '',
           // Since descricao doesn't exist in the database, provide a default value
           descricao: 'Modelo de petição jurídica para uso profissional',
           categoria: item.area || '',
-          arquivo_url: item.documento || '',
-          created_at: new Date().toISOString(),
+          arquivo_url: item.link || '',
+          created_at: item.created_at || new Date().toISOString(),
           area: item.area || '',
-          tipo: item.tipo || '',
-          // Extract potential sub-area from tipo field if available
-          sub_area: item.tipo && item.tipo.includes("-") 
-            ? item.tipo.split("-")[0].trim() 
+          tipo: item.documento || '',
+          // Extract potential sub-area from documento field if available
+          sub_area: item.documento && item.documento.includes("-") 
+            ? item.documento.split("-")[0].trim() 
             : undefined,
           // Add default tags based on area
           tags: [item.area]
-        }));
+        } as Peticao));
       } catch (error) {
         console.error("Error loading peticoes:", error);
         toast.error("Erro ao carregar petições");

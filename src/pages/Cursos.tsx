@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
@@ -79,7 +78,23 @@ const Cursos = () => {
         throw error;
       }
 
-      setCursos(data || []);
+      if (data) {
+        // Transform data to match Curso interface
+        const formattedCursos: Curso[] = data.map(curso => ({
+          id: curso.id,
+          materia: curso.materia || "",
+          area: curso.area || "",
+          sobre: curso.sobre || "",
+          link: curso.link || "",
+          capa: curso.capa || "",
+          download: curso.download || "",
+          tipo_acesso: curso.tipo_acesso || "Free", // Default value
+          dificuldade: curso.dificuldade || "Iniciante", // Default value
+          sequencia: typeof curso.sequencia === 'string' ? parseInt(curso.sequencia) : curso.sequencia || 0
+        }));
+
+        setCursos(formattedCursos);
+      }
 
       // Extract unique areas
       const uniqueAreas = Array.from(

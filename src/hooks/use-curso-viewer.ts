@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +12,8 @@ interface Curso {
   capa: string;
   sobre: string;
   download: string | null;
+  tipo_acesso: string;
+  dificuldade: string;
 }
 
 interface CursoViewerState {
@@ -100,7 +101,15 @@ export function useCursoViewer() {
           
           // Only update state if component is still mounted
           if (mountedRef.current) {
-            setState(prev => ({ ...prev, curso: data as Curso, loading: false }));
+            // Convert sequencia from string to number and add default values for tipo_acesso
+            const cursoData: Curso = {
+              ...data,
+              sequencia: typeof data.sequencia === 'string' ? parseInt(data.sequencia) : data.sequencia || 0,
+              tipo_acesso: data.tipo_acesso || 'Free', // Default value
+              dificuldade: data.dificuldade || 'Iniciante' // Default value
+            };
+            
+            setState(prev => ({ ...prev, curso: cursoData, loading: false }));
           }
         } catch (error) {
           console.error("Error fetching course:", error);
