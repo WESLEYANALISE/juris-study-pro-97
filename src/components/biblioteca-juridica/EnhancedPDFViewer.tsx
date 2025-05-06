@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
@@ -237,13 +238,13 @@ export function EnhancedPDFViewer({
 
   // Use the processed URL for the PDF
   const processedPdfUrl = processUrl(pdfUrl);
-  return <div className="fixed inset-0 bg-gray-900 z-50 px-0 py-0 mx-0 my-0">
-      {/* Large close button in the top-left corner */}
-      <Button variant="outline" size="icon" className="absolute top-4 left-4 z-50 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border-white/20 text-white" onClick={onClose}>
-        <X className="h-5 w-5" />
+  return <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col">
+      {/* Large close button in the top-right corner */}
+      <Button variant="destructive" size="lg" className="absolute top-4 right-4 z-50 h-14 w-14 rounded-full" onClick={onClose}>
+        <X className="h-8 w-8" />
       </Button>
       
-      <div ref={containerRef} className="enhanced-pdf-container flex flex-col h-full my-[63px] mx-[8px] py-[9px] px-0">
+      <div ref={containerRef} className="enhanced-pdf-container flex flex-col h-full">
         {/* Header with title */}
         <div className="px-4 py-3 border-b border-gray-800 bg-black/80 backdrop-blur-sm sticky top-0 z-40">
           <div className="container max-w-5xl mx-auto flex items-center justify-between">
@@ -274,7 +275,7 @@ export function EnhancedPDFViewer({
           </div>}
         
         {/* PDF Viewer Content */}
-        <div className="enhanced-pdf-content container max-w-4xl mx-auto flex-grow overflow-auto px-0 py-0 my-[81px]">
+        <div className="enhanced-pdf-content container max-w-4xl mx-auto flex-grow overflow-auto px-0 py-0">
           <Document file={processedPdfUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} onProgress={({
           loaded,
           total
@@ -329,8 +330,15 @@ export function EnhancedPDFViewer({
             </div>
           </div>
           
-          <div className="text-center text-xs text-gray-400 mt-2">
+          <div className="text-center text-xs text-gray-400 mt-2 mb-2">
             Deslize para esquerda ou direita para mudar de página
+          </div>
+          
+          {/* Additional close button at the bottom for better accessibility */}
+          <div className="flex justify-center pb-2">
+            <Button variant="outline" onClick={onClose} className="px-8 text-white border-gray-700">
+              <X className="h-4 w-4 mr-2" /> Fechar visualizador
+            </Button>
           </div>
         </div>
       </div>

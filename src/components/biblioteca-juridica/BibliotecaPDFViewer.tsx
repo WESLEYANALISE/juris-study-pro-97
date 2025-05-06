@@ -11,10 +11,16 @@ interface BibliotecaPDFViewerProps {
 }
 
 export function BibliotecaPDFViewer({ pdfUrl, onClose, bookTitle, book }: BibliotecaPDFViewerProps) {
+  // Handle close with a wrapper function to ensure proper cleanup
+  const handleClose = () => {
+    console.log("Closing PDF viewer");
+    onClose();
+  };
+  
   return (
     <EnhancedPDFViewer
       pdfUrl={pdfUrl}
-      onClose={onClose}
+      onClose={handleClose}
       bookTitle={bookTitle}
       book={book}
     />

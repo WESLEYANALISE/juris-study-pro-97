@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
-import { EnhancedPDFViewer } from './EnhancedPDFViewer';
+import { BibliotecaPDFViewer } from './BibliotecaPDFViewer';
 
 interface BookReaderProps {
   book: LivroJuridico;
@@ -16,7 +16,7 @@ export const BookReader: React.FC<BookReaderProps> = ({ book, onClose }) => {
   useEffect(() => {
     if (!book || !book.pdf_url) return;
 
-    // Store the PDF URL directly - the EnhancedPDFViewer will handle creating the full URL
+    // Store the PDF URL directly - the BibliotecaPDFViewer will handle creating the full URL
     setPdfUrl(book.pdf_url);
     
     // Add class to body when PDF reader is open to prevent scrolling
@@ -34,6 +34,15 @@ export const BookReader: React.FC<BookReaderProps> = ({ book, onClose }) => {
     };
   }, [book]);
 
+  // Define a clear closeHandler to ensure proper cleanup
+  const handleClose = () => {
+    setIsReady(false);
+    // Add a small delay before calling the parent onClose to allow animations to complete
+    setTimeout(() => {
+      onClose();
+    }, 100);
+  };
+
   if (!book || !pdfUrl) return null;
 
   return (
@@ -45,10 +54,10 @@ export const BookReader: React.FC<BookReaderProps> = ({ book, onClose }) => {
         transition={{ duration: 0.3 }}
         className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
       >
-        <EnhancedPDFViewer
+        <BibliotecaPDFViewer
           pdfUrl={pdfUrl}
           bookTitle={book.titulo}
-          onClose={onClose}
+          onClose={handleClose}
           book={book}
         />
       </motion.div>
