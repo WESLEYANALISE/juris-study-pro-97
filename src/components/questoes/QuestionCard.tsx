@@ -32,6 +32,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   const { toast } = useToast();
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {
     if (question) {
@@ -39,6 +42,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
       trackQuestionView();
     }
   }, [question?.id, user]);
+
+  // Reset state when question changes
+  useEffect(() => {
+    setSelectedAnswer(null);
+    setIsAnswerCorrect(null);
+    setShowExplanation(false);
+  }, [props.id, question?.id]);
 
   const checkIfFavorited = async () => {
     if (!user || !question) return false;
@@ -108,6 +118,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     }
   };
 
+  const handleAnswerSelection = (key: string) => {
+    if (selectedAnswer) return; // Prevent multiple answers
+    
+    setSelectedAnswer(key);
+    const correct = key === props.respostaCorreta;
+    setIsAnswerCorrect(correct);
+    setShowExplanation(true);
+    
+    if (props.onAnswer && props.id) {
+      props.onAnswer(props.id, key, correct);
+    }
+  };
+
   // Handle the newer version of QuestionCard used in Questoes.tsx
   if (props.id) {
     return (
@@ -128,19 +151,44 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
             <div className="text-base leading-relaxed">{props.pergunta}</div>
             
             <div className="space-y-3 mt-6">
-              {props.respostas && Object.entries(props.respostas).map(([key, value]) => (
-                <Button 
-                  key={key}
-                  variant="outline" 
-                  className="w-full justify-start text-left py-3 hover:bg-primary/10 hover:border-primary/40 transition-colors"
-                  onClick={() => props.onAnswer && props.onAnswer(props.id!, key, key === props.respostaCorreta)}
-                >
-                  <span className="font-bold mr-2">{key})</span> {value}
-                </Button>
-              ))}
+              {props.respostas && Object.entries(props.respostas).map(([key, value]) => {
+                const isSelected = selectedAnswer === key;
+                const isCorrect = props.respostaCorreta === key;
+                let buttonClassName = "w-full justify-start text-left py-3 hover:bg-primary/10 hover:border-primary/40 transition-colors";
+                
+                // Add styling based on selection and correctness
+                if (isSelected) {
+                  buttonClassName += isCorrect 
+                    ? " bg-green-500/20 border-green-500" 
+                    : " bg-red-500/20 border-red-500";
+                } else if (selectedAnswer && isCorrect) {
+                  // Highlight correct answer when user selected wrong
+                  buttonClassName += " bg-green-500/20 border-green-500";
+                }
+                
+                return (
+                  <Button 
+                    key={key}
+                    variant="outline" 
+                    className={buttonClassName}
+                    onClick={() => handleAnswerSelection(key)}
+                    disabled={!!selectedAnswer}
+                  >
+                    <span className="font-bold mr-2">{key})</span> {value}
+                    {isSelected && (
+                      isCorrect 
+                        ? <CheckCircle className="ml-auto h-5 w-5 text-green-500" /> 
+                        : <XCircle className="ml-auto h-5 w-5 text-red-500" />
+                    )}
+                    {!isSelected && selectedAnswer && isCorrect && (
+                      <CheckCircle className="ml-auto h-5 w-5 text-green-500" />
+                    )}
+                  </Button>
+                );
+              })}
             </div>
             
-            {props.comentario && (
+            {showExplanation && props.comentario && (
               <div className="mt-6 p-4 bg-muted/40 rounded-md border border-muted">
                 <h4 className="font-medium mb-2 flex items-center gap-2">
                   <CheckCircle className="h-4 w-4 text-green-500" />
@@ -165,7 +213,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
             <Heart className="h-4 w-4 mr-1" />
             Favoritar
           </Button>
-          {props.onNext && (
+          {selectedAnswer && props.onNext && (
             <Button onClick={props.onNext} variant="default" size="sm" className="gap-1">
               Próxima Questão
               <ChevronRight className="h-4 w-4" />
@@ -299,5 +347,4 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   );
 };
 
-// Export the component with default export to maintain compatibility
 export default QuestionCard;

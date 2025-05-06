@@ -210,6 +210,42 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
                 Vade Mecum
               </Button>
             </div>
+
+            {/* Add results preview here if search has query */}
+            {searchQuery.trim().length > 2 && (
+              <div className="mt-4 space-y-2">
+                <p className="text-sm font-medium">Resultados:</p>
+                <div className="max-h-60 overflow-y-auto space-y-2">
+                  <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-blue-500">Questões</Badge>
+                      <span className="text-sm line-clamp-1">Questão sobre {searchQuery}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      Área: Direito Penal
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-green-500">Biblioteca</Badge>
+                      <span className="text-sm line-clamp-1">Livro relacionado a {searchQuery}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      Área: Direito Civil
+                    </p>
+                  </div>
+                  <div className="bg-muted/30 p-3 rounded-md hover:bg-muted/50 cursor-pointer">
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-purple-500">Vade Mecum</Badge>
+                      <span className="text-sm line-clamp-1">Artigo sobre {searchQuery}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      Código Penal - Art. 121
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
           </form>
         </DialogContent>
       </Dialog>
