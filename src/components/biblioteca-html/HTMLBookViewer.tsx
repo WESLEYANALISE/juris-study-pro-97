@@ -38,26 +38,74 @@ export function HTMLBookViewer({ documentoId, onClose }: HTMLBookViewerProps) {
   const [darkMode, setDarkMode] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
+  
+  // Estado para armazenar o conteúdo HTML carregado da URL
+  const [htmlContent, setHtmlContent] = useState<string>('');
+  const [carregandoHTML, setCarregandoHTML] = useState(false);
+  const [erroHTML, setErroHTML] = useState<string | null>(null);
 
-  // Extrair seções do documento quando o conteúdo é carregado
+  // Função para buscar o conteúdo HTML da URL
   useEffect(() => {
-    if (documento?.conteudo_html) {
-      // Criar um parser temporário para extrair as seções
-      const parser = new DOMParser();
-      const htmlDoc = parser.parseFromString(documento.conteudo_html, 'text/html');
-      const sectionElements = htmlDoc.querySelectorAll('section[id], div[id]');
+    async function fetchHTMLContent() {
+      if (!documento?.conteudo_html) return;
       
-      const secoesParsed = Array.from(sectionElements).map(section => ({
-        id: section.id,
-        titulo: section.getAttribute('data-title') || section.id
-      }));
-
-      setSecoes([
-        { id: 'intro', titulo: 'Introdução' },
-        ...secoesParsed
-      ]);
+      // Verificar se o conteúdo já é HTML ou se é uma URL
+      if (documento.conteudo_html.trim().startsWith('<') || documento.conteudo_html.includes('</')) {
+        // Já parece ser conteúdo HTML, usar diretamente
+        setHtmlContent(documento.conteudo_html);
+        return;
+      }
+      
+      try {
+        setCarregandoHTML(true);
+        setErroHTML(null);
+        
+        // Assumindo que conteudo_html contém uma URL
+        const url = documento.conteudo_html;
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          throw new Error(`Erro ao carregar o conteúdo: ${response.status}`);
+        }
+        
+        const html = await response.text();
+        setHtmlContent(html);
+      } catch (error) {
+        console.error("Erro ao carregar o HTML:", error);
+        setErroHTML(error instanceof Error ? error.message : "Erro ao carregar o conteúdo HTML");
+        toast.error("Erro ao carregar o conteúdo do documento");
+      } finally {
+        setCarregandoHTML(false);
+      }
     }
+    
+    fetchHTMLContent();
   }, [documento]);
+
+  // Extrair seções do documento quando o conteúdo HTML é carregado
+  useEffect(() => {
+    if (htmlContent) {
+      try {
+        // Criar um parser temporário para extrair as seções
+        const parser = new DOMParser();
+        const htmlDoc = parser.parseFromString(htmlContent, 'text/html');
+        const sectionElements = htmlDoc.querySelectorAll('section[id], div[id]');
+        
+        const secoesParsed = Array.from(sectionElements).map(section => ({
+          id: section.id,
+          titulo: section.getAttribute('data-title') || section.id
+        }));
+
+        setSecoes([
+          { id: 'intro', titulo: 'Introdução' },
+          ...secoesParsed
+        ]);
+      } catch (error) {
+        console.error("Erro ao analisar o HTML:", error);
+        toast.error("Erro ao processar a estrutura do documento");
+      }
+    }
+  }, [htmlContent]);
 
   // Manipuladores de eventos
   const handleBookmarkToggle = async () => {
@@ -215,15 +263,26 @@ export function HTMLBookViewer({ documentoId, onClose }: HTMLBookViewerProps) {
           className={`flex-1 overflow-y-auto p-4 relative html-content ${darkMode ? 'dark-mode' : ''}`}
           style={{ fontSize: `${fontSize}px` }}
         >
-          {carregando ? (
+          {carregando || carregandoHTML ? (
             <div className="flex items-center justify-center h-full">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
             </div>
-          ) : documento ? (
+          ) : erroHTML ? (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="text-red-500 mb-2">
+                <X className="h-12 w-12 mx-auto" />
+              </div>
+              <h3 className="text-xl font-medium mb-2">Erro ao carregar o conteúdo</h3>
+              <p className="text-muted-foreground">{erroHTML}</p>
+              <p className="text-muted-foreground mt-2">
+                O link para o conteúdo pode estar quebrado ou inacessível.
+              </p>
+            </div>
+          ) : htmlContent ? (
             <>
               <div 
                 className="max-w-3xl mx-auto"
-                dangerouslySetInnerHTML={{ __html: documento.conteudo_html }} 
+                dangerouslySetInnerHTML={{ __html: htmlContent }} 
               />
               
               {/* Botão flutuante para marcador */}
