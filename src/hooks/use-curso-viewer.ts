@@ -14,6 +14,7 @@ interface CursoViewerState {
   hasNotes: boolean;
   notes: string;
   isComplete: boolean;
+  error: string | null;
 }
 
 export function useCursoViewer() {
@@ -33,6 +34,7 @@ export function useCursoViewer() {
     hasNotes: false,
     notes: "",
     isComplete: false,
+    error: null,
   });
 
   // Set mountedRef to false when component unmounts
@@ -72,7 +74,7 @@ export function useCursoViewer() {
     const getCurso = async () => {
       // Only fetch if we don't have curso data and have an ID
       if (!state.curso && cursoId) {
-        setState(prev => ({ ...prev, loading: true }));
+        setState(prev => ({ ...prev, loading: true, error: null }));
         try {
           console.log("Fetching curso with ID:", cursoId);
           const { data, error } = await supabase
@@ -96,15 +98,32 @@ export function useCursoViewer() {
             thumbnail: data.capa, // Map capa to thumbnail for compatibility
           };
           
-          // Only update state if component is still mounted
-          if (mountedRef.current) {
-            setState(prev => ({ ...prev, curso: cursoData as Curso, loading: false }));
+          // Check if course has a valid link
+          if (!cursoData.link) {
+            if (mountedRef.current) {
+              setState(prev => ({ 
+                ...prev, 
+                curso: cursoData as Curso, 
+                loading: false,
+                error: "Este curso não possui um link válido."
+              }));
+              toast.warning("Este curso não possui um link de conteúdo válido.");
+            }
+          } else {
+            // Only update state if component is still mounted
+            if (mountedRef.current) {
+              setState(prev => ({ ...prev, curso: cursoData as Curso, loading: false }));
+            }
           }
         } catch (error) {
           console.error("Error fetching course:", error);
           if (mountedRef.current) {
             toast.error("Erro ao carregar curso. Por favor, tente novamente.");
-            setState(prev => ({ ...prev, loading: false }));
+            setState(prev => ({ 
+              ...prev, 
+              loading: false, 
+              error: "Não foi possível carregar os dados do curso."
+            }));
           }
         }
       }

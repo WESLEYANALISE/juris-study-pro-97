@@ -9,7 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 import { useCursoViewer } from '@/hooks/use-curso-viewer';
+import { LoadingState } from '@/components/ui/loading-state';
 
 const CursoViewer = () => {
   const { 
@@ -27,7 +30,8 @@ const CursoViewer = () => {
     notes,
     isBookmarked,
     toggleBookmark,
-    videoRef
+    videoRef,
+    error
   } = useCursoViewer();
 
   // If in course view mode, show the CourseViewer component
@@ -52,18 +56,21 @@ const CursoViewer = () => {
   if (loading) {
     return (
       <div className="container mx-auto py-8 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-lg">Carregando curso...</p>
-        </div>
+        <LoadingState message="Carregando curso..." />
       </div>
     );
   }
 
-  if (!curso) {
+  if (!curso || error) {
     return (
       <div className="container mx-auto py-8 text-center">
         <h2 className="text-xl font-semibold mb-4">Curso não encontrado</h2>
+        {error && (
+          <Alert variant="destructive" className="max-w-md mx-auto mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <p className="text-muted-foreground mb-6">O curso solicitado não está disponível.</p>
         <Button onClick={handleNavigateBack}>Voltar para Cursos</Button>
       </div>
@@ -132,7 +139,19 @@ const CursoViewer = () => {
               </div>
             </div>
 
-            <Button className="w-full" size="lg" onClick={handleStartCourse}>
+            {!curso.link && (
+              <Alert variant="warning" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>Este curso não possui um link de conteúdo válido.</AlertDescription>
+              </Alert>
+            )}
+
+            <Button 
+              className="w-full" 
+              size="lg" 
+              onClick={handleStartCourse}
+              disabled={!curso.link}
+            >
               Iniciar Curso
             </Button>
           </CardContent>
@@ -180,9 +199,11 @@ const CursoViewer = () => {
             ) : (
               <div className="text-center py-4">
                 <p className="text-muted-foreground">Este curso não possui módulos definidos.</p>
-                <Button variant="outline" className="mt-4" onClick={handleStartCourse}>
-                  Ir direto para o conteúdo
-                </Button>
+                {curso.link && (
+                  <Button variant="outline" className="mt-4" onClick={handleStartCourse}>
+                    Ir direto para o conteúdo
+                  </Button>
+                )}
               </div>
             )}
           </CardContent>

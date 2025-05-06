@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, Volume1, VolumeX, X, ExternalLink } from "lucide-react";
+import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, Volume1, VolumeX, X, ExternalLink, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,8 +11,10 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { toast } from "sonner";
+import { LoadingState } from "@/components/ui/loading-state";
 
 interface CourseViewerProps {
   title: string;
@@ -49,12 +51,25 @@ export function CourseViewer({
   const [showNotes, setShowNotes] = useState(initialShowNotes);
   const [showControls, setShowControls] = useState(false);
   const [volume, setVolume] = useState<"muted" | "low" | "normal">("normal");
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const localVideoRef = useRef<HTMLIFrameElement>(null);
   const actualVideoRef = videoRef || localVideoRef;
   const notesTimeoutRef = useRef<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
+  const loadingTimeoutRef = useRef<number | null>(null);
   const isMobile = useIsMobile();
   const webViewRef = useRef<HTMLDivElement>(null);
+  
+  // Determine content type based on URL
+  const getContentType = (url: string) => {
+    if (!url) return 'unknown';
+    if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
+    if (url.includes('mindsmith.ai')) return 'mindsmith';
+    return 'external';
+  }
+  
+  const contentType = getContentType(videoUrl);
   
   useEffect(() => {
     // Hide mobile navigation when course is active
@@ -67,10 +82,30 @@ export function CourseViewer({
       updateProgress(initialProgress);
     }
     
+    // Reset loading state whenever URL changes
+    setLoading(true);
+    setLoadError(null);
+    
+    // Set timeout to detect loading issues
+    loadingTimeoutRef.current = window.setTimeout(() => {
+      if (contentType !== 'youtube' && loading) {
+        setLoading(false);
+        if (videoUrl) {
+          setLoadError('O conteúdo está demorando para carregar. Você pode tentar abrir em uma nova aba.');
+        } else {
+          setLoadError('Não foi possível carregar o conteúdo do curso.');
+        }
+      }
+    }, 10000); // 10 second timeout
+    
     return () => {
       document.body.classList.remove('course-viewer-active');
+      if (loadingTimeoutRef.current) {
+        clearTimeout(loadingTimeoutRef.current);
+        loadingTimeoutRef.current = null;
+      }
     };
-  }, [videoUrl, updateProgress, progress]);
+  }, [videoUrl, updateProgress, progress, contentType, loading]);
   
   // Handle initial notes panel visibility
   useEffect(() => {
@@ -175,6 +210,32 @@ export function CourseViewer({
     }
   };
 
+  const handleIframeLoad = () => {
+    setLoading(false);
+    
+    // Clear loading timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+    
+    // Update progress when content is loaded
+    if (updateProgress) {
+      updateProgress(Math.max(progress, 15));
+    }
+  };
+
+  const handleIframeError = () => {
+    setLoading(false);
+    setLoadError('Não foi possível carregar o conteúdo no player interno. Por favor, tente abrir em uma nova aba.');
+    
+    // Clear loading timeout
+    if (loadingTimeoutRef.current) {
+      clearTimeout(loadingTimeoutRef.current);
+      loadingTimeoutRef.current = null;
+    }
+  };
+
   const renderCourseContent = () => {
     if (!videoUrl) {
       return (
@@ -190,21 +251,66 @@ export function CourseViewer({
     // For YouTube videos, use iframe with embed
     if (youtubeId) {
       return (
-        <iframe
-          ref={actualVideoRef}
-          src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
-          className="w-full h-full border-0"
-          title={title}
-          allowFullScreen
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          loading="eager"
-        />
+        <>
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+              <LoadingState 
+                variant="spinner" 
+                message="Carregando vídeo..." 
+                className="text-white" 
+              />
+            </div>
+          )}
+          
+          <iframe
+            ref={actualVideoRef}
+            src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
+            className="w-full h-full border-0"
+            title={title}
+            allowFullScreen
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            loading="eager"
+            onLoad={handleIframeLoad}
+            onError={handleIframeError}
+          />
+        </>
       );
     }
     
     // For all other links (including Mindsmith), use webview approach
     return (
       <div className="w-full h-full flex flex-col">
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+            <LoadingState 
+              variant="spinner" 
+              message={contentType === 'mindsmith' ? 'Carregando conteúdo do Mindsmith...' : 'Carregando conteúdo...'} 
+              className="text-white" 
+            />
+          </div>
+        )}
+        
+        {loadError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10">
+            <div className="max-w-md p-6 rounded-lg bg-background">
+              <Alert variant="destructive" className="mb-4">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{loadError}</AlertDescription>
+              </Alert>
+              
+              <Button 
+                onClick={handleOpenExternalLink} 
+                className="flex items-center gap-2 w-full"
+                variant="default"
+                size="lg"
+              >
+                <ExternalLink className="h-5 w-5" />
+                Abrir em Nova Aba
+              </Button>
+            </div>
+          </div>
+        )}
+        
         <div 
           ref={webViewRef}
           className="w-full h-full bg-white"
@@ -216,11 +322,9 @@ export function CourseViewer({
             allowFullScreen
             sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
             loading="eager"
+            onLoad={handleIframeLoad}
+            onError={handleIframeError}
           />
-        </div>
-        
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {/* Nothing here, but we can add loading state if needed */}
         </div>
         
         <div className="absolute bottom-16 left-0 right-0 flex justify-center">
