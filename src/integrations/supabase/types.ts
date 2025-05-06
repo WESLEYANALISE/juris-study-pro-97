@@ -2423,6 +2423,39 @@ export type Database = {
         }
         Relationships: []
       }
+      livro9: {
+        Row: {
+          area: string
+          created_at: string | null
+          description: string | null
+          id: string
+          original_path: string | null
+          pdf_name: string
+          pdf_url: string
+          total_pages: number | null
+        }
+        Insert: {
+          area: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          original_path?: string | null
+          pdf_name: string
+          pdf_url: string
+          total_pages?: number | null
+        }
+        Update: {
+          area?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          original_path?: string | null
+          pdf_name?: string
+          pdf_url?: string
+          total_pages?: number | null
+        }
+        Relationships: []
+      }
       livros: {
         Row: {
           autor: string | null

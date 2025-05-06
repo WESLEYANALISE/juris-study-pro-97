@@ -24,8 +24,7 @@ export interface Livro9Area {
  */
 export async function fetchLivro9ByArea(): Promise<{ [key: string]: Livro9Item[] }> {
   try {
-    // Cast to any to bypass TypeScript's type checking since this table might not be in the generated types
-    const { data, error } = await (supabase.from('livro9') as any).select('*');
+    const { data, error } = await safeSelect<Livro9Item>('livro9');
     
     if (error) {
       toast.error('Error fetching livro9 PDFs: ' + error.message);
@@ -55,8 +54,7 @@ export async function fetchLivro9ByArea(): Promise<{ [key: string]: Livro9Item[]
  */
 export async function fetchLivro9Areas(): Promise<Livro9Area[]> {
   try {
-    // Cast to any to bypass TypeScript's type checking
-    const { data, error } = await (supabase.from('livro9') as any).select('area').order('area');
+    const { data, error } = await safeSelect<{ area: string }>('livro9', 'area');
     
     if (error) {
       toast.error('Error fetching livro9 areas: ' + error.message);
@@ -89,13 +87,11 @@ export async function fetchLivro9Areas(): Promise<Livro9Area[]> {
  */
 export async function fetchLivro9ByAreaName(area: string): Promise<Livro9Item[]> {
   try {
-    // Cast to any to bypass TypeScript's type checking
-    const query = supabase.from('livro9') as any;
-    const builtQuery = area === 'all' 
-      ? query.select('*').order('pdf_name')
-      : query.select('*').eq('area', area).order('pdf_name');
-    
-    const { data, error } = await builtQuery;
+    const { data, error } = await safeSelect<Livro9Item>('livro9', '*', 
+      query => area === 'all' 
+        ? query.order('pdf_name') 
+        : query.eq('area', area).order('pdf_name')
+    );
     
     if (error) {
       toast.error('Error fetching livro9 PDFs by area: ' + error.message);
@@ -115,12 +111,11 @@ export async function fetchLivro9ByAreaName(area: string): Promise<Livro9Item[]>
  */
 export async function searchLivro9(searchQuery: string): Promise<Livro9Item[]> {
   try {
-    // Cast to any to bypass TypeScript's type checking
-    const query = supabase.from('livro9') as any;
-    const { data, error } = await query
-      .select('*')
-      .or(`pdf_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,area.ilike.%${searchQuery}%`)
-      .order('pdf_name');
+    const { data, error } = await safeSelect<Livro9Item>('livro9', '*', 
+      query => query
+        .or(`pdf_name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,area.ilike.%${searchQuery}%`)
+        .order('pdf_name')
+    );
     
     if (error) {
       toast.error('Error searching livro9 PDFs: ' + error.message);
