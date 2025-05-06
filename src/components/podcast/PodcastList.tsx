@@ -182,123 +182,64 @@ export function PodcastList({
     };
   }, [filters.searchTerm, filters.category, filters.sortBy, limit]);
   
-  // Memoized handlers
-  const handlePodcastClick = React.useCallback(async (podcast: any) => {
+  // Memoized handlers - ALWAYS declare these regardless of conditions
+  const handlePodcastClick = React.useCallback((podcast: any) => {
     // If using the direct parent component handler
     if (onSelectPodcast) {
       onSelectPodcast(podcast);
       return;
     }
     
-    try {
-      // If the podcast doesn't have audio_url, fetch it
-      if (!podcast.audio_url) {
-        const { data, error } = await supabase
-          .from('podcast_tabela')
-          .select('url_audio, descricao')
-          .eq('id', Number(podcast.id))
-          .single();
-        
-        if (error) throw error;
-        
-        if (data) {
-          podcast.audio_url = data.url_audio || '';
-          // Also update description if empty
-          if (!podcast.description && data.descricao) {
-            podcast.description = data.descricao;
+    // Fetch extra podcast data if needed
+    const fetchPodcastDetails = async (podcastToFetch: any) => {
+      try {
+        // If the podcast doesn't have audio_url, fetch it
+        if (!podcastToFetch.audio_url) {
+          const { data, error } = await supabase
+            .from('podcast_tabela')
+            .select('url_audio, descricao')
+            .eq('id', Number(podcastToFetch.id))
+            .single();
+          
+          if (error) throw error;
+          
+          if (data) {
+            podcastToFetch.audio_url = data.url_audio || '';
+            // Also update description if empty
+            if (!podcastToFetch.description && data.descricao) {
+              podcastToFetch.description = data.descricao;
+            }
           }
         }
+        
+        setSelectedPodcast(podcastToFetch);
+        setShowAdvancedPlayer(true);
+      } catch (err) {
+        console.error("Error fetching podcast details:", err);
+        setError("Não foi possível carregar os detalhes do podcast");
       }
-      
-      setSelectedPodcast(podcast);
-      setShowAdvancedPlayer(true);
-    } catch (err) {
-      console.error("Error fetching podcast details:", err);
-      setError("Não foi possível carregar os detalhes do podcast");
-    }
+    };
+    
+    fetchPodcastDetails(podcast);
   }, [onSelectPodcast]);
   
-  // Handle state updates in batches for better performance
+  // Handle state updates in batches for better performance - ALWAYS declare regardless of component state
   const handleFilterChange = React.useCallback((type: string, value: any) => {
     setFilters(prev => ({ ...prev, [type]: value }));
   }, []);
   
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        <PodcastFilters
-          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
-          onCategoryChange={(value) => handleFilterChange('category', value)}
-          onSortChange={(value) => handleFilterChange('sortBy', value)}
-          categories={categories}
-          selectedCategory={filters.category}
-        />
-        
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, index) => (
-            <div key={index} className="space-y-2">
-              <Skeleton className="w-full aspect-[4/3]" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
+  // Always create filter component regardless of loading status
+  const renderFilters = () => (
+    <PodcastFilters
+      onSearchChange={(value) => handleFilterChange('searchTerm', value)}
+      onCategoryChange={(value) => handleFilterChange('category', value)}
+      onSortChange={(value) => handleFilterChange('sortBy', value)}
+      categories={categories}
+      selectedCategory={filters.category}
+    />
+  );
   
-  // Error state
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <PodcastFilters
-          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
-          onCategoryChange={(value) => handleFilterChange('category', value)}
-          onSortChange={(value) => handleFilterChange('sortBy', value)}
-          categories={categories}
-          selectedCategory={filters.category}
-        />
-      
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Erro</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-  
-  // Empty state
-  if (podcasts.length === 0) {
-    return (
-      <div className="space-y-4">
-        <PodcastFilters
-          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
-          onCategoryChange={(value) => handleFilterChange('category', value)}
-          onSortChange={(value) => handleFilterChange('sortBy', value)}
-          categories={categories}
-          selectedCategory={filters.category}
-        />
-      
-        <div className="text-center py-16">
-          <Music className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
-          <h3 className="text-xl font-medium mb-2">Nenhum podcast encontrado</h3>
-          <p className="text-muted-foreground max-w-md mx-auto">
-            {filters.searchTerm && filters.category 
-              ? `Não encontramos podcasts com "${filters.searchTerm}" na categoria "${filters.category}"`
-              : filters.searchTerm 
-                ? `Não encontramos podcasts com "${filters.searchTerm}"`
-                : filters.category 
-                  ? `Não há podcasts na categoria "${filters.category}"`
-                  : 'Não há podcasts disponíveis no momento'}
-          </p>
-        </div>
-      </div>
-    );
-  }
-  
-  // Memoize the podcast grid to prevent unnecessary re-renders
+  // ALWAYS create the podcast grid memo - even if empty or loading
   const podcastGrid = useMemo(() => (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {podcasts.map((podcast) => (
@@ -321,17 +262,68 @@ export function PodcastList({
     </div>
   ), [podcasts, handlePodcastClick]);
   
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        {renderFilters()}
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="space-y-2">
+              <Skeleton className="w-full aspect-[4/3]" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  
+  // Error state
+  if (error) {
+    return (
+      <div className="space-y-4">
+        {renderFilters()}
+      
+        <Alert variant="destructive">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  
+  // Empty state
+  if (podcasts.length === 0) {
+    return (
+      <div className="space-y-4">
+        {renderFilters()}
+      
+        <div className="text-center py-16">
+          <Music className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
+          <h3 className="text-xl font-medium mb-2">Nenhum podcast encontrado</h3>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            {filters.searchTerm && filters.category 
+              ? `Não encontramos podcasts com "${filters.searchTerm}" na categoria "${filters.category}"`
+              : filters.searchTerm 
+                ? `Não encontramos podcasts com "${filters.searchTerm}"`
+                : filters.category 
+                  ? `Não há podcasts na categoria "${filters.category}"`
+                  : 'Não há podcasts disponíveis no momento'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  
+  // Main render - consistent with all other render paths
   return (
     <>
       <div className="space-y-4">
-        <PodcastFilters
-          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
-          onCategoryChange={(value) => handleFilterChange('category', value)}
-          onSortChange={(value) => handleFilterChange('sortBy', value)}
-          categories={categories}
-          selectedCategory={filters.category}
-        />
-        
+        {renderFilters()}
         {podcastGrid}
       </div>
       
