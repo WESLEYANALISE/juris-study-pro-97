@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useState as useStateSafe } from "react";
+import { Badge } from "@/components/ui/badge";
+import { useGlobalSearch } from "@/hooks/use-global-search";
 
 interface HeaderProps {
   userProfile?: ProfileType;
@@ -31,6 +33,7 @@ export function Header({ userProfile = "concurseiro" }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { globalSearchResults, handleGlobalSearch } = useGlobalSearch();
 
   // Function to handle sidebar toggle, checking if toggle exists first
   const handleSidebarToggle = () => {

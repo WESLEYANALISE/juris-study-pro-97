@@ -45,31 +45,49 @@ export function useGlobalSearch() {
 
       if (livrosError) throw livrosError;
 
-      // Search in vademecum (demonstrative - adjust according to your actual schema)
-      const vademecumSearchTables = [
-        'Código_Penal', 
-        'Código_Civil', 
-        'Constituicao_Federal'
-      ];
+      // Search in vademecum (using fixed table names instead of dynamic ones)
+      const vademecumResults: any[] = [];
       
-      let vademecumResults: any[] = [];
+      // Search in Código_Penal
+      const { data: codigoPenal, error: codigoPenalError } = await supabase
+        .from('Código_Penal')
+        .select('id, artigo, numero')
+        .ilike('artigo', `%${query}%`)
+        .limit(3);
+        
+      if (!codigoPenalError && codigoPenal) {
+        vademecumResults.push(...codigoPenal.map(item => ({
+          ...item,
+          lawName: 'Código_Penal'
+        })));
+      }
       
-      for (const table of vademecumSearchTables) {
-        const { data, error } = await supabase
-          .from(table)
-          .select('id, artigo, numero')
-          .ilike('artigo', `%${query}%`)
-          .limit(3);
-          
-        if (!error && data) {
-          vademecumResults = [
-            ...vademecumResults,
-            ...data.map(item => ({
-              ...item,
-              lawName: table
-            }))
-          ];
-        }
+      // Search in Código_Civil
+      const { data: codigoCivil, error: codigoCivilError } = await supabase
+        .from('Código_Civil')
+        .select('id, artigo, numero')
+        .ilike('artigo', `%${query}%`)
+        .limit(3);
+        
+      if (!codigoCivilError && codigoCivil) {
+        vademecumResults.push(...codigoCivil.map(item => ({
+          ...item,
+          lawName: 'Código_Civil'
+        })));
+      }
+      
+      // Search in Constituicao_Federal
+      const { data: constituicao, error: constituicaoError } = await supabase
+        .from('Constituicao_Federal')
+        .select('id, artigo, numero')
+        .ilike('artigo', `%${query}%`)
+        .limit(3);
+        
+      if (!constituicaoError && constituicao) {
+        vademecumResults.push(...constituicao.map(item => ({
+          ...item,
+          lawName: 'Constituicao_Federal'
+        })));
       }
 
       // Combine all results
@@ -90,7 +108,7 @@ export function useGlobalSearch() {
           area: l.categoria || 'Geral',
           url: `/biblioteca-juridica?id=${l.id}`
         })),
-        ...(vademecumResults).map(v => ({
+        ...(vademecumResults || []).map(v => ({
           id: String(v.id),
           title: `${v.lawName.replace(/_/g, ' ')} - Art. ${v.numero || ''}`,
           description: v.artigo?.substring(0, 100) + '...' || 'Artigo de lei',
