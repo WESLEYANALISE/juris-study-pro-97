@@ -1,163 +1,141 @@
 
-.enhanced-pdf-container {
-  background-color: #121212;
-  color: #eee;
+/* PDF Viewer Styles */
+.pdf-container {
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
 }
 
-.enhanced-pdf-content {
+.pdf-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
   padding: 1rem;
-  min-height: 0;
 }
 
-.enhanced-pdf-document {
+/* PDF.js specific styles */
+.react-pdf__Document {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.pdf-document-container {
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.enhanced-pdf-page {
-  margin-bottom: 1rem;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+.pdf-page-container {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  scroll-margin-top: 20px;
+  width: 100%;
+}
+
+.pdf-page {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: white;
+  transition: transform 0.2s ease;
+}
+
+.react-pdf__Page__canvas {
   border-radius: 4px;
   background-color: white;
   max-width: 100%;
+  height: auto !important;
+  margin: 0 auto;
+  display: block;
 }
 
-.enhanced-pdf-controls {
+/* Dark mode for PDF */
+.pdf-page-dark canvas {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+/* Mobile controls */
+.pdf-mobile-controls {
   position: sticky;
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  border-top: 1px solid #333;
-  padding: 0.75rem 1rem;
-  z-index: 40;
-}
-
-.enhanced-pdf-controls-row {
+  background-color: hsl(var(--background));
+  border-top: 1px solid hsl(var(--border));
+  padding: 0.5rem;
+  z-index: 10;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
 }
 
+/* Helper classes to prevent scrolling when PDF is open */
+body.pdf-viewer-open {
+  overflow: hidden;
+}
+
+body.dark-pdf-mode {
+  background-color: #111111;
+  color: #f5f5f5;
+}
+
+/* Annotations sidebar styles */
+.pdf-annotation-sidebar {
+  position: absolute;
+  right: 0;
+  top: 3rem;
+  bottom: 5rem;
+  width: 300px;
+  overflow-y: auto;
+  z-index: 20;
+  padding: 1rem;
+  transition: transform 0.3s ease;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Zoom interactions */
+.pdf-page:active {
+  cursor: grabbing;
+}
+
+/* Mobile optimization */
 @media (max-width: 640px) {
-  .enhanced-pdf-controls-row {
-    flex-direction: column;
-    align-items: center;
+  .pdf-content {
+    padding: 0.5rem;
   }
   
-  .enhanced-pdf-page {
-    max-width: 100% !important;
-    max-height: unset !important;
+  .pdf-page-container {
+    margin-bottom: 10px;
+  }
+  
+  .pdf-annotation-sidebar {
+    width: 260px;
   }
 }
 
-/* Disable document layer interactions that can cause issues */
-.react-pdf__Document {
-  line-height: initial;
-}
-
-/* Improve touch gestures */
-.enhanced-pdf-container {
-  touch-action: pan-y;
-}
-
-/* Custom PDF appearance */
-.enhanced-pdf-page canvas {
-  max-width: 100%;
-  height: auto !important;
-}
-
-/* Fade transition for page changes */
-.enhanced-pdf-page {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
+/* Page transition animations */
 @keyframes fadeIn {
   from {
-    opacity: 0.6;
+    opacity: 0;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-/* Swipe hint animation */
-.swipe-hint {
-  position: fixed;
-  bottom: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  z-index: 100;
-  animation: swipeHint 2s ease-in-out forwards;
-}
-
-@keyframes swipeHint {
-  0% {
-    opacity: 0;
-    transform: translate(-50%, 20px);
-  }
-  20% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  80% {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-  100% {
-    opacity: 0;
-    transform: translate(-50%, -20px);
-  }
-}
-
-/* PDF toast */
-.pdf-toast {
-  position: fixed;
-  bottom: 100px;
-  left: 50%;
-  transform: translateX(-50%) translateY(20px);
-  background-color: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 8px 16px;
-  border-radius: 4px;
-  font-size: 14px;
-  opacity: 0;
-  transition: all 0.3s ease;
-  z-index: 9999;
-}
-
-.pdf-toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-/* Dark mode specific styles */
-.pdf-viewer-open {
-  background-color: #121212;
-}
-
-/* Fix PDF pagination issues */
-.react-pdf__Page__annotations {
-  display: none; /* Hide annotations to prevent page bugs */
-}
-
-/* Make the PDF page container look better */
-.react-pdf__Page {
-  margin: 0 auto;
-  padding: 0;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+.pdf-page-container {
+  animation: fadeIn 0.3s ease-out;
 }

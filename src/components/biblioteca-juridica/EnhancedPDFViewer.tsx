@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle, StickyNote, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { usePdfAnnotations } from '@/hooks/use-pdf-annotations';
@@ -39,12 +38,14 @@ export function EnhancedPDFViewer({
   const [errorMessage, setErrorMessage] = useState("");
   const [progress, setProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [isFullScreen, setIsFullScreen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   const [processedPdfUrl, setProcessedPdfUrl] = useState('');
   const [isValidatingUrl, setIsValidatingUrl] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const [showAnnotations, setShowAnnotations] = useState(false);
+  const [visiblePages, setVisiblePages] = useState<Set<number>>(new Set([1]));
+  const [renderedPages, setRenderedPages] = useState<number[]>([]);
+  const [pageDimensions, setPageDimensions] = useState<{ width: number, height: number }>({ width: 0, height: 0 });
 
   const {
     saveReadingProgress,
@@ -67,7 +68,9 @@ export function EnhancedPDFViewer({
   } = usePdfAnnotations(bookId);
   
   const containerRef = useRef<HTMLDivElement>(null);
+  const pdfContainerRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<any>(null);
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Handle viewport resize for responsive display
   useEffect(() => {
@@ -75,10 +78,8 @@ export function EnhancedPDFViewer({
       setViewportWidth(window.innerWidth);
 
       // Adjust scale for small screens
-      if (window.innerWidth < 640) {
+      if (window.innerWidth < 640 && scale > 0.8) {
         setScale(0.8);
-      } else {
-        setScale(1.0);
       }
     };
     window.addEventListener('resize', handleResize);
@@ -87,7 +88,7 @@ export function EnhancedPDFViewer({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, []);
+  }, [scale]);
   
   // Initialize component state and process PDF URL
   useEffect(() => {
@@ -128,6 +129,65 @@ export function EnhancedPDFViewer({
     };
   }, [pdfUrl, darkMode]);
   
+  // Setup intersection observer to detect visible pages
+  useEffect(() => {
+    // Clean up previous observer
+    if (observerRef.current) {
+      observerRef.current.disconnect();
+    }
+
+    if (!isLoaded || !numPages) return;
+
+    const options = {
+      root: pdfContainerRef.current,
+      rootMargin: '100px 0px',
+      threshold: 0.1
+    };
+
+    // Create new observer
+    observerRef.current = new IntersectionObserver((entries) => {
+      const visiblePagesSet = new Set(visiblePages);
+      
+      entries.forEach(entry => {
+        const pageElement = entry.target as HTMLElement;
+        const pageNum = parseInt(pageElement.dataset.pageNumber || '1', 10);
+        
+        if (entry.isIntersecting) {
+          visiblePagesSet.add(pageNum);
+        } else {
+          visiblePagesSet.delete(pageNum);
+        }
+      });
+      
+      // Update visible pages state
+      setVisiblePages(visiblePagesSet);
+      
+      // Update current page number based on first visible page
+      if (visiblePagesSet.size > 0) {
+        const firstVisiblePage = Math.min(...Array.from(visiblePagesSet));
+        setPageNumber(firstVisiblePage);
+      }
+    }, options);
+
+    // Observe all page elements
+    const pageElements = document.querySelectorAll('.pdf-page-container');
+    pageElements.forEach(element => {
+      observerRef.current?.observe(element);
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
+  }, [isLoaded, numPages, visiblePages]);
+
+  // Create array of pages to render
+  const pagesToRender = useMemo(() => {
+    if (!numPages) return [1];
+    return Array.from({ length: numPages }, (_, i) => i + 1);
+  }, [numPages]);
+  
   // Save reading progress when page changes
   useEffect(() => {
     if (book && pageNumber > 0 && isLoaded) {
@@ -143,10 +203,9 @@ export function EnhancedPDFViewer({
     setIsError(false);
     toast.success(`PDF carregado: ${totalPages} páginas`);
 
-    // Try to get the document object for better page navigation
-    if (documentRef.current) {
-      console.log("Document ref available:", documentRef.current);
-    }
+    // Set initial pages to render
+    const initialPages = Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1);
+    setRenderedPages(initialPages);
   }
   
   function onDocumentLoadError(error: any) {
@@ -157,23 +216,38 @@ export function EnhancedPDFViewer({
     setErrorMessage(`Erro ao carregar PDF: ${error.message || "Verifique se o arquivo existe"}`);
     toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
   }
+
+  // Handle page dimension calculation
+  function onPageLoadSuccess({ width, height }) {
+    if (!pageDimensions.width) {
+      setPageDimensions({ width, height });
+    }
+  }
   
+  // Scroll to specific page
+  function scrollToPage(pageNum: number) {
+    if (!pdfContainerRef.current) return;
+    
+    const pageElement = document.querySelector(`[data-page-number="${pageNum}"]`);
+    if (pageElement) {
+      pageElement.scrollIntoView({ behavior: 'smooth' });
+      setPageNumber(pageNum);
+    }
+  }
+  
+  // Go to next or previous page
   function changePage(amount: number) {
-    setPageNumber(prevPageNumber => {
-      const newPageNumber = prevPageNumber + amount;
-      if (newPageNumber >= 1 && newPageNumber <= (numPages || 1)) {
-        return newPageNumber;
-      } else {
-        return prevPageNumber;
-      }
-    });
+    const newPage = pageNumber + amount;
+    if (newPage >= 1 && newPage <= (numPages || 1)) {
+      scrollToPage(newPage);
+    }
   }
 
   // Manual page input handler
   function handlePageInput(e: React.ChangeEvent<HTMLInputElement>) {
     const value = parseInt(e.target.value);
     if (!isNaN(value) && value >= 1 && value <= (numPages || 1)) {
-      setPageNumber(value);
+      scrollToPage(value);
     }
   }
 
@@ -188,6 +262,21 @@ export function EnhancedPDFViewer({
   function rotate() {
     setRotation(prevRotation => (prevRotation + 90) % 360);
   }
+
+  // Handle zoom with wheel
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (e.ctrlKey) {
+      e.preventDefault();
+      const delta = -e.deltaY;
+      
+      setScale(prevScale => {
+        const newScale = delta > 0 
+          ? Math.min(prevScale + 0.1, 3.0) 
+          : Math.max(prevScale - 0.1, 0.5);
+        return parseFloat(newScale.toFixed(1));
+      });
+    }
+  };
 
   // Handle favorites toggle
   const handleToggleFavorite = () => {
@@ -406,10 +495,14 @@ export function EnhancedPDFViewer({
       </div>
       
       {/* PDF content area */}
-      <div className={cn(
-        "flex-1 overflow-auto h-[calc(100vh-10rem)]",
-        darkMode ? "bg-gray-900" : "bg-gray-100"
-      )}>
+      <div 
+        className={cn(
+          "flex-1 overflow-auto h-[calc(100vh-10rem)]",
+          darkMode ? "bg-gray-900" : "bg-gray-100"
+        )}
+        ref={pdfContainerRef}
+        onWheel={handleWheel}
+      >
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
@@ -419,7 +512,7 @@ export function EnhancedPDFViewer({
             <Progress value={progress} className="w-64 mb-4" />
           </div>
         ) : (
-          <div className="flex justify-center items-center min-h-full py-4">
+          <div className="flex flex-col items-center min-h-full py-4">
             <Document
               file={processedPdfUrl}
               onLoadSuccess={onDocumentLoadSuccess}
@@ -437,18 +530,31 @@ export function EnhancedPDFViewer({
                 standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
               }}
             >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                rotate={rotation}
-                className={cn(
-                  "pdf-page",
-                  darkMode ? "pdf-page-dark" : "pdf-page-light",
-                  "shadow-lg"
-                )}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-              />
+              {pagesToRender.map((pageNum) => (
+                <div 
+                  key={`page_${pageNum}`} 
+                  className="pdf-page-container mb-4"
+                  data-page-number={pageNum}
+                >
+                  <Page
+                    key={`page_${pageNum}_${scale}_${rotation}`}
+                    pageNumber={pageNum}
+                    scale={scale}
+                    rotate={rotation}
+                    className={cn(
+                      "pdf-page",
+                      darkMode ? "pdf-page-dark" : "pdf-page-light",
+                      "shadow-lg"
+                    )}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    onLoadSuccess={onPageLoadSuccess}
+                  />
+                  <div className="text-center mt-1 text-xs text-muted-foreground">
+                    {pageNum} / {numPages}
+                  </div>
+                </div>
+              ))}
             </Document>
           </div>
         )}
