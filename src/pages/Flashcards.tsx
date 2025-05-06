@@ -77,7 +77,7 @@ export default function Flashcards() {
   const areasWithTema = areas.map(area => ({
     ...area,
     tema: "" // Add tema property with empty string as default value
-  })) as TemaCount[];
+  }));
 
   const { data: temas = [], isLoading: isLoadingTemas } = useQuery<TemaCount[]>({
     queryKey: ["flashcard-temas"],
@@ -235,7 +235,7 @@ export default function Flashcards() {
           >
             <FlashcardSetup 
               onStartStudy={handleStartStudy} 
-              areas={areasWithTema}
+              areas={areas}
               temas={temas}
               isMobile={isMobile}
               loading={isLoading || isLoadingAreas || isLoadingTemas}
@@ -270,7 +270,7 @@ export default function Flashcards() {
       )}
 
       {/* Study session */}
-      {studyConfig && (
+      {studyConfig && filteredCards.length > 0 && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 

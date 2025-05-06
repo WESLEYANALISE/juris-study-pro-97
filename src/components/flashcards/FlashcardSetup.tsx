@@ -122,7 +122,7 @@ export function FlashcardSetup({
                     <SelectValue placeholder="Selecione uma área do Direito" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Todas as áreas</SelectItem>
+                    <SelectItem value="all">Todas as áreas</SelectItem>
                     {areas.map((area) => (
                       <SelectItem key={area.area} value={area.area}>
                         {area.area} ({area.count} cartões)
@@ -148,7 +148,7 @@ export function FlashcardSetup({
                   <SelectValue placeholder="Selecione um tema" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Todos os temas</SelectItem>
+                  <SelectItem value="all">Todos os temas</SelectItem>
                   {filteredTemas
                     .filter((t, i, self) => 
                       i === self.findIndex(s => s.tema === t.tema))
