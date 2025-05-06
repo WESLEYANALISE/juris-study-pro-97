@@ -54,7 +54,14 @@ const CursoViewer = () => {
   }
 
   if (loading) {
-    return <div className="container mx-auto py-8">Carregando curso...</div>;
+    return (
+      <div className="container mx-auto py-8 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-lg">Carregando curso...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!curso) {
@@ -100,7 +107,15 @@ const CursoViewer = () => {
             <CardDescription>{courseMenuProps.description}</CardDescription>
           </CardHeader>
           <CardContent>
-            <img src={curso.thumbnail || curso.capa} alt={courseMenuProps.title} className="rounded-md mb-4 w-full h-[240px] object-cover" />
+            <img 
+              src={curso.capa || curso.thumbnail || '/placeholder-book-cover.png'} 
+              alt={courseMenuProps.title} 
+              className="rounded-md mb-4 w-full h-[240px] object-cover" 
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-book-cover.png';
+              }}
+            />
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div>

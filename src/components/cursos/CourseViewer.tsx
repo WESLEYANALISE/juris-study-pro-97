@@ -1,6 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
-import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, Volume1, VolumeX, X } from "lucide-react";
+import { ChevronLeft, BookmarkPlus, Bookmark, MessageSquare, Download, Volume2, Volume1, VolumeX, X, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +55,15 @@ export function CourseViewer({
   const progressIntervalRef = useRef<number | null>(null);
   const isMobile = useIsMobile();
   
+  // Check if the URL is embeddable or an external link
+  const isExternalLink = videoUrl && (
+    videoUrl.includes('mindsmith') || 
+    !videoUrl.includes('youtube') && 
+    !videoUrl.includes('youtu.be') && 
+    !videoUrl.includes('vimeo') &&
+    !videoUrl.includes('embed')
+  );
+
   useEffect(() => {
     // Hide mobile navigation when course is active
     document.body.classList.add('course-viewer-active');
@@ -153,6 +162,20 @@ export function CourseViewer({
     setShowControls(!showControls);
   };
 
+  const handleOpenExternalLink = () => {
+    if (videoUrl) {
+      window.open(videoUrl, '_blank', 'noopener,noreferrer');
+      
+      // Update progress to indicate the user accessed the course
+      if (updateProgress) {
+        updateProgress(Math.max(progress, 10));
+        toast.success("Conteúdo aberto em uma nova aba");
+      }
+    } else {
+      toast.error("Link do curso não disponível");
+    }
+  };
+
   return (
     <div className="fixed inset-0 flex flex-col bg-black z-[100]">
       {/* Close button in the top right corner as requested */}
@@ -177,7 +200,23 @@ export function CourseViewer({
       {/* Full screen video container */}
       <div className="flex-grow w-full h-full overflow-hidden relative">
         <div className="absolute inset-0 flex items-center justify-center bg-black">
-          {youtubeId ? (
+          {isExternalLink ? (
+            <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
+              <div className="max-w-md mx-auto px-4 text-center">
+                <h2 className="text-xl font-bold mb-4">{title}</h2>
+                <p className="mb-6">Este curso está disponível em uma plataforma externa e não pode ser incorporado diretamente.</p>
+                <Button 
+                  onClick={handleOpenExternalLink} 
+                  className="flex items-center gap-2"
+                  size="lg"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                  Acessar Curso
+                </Button>
+                <p className="mt-4 text-sm text-gray-400">O conteúdo será aberto em uma nova aba.</p>
+              </div>
+            </div>
+          ) : youtubeId ? (
             <iframe
               ref={actualVideoRef}
               src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
@@ -199,7 +238,10 @@ export function CourseViewer({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-black text-white">
-              Vídeo não disponível
+              <div className="text-center">
+                <p className="text-xl mb-2">Vídeo não disponível</p>
+                <p className="text-sm text-gray-400">O link para este curso não foi encontrado.</p>
+              </div>
             </div>
           )}
         </div>
@@ -260,18 +302,20 @@ export function CourseViewer({
                 </Button>
               )}
               
-              <Button 
-                variant="outline" 
-                size={isMobile ? "sm" : "default"}
-                onClick={cycleVolume}
-                title={`Volume: ${volume}`}
-                className="bg-black/40 text-white border-white/30"
-              >
-                <VolumeIcon className="h-4 w-4 mr-2" />
-                <span>
-                  {volume === "normal" ? "Volume normal" : volume === "low" ? "Volume baixo" : "Mudo"}
-                </span>
-              </Button>
+              {!isExternalLink && (
+                <Button 
+                  variant="outline" 
+                  size={isMobile ? "sm" : "default"}
+                  onClick={cycleVolume}
+                  title={`Volume: ${volume}`}
+                  className="bg-black/40 text-white border-white/30"
+                >
+                  <VolumeIcon className="h-4 w-4 mr-2" />
+                  <span>
+                    {volume === "normal" ? "Volume normal" : volume === "low" ? "Volume baixo" : "Mudo"}
+                  </span>
+                </Button>
+              )}
             </div>
             
             {updateProgress !== undefined && (

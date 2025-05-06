@@ -114,13 +114,19 @@ export function useCursoViewer() {
   }, [cursoId, state.curso]);
 
   const handleStartCourse = useCallback(() => {
+    // Check if the course has a valid link
+    if (state.curso && !state.curso.link) {
+      toast.error("Este curso não possui um link válido. Por favor, tente novamente mais tarde.");
+      return;
+    }
+    
     // Batch state updates to avoid multiple renders
     setState(prev => ({ 
       ...prev, 
       menuOpen: false, 
       showCourse: true 
     }));
-  }, []);
+  }, [state.curso]);
 
   const handleBack = useCallback(() => {
     if (state.progress > 0 && cursoId) {
