@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -48,19 +47,39 @@ export function PDFViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Process the URL to ensure it's a full URL
+  const processUrl = (url: string): string => {
+    if (!url) return '';
+
+    // Already a full URL
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      console.log("PDF URL is already complete:", url);
+      return url;
+    }
+
+    // Add the Supabase storage URL prefix if it's just a path
+    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
+    console.log("Converted PDF URL:", fullUrl);
+    return fullUrl;
+  };
+
+  // Use the processed URL for the PDF
+  const pdfUrl = processUrl(livro.pdf);
+
   // Debugging PDF URL
   useEffect(() => {
-    console.log("PDF URL:", livro.pdf);
+    console.log("PDF URL:", pdfUrl);
     // Validate if URL is properly formatted
-    if (livro.pdf) {
+    if (pdfUrl) {
       try {
-        new URL(livro.pdf);
+        new URL(pdfUrl);
       } catch (err) {
         console.error("PDF URL is not valid:", err);
         setError('URL do PDF inválida ou mal formatada');
       }
     }
-  }, [livro.pdf]);
+  }, [pdfUrl]);
 
   // Set up touch gestures for mobile
   const touchGestures = useTouchGestures({
@@ -145,6 +164,7 @@ export function PDFViewer({
   }: {
     numPages: number;
   }): void {
+    console.log("PDF loaded successfully. Total pages:", numPages);
     setNumPages(numPages);
     setIsLoading(false);
     
@@ -166,7 +186,8 @@ export function PDFViewer({
 
   function onDocumentLoadError(error: Error): void {
     console.error('Error loading PDF:', error);
-    setError('Erro ao carregar o PDF. Por favor, tente novamente mais tarde.');
+    console.error('Attempted PDF URL:', pdfUrl);
+    setError(`Erro ao carregar o PDF: ${error.message}. Verifique se o arquivo existe no servidor.`);
     setIsLoading(false);
   }
 
@@ -266,7 +287,10 @@ export function PDFViewer({
               transition={{ duration: 0.3 }}
             >
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
-              <p>{error}</p>
+              <p className="mb-4">{error}</p>
+              <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+                <code className="break-all whitespace-pre-wrap">{pdfUrl}</code>
+              </div>
               <Button className="mt-4" onClick={onClose}>
                 Voltar
               </Button>
@@ -274,7 +298,7 @@ export function PDFViewer({
           </div>
         ) : (
           <Document 
-            file={livro.pdf} 
+            file={pdfUrl} 
             onLoadSuccess={onDocumentLoadSuccess} 
             onLoadError={onDocumentLoadError} 
             loading={

@@ -20,6 +20,20 @@ export interface LibraryArea {
 }
 
 /**
+ * Ensures all URLs are properly formatted
+ */
+export function formatPdfUrl(url: string): string {
+  // If it's already a complete URL, return it
+  if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+    return url;
+  }
+
+  // If it's a storage path, add the necessary prefix
+  const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+  return `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
+}
+
+/**
  * Fetches all books grouped by area
  */
 export async function fetchBooksByArea(): Promise<{ [key: string]: LivroSupa[] }> {
@@ -31,15 +45,22 @@ export async function fetchBooksByArea(): Promise<{ [key: string]: LivroSupa[] }
       return {};
     }
     
+    // Make sure URLs are properly formatted and IDs are strings
+    const formattedData = data?.map(book => ({
+      ...book,
+      id: String(book.id),
+      pdf_url: formatPdfUrl(book.pdf_url)
+    })) || [];
+    
     // Group the books by area
-    const groupedByArea = data?.reduce<{ [key: string]: LivroSupa[] }>((acc, book) => {
+    const groupedByArea = formattedData.reduce<{ [key: string]: LivroSupa[] }>((acc, book) => {
       const area = book.area || 'Sem Categoria';
       if (!acc[area]) {
         acc[area] = [];
       }
       acc[area].push(book);
       return acc;
-    }, {}) || {};
+    }, {});
     
     return groupedByArea;
   } catch (error) {
@@ -144,8 +165,11 @@ export async function saveReadingProgress(
     
     if (!userData || !userData.user) {
       // Silently fail if no user
+      console.log("No user found when trying to save reading progress");
       return;
     }
+    
+    console.log("Saving reading progress:", { bookId, currentPage, isFavorite, userId: userData.user.id });
     
     const { error } = await supabase
       .from('biblioteca_leitura_progresso')
@@ -159,9 +183,13 @@ export async function saveReadingProgress(
     
     if (error) {
       console.error('Error saving reading progress:', error);
+      toast.error('Não foi possível salvar seu progresso de leitura');
+    } else {
+      console.log("Reading progress saved successfully");
     }
   } catch (error) {
     console.error('Error in saveReadingProgress:', error);
+    toast.error('Erro ao salvar progresso de leitura');
   }
 }
 
@@ -244,7 +272,7 @@ export async function getFavoriteBooks(): Promise<LivroSupa[]> {
       id: String(book.id), // Convert id to string to match our interface
       pdf_name: book.pdf_name,
       area: book.area,
-      pdf_url: book.pdf_url,
+      pdf_url: formatPdfUrl(book.pdf_url),
       sinopse: book.sinopse,
       capa: book.capa,
       created_at: book.created_at
@@ -308,7 +336,7 @@ export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa
         id: String(book.id), // Convert id to string to match our interface
         pdf_name: book.pdf_name,
         area: book.area,
-        pdf_url: book.pdf_url,
+        pdf_url: formatPdfUrl(book.pdf_url),
         sinopse: book.sinopse,
         capa: book.capa,
         created_at: book.created_at,

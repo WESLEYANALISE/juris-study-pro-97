@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { 
@@ -50,6 +49,32 @@ export function BookReader({ book, onClose }: BookReaderProps) {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Process the URL to ensure it's a full URL
+  const processUrl = (url: string): string => {
+    if (!url) return '';
+
+    // Already a full URL
+    if (url.startsWith('http')) {
+      console.log("PDF URL is already complete:", url);
+      return url;
+    }
+
+    // Add the Supabase storage URL prefix if it's just a path
+    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
+    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
+    console.log("Converted PDF URL:", fullUrl);
+    return fullUrl;
+  };
+  
+  // Use the processed URL for the PDF
+  const pdfUrl = processUrl(book.pdf_url);
+  
+  // Debug the PDF URL
+  useEffect(() => {
+    console.log("Processing PDF URL:", book.pdf_url);
+    console.log("Final PDF URL to use:", pdfUrl);
+  }, [book.pdf_url, pdfUrl]);
   
   // Handle viewport resize
   useEffect(() => {
@@ -104,11 +129,13 @@ export function BookReader({ book, onClose }: BookReaderProps) {
     toast.success(`PDF carregado: ${numPages} páginas`);
   }
   
-  // Handle document load error
+  // Handle document load error with more detailed logging
   function onDocumentLoadError(error: Error): void {
     console.error('Error loading PDF:', error);
+    console.error('Attempted PDF URL:', pdfUrl);
     setError(`Erro ao carregar PDF: ${error.message}`);
     setIsLoading(false);
+    toast.error('Não foi possível carregar o PDF. Verifique se o arquivo existe no servidor.');
   }
   
   // Navigation functions
@@ -245,7 +272,10 @@ export function BookReader({ book, onClose }: BookReaderProps) {
         <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center">
           <AlertCircle className="h-16 w-16 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Erro ao carregar PDF</h2>
-          <p className="mb-6">{error}</p>
+          <p className="mb-4">{error}</p>
+          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+            <code className="break-all whitespace-pre-wrap">{pdfUrl}</code>
+          </div>
           <Button onClick={onClose}>Fechar</Button>
         </div>
       </div>
@@ -313,7 +343,7 @@ export function BookReader({ book, onClose }: BookReaderProps) {
         ) : (
           <div className="pdf-content py-4 flex justify-center items-start min-h-full">
             <Document 
-              file={book.pdf_url} 
+              file={pdfUrl} 
               onLoadSuccess={onDocumentLoadSuccess} 
               onLoadError={onDocumentLoadError} 
               onLoadProgress={({ loaded, total }: { loaded: number; total: number }) => {
@@ -334,6 +364,11 @@ export function BookReader({ book, onClose }: BookReaderProps) {
                   <p className="text-red-500">Erro ao carregar o PDF.</p>
                 </div>
               }
+              options={{
+                cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+                cMapPacked: true,
+                standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
+              }}
             >
               <Page 
                 pageNumber={pageNumber} 
