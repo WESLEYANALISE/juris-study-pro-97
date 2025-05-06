@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion, HTMLMotionProps } from "framer-motion";
 import { Landmark, Book, Scale } from "lucide-react";
 
-interface JuridicalCardProps extends React.HTMLAttributes<HTMLDivElement> {
+interface JuridicalCardProps extends Omit<HTMLMotionProps<"div">, "title" | "icon" | "children" | "description"> {
   title: string;
   description: string;
   icon: string | React.ReactNode;
@@ -43,9 +43,6 @@ export function JuridicalCard({
     secondary: "from-indigo-900/30 to-indigo-900/10 border-indigo-700/20 hover:border-indigo-700/40"
   };
 
-  // Set type-safe hover animation without using the problematic props
-  const hoverAnimation = { y: -5, transition: { duration: 0.2 } };
-
   return (
     <motion.div
       className={cn(
@@ -53,7 +50,8 @@ export function JuridicalCard({
         variants[variant],
         className
       )}
-      whileHover={hoverAnimation}
+      whileHover={{ y: -5 }}
+      transition={{ duration: 0.2 }}
       {...props}
     >
       <div className="mb-4 flex items-center gap-2">
