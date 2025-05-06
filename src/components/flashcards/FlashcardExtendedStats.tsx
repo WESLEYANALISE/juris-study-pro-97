@@ -193,7 +193,7 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
     : 0;
 
   return (
-    <Card className={cn("w-full", className)}>
+    <Card className={cn("w-full gradient-card", className)}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-xl flex items-center">
           <Brain className="mr-2 h-5 w-5 text-primary" />
@@ -213,7 +213,12 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
             <span className="text-sm font-medium">Progresso de Domínio</span>
             <span className="text-sm font-medium">{totalMastery}%</span>
           </div>
-          <Progress value={totalMastery} className="h-2" />
+          <div className="w-full h-2 bg-primary/10 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-primary/90 to-purple-600/90"
+              style={{ width: `${totalMastery}%` }}
+            />
+          </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{stats.masteredCards} dominados</span>
             <span>{stats.cardsInProgress} estudados</span>
@@ -223,7 +228,7 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
         {/* Cards stats */}
         <div className="grid grid-cols-2 gap-3">
           <motion.div 
-            className="flex items-center gap-2 p-3 border rounded-lg bg-primary/5"
+            className="flex items-center gap-2 p-3 rounded-lg bg-[#1A1633]/50 border border-primary/10"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
@@ -238,7 +243,7 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
           </motion.div>
           
           <motion.div 
-            className="flex items-center gap-2 p-3 border rounded-lg bg-primary/5"
+            className="flex items-center gap-2 p-3 rounded-lg bg-[#1A1633]/50 border border-primary/10"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
@@ -255,7 +260,7 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
           </motion.div>
           
           <motion.div 
-            className="flex items-center gap-2 p-3 border rounded-lg bg-primary/5"
+            className="flex items-center gap-2 p-3 rounded-lg bg-[#1A1633]/50 border border-primary/10"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
@@ -273,7 +278,7 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
           </motion.div>
           
           <motion.div 
-            className="flex items-center gap-2 p-3 border rounded-lg bg-primary/5"
+            className="flex items-center gap-2 p-3 rounded-lg bg-[#1A1633]/50 border border-primary/10"
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
@@ -299,84 +304,73 @@ export function FlashcardExtendedStats({ onClose, className }: FlashcardStatsPro
         {/* Knowledge distribution */}
         <div className="pt-2">
           <div className="text-sm font-medium mb-2">Distribuição de Conhecimento</div>
-          <div className="flex gap-1 h-8">
-            {stats.knowledgeDistribution.map((count, level) => {
-              const total = stats.knowledgeDistribution.reduce((a, b) => a + b, 0);
-              const percentage = total > 0 ? (count / total) * 100 : 0;
+          <div className="space-y-2">
+            {stats.knowledgeDistribution.slice(1).map((value, index) => {
+              const level = index + 1;
+              const total = stats.knowledgeDistribution.reduce((sum, val) => sum + val, 0) || 1;
+              const percentage = Math.round((value / total) * 100);
               
-              // Skip level 0 in the visualization
-              if (level === 0) return null;
-              
-              const levelColors = [
-                "bg-red-500", 
-                "bg-orange-500", 
-                "bg-yellow-500", 
-                "bg-lime-500", 
-                "bg-green-500", 
-                "bg-emerald-500"
+              // Color based on level
+              const colors = [
+                "from-red-500 to-red-600",      // Level 1
+                "from-orange-500 to-amber-600", // Level 2
+                "from-yellow-500 to-amber-500", // Level 3
+                "from-green-500 to-emerald-600",// Level 4
+                "from-emerald-500 to-teal-600", // Level 5
               ];
               
               return (
-                <div 
-                  key={level} 
-                  className={cn(
-                    "rounded-sm relative group", 
-                    levelColors[level],
-                    count === 0 ? "opacity-30" : "opacity-80"
-                  )}
-                  style={{ width: `${Math.max(percentage, 2)}%` }}
-                >
-                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 hidden group-hover:block bg-black bg-opacity-75 text-white text-xs p-1 rounded whitespace-nowrap z-10">
-                    Nível {level}: {count} cartões
+                <div key={level} className="space-y-1">
+                  <div className="flex justify-between text-xs">
+                    <span>Nível {level}</span>
+                    <span>{percentage}%</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full bg-gradient-to-r ${colors[index]}`}
+                      style={{ width: `${percentage}%` }}
+                    />
                   </div>
                 </div>
               );
             })}
           </div>
-          <div className="flex justify-between text-xs text-muted-foreground mt-1">
-            <span>Iniciante</span>
-            <span>Dominado</span>
-          </div>
         </div>
         
-        {/* Areas progress */}
+        {/* Areas progress - limited to top 3 */}
         {Object.keys(stats.areaProgress).length > 0 && (
           <div className="pt-2">
             <div className="text-sm font-medium mb-2">Progresso por Área</div>
-            <div className="space-y-2">
-              {Object.entries(stats.areaProgress).map(([area, progress]) => {
-                const masteryPercentage = progress.total > 0 
-                  ? Math.round((progress.mastered / progress.total) * 100)
-                  : 0;
-                
-                return (
-                  <div key={area} className="space-y-1">
-                    <div className="flex justify-between text-xs">
-                      <span>{area}</span>
-                      <span>{masteryPercentage}%</span>
+            <div className="space-y-3">
+              {Object.entries(stats.areaProgress)
+                .sort((a, b) => b[1].total - a[1].total)
+                .slice(0, 3)
+                .map(([area, { total, mastered }]) => {
+                  const percentage = total > 0 ? Math.round((mastered / total) * 100) : 0;
+                  return (
+                    <div key={area} className="space-y-1">
+                      <div className="flex justify-between text-xs">
+                        <span className="truncate pr-2 max-w-[80%]" title={area}>{area}</span>
+                        <span>{percentage}%</span>
+                      </div>
+                      <div className="h-1.5 w-full bg-primary/10 rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-gradient-to-r from-primary/90 to-purple-600/90"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
                     </div>
-                    <Progress value={masteryPercentage} className="h-1" />
-                  </div>
-                );
-              })}
+                  );
+                })
+              }
             </div>
+            {Object.keys(stats.areaProgress).length > 3 && (
+              <div className="text-xs text-center text-muted-foreground mt-2">
+                +{Object.keys(stats.areaProgress).length - 3} outras áreas
+              </div>
+            )}
           </div>
         )}
-        
-        {/* User level */}
-        <div className="flex items-center justify-between border-t pt-4 mt-4">
-          <div className="flex items-center gap-2">
-            <Award className="h-5 w-5 text-primary" />
-            <div>
-              <div className="text-sm font-medium">Nível {stats.level}</div>
-              <div className="text-xs text-muted-foreground">{stats.points} pontos</div>
-            </div>
-          </div>
-          <Button variant="outline" size="sm">
-            <BookOpen className="h-4 w-4 mr-1" />
-            <span>Ver Detalhes</span>
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );
