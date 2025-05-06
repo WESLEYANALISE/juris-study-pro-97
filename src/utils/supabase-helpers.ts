@@ -17,14 +17,16 @@ export async function safeSelect<T = any>(
   queryBuilder?: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    // Using type assertion to overcome TypeScript limitations with dynamic table names
-    let query = (supabase.from(tableName) as any).select(columns);
+    // We need to use a double type assertion to bypass TypeScript's type checking
+    // for dynamic table names
+    const query = supabase.from(tableName as any) as any;
+    let builtQuery = query.select(columns);
     
     if (queryBuilder) {
-      query = queryBuilder(query);
+      builtQuery = queryBuilder(builtQuery);
     }
     
-    const { data, error } = await query;
+    const { data, error } = await builtQuery;
     
     if (error) {
       handleSupabaseError(error, `select from ${tableName}`);
@@ -47,9 +49,12 @@ export async function safeInsert<T = any>(
   options?: { returning?: string }
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    // Using type assertion to overcome TypeScript limitations with dynamic table names
-    const query = supabase.from(tableName) as any;
-    const { data, error } = await query.insert(values, { returning: options?.returning || 'minimal' });
+    // We need to use a double type assertion to bypass TypeScript's type checking
+    const query = supabase.from(tableName as any) as any;
+    
+    // Use the options parameter correctly
+    const insertOptions = { returning: options?.returning || 'minimal' };
+    const { data, error } = await query.insert(values, insertOptions);
     
     if (error) {
       handleSupabaseError(error, `insert into ${tableName}`);
@@ -72,8 +77,8 @@ export async function safeUpdate<T = any>(
   queryBuilder: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    // Using type assertion to overcome TypeScript limitations with dynamic table names
-    const query = supabase.from(tableName) as any;
+    // We need to use a double type assertion to bypass TypeScript's type checking
+    const query = supabase.from(tableName as any) as any;
     const updateQuery = query.update(values);
     const filteredQuery = queryBuilder(updateQuery);
     
@@ -99,8 +104,8 @@ export async function safeDelete<T = any>(
   queryBuilder: (query: any) => any
 ): Promise<{ data: T[] | null; error: any }> {
   try {
-    // Using type assertion to overcome TypeScript limitations with dynamic table names
-    const query = supabase.from(tableName) as any;
+    // We need to use a double type assertion to bypass TypeScript's type checking
+    const query = supabase.from(tableName as any) as any;
     const deleteQuery = query.delete();
     const filteredQuery = queryBuilder(deleteQuery);
     

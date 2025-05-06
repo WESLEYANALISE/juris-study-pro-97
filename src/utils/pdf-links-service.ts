@@ -39,10 +39,10 @@ export async function fetchPDFLinksByArea(): Promise<{ [key: string]: PDFLinkByA
  */
 export async function fetchPDFAreas(): Promise<PDFArea[]> {
   try {
-    // Using type assertion to overcome TypeScript limitations with dynamic table names
-    const { data, error } = await (supabase.from('pdf_links_by_area') as any)
-      .select('area')
-      .order('area');
+    // We need to use a direct approach with type assertion
+    // because we're doing a specific query that our safeSelect may not handle well
+    const query = supabase.from('pdf_links_by_area' as any) as any;
+    const { data, error } = await query.select('area').order('area');
     
     if (error) {
       toast.error('Error fetching PDF areas: ' + error.message);
