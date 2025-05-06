@@ -18,6 +18,7 @@ import { Container } from '@/components/ui/container';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { BookOpen, Bookmark, Clock, Star, TrendingUp, History } from 'lucide-react';
+import { CourseCard } from '@/components/cursos/CourseCard';
 
 const CursosV2 = () => {
   const location = useLocation();
@@ -162,7 +163,7 @@ const CursosV2 = () => {
   const hasFilteredResults = courses && courses.length > 0;
   
   return (
-    <JuridicalBackground variant="landmark" opacity={0.02}>
+    <JuridicalBackground variant="book" opacity={0.02}>
       <Container className="py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
