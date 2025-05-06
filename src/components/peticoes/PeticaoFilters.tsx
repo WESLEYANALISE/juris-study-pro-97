@@ -16,9 +16,8 @@ import { Badge } from "@/components/ui/badge";
 interface FiltersState {
   area: string;
   subArea: string;
-  tipo: string; // Keeping for interface compatibility
-  tags: string[];
   search: string;
+  tags: string[];
 }
 
 interface PeticaoFiltersProps {
@@ -52,9 +51,8 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
     setFilters({
       area: "",
       subArea: "",
-      tipo: "",
-      tags: [],
-      search: ""
+      search: "",
+      tags: []
     });
   }, [setFilters]);
   

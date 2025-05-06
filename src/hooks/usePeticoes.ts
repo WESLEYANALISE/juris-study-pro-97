@@ -12,6 +12,10 @@ interface Peticao {
   arquivo_url: string;
   created_at?: string;
   area: string;
+  // Adding the missing properties that are being used in the code
+  tipo?: string;
+  sub_area?: string;
+  tags?: string[];
 }
 
 // Record from the database - matching the actual structure
@@ -23,23 +27,26 @@ interface PeticaoRecord {
   created_at: string;
 }
 
+interface FiltersState {
+  area: string;
+  subArea: string;
+  search: string;
+  tags: string[];
+  // Removed 'tipo' as it's causing errors and might not be needed
+}
+
 interface UsePeticoesOptions {
-  initialFilters?: {
-    area: string;
-    subArea: string;
-    search: string;
-    tags: string[];
-  };
+  initialFilters?: FiltersState;
   page?: number;
   pageSize?: number;
 }
 
 export function usePeticoes(options: UsePeticoesOptions = {}) {
-  const [filters, setFilters] = useState({
+  const [filters, setFilters] = useState<FiltersState>({
     area: "",
     subArea: "",
     search: "",
-    tags: [] as string[],
+    tags: [],
     ...options.initialFilters
   });
   
@@ -124,7 +131,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
           throw error;
         }
 
-        // Map the data to match our interface
+        // Map the data to match our interface, with type assertions to handle the missing fields issue
         return (data || []).map((item: PeticaoRecord) => ({
           id: item.id.toString(),
           titulo: item.area,

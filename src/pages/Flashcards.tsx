@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +19,12 @@ type FlashCard = {
   resposta: string;
   explicacao: string | null;
 };
+
+interface TemaCount {
+  area: string;
+  tema: string;
+  count: number;
+}
 
 export default function Flashcards() {
   const [studyConfig, setStudyConfig] = useState<{
@@ -68,12 +73,18 @@ export default function Flashcards() {
     enabled: !!allCards,
   });
   
-  const { data: temas = [], isLoading: isLoadingTemas } = useQuery({
+  // Update areas with required tema property
+  const areasWithTema = areas.map(area => ({
+    ...area,
+    tema: "" // Add tema property with empty string as default value
+  })) as TemaCount[];
+
+  const { data: temas = [], isLoading: isLoadingTemas } = useQuery<TemaCount[]>({
     queryKey: ["flashcard-temas"],
     queryFn: async () => {
       if (!allCards) return [];
       
-      const temaMap = new Map<string, { area: string; count: number }>();
+      const temaMap = new Map<string, { area: string; tema: string; count: number }>();
       
       allCards.forEach(card => {
         const key = `${card.area}-${card.tema}`;
@@ -224,7 +235,7 @@ export default function Flashcards() {
           >
             <FlashcardSetup 
               onStartStudy={handleStartStudy} 
-              areas={areas}
+              areas={areasWithTema}
               temas={temas}
               isMobile={isMobile}
               loading={isLoading || isLoadingAreas || isLoadingTemas}

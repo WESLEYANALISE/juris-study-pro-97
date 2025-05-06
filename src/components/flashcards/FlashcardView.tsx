@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -166,7 +165,9 @@ export function FlashcardView({
         </div>
       </motion.div>
 
-      <style>{`
+      {/* Fixed style tag - removed 'jsx' and 'global' props */}
+      <style>
+        {`
         .preserve-3d {
           transform-style: preserve-3d;
         }
@@ -176,7 +177,8 @@ export function FlashcardView({
         .backface-hidden {
           backface-visibility: hidden;
         }
-      `}</style>
+      `}
+      </style>
     </div>
   );
 }
