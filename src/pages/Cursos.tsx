@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/use-debounce';
 import { Curso } from '@/types/curso';
-import { safeSelect } from '@/utils/supabase-helpers';
+import { supabase } from '@/integrations/supabase/client';
 
 const Cursos = () => {
   const navigate = useNavigate();
@@ -24,44 +24,48 @@ const Cursos = () => {
     queryKey: ['courses', selectedCategory, debouncedSearchQuery],
     queryFn: async () => {
       try {
-        // Use our safer select function
-        const { data, error } = await safeSelect<Curso>(
-          'cursos_narrados',
-          '*',
-          query => {
-            let result = query;
-            
-            // Apply category filter if selected
-            if (selectedCategory) {
-              result = result.eq('area', selectedCategory);
-            }
-            
-            // Apply search filter if there's a search query
-            if (debouncedSearchQuery) {
-              result = result.or(
-                `materia.ilike.%${debouncedSearchQuery}%,sobre.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
-              );
-            }
-            
-            // Sort by area and then by sequencia
-            result = result.order('area').order('sequencia');
-            
-            return result;
-          }
-        );
+        let query = supabase
+          .from('cursos_narrados')
+          .select('*');
+        
+        // Apply category filter if selected
+        if (selectedCategory) {
+          query = query.eq('area', selectedCategory);
+        }
+        
+        // Apply search filter if there's a search query
+        if (debouncedSearchQuery) {
+          query = query.or(
+            `materia.ilike.%${debouncedSearchQuery}%,sobre.ilike.%${debouncedSearchQuery}%,area.ilike.%${debouncedSearchQuery}%`
+          );
+        }
+        
+        // Sort by area and then by sequencia
+        query = query.order('area').order('sequencia');
+        
+        const { data, error } = await query;
         
         if (error) {
           throw error;
         }
         
-        // Return data safely, ensuring we don't return undefined
-        return data || [];
+        console.log("Fetched courses:", data);
+        
+        // Map the data to the Curso interface
+        const mappedCourses = data?.map(course => ({
+          ...course,
+          sequencia: course.sequencia ? parseInt(course.sequencia) : 0,
+          titulo: course.materia, // Map materia to titulo for compatibility
+          thumbnail: course.capa, // Map capa to thumbnail for compatibility
+        })) || [];
+        
+        return mappedCourses as Curso[];
       } catch (error) {
         console.error('Error fetching courses:', error);
         return [] as Curso[];
       }
     },
-    enabled: true, // Always fetch some courses, filter on client side
+    enabled: true, // Always fetch some courses
   });
   
   const handleSelectCategory = (categoryId: string) => {
@@ -88,6 +92,7 @@ const Cursos = () => {
       description: curso.descricao || curso.sobre || '',
       alunos: curso.alunos || 0,
       duracao: curso.duracao || '1h',
+      certificado: true
     };
   };
 
@@ -236,7 +241,7 @@ const Cursos = () => {
           <div className="py-12 text-center">
             <h3 className="text-xl font-medium mb-2">Cursos Recém Adicionados</h3>
             <p className="text-muted-foreground">
-              Conteúdos mais recentes adicionados à nossa plataforma.
+              Em breve você verá aqui os conteúdos mais recentes adicionados à nossa plataforma.
             </p>
           </div>
         </TabsContent>
@@ -245,7 +250,7 @@ const Cursos = () => {
           <div className="py-12 text-center">
             <h3 className="text-xl font-medium mb-2">Cursos em Alta</h3>
             <p className="text-muted-foreground">
-              Descubra os cursos que estão ganhando popularidade rapidamente.
+              Em breve você poderá descobrir os cursos que estão ganhando popularidade.
             </p>
           </div>
         </TabsContent>
@@ -254,7 +259,7 @@ const Cursos = () => {
           <div className="py-12 text-center">
             <h3 className="text-xl font-medium mb-2">Meus Cursos</h3>
             <p className="text-muted-foreground">
-              Cursos que você iniciou ou completou.
+              Aqui você verá os cursos que iniciou ou completou.
             </p>
           </div>
         </TabsContent>

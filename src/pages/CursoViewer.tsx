@@ -4,16 +4,12 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { CourseMenu } from '@/components/cursos/CourseMenu';
 import { CourseViewer } from '@/components/cursos/CourseViewer';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Curso } from '@/types/curso';
 import { useCursoViewer } from '@/hooks/use-curso-viewer';
-import { toast } from 'sonner';
 
 const CursoViewer = () => {
   const { 
@@ -75,9 +71,9 @@ const CursoViewer = () => {
   }
 
   // Function to map database fields to what the CourseMenu expects
-  const mapCursoToCourseMenu = (curso: Curso) => {
+  const mapCursoToCourseMenu = (curso: any) => {
     return {
-      title: curso.titulo || curso.materia || 'Curso sem título',
+      title: curso.materia || curso.titulo || 'Curso sem título',
       description: curso.descricao || curso.sobre || '',
       alunos: curso.alunos || 0,
       duracao: curso.duracao || '1h',

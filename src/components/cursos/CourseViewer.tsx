@@ -54,24 +54,23 @@ export function CourseViewer({
   const notesTimeoutRef = useRef<number | null>(null);
   const progressIntervalRef = useRef<number | null>(null);
   const isMobile = useIsMobile();
+  const webViewRef = useRef<HTMLDivElement>(null);
   
-  // Check if the URL is embeddable or an external link
-  const isExternalLink = videoUrl && (
-    videoUrl.includes('mindsmith') || 
-    !videoUrl.includes('youtube') && 
-    !videoUrl.includes('youtu.be') && 
-    !videoUrl.includes('vimeo') &&
-    !videoUrl.includes('embed')
-  );
-
   useEffect(() => {
     // Hide mobile navigation when course is active
     document.body.classList.add('course-viewer-active');
     
+    // If there's a valid URL and we're using a webview approach, update progress
+    if (videoUrl && updateProgress) {
+      // Simulate viewing progress since we can't track it directly in webview
+      const initialProgress = progress > 10 ? progress : 10;
+      updateProgress(initialProgress);
+    }
+    
     return () => {
       document.body.classList.remove('course-viewer-active');
     };
-  }, []);
+  }, [videoUrl, updateProgress, progress]);
   
   // Handle initial notes panel visibility
   useEffect(() => {
@@ -149,8 +148,6 @@ export function CourseViewer({
     const nextIndex = (currentIndex + 1) % volumes.length;
     setVolume(volumes[nextIndex]);
     
-    // Apply volume settings to the iframe if possible
-    // Note: YouTube iframe API doesn't allow direct volume control through the iframe
     toast(`Volume alterado para ${volumes[nextIndex]}`, {
       description: "Esta configuração afeta apenas o elemento de interface e não o volume real do vídeo."
     });
@@ -163,7 +160,8 @@ export function CourseViewer({
   };
 
   const handleOpenExternalLink = () => {
-    if (videoUrl) {
+    try {
+      // Try to open the URL in a new window
       window.open(videoUrl, '_blank', 'noopener,noreferrer');
       
       // Update progress to indicate the user accessed the course
@@ -171,9 +169,72 @@ export function CourseViewer({
         updateProgress(Math.max(progress, 10));
         toast.success("Conteúdo aberto em uma nova aba");
       }
-    } else {
-      toast.error("Link do curso não disponível");
+    } catch (error) {
+      console.error("Erro ao abrir o link:", error);
+      toast.error("Não foi possível abrir o link. Verifique se os pop-ups estão permitidos.");
     }
+  };
+
+  const renderCourseContent = () => {
+    if (!videoUrl) {
+      return (
+        <div className="w-full h-full flex items-center justify-center bg-black text-white">
+          <div className="text-center">
+            <p className="text-xl mb-2">Vídeo não disponível</p>
+            <p className="text-sm text-gray-400">O link para este curso não foi encontrado.</p>
+          </div>
+        </div>
+      );
+    }
+
+    // For YouTube videos, use iframe with embed
+    if (youtubeId) {
+      return (
+        <iframe
+          ref={actualVideoRef}
+          src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
+          className="w-full h-full border-0"
+          title={title}
+          allowFullScreen
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          loading="eager"
+        />
+      );
+    }
+    
+    // For all other links (including Mindsmith), use webview approach
+    return (
+      <div className="w-full h-full flex flex-col">
+        <div 
+          ref={webViewRef}
+          className="w-full h-full bg-white"
+        >
+          <iframe
+            src={videoUrl}
+            className="w-full h-full border-0"
+            title={title}
+            allowFullScreen
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-top-navigation"
+            loading="eager"
+          />
+        </div>
+        
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {/* Nothing here, but we can add loading state if needed */}
+        </div>
+        
+        <div className="absolute bottom-16 left-0 right-0 flex justify-center">
+          <Button 
+            onClick={handleOpenExternalLink} 
+            className="flex items-center gap-2 bg-primary shadow-lg"
+            size="lg"
+          >
+            <ExternalLink className="h-5 w-5" />
+            Abrir em Nova Aba
+          </Button>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -200,50 +261,7 @@ export function CourseViewer({
       {/* Full screen video container */}
       <div className="flex-grow w-full h-full overflow-hidden relative">
         <div className="absolute inset-0 flex items-center justify-center bg-black">
-          {isExternalLink ? (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-black text-white">
-              <div className="max-w-md mx-auto px-4 text-center">
-                <h2 className="text-xl font-bold mb-4">{title}</h2>
-                <p className="mb-6">Este curso está disponível em uma plataforma externa e não pode ser incorporado diretamente.</p>
-                <Button 
-                  onClick={handleOpenExternalLink} 
-                  className="flex items-center gap-2"
-                  size="lg"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                  Acessar Curso
-                </Button>
-                <p className="mt-4 text-sm text-gray-400">O conteúdo será aberto em uma nova aba.</p>
-              </div>
-            </div>
-          ) : youtubeId ? (
-            <iframe
-              ref={actualVideoRef}
-              src={`https://www.youtube.com/embed/${youtubeId}?autoplay=1&rel=0&playsinline=1`}
-              className="w-full h-full border-0"
-              title={title}
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              loading="eager"
-            />
-          ) : videoUrl ? (
-            <iframe
-              ref={actualVideoRef}
-              src={videoUrl}
-              className="w-full h-full border-0"
-              title={title}
-              allowFullScreen
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              loading="eager"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-black text-white">
-              <div className="text-center">
-                <p className="text-xl mb-2">Vídeo não disponível</p>
-                <p className="text-sm text-gray-400">O link para este curso não foi encontrado.</p>
-              </div>
-            </div>
-          )}
+          {renderCourseContent()}
         </div>
       </div>
       
@@ -302,7 +320,7 @@ export function CourseViewer({
                 </Button>
               )}
               
-              {!isExternalLink && (
+              {youtubeId && (
                 <Button 
                   variant="outline" 
                   size={isMobile ? "sm" : "default"}
@@ -316,6 +334,16 @@ export function CourseViewer({
                   </span>
                 </Button>
               )}
+              
+              <Button 
+                variant="outline" 
+                size={isMobile ? "sm" : "default"}
+                onClick={handleOpenExternalLink}
+                className="flex items-center bg-black/40 text-white border-white/30"
+              >
+                <ExternalLink className="h-4 w-4 mr-2" />
+                <span>Abrir em nova aba</span>
+              </Button>
             </div>
             
             {updateProgress !== undefined && (
