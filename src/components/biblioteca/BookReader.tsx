@@ -20,11 +20,12 @@ import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { LivroSupa } from '@/utils/biblioteca-service';
 import { saveReadingProgress } from '@/utils/biblioteca-service';
+import { formatPDFUrl, testPDFAccess } from '@/utils/pdf-url-utils';
 import { toast } from 'sonner';
 import './BookReader.css';
 
-// Set worker source for PDF.js
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+// Set worker source for PDF.js - using minified version for consistency
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface BookReaderProps {
   book: LivroSupa;
@@ -40,6 +41,8 @@ export function BookReader({ book, onClose }: BookReaderProps) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadProgress, setLoadProgress] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(true);
   
   // UI state
   const [showControls, setShowControls] = useState<boolean>(true);
@@ -50,31 +53,36 @@ export function BookReader({ book, onClose }: BookReaderProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Process the URL to ensure it's a full URL
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-
-    // Already a full URL
-    if (url.startsWith('http')) {
-      console.log("PDF URL is already complete:", url);
-      return url;
+  // Process the URL when component mounts
+  useEffect(() => {
+    if (!book.pdf_url) {
+      setError('URL do PDF não fornecida');
+      setIsLoading(false);
+      setIsValidatingUrl(false);
+      return;
     }
 
-    // Add the Supabase storage URL prefix if it's just a path
-    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
-    console.log("Converted PDF URL:", fullUrl);
-    return fullUrl;
-  };
-  
-  // Use the processed URL for the PDF
-  const pdfUrl = processUrl(book.pdf_url);
-  
-  // Debug the PDF URL
-  useEffect(() => {
+    // Format the URL using our utility
+    const formattedUrl = formatPDFUrl(book.pdf_url);
     console.log("Processing PDF URL:", book.pdf_url);
-    console.log("Final PDF URL to use:", pdfUrl);
-  }, [book.pdf_url, pdfUrl]);
+    console.log("Final PDF URL to use:", formattedUrl);
+    setPdfUrl(formattedUrl);
+    
+    // Validate if URL is accessible
+    setIsValidatingUrl(true);
+    testPDFAccess(formattedUrl).then(isAccessible => {
+      setIsValidatingUrl(false);
+      if (!isAccessible) {
+        console.error("PDF URL is not accessible:", formattedUrl);
+        setError(`O PDF não está acessível. Por favor, verifique se o arquivo existe no servidor.`);
+        setIsLoading(false);
+      }
+    }).catch(err => {
+      setIsValidatingUrl(false);
+      setError(`Erro ao verificar acessibilidade do PDF: ${err.message}`);
+      setIsLoading(false);
+    });
+  }, [book.pdf_url]);
   
   // Handle viewport resize
   useEffect(() => {
@@ -126,6 +134,7 @@ export function BookReader({ book, onClose }: BookReaderProps) {
     console.log("PDF loaded successfully. Total pages:", numPages);
     setNumPages(numPages);
     setIsLoading(false);
+    setError(null);
     toast.success(`PDF carregado: ${numPages} páginas`);
   }
   
@@ -177,8 +186,10 @@ export function BookReader({ book, onClose }: BookReaderProps) {
   
   // Handle download
   const handleDownload = () => {
-    window.open(book.pdf_url, '_blank');
-    toast.success('Download iniciado');
+    if (pdfUrl) {
+      window.open(pdfUrl, '_blank');
+      toast.success('Download iniciado');
+    }
   };
   
   // Auto-hide/show controls
@@ -264,6 +275,18 @@ export function BookReader({ book, onClose }: BookReaderProps) {
       document.body.classList.remove('pdf-reader-open');
     };
   }, []);
+  
+  // Show validating spinner
+  if (isValidatingUrl) {
+    return (
+      <div className="fixed inset-0 bg-background/95 z-50 flex flex-col items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-lg">Verificando disponibilidade do PDF...</p>
+        </div>
+      </div>
+    );
+  }
   
   // Error view
   if (error) {

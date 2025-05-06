@@ -13,14 +13,16 @@ import {
   PenLine,
   Menu,
   Download,
-  Share2
+  Share2,
+  AlertCircle
 } from 'lucide-react';
 import { useTouchGestures } from '@/hooks/use-touch-gestures';
 import { motion, AnimatePresence } from 'framer-motion';
+import { formatPDFUrl, testPDFAccess } from '@/utils/pdf-url-utils';
 import './PDFViewer.css';
 
-// Set up the PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+// Set up the PDF.js worker - using minified version for consistency
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
 
 interface PDFViewerProps {
   livro: {
@@ -44,42 +46,40 @@ export function PDFViewer({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showControls, setShowControls] = useState<boolean>(true);
   const [showMobileTools, setShowMobileTools] = useState<boolean>(false);
+  const [pdfUrl, setPdfUrl] = useState<string>('');
+  const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Process the URL to ensure it's a full URL
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-
-    // Already a full URL
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      console.log("PDF URL is already complete:", url);
-      return url;
-    }
-
-    // Add the Supabase storage URL prefix if it's just a path
-    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
-    console.log("Converted PDF URL:", fullUrl);
-    return fullUrl;
-  };
-
-  // Use the processed URL for the PDF
-  const pdfUrl = processUrl(livro.pdf);
-
-  // Debugging PDF URL
+  // Process and validate the URL
   useEffect(() => {
-    console.log("PDF URL:", pdfUrl);
-    // Validate if URL is properly formatted
-    if (pdfUrl) {
-      try {
-        new URL(pdfUrl);
-      } catch (err) {
-        console.error("PDF URL is not valid:", err);
-        setError('URL do PDF inválida ou mal formatada');
-      }
+    if (!livro.pdf) {
+      setError('URL do PDF não fornecida');
+      setIsLoading(false);
+      setIsValidatingUrl(false);
+      return;
     }
-  }, [pdfUrl]);
+
+    // Format the URL
+    const formattedUrl = formatPDFUrl(livro.pdf);
+    console.log("PDF URL after formatting:", formattedUrl);
+    setPdfUrl(formattedUrl);
+    
+    // Validate if URL is accessible
+    setIsValidatingUrl(true);
+    testPDFAccess(formattedUrl).then(isAccessible => {
+      setIsValidatingUrl(false);
+      if (!isAccessible) {
+        console.error("PDF URL is not accessible:", formattedUrl);
+        setError(`O PDF não está acessível. Por favor, verifique se o arquivo existe no servidor.`);
+        setIsLoading(false);
+      }
+    }).catch(err => {
+      setIsValidatingUrl(false);
+      setError(`Erro ao verificar acessibilidade do PDF: ${err.message}`);
+      setIsLoading(false);
+    });
+  }, [livro.pdf]);
 
   // Set up touch gestures for mobile
   const touchGestures = useTouchGestures({
@@ -108,26 +108,6 @@ export function PDFViewer({
       document.body.classList.remove('pdf-viewer-open');
     };
   }, []);
-
-  // Validate if the PDF URL is valid
-  useEffect(() => {
-    const validateURL = async () => {
-      if (!livro.pdf || typeof livro.pdf !== 'string') {
-        setError('PDF URL inválida ou não disponível');
-        setIsLoading(false);
-        return;
-      }
-      try {
-        // Basic URL validation
-        new URL(livro.pdf);
-        setError(null);
-      } catch (err) {
-        console.error("Invalid PDF URL:", err);
-        setError('URL do PDF inválida');
-      }
-    };
-    validateURL();
-  }, [livro.pdf]);
 
   // Auto-hide controls after inactivity
   useEffect(() => {
@@ -167,6 +147,7 @@ export function PDFViewer({
     console.log("PDF loaded successfully. Total pages:", numPages);
     setNumPages(numPages);
     setIsLoading(false);
+    setError(null);
     
     // Show swipe hint for mobile users
     const isMobile = window.innerWidth <= 768;
@@ -261,6 +242,23 @@ export function PDFViewer({
       }, 300);
     }, 3000);
   };
+
+  // Show validating spinner
+  if (isValidatingUrl) {
+    return (
+      <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="text-center"
+        >
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
+          <p className="text-lg">Verificando disponibilidade do PDF...</p>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">

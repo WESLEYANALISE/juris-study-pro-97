@@ -1,7 +1,7 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { safeSelect } from './supabase-helpers';
+import { formatPDFUrl } from './pdf-url-utils';
 
 export interface LivroSupa {
   id: string; // Make sure this is defined as string to match our usage
@@ -18,6 +18,10 @@ export interface LibraryArea {
   name: string;
   count: number;
 }
+
+// This function is now moved to pdf-url-utils.ts and imported above
+// Keeping alias for backward compatibility
+export { formatPDFUrl as formatPdfUrl };
 
 /**
  * Ensures all URLs are properly formatted
@@ -251,8 +255,7 @@ export async function getFavoriteBooks(): Promise<LivroSupa[]> {
     // Extract the IDs for the query
     const bookIds = data.map(item => item.livro_id);
     
-    // Modified: Using a different approach without .in() for type compatibility
-    // We'll manually filter the books after fetching all or use a hack (converting strings to numbers)
+    // Get all books and filter manually
     const { data: booksData, error: booksError } = await supabase
       .from('livros_supa')
       .select('*');
@@ -313,7 +316,6 @@ export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa
     // Extract the IDs for the query
     const bookIds = data.map(item => item.livro_id);
     
-    // Modified: Using a different approach without .in() for type compatibility
     // Get all books and filter manually
     const { data: booksData, error: booksError } = await supabase
       .from('livros_supa')

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { EnhancedPDFViewer } from './EnhancedPDFViewer';
 import { AnimatePresence, motion } from 'framer-motion';

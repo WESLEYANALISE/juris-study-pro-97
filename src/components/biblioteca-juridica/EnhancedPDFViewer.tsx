@@ -7,16 +7,19 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
 import { toast } from 'sonner';
+import { formatPDFUrl, testPDFAccess } from '@/utils/pdf-url-utils';
 import './EnhancedPDFViewer.css';
 
-// Set PDF.js worker source
+// Set PDF.js worker source - using minified version for consistency
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+
 interface EnhancedPDFViewerProps {
   pdfUrl: string;
   onClose: () => void;
   bookTitle: string;
   book: LivroJuridico | null;
 }
+
 export function EnhancedPDFViewer({
   pdfUrl,
   onClose,
@@ -34,6 +37,9 @@ export function EnhancedPDFViewer({
   const [isLoaded, setIsLoaded] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
+  const [processedPdfUrl, setProcessedPdfUrl] = useState('');
+  const [isValidatingUrl, setIsValidatingUrl] = useState(true);
+
   const {
     saveReadingProgress,
     isFavorite,
@@ -61,6 +67,8 @@ export function EnhancedPDFViewer({
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+  
+  // Initialize component state and process PDF URL
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
     document.body.style.backgroundColor = '#121212'; // Dark background
@@ -68,42 +76,46 @@ export function EnhancedPDFViewer({
     // Force reload PDF when URL changes
     setIsLoaded(false);
     setIsLoading(true);
+    setIsError(false);
+    setErrorMessage("");
     setPageNumber(1);
-    console.log("Loading PDF from URL:", pdfUrl);
+    
+    // Process the URL
+    const formattedUrl = formatPDFUrl(pdfUrl);
+    console.log("PDF URL after formatting:", formattedUrl);
+    setProcessedPdfUrl(formattedUrl);
+    
+    // Validate the URL to make sure it's accessible
+    setIsValidatingUrl(true);
+    testPDFAccess(formattedUrl).then(isAccessible => {
+      if (!isAccessible) {
+        console.error("PDF URL is not accessible:", formattedUrl);
+        setIsError(true);
+        setErrorMessage(`O PDF não está acessível. Por favor, verifique se o arquivo existe no servidor.`);
+        setIsLoading(false);
+      }
+      setIsValidatingUrl(false);
+    });
+    
     return () => {
       document.body.classList.remove('pdf-viewer-open');
       document.body.style.backgroundColor = ''; // Reset background
     };
   }, [pdfUrl]);
+  
+  // Save reading progress when page changes
   useEffect(() => {
     if (book && pageNumber > 0 && isLoaded) {
       saveReadingProgress(book.id, pageNumber);
     }
   }, [pageNumber, book, saveReadingProgress, isLoaded]);
 
-  // Process the URL to ensure it's a full URL
-  const processUrl = (url: string): string => {
-    if (!url) return '';
-
-    // Already a full URL
-    if (url.startsWith('http')) {
-      console.log("URL is already complete:", url);
-      return url;
-    }
-
-    // Add the Supabase storage URL prefix if it's just a path
-    const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-    const fullUrl = `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
-    console.log("Converted URL:", fullUrl);
-    return fullUrl;
-  };
-  function onDocumentLoadSuccess({
-    numPages: totalPages
-  }) {
+  function onDocumentLoadSuccess({ numPages: totalPages }) {
     console.log("PDF loaded successfully. Total pages:", totalPages);
     setNumPages(totalPages);
     setIsLoading(false);
     setIsLoaded(true);
+    setIsError(false);
     toast.success(`PDF carregado: ${totalPages} páginas`);
 
     // Try to get the document object for better page navigation
@@ -111,13 +123,16 @@ export function EnhancedPDFViewer({
       console.log("Document ref available:", documentRef.current);
     }
   }
+  
   function onDocumentLoadError(error: any) {
     console.error('Error loading PDF:', error);
+    console.error('Attempted PDF URL:', processedPdfUrl);
     setIsLoading(false);
     setIsError(true);
     setErrorMessage(`Erro ao carregar PDF: ${error.message || "Verifique se o arquivo existe"}`);
     toast.error("Houve um problema ao carregar o livro. Por favor, tente novamente.");
   }
+  
   function changePage(amount: number) {
     setPageNumber(prevPageNumber => {
       const newPageNumber = prevPageNumber + amount;
@@ -156,9 +171,8 @@ export function EnhancedPDFViewer({
 
   // Handle download
   const handleDownload = () => {
-    if (pdfUrl) {
-      const processedUrl = processUrl(pdfUrl);
-      window.open(processedUrl, '_blank');
+    if (processedPdfUrl) {
+      window.open(processedPdfUrl, '_blank');
       toast.success('Download iniciado');
     }
   };
@@ -217,27 +231,38 @@ export function EnhancedPDFViewer({
       }
     };
   }, []);
+  
+  // Error display
   if (isError) {
     return <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
-          <AlertCircle className="h-16 w-16 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
-          <p className="text-muted-foreground mb-6">
-            {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
-          </p>
-          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
-            <code className="break-all whitespace-pre-wrap">{processUrl(pdfUrl)}</code>
-          </div>
-          <Button onClick={onClose} className="mt-4">
-            Fechar
-          </Button>
+      <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
+        <AlertCircle className="h-16 w-16 mx-auto mb-4" />
+        <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
+        <p className="text-muted-foreground mb-6">
+          {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
+        </p>
+        <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+          <code className="break-all whitespace-pre-wrap">{processedPdfUrl}</code>
         </div>
-      </div>;
+        <Button onClick={onClose} className="mt-4">
+          Fechar
+        </Button>
+      </div>
+    </div>;
   }
 
-  // Use the processed URL for the PDF
-  const processedPdfUrl = processUrl(pdfUrl);
-  return <div className="fixed inset-0 bg-gray-900 z-50">
+  // Show validating spinner
+  if (isValidatingUrl) {
+    return <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="text-white text-lg">Verificando disponibilidade do PDF...</p>
+      </div>
+    </div>;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-gray-900 z-50">
       {/* Large close button in the top-left corner */}
       <Button variant="outline" size="icon" className="absolute top-4 left-4 z-50 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border-white/20 text-white" onClick={onClose}>
         <X className="h-5 w-5" />
@@ -252,9 +277,9 @@ export function EnhancedPDFViewer({
             {/* Favorite and download buttons */}
             <div className="flex items-center gap-2">
               {book && <Button variant="ghost" size="sm" onClick={handleToggleFavorite} className="text-white hover:bg-gray-800">
-                  <Heart className={`h-4 w-4 mr-2 ${isFavorite(book.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                  {isFavorite(book.id) ? 'Favorito' : 'Favoritar'}
-                </Button>}
+                <Heart className={`h-4 w-4 mr-2 ${isFavorite(book.id) ? 'fill-red-500 text-red-500' : ''}`} />
+                {isFavorite(book.id) ? 'Favorito' : 'Favoritar'}
+              </Button>}
               
               <Button variant="ghost" size="sm" onClick={handleDownload} className="text-white hover:bg-gray-800">
                 <Download className="h-4 w-4 mr-2" />
@@ -266,32 +291,52 @@ export function EnhancedPDFViewer({
         
         {/* Loading indicator */}
         {isLoading && <div className="flex flex-col items-center justify-center h-full p-4">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-lg text-white">Carregando livro... {progress}%</p>
-            <p className="text-xs text-gray-400 mt-2 max-w-md text-center">
-              Se o livro não carregar, verifique se o PDF está disponível no servidor.
-            </p>
-          </div>}
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-lg text-white">Carregando livro... {progress}%</p>
+          <p className="text-xs text-gray-400 mt-2 max-w-md text-center">
+            Se o livro não carregar, verifique se o PDF está disponível no servidor.
+          </p>
+        </div>}
         
         {/* PDF Viewer Content */}
         <div className="enhanced-pdf-content container max-w-4xl mx-auto flex-grow overflow-auto px-0 py-0 my-[81px]">
-          <Document file={processedPdfUrl} onLoadSuccess={onDocumentLoadSuccess} onLoadError={onDocumentLoadError} onProgress={({
-          loaded,
-          total
-        }) => {
-          if (total) {
-            setProgress(Math.round(loaded / total * 100));
-          }
-        }} loading={<div className="flex flex-col items-center justify-center py-20">
-                <Skeleton className="h-[500px] w-full max-w-lg bg-gray-800" />
-                <p className="mt-4 text-gray-400">Carregando PDF...</p>
-              </div>} error={<div className="text-center text-red-500 py-20">
-                <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-                <p>Erro ao carregar PDF</p>
-              </div>} inputRef={documentRef} className="enhanced-pdf-document">
-            {isLoaded && <Page pageNumber={pageNumber} scale={scale} rotate={rotation} width={viewportWidth < 640 ? viewportWidth - 32 : undefined} height={viewportWidth < 640 ? undefined : undefined} renderMode="canvas" className="enhanced-pdf-page mx-auto" error={<div className="text-center text-red-500 p-4">
-                    <p>Erro ao renderizar página {pageNumber}</p>
-                  </div>} />}
+          <Document 
+            file={processedPdfUrl} 
+            onLoadSuccess={onDocumentLoadSuccess} 
+            onLoadError={onDocumentLoadError} 
+            onProgress={({ loaded, total }) => {
+              if (total) {
+                setProgress(Math.round(loaded / total * 100));
+              }
+            }} 
+            loading={<div className="flex flex-col items-center justify-center py-20">
+              <Skeleton className="h-[500px] w-full max-w-lg bg-gray-800" />
+              <p className="mt-4 text-gray-400">Carregando PDF...</p>
+            </div>} 
+            error={<div className="text-center text-red-500 py-20">
+              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+              <p>Erro ao carregar PDF</p>
+            </div>} 
+            inputRef={documentRef} 
+            className="enhanced-pdf-document"
+            options={{
+              cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+              cMapPacked: true,
+              standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
+            }}
+          >
+            {isLoaded && <Page 
+              pageNumber={pageNumber} 
+              scale={scale} 
+              rotate={rotation} 
+              width={viewportWidth < 640 ? viewportWidth - 32 : undefined} 
+              height={viewportWidth < 640 ? undefined : undefined} 
+              renderMode="canvas" 
+              className="enhanced-pdf-page mx-auto" 
+              error={<div className="text-center text-red-500 p-4">
+                <p>Erro ao renderizar página {pageNumber}</p>
+              </div>} 
+            />}
           </Document>
         </div>
         
@@ -299,31 +344,65 @@ export function EnhancedPDFViewer({
         <div className="enhanced-pdf-controls bg-gray-900 border-t border-gray-800">
           <div className="enhanced-pdf-controls-row">
             <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" onClick={() => changePage(-1)} disabled={pageNumber <= 1} className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => changePage(-1)} 
+                disabled={pageNumber <= 1} 
+                className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700"
+              >
                 <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
               </Button>
               
               <div className="flex items-center gap-1 bg-gray-800 backdrop-blur px-2 py-1 rounded text-white">
-                <input type="number" min={1} max={numPages || 1} value={pageNumber} onChange={handlePageInput} className="w-12 h-6 bg-transparent text-center p-0 border-none text-sm" />
+                <input 
+                  type="number" 
+                  min={1} 
+                  max={numPages || 1} 
+                  value={pageNumber} 
+                  onChange={handlePageInput} 
+                  className="w-12 h-6 bg-transparent text-center p-0 border-none text-sm" 
+                />
                 <span className="text-sm text-gray-400">/ {numPages || '-'}</span>
               </div>
               
-              <Button variant="secondary" size="sm" onClick={() => changePage(1)} disabled={pageNumber >= (numPages || 0)} className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700">
+              <Button 
+                variant="secondary" 
+                size="sm" 
+                onClick={() => changePage(1)} 
+                disabled={pageNumber >= (numPages || 0)} 
+                className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700"
+              >
                 Próximo <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
             
             <div className="flex items-center gap-1">
-              <Button variant="outline" size="sm" onClick={zoomOut} className="h-8 w-8 p-0 border-gray-700 text-white">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={zoomOut} 
+                className="h-8 w-8 p-0 border-gray-700 text-white"
+              >
                 <ZoomOut className="h-4 w-4" />
               </Button>
               <span className="text-xs bg-gray-800 px-2 py-1 rounded text-white">
                 {Math.round(scale * 100)}%
               </span>
-              <Button variant="outline" size="sm" onClick={zoomIn} className="h-8 w-8 p-0 border-gray-700 text-white">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={zoomIn} 
+                className="h-8 w-8 p-0 border-gray-700 text-white"
+              >
                 <ZoomIn className="h-4 w-4" />
               </Button>
-              <Button variant="outline" size="sm" onClick={rotate} className="h-8 w-8 p-0 border-gray-700 text-white">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={rotate} 
+                className="h-8 w-8 p-0 border-gray-700 text-white"
+              >
                 <RotateCw className="h-4 w-4" />
               </Button>
             </div>
@@ -336,4 +415,5 @@ export function EnhancedPDFViewer({
       </div>
     </div>;
 }
+
 export default EnhancedPDFViewer;
