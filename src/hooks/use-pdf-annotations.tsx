@@ -30,6 +30,75 @@ export interface Bookmark {
   created_at?: string;
 }
 
+// Internal interfaces that match the database schema
+interface DbAnnotation {
+  id?: string;
+  user_id: string;
+  livro_id: string;
+  pagina: number;
+  texto: string;
+  cor: string;
+  posicao?: any;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface DbBookmark {
+  id?: string;
+  user_id: string;
+  livro_id: string;
+  pagina: number;
+  titulo: string;
+  cor?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Conversion functions to map between database and app models
+function dbToAnnotation(db: DbAnnotation): Annotation {
+  return {
+    id: db.id,
+    user_id: db.user_id,
+    book_id: db.livro_id,
+    page: db.pagina,
+    text: db.texto,
+    color: db.cor,
+    position: db.posicao,
+    created_at: db.created_at
+  };
+}
+
+function annotationToDb(annotation: Omit<Annotation, 'user_id'>): Omit<DbAnnotation, 'user_id'> {
+  return {
+    livro_id: annotation.book_id,
+    pagina: annotation.page,
+    texto: annotation.text,
+    cor: annotation.color,
+    posicao: annotation.position
+  };
+}
+
+function dbToBookmark(db: DbBookmark): Bookmark {
+  return {
+    id: db.id,
+    user_id: db.user_id,
+    book_id: db.livro_id,
+    page: db.pagina,
+    title: db.titulo,
+    color: db.cor,
+    created_at: db.created_at
+  };
+}
+
+function bookmarkToDb(bookmark: Omit<Bookmark, 'user_id'>): Omit<DbBookmark, 'user_id'> {
+  return {
+    livro_id: bookmark.book_id,
+    pagina: bookmark.page,
+    titulo: bookmark.title,
+    cor: bookmark.color
+  };
+}
+
 export function usePdfAnnotations(bookId: string) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
@@ -62,7 +131,9 @@ export function usePdfAnnotations(bookId: string) {
         return;
       }
 
-      setAnnotations(data || []);
+      // Convert database annotations to application annotations
+      const appAnnotations = (data || []).map(dbToAnnotation);
+      setAnnotations(appAnnotations);
     } catch (error) {
       console.error('Error in loadAnnotations:', error);
     } finally {
@@ -88,7 +159,9 @@ export function usePdfAnnotations(bookId: string) {
         return;
       }
 
-      setBookmarks(data || []);
+      // Convert database bookmarks to application bookmarks
+      const appBookmarks = (data || []).map(dbToBookmark);
+      setBookmarks(appBookmarks);
     } catch (error) {
       console.error('Error in loadBookmarks:', error);
     } finally {
@@ -104,14 +177,15 @@ export function usePdfAnnotations(bookId: string) {
     }
 
     try {
-      const newAnnotation = {
-        ...annotation,
+      // Convert to database model
+      const dbAnnotation = {
+        ...annotationToDb(annotation),
         user_id: user.id
       };
 
       const { data, error } = await supabase
         .from('biblioteca_anotacoes')
-        .insert([newAnnotation])
+        .insert([dbAnnotation])
         .select()
         .single();
 
@@ -121,9 +195,11 @@ export function usePdfAnnotations(bookId: string) {
         return null;
       }
 
-      setAnnotations(prev => [data, ...prev]);
+      // Convert back to app model and add to state
+      const newAnnotation = dbToAnnotation(data);
+      setAnnotations(prev => [newAnnotation, ...prev]);
       toast.success('Anotação salva com sucesso');
-      return data;
+      return newAnnotation;
     } catch (error) {
       console.error('Error in addAnnotation:', error);
       toast.error('Erro ao salvar anotação');
@@ -136,9 +212,15 @@ export function usePdfAnnotations(bookId: string) {
     if (!user) return false;
 
     try {
+      // Convert update fields to database model
+      const dbUpdates: Partial<DbAnnotation> = {};
+      if (updates.text !== undefined) dbUpdates.texto = updates.text;
+      if (updates.color !== undefined) dbUpdates.cor = updates.color;
+      if (updates.position !== undefined) dbUpdates.posicao = updates.position;
+
       const { error } = await supabase
         .from('biblioteca_anotacoes')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .eq('user_id', user.id);
 
@@ -196,14 +278,15 @@ export function usePdfAnnotations(bookId: string) {
     }
 
     try {
-      const newBookmark = {
-        ...bookmark,
+      // Convert to database model
+      const dbBookmark = {
+        ...bookmarkToDb(bookmark),
         user_id: user.id
       };
 
       const { data, error } = await supabase
         .from('biblioteca_marcadores')
-        .insert([newBookmark])
+        .insert([dbBookmark])
         .select()
         .single();
 
@@ -213,9 +296,11 @@ export function usePdfAnnotations(bookId: string) {
         return null;
       }
 
-      setBookmarks(prev => [data, ...prev]);
+      // Convert back to app model and add to state
+      const newBookmark = dbToBookmark(data);
+      setBookmarks(prev => [newBookmark, ...prev]);
       toast.success('Marcador adicionado');
-      return data;
+      return newBookmark;
     } catch (error) {
       console.error('Error in addBookmark:', error);
       toast.error('Erro ao salvar marcador');
@@ -228,9 +313,14 @@ export function usePdfAnnotations(bookId: string) {
     if (!user) return false;
 
     try {
+      // Convert update fields to database model
+      const dbUpdates: Partial<DbBookmark> = {};
+      if (updates.title !== undefined) dbUpdates.titulo = updates.title;
+      if (updates.color !== undefined) dbUpdates.cor = updates.color;
+
       const { error } = await supabase
         .from('biblioteca_marcadores')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .eq('user_id', user.id);
 
