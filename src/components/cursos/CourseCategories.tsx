@@ -67,7 +67,7 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
 export function CourseCategories({ onSelectCategory }: { onSelectCategory: (category: string) => void }) {
   const categories = [
     {
-      id: 'direito-civil',
+      id: 'Direito Civil',
       icon: <ScrollText className="h-5 w-5 text-white" />,
       title: 'Direito Civil',
       description: 'Contratos, responsabilidade civil, direito de família e sucessões.',
@@ -75,7 +75,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-blue-600 to-blue-400',
     },
     {
-      id: 'direito-penal',
+      id: 'Direito Penal',
       icon: <Gavel className="h-5 w-5 text-white" />,
       title: 'Direito Penal',
       description: 'Teoria do crime, execução penal e processo penal.',
@@ -83,7 +83,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-red-600 to-red-400',
     },
     {
-      id: 'direito-constitucional',
+      id: 'Direito Constitucional',
       icon: <Landmark className="h-5 w-5 text-white" />,
       title: 'Direito Constitucional',
       description: 'Princípios fundamentais, organização do Estado e controle de constitucionalidade.',
@@ -91,7 +91,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-green-600 to-green-400',
     },
     {
-      id: 'direito-administrativo',
+      id: 'Direito Administrativo',
       icon: <Building2 className="h-5 w-5 text-white" />,
       title: 'Direito Administrativo',
       description: 'Atos administrativos, licitações e regime jurídico administrativo.',
@@ -99,7 +99,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-amber-600 to-amber-400',
     },
     {
-      id: 'direito-tributario',
+      id: 'Direito Tributário',
       icon: <FileText className="h-5 w-5 text-white" />,
       title: 'Direito Tributário',
       description: 'Sistema tributário nacional, impostos e processo tributário.',
@@ -107,7 +107,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-purple-600 to-purple-400',
     },
     {
-      id: 'direito-trabalho',
+      id: 'Direito do Trabalho',
       icon: <Users className="h-5 w-5 text-white" />,
       title: 'Direito do Trabalho',
       description: 'Relações de trabalho, direitos trabalhistas e processo do trabalho.',
@@ -115,7 +115,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-orange-600 to-orange-400',
     },
     {
-      id: 'direito-empresarial',
+      id: 'Direito Empresarial',
       icon: <Building2 className="h-5 w-5 text-white" />,
       title: 'Direito Empresarial',
       description: 'Sociedades, títulos de crédito e recuperação de empresas.',
@@ -123,7 +123,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-sky-600 to-sky-400',
     },
     {
-      id: 'direito-internacional',
+      id: 'Direito Internacional',
       icon: <Globe className="h-5 w-5 text-white" />,
       title: 'Direito Internacional',
       description: 'Tratados internacionais, organismos internacionais e direitos humanos.',
@@ -131,7 +131,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-indigo-600 to-indigo-400',
     },
     {
-      id: 'oab',
+      id: 'OAB',
       icon: <GraduationCap className="h-5 w-5 text-white" />,
       title: 'Preparatório OAB',
       description: 'Cursos específicos para aprovação no Exame da Ordem.',
@@ -139,7 +139,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-emerald-600 to-emerald-400',
     },
     {
-      id: 'carreiras',
+      id: 'Carreiras Jurídicas',
       icon: <Scale className="h-5 w-5 text-white" />,
       title: 'Carreiras Jurídicas',
       description: 'Preparação para concursos na magistratura, MP e outras carreiras.',
@@ -147,7 +147,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-rose-600 to-rose-400',
     },
     {
-      id: 'especializacoes',
+      id: 'Especializações',
       icon: <BookText className="h-5 w-5 text-white" />,
       title: 'Especializações',
       description: 'Cursos avançados em áreas específicas do Direito.',
@@ -155,7 +155,7 @@ export function CourseCategories({ onSelectCategory }: { onSelectCategory: (cate
       color: 'bg-gradient-to-r from-violet-600 to-violet-400',
     },
     {
-      id: 'novidades',
+      id: 'Novidades',
       icon: <Shield className="h-5 w-5 text-white" />,
       title: 'Novidades Legislativas',
       description: 'Atualizações sobre novas leis e alterações na legislação.',

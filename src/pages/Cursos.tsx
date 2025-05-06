@@ -162,7 +162,7 @@ const Cursos = () => {
           {selectedCategory ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Cursos na Categoria Selecionada</h2>
+                <h2 className="text-2xl font-bold">Cursos na Categoria: {selectedCategory}</h2>
                 <Button variant="outline" onClick={handleClearCategory}>
                   Voltar para Categorias
                 </Button>
@@ -182,7 +182,6 @@ const Cursos = () => {
                           key={course.id}
                           {...courseMenuProps}
                           onStartCourse={() => handleStartCourse(course.id)}
-                          // Required props
                           open={false}
                           onOpenChange={() => {}}
                         />

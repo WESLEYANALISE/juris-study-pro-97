@@ -3,17 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-
-interface Curso {
-  id: number;
-  area: string;
-  materia: string;
-  sequencia: number;
-  link: string;
-  capa: string;
-  sobre: string;
-  download: string | null;
-}
+import { Curso } from "@/types/curso";
 
 interface CursoViewerState {
   curso: Curso | null;
