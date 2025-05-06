@@ -19,23 +19,11 @@ export interface LibraryArea {
   count: number;
 }
 
-// This function is now moved to pdf-url-utils.ts and imported above
-// Keeping alias for backward compatibility
-export { formatPDFUrl as formatPdfUrl };
+// Using the imported function from pdf-url-utils.ts
+export { formatPDFUrl };
 
-/**
- * Ensures all URLs are properly formatted
- */
-export function formatPdfUrl(url: string): string {
-  // If it's already a complete URL, return it
-  if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-    return url;
-  }
-
-  // If it's a storage path, add the necessary prefix
-  const storageBaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://yovocuutiwwmbempxcyo.supabase.co";
-  return `${storageBaseUrl}/storage/v1/object/public/agoravai/${url}`;
-}
+// We'll remove the duplicate formatPdfUrl function that was causing the error
+// and use the imported formatPDFUrl consistently
 
 /**
  * Fetches all books grouped by area
@@ -53,7 +41,7 @@ export async function fetchBooksByArea(): Promise<{ [key: string]: LivroSupa[] }
     const formattedData = data?.map(book => ({
       ...book,
       id: String(book.id),
-      pdf_url: formatPdfUrl(book.pdf_url)
+      pdf_url: formatPDFUrl(book.pdf_url)
     })) || [];
     
     // Group the books by area
@@ -275,7 +263,7 @@ export async function getFavoriteBooks(): Promise<LivroSupa[]> {
       id: String(book.id), // Convert id to string to match our interface
       pdf_name: book.pdf_name,
       area: book.area,
-      pdf_url: formatPdfUrl(book.pdf_url),
+      pdf_url: formatPDFUrl(book.pdf_url),
       sinopse: book.sinopse,
       capa: book.capa,
       created_at: book.created_at
@@ -338,7 +326,7 @@ export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa
         id: String(book.id), // Convert id to string to match our interface
         pdf_name: book.pdf_name,
         area: book.area,
-        pdf_url: formatPdfUrl(book.pdf_url),
+        pdf_url: formatPDFUrl(book.pdf_url),
         sinopse: book.sinopse,
         capa: book.capa,
         created_at: book.created_at,

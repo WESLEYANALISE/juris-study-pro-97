@@ -234,31 +234,35 @@ export function EnhancedPDFViewer({
   
   // Error display
   if (isError) {
-    return <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
-      <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
-        <AlertCircle className="h-16 w-16 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
-        <p className="text-muted-foreground mb-6">
-          {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
-        </p>
-        <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
-          <code className="break-all whitespace-pre-wrap">{processedPdfUrl}</code>
+    return (
+      <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
+        <div className="bg-destructive/10 text-destructive rounded-lg p-6 max-w-md text-center shadow-lg">
+          <AlertCircle className="h-16 w-16 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4">Erro ao carregar o livro</h2>
+          <p className="text-muted-foreground mb-6">
+            {errorMessage || "Houve um problema ao carregar o arquivo PDF. Por favor, tente novamente mais tarde."}
+          </p>
+          <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
+            <code className="break-all whitespace-pre-wrap">{processedPdfUrl}</code>
+          </div>
+          <Button onClick={onClose} className="mt-4">
+            Fechar
+          </Button>
         </div>
-        <Button onClick={onClose} className="mt-4">
-          Fechar
-        </Button>
       </div>
-    </div>;
+    );
   }
 
   // Show validating spinner
   if (isValidatingUrl) {
-    return <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
-      <div className="text-center">
-        <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-white text-lg">Verificando disponibilidade do PDF...</p>
+    return (
+      <div className="fixed inset-0 bg-gray-900 z-50 flex flex-col items-center justify-center p-4">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-white text-lg">Verificando disponibilidade do PDF...</p>
+        </div>
       </div>
-    </div>;
+    );
   }
 
   return (
@@ -413,7 +417,8 @@ export function EnhancedPDFViewer({
           </div>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 }
 
 export default EnhancedPDFViewer;
