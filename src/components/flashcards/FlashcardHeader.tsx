@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Brain, ChevronDown, BarChart } from 'lucide-react';
+import { Brain, ChevronDown, BarChart, Clock, List, Bookmark } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,9 +22,15 @@ interface FlashcardHeaderProps {
   };
   onShowStats: () => void;
   isMobile: boolean;
+  title?: string;
 }
 
-export const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({ userStats, onShowStats, isMobile }) => {
+export const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({ 
+  userStats, 
+  onShowStats, 
+  isMobile, 
+  title = "Flashcards" 
+}) => {
   return (
     <>
       {/* Header with stats toggle */}
@@ -38,14 +44,21 @@ export const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({ userStats, onS
           <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
             <Brain className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Flashcards</h1>
+          <div className="flex flex-col">
+            <h1 className="text-2xl font-bold">{title}</h1>
+            {userStats && (
+              <p className="text-sm text-muted-foreground">
+                Progresso diário: {userStats.todayStudied} cartões estudados
+              </p>
+            )}
+          </div>
 
           {userStats && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Badge
                   variant="outline"
-                  className="ml-2 bg-primary/10 border-primary/20 text-muted-foreground cursor-pointer"
+                  className="ml-2 bg-primary/10 border-primary/20 text-muted-foreground cursor-pointer hover:bg-primary/20 transition-all"
                 >
                   Sequência: {userStats.streak} dias <ChevronDown className="h-3 w-3 ml-1 inline" />
                 </Badge>
@@ -54,13 +67,13 @@ export const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({ userStats, onS
                 <DropdownMenuLabel>Seu progresso</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem className="flex justify-between">
-                  Total estudado <span className="font-bold">{userStats.totalStudied}</span>
+                  <span className="flex items-center gap-2"><List className="h-3.5 w-3.5" /> Total estudado</span> <span className="font-bold">{userStats.totalStudied}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="flex justify-between">
-                  Hoje <span className="font-bold">{userStats.todayStudied}</span>
+                  <span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" /> Hoje</span> <span className="font-bold">{userStats.todayStudied}</span>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="flex justify-between">
-                  Dominados <span className="font-bold">{userStats.masteredCards}</span>
+                  <span className="flex items-center gap-2"><Bookmark className="h-3.5 w-3.5" /> Dominados</span> <span className="font-bold">{userStats.masteredCards}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -70,7 +83,7 @@ export const FlashcardHeader: React.FC<FlashcardHeaderProps> = ({ userStats, onS
         {!isMobile && (
           <motion.button
             onClick={onShowStats}
-            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors bg-primary/5 px-3 py-1.5 rounded-lg hover:bg-primary/10"
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}

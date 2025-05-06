@@ -1,198 +1,182 @@
 
-import React, { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import React from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
-import { ChevronDown, Volume2 } from "lucide-react";
-
-type Flashcard = {
-  id: string | number;
-  pergunta: string;
-  resposta: string;
-  explicacao: string | null;
-  area: string;
-  tema: string;
-};
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, BookOpen, Info, RotateCcw } from "lucide-react";
 
 interface FlashcardViewProps {
-  flashcard: Flashcard;
-  index?: number;
-  total?: number;
+  question: string;
+  answer: string;
+  explanation?: string;
   showAnswer: boolean;
   onShowAnswer: () => void;
-  onNext?: () => void;
-  autoNarrate?: boolean;
-  fullWidth?: boolean;
-  hideControls?: boolean;
 }
 
-export function FlashcardView({ 
-  flashcard, 
-  index, 
-  total,
-  showAnswer, 
-  onShowAnswer, 
-  onNext,
-  autoNarrate = false,
-  fullWidth = false,
-  hideControls = false
+export function FlashcardView({
+  question,
+  answer,
+  explanation,
+  showAnswer,
+  onShowAnswer,
 }: FlashcardViewProps) {
-  const [showExplanation, setShowExplanation] = useState(false);
-  
-  // Auto narration effect
-  useEffect(() => {
-    if (!autoNarrate) return;
-    
-    const synth = window.speechSynthesis;
-    const questionUtterance = new SpeechSynthesisUtterance(flashcard.pergunta);
-    
-    // Select Portuguese voice if available
-    const voices = synth.getVoices();
-    const ptVoice = voices.find(voice => voice.lang.includes('pt'));
-    if (ptVoice) questionUtterance.voice = ptVoice;
-    
-    synth.speak(questionUtterance);
-    
-    if (showAnswer) {
-      const answerUtterance = new SpeechSynthesisUtterance(flashcard.resposta);
-      if (ptVoice) answerUtterance.voice = ptVoice;
-      
-      // Delay the answer narration slightly
-      setTimeout(() => {
-        synth.speak(answerUtterance);
-      }, 1000);
+  const [showInfo, setShowInfo] = React.useState(false);
+  const [isFlipped, setIsFlipped] = React.useState(false);
+
+  const handleToggleFlip = () => {
+    if (!showAnswer) {
+      onShowAnswer();
+    } else {
+      setIsFlipped(!isFlipped);
     }
-    
-    return () => {
-      synth.cancel(); // Stop narration when component unmounts or changes
-    };
-  }, [flashcard, showAnswer, autoNarrate]);
-  
-  // Manually trigger narration
-  const handleNarrate = (text: string) => {
-    const synth = window.speechSynthesis;
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Select Portuguese voice if available
-    const voices = synth.getVoices();
-    const ptVoice = voices.find(voice => voice.lang.includes('pt'));
-    if (ptVoice) utterance.voice = ptVoice;
-    
-    synth.speak(utterance);
+  };
+
+  const toggleInfo = () => {
+    if (showAnswer) {
+      setShowInfo(!showInfo);
+    }
   };
 
   return (
-    <Card className={`${fullWidth ? 'w-full' : 'max-w-md mx-auto'} border-primary/10 shadow-lg bg-gradient-to-br from-[#1A1633] via-[#262051] to-[#1A1633]`}>
-      <CardContent className="p-6 space-y-4">
-        {/* Card metadata */}
-        <div className="flex justify-between items-center mb-1">
-          <div className="flex gap-2 items-center">
-            <Badge variant="outline" className="bg-primary/10 border-primary/20">
-              {flashcard.area}
-            </Badge>
-            <p className="text-xs text-muted-foreground">{flashcard.tema}</p>
-          </div>
-          
-          {index !== undefined && total !== undefined && (
-            <Badge variant="outline" className="text-xs">
-              {index + 1}/{total}
-            </Badge>
-          )}
-        </div>
-        
-        {/* Question */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <h3 className="font-medium text-primary">Pergunta</h3>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              className="h-7 w-7 rounded-full hover:bg-primary/10"
-              onClick={() => handleNarrate(flashcard.pergunta)}
+    <div className="flex flex-col items-center space-y-4">
+      <motion.div
+        className="w-full perspective"
+        initial={false}
+        animate={{ rotateY: isFlipped ? 180 : 0 }}
+        transition={{ duration: 0.5 }}
+        style={{ perspective: 1200 }}
+      >
+        <div className="w-full relative preserve-3d" style={{ transformStyle: "preserve-3d" }}>
+          {/* Card Front (Question) */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key="question"
+              className={`absolute w-full ${isFlipped ? "backface-hidden" : ""}`}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: isFlipped ? 0 : 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              style={{ 
+                backfaceVisibility: "hidden",
+                transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
+              }}
             >
-              <Volume2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-          
-          <div className="p-4 bg-[#1A1633]/80 border border-primary/10 rounded-md">
-            <p>{flashcard.pergunta}</p>
-          </div>
-        </div>
-        
-        {/* Answer */}
-        {showAnswer ? (
-          <motion.div 
-            className="space-y-2" 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="flex justify-between items-center">
-              <h3 className="font-medium text-primary">Resposta</h3>
-              <Button 
-                variant="ghost" 
-                size="icon"
-                className="h-7 w-7 rounded-full hover:bg-primary/10"
-                onClick={() => handleNarrate(flashcard.resposta)}
-              >
-                <Volume2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-            
-            <div className="p-4 bg-[#1A1633]/80 border border-primary/10 rounded-md">
-              <p>{flashcard.resposta}</p>
-            </div>
-            
-            {/* Explanation section */}
-            {flashcard.explicacao && (
-              <div className="pt-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-sm hover:bg-primary/10 p-2 h-auto"
-                  onClick={() => setShowExplanation(!showExplanation)}
-                >
-                  <span className="mr-1">{showExplanation ? "Ocultar" : "Mostrar"} explicação</span>
-                  <ChevronDown className={`h-4 w-4 transition-transform ${showExplanation ? "rotate-180" : ""}`} />
-                </Button>
+              <Card className="p-6 min-h-[200px] flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                  <div className="text-sm font-medium text-muted-foreground mb-4">Pergunta</div>
+                  {showAnswer && (
+                    <Button 
+                      onClick={handleToggleFlip} 
+                      size="sm" 
+                      variant="ghost"
+                      className="text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Virar
+                    </Button>
+                  )}
+                </div>
                 
-                {showExplanation && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                    className="mt-2 p-4 bg-primary/5 border border-primary/10 rounded-md"
-                  >
-                    <p className="text-sm">{flashcard.explicacao}</p>
-                  </motion.div>
-                )}
-              </div>
+                <div className="flex-grow flex items-center justify-center py-4">
+                  <p className="text-lg text-center font-medium">{question}</p>
+                </div>
+                
+                <div className="flex justify-center mt-4">
+                  {!showAnswer ? (
+                    <Button 
+                      onClick={onShowAnswer} 
+                      className="w-full max-w-[200px]"
+                      size="lg"
+                    >
+                      <Eye className="mr-2 h-4 w-4" /> Ver resposta
+                    </Button>
+                  ) : (
+                    <Button 
+                      onClick={handleToggleFlip} 
+                      variant="outline" 
+                      className="w-full max-w-[200px]"
+                      size="lg"
+                    >
+                      <BookOpen className="mr-2 h-4 w-4" /> Ver resposta
+                    </Button>
+                  )}
+                </div>
+              </Card>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Card Back (Answer) */}
+          <AnimatePresence mode="wait">
+            {showAnswer && (
+              <motion.div
+                key="answer"
+                className={`absolute w-full ${!isFlipped ? "backface-hidden" : ""}`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: isFlipped ? 1 : 0 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                style={{ 
+                  backfaceVisibility: "hidden",
+                  transform: isFlipped ? "rotateY(0deg)" : "rotateY(180deg)"
+                }}
+              >
+                <Card className="p-6 min-h-[200px] flex flex-col justify-between bg-primary/5">
+                  <div className="flex justify-between items-start">
+                    <div className="text-sm font-medium text-primary mb-4">Resposta</div>
+                    <Button 
+                      onClick={handleToggleFlip} 
+                      size="sm" 
+                      variant="ghost"
+                      className="text-xs"
+                    >
+                      <RotateCcw className="h-3 w-3 mr-1" />
+                      Virar
+                    </Button>
+                  </div>
+                  
+                  <div className="flex-grow flex items-center justify-center py-4">
+                    {showInfo && explanation ? (
+                      <div className="text-center">
+                        <p className="text-lg font-medium mb-4">{answer}</p>
+                        <div className="border-t border-primary/20 pt-3 mt-3">
+                          <p className="text-muted-foreground text-sm italic">{explanation}</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-lg text-center font-medium">{answer}</p>
+                    )}
+                  </div>
+                  
+                  <div className="flex justify-center mt-4">
+                    {explanation && (
+                      <Button 
+                        onClick={toggleInfo} 
+                        variant="ghost" 
+                        className="w-full max-w-[200px]"
+                      >
+                        <Info className={`${showInfo ? "text-primary" : ""} mr-2 h-4 w-4`} /> 
+                        {showInfo ? "Ocultar explicação" : "Ver explicação"}
+                      </Button>
+                    )}
+                  </div>
+                </Card>
+              </motion.div>
             )}
-          </motion.div>
-        ) : (
-          !hideControls && (
-            <Button 
-              className="w-full bg-gradient-to-r from-primary/90 via-purple-600/90 to-primary/90 shadow-md hover:shadow-purple-600/20"
-              onClick={onShowAnswer}
-            >
-              Ver resposta
-            </Button>
-          )
-        )}
-        
-        {/* Next button */}
-        {showAnswer && onNext && !hideControls && (
-          <Button 
-            className="w-full"
-            onClick={onNext}
-            variant="default"
-          >
-            Próximo cartão
-          </Button>
-        )}
-      </CardContent>
-    </Card>
+          </AnimatePresence>
+        </div>
+      </motion.div>
+
+      <style jsx global>{`
+        .preserve-3d {
+          transform-style: preserve-3d;
+        }
+        .perspective {
+          perspective: 1200px;
+        }
+        .backface-hidden {
+          backface-visibility: hidden;
+        }
+      `}</style>
+    </div>
   );
 }

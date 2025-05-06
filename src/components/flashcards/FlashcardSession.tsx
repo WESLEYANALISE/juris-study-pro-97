@@ -1,184 +1,207 @@
 
-import { useState, useEffect } from "react";
-import { FlashcardStudySession } from "./FlashcardStudySession";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { FlashcardView } from "./FlashcardView";
+import { FlashcardRating } from "./FlashcardRating";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { motion } from "framer-motion";
-import { Check, Clock, PartyPopper, Trophy } from "lucide-react";
-import confetti from "canvas-confetti";
+import { FlashcardHeader } from "./FlashcardHeader";
+import { Progress } from "@/components/ui/progress";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircle, XCircle, Layers, RotateCw } from "lucide-react";
 
-type FlashCard = {
-  id: string | number;
-  area: string;
-  tema: string;
+interface Flashcard {
+  id: string;
   pergunta: string;
   resposta: string;
-  explicacao: string | null;
-};
-
-interface FlashcardSessionProps {
-  cards: FlashCard[];
-  showAnswers?: boolean;
-  studyMode?: "manual" | "auto";
-  autoNarrate?: boolean;
-  autoSpeed?: number;
-  onExit?: () => void;
+  area: string;
+  tema: string;
+  dificuldade?: string;
+  explicacao?: string;
 }
 
-export function FlashcardSession({
-  cards,
-  showAnswers = false,
-  studyMode = "manual",
-  autoNarrate = false,
-  autoSpeed = 3500,
-  onExit
+interface FlashcardSessionProps {
+  flashcards: Flashcard[];
+  onComplete: (results: any) => void;
+  onExit: () => void;
+  areaName?: string;
+  temaNome?: string;
+}
+
+export function FlashcardSession({ 
+  flashcards, 
+  onComplete, 
+  onExit,
+  areaName,
+  temaNome
 }: FlashcardSessionProps) {
-  const [sessionCompleted, setSessionCompleted] = useState(false);
-  const [sessionStats, setSessionStats] = useState({
-    totalCards: cards.length,
-    timeSpent: 0,
-    reviewedCards: 0
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [results, setResults] = useState<{ cardId: string; rating: number }[]>([]);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const [stats, setStats] = useState({
+    easy: 0,
+    medium: 0,
+    hard: 0,
   });
-  const [timer, setTimer] = useState<NodeJS.Timeout | null>(null);
   
-  // Start timer when session begins
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSessionStats(prev => ({
-        ...prev,
-        timeSpent: prev.timeSpent + 1
-      }));
-    }, 1000);
-    
-    setTimer(interval);
-    
-    // Clean up on unmount
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, []);
+  const currentCard = flashcards[currentIndex];
+  const progress = ((currentIndex) / flashcards.length) * 100;
   
-  // Handle session completion
-  const handleSessionComplete = () => {
-    // Stop the timer
-    if (timer) clearInterval(timer);
-    
-    // Show success animation
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 }
-    });
-    
-    // Update stats
-    setSessionStats(prev => ({
-      ...prev,
-      reviewedCards: cards.length
-    }));
-    
-    // Show completion screen
-    setSessionCompleted(true);
-    
-    // Show toast notification
-    toast.success("Sessão de estudo concluída!");
+  const handleShowAnswer = () => {
+    setShowAnswer(true);
   };
   
-  // Format time from seconds to mm:ss
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const handleRating = (rating: 0 | 1 | 2 | 3 | 4 | 5) => {
+    // Update statistics
+    if (rating <= 1) {
+      setStats(prev => ({ ...prev, hard: prev.hard + 1 }));
+    } else if (rating <= 3) {
+      setStats(prev => ({ ...prev, medium: prev.medium + 1 }));
+    } else {
+      setStats(prev => ({ ...prev, easy: prev.easy + 1 }));
+    }
+    
+    // Save result
+    setResults([
+      ...results,
+      { cardId: currentCard.id, rating }
+    ]);
+    
+    // Move to next card or complete
+    if (currentIndex < flashcards.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+      setShowAnswer(false);
+    } else {
+      setIsCompleted(true);
+      // Call onComplete with a small delay to allow animation
+      setTimeout(() => {
+        onComplete(results);
+      }, 1000);
+    }
+  };
+  
+  const handleRetry = () => {
+    // Reset everything
+    setCurrentIndex(0);
+    setShowAnswer(false);
+    setResults([]);
+    setIsCompleted(false);
   };
 
-  if (sessionCompleted) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="border-primary/20 bg-gradient-to-br from-[#1A1633] via-[#262051] to-[#1A1633] shadow-xl">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto bg-primary/20 w-16 h-16 rounded-full flex items-center justify-center mb-4">
-              <Trophy className="h-8 w-8 text-primary" />
+  const sessionTitle = `${areaName || "Direito"} - ${temaNome || "Revisão geral"}`;
+  
+  const userStats = {
+    totalStudied: 120,
+    todayStudied: 25,
+    masteredCards: 50,
+    streak: 3,
+  };
+
+  return (
+    <div className="flex flex-col space-y-4 max-w-2xl mx-auto">
+      <FlashcardHeader 
+        userStats={userStats}
+        onShowStats={() => {}}
+        isMobile={false}
+        title={sessionTitle}
+      />
+      
+      {/* Progress bar and count */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-sm text-muted-foreground">
+          Cartão {currentIndex + 1} de {flashcards.length}
+        </div>
+        <div className="text-sm text-muted-foreground flex items-center gap-2">
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-red-500"></span> 
+            Difíceis: {stats.hard}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-amber-500"></span> 
+            Médios: {stats.medium}
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="w-2 h-2 rounded-full bg-green-500"></span> 
+            Fáceis: {stats.easy}
+          </span>
+        </div>
+      </div>
+      <Progress value={progress} className="h-2" 
+        style={{
+          background: "linear-gradient(to right, rgba(240,82,82,0.2), rgba(245,158,11,0.2), rgba(132,204,22,0.2))"
+        }}
+      />
+      
+      <AnimatePresence mode="wait">
+        {isCompleted ? (
+          <motion.div
+            key="completed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex flex-col items-center justify-center space-y-6 py-12"
+          >
+            <div className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center">
+              <CheckCircle className="h-12 w-12 text-green-500" />
             </div>
-            <CardTitle className="text-2xl">Sessão Concluída!</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-3 gap-4 mt-6">
-              <div className="border border-primary/20 rounded-lg p-4 text-center bg-card/50">
-                <div className="text-2xl font-bold mb-1">{sessionStats.totalCards}</div>
-                <div className="text-xs text-muted-foreground">Cartões</div>
+            <h2 className="text-2xl font-bold">Sessão concluída!</h2>
+            <p className="text-muted-foreground text-center">
+              Você estudou {flashcards.length} cartões nesta sessão.
+            </p>
+            
+            <div className="grid grid-cols-3 gap-4 w-full mt-4">
+              <div className="flex flex-col items-center p-4 bg-red-500/20 rounded-lg">
+                <span className="text-2xl font-bold text-red-500">{stats.hard}</span>
+                <span className="text-sm">Difíceis</span>
               </div>
-              <div className="border border-primary/20 rounded-lg p-4 text-center bg-card/50">
-                <div className="text-2xl font-bold mb-1">{formatTime(sessionStats.timeSpent)}</div>
-                <div className="text-xs text-muted-foreground">Tempo total</div>
+              <div className="flex flex-col items-center p-4 bg-amber-500/20 rounded-lg">
+                <span className="text-2xl font-bold text-amber-500">{stats.medium}</span>
+                <span className="text-sm">Médios</span>
               </div>
-              <div className="border border-primary/20 rounded-lg p-4 text-center bg-card/50">
-                <div className="text-2xl font-bold mb-1">
-                  {Math.round((sessionStats.totalCards / sessionStats.timeSpent) * 60)}
-                </div>
-                <div className="text-xs text-muted-foreground">Cards/min</div>
+              <div className="flex flex-col items-center p-4 bg-green-500/20 rounded-lg">
+                <span className="text-2xl font-bold text-green-500">{stats.easy}</span>
+                <span className="text-sm">Fáceis</span>
               </div>
             </div>
             
-            <div className="flex flex-col gap-4 items-center">
-              <p className="text-center text-muted-foreground">
-                Continue estudando regularmente para melhorar seu conhecimento.
-              </p>
-              
-              <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={onExit} 
-                  className="border-primary/20 hover:bg-primary/10"
-                >
-                  Finalizar
-                </Button>
-                <Button
-                  onClick={() => {
-                    setSessionCompleted(false);
-                    setSessionStats(prev => ({ ...prev, timeSpent: 0, reviewedCards: 0 }));
-                    
-                    // Restart timer
-                    const interval = setInterval(() => {
-                      setSessionStats(prev => ({
-                        ...prev,
-                        timeSpent: prev.timeSpent + 1
-                      }));
-                    }, 1000);
-                    
-                    setTimer(interval);
-                  }}
-                  className="bg-gradient-to-r from-primary/90 via-purple-600/90 to-primary/90 gap-2"
-                >
-                  <PartyPopper className="h-4 w-4" /> Estudar novamente
-                </Button>
-              </div>
+            <div className="flex gap-4 mt-6">
+              <Button variant="outline" onClick={onExit} className="gap-2">
+                <Layers className="h-4 w-4" />
+                Voltar ao menu
+              </Button>
+              <Button onClick={handleRetry} variant="default" className="gap-2">
+                <RotateCw className="h-4 w-4" />
+                Revisar novamente
+              </Button>
             </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
-
-  return (
-    <div className="relative">
-      <div className="absolute top-0 right-0 flex items-center gap-2 text-sm text-muted-foreground p-1">
-        <Clock className="h-4 w-4" />
-        <span>{formatTime(sessionStats.timeSpent)}</span>
-      </div>
-      
-      <FlashcardStudySession 
-        cards={cards}
-        showAnswers={showAnswers}
-        studyMode={studyMode}
-        autoNarrate={autoNarrate}
-        autoSpeed={autoSpeed}
-        onComplete={handleSessionComplete}
-        onExit={onExit}
-      />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="session"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
+          >
+            <FlashcardView
+              question={currentCard.pergunta}
+              answer={currentCard.resposta}
+              explanation={currentCard.explicacao}
+              showAnswer={showAnswer}
+              onShowAnswer={handleShowAnswer}
+            />
+            
+            {showAnswer && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <FlashcardRating onRate={handleRating} />
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

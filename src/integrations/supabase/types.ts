@@ -2923,22 +2923,25 @@ export type Database = {
       }
       peticoes: {
         Row: {
-          area: string
-          documento: string
-          id: string
-          tipo: string | null
+          area: string | null
+          created_at: string
+          id: number
+          link: string | null
+          total: number | null
         }
         Insert: {
-          area: string
-          documento: string
-          id?: string
-          tipo?: string | null
+          area?: string | null
+          created_at?: string
+          id?: number
+          link?: string | null
+          total?: number | null
         }
         Update: {
-          area?: string
-          documento?: string
-          id?: string
-          tipo?: string | null
+          area?: string | null
+          created_at?: string
+          id?: number
+          link?: string | null
+          total?: number | null
         }
         Relationships: []
       }
