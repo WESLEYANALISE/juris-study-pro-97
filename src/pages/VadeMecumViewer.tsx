@@ -17,6 +17,7 @@ import { JuridicalBackground } from "@/components/ui/juridical-background";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Container } from "@/components/ui/container";
+import { BookOpen } from "lucide-react"; // Updated import name from BookOpenIcon to BookOpen
 
 // Define a type for the supported background variants
 type VadeMecumBackgroundVariant = "scales" | "books" | "constitution";
@@ -181,7 +182,7 @@ const VadeMecumViewer = () => {
                 variants={itemVariants}
                 className="text-center py-12 bg-background/30 backdrop-blur-sm rounded-lg border border-primary/20"
               >
-                <BookOpenIcon className="h-16 w-16 mx-auto text-muted-foreground opacity-30 mb-4" />
+                <BookOpen className="h-16 w-16 mx-auto text-muted-foreground opacity-30 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Nenhum artigo encontrado</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   Não encontramos nenhum artigo que corresponda aos seus critérios de busca.
