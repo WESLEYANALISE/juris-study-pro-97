@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useParams } from "react-router-dom";
+import { SupabaseArticle } from "@/types/supabase";
 
 // Lista de tabelas permitidas para prevenir SQL injection e type errors
 const ALLOWED_TABLES = [
@@ -29,26 +30,15 @@ const ALLOWED_TABLES = [
   "Constituição_Federal"
 ]; 
 
-// Interface simplificada para artigos de leis
-interface LawArticle {
-  id: string;
-  law_name: string;
-  numero: string;
-  artigo: string;
-  tecnica?: string;
-  formal?: string;
-  exemplo?: string;
-}
-
 export const useVadeMecumArticlesOptimized = (searchQuery: string) => {
   const { lawId } = useParams<{ lawId: string; }>();
-  const [articles, setArticles] = useState<LawArticle[]>([]);
-  const [filteredArticles, setFilteredArticles] = useState<LawArticle[]>([]);
+  const [articles, setArticles] = useState<SupabaseArticle[]>([]);
+  const [filteredArticles, setFilteredArticles] = useState<SupabaseArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
   // Cache para evitar requisições repetidas
-  const articlesCache = useMemo(() => new Map<string, LawArticle[]>(), []);
+  const articlesCache = useMemo(() => new Map<string, SupabaseArticle[]>(), []);
 
   // Obtém o nome da tabela de forma segura
   const tableName = useMemo(() => {
@@ -100,7 +90,7 @@ export const useVadeMecumArticlesOptimized = (searchQuery: string) => {
       }
       
       if (data && Array.isArray(data)) {
-        const processedData = data.map(item => ({
+        const processedData = data.map((item: any) => ({
           id: item.id ? item.id.toString() : '',
           law_name: tableName || '',
           numero: item.numero || '',
