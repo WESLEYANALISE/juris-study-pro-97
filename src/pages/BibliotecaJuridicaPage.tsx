@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
@@ -57,18 +56,28 @@ export default function BibliotecaJuridicaPage() {
       setIsLoading(true);
       
       try {
-        // Load all data in parallel
-        const [booksData, areasData, recentData, favoritesData] = await Promise.all([
-          fetchBooksByArea(),
-          fetchBookAreas(),
-          getRecentlyReadBooks(6),
-          getFavoriteBooks()
-        ]);
-        
+        // Load books and areas
+        const booksData = await fetchBooksByArea();
+        const areasData = await fetchBookAreas();
         setBooksByArea(booksData);
         setAreas(areasData);
-        setRecentBooks(recentData);
-        setFavoriteBooks(favoritesData);
+
+        // Load user-specific data
+        try {
+          const recentData = await getRecentlyReadBooks(6);
+          setRecentBooks(recentData);
+        } catch (error) {
+          console.error('Error loading recent books:', error);
+          setRecentBooks([]);
+        }
+
+        try {
+          const favoritesData = await getFavoriteBooks();
+          setFavoriteBooks(favoritesData);
+        } catch (error) {
+          console.error('Error loading favorite books:', error);
+          setFavoriteBooks([]);
+        }
       } catch (error) {
         console.error('Error loading library data:', error);
       } finally {

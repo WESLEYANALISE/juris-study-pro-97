@@ -11,6 +11,7 @@ export interface LivroSupa {
   sinopse: string | null;
   capa: string | null;
   created_at: string;
+  pagina_atual?: number; // Optional property for progress
 }
 
 export interface LibraryArea {
@@ -139,8 +140,9 @@ export async function saveReadingProgress(
   isFavorite: boolean = false
 ) {
   try {
-    const user = supabase.auth.getUser();
-    if (!user) {
+    const { data: userData } = await supabase.auth.getUser();
+    
+    if (!userData || !userData.user) {
       // Silently fail if no user
       return;
     }
@@ -151,9 +153,9 @@ export async function saveReadingProgress(
         livro_id: bookId,
         pagina_atual: currentPage,
         favorito: isFavorite,
-        ultima_leitura: new Date().toISOString()
-      })
-      .single();
+        ultima_leitura: new Date().toISOString(),
+        user_id: userData.user.id
+      });
     
     if (error) {
       console.error('Error saving reading progress:', error);
@@ -168,8 +170,8 @@ export async function saveReadingProgress(
  */
 export async function getReadingProgress(bookId: string) {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
       return null;
     }
     
@@ -177,6 +179,7 @@ export async function getReadingProgress(bookId: string) {
       .from('biblioteca_leitura_progresso')
       .select('*')
       .eq('livro_id', bookId)
+      .eq('user_id', userData.user.id)
       .single();
     
     if (error && error.code !== 'PGRST116') { // PGRST116 is not found
@@ -194,27 +197,42 @@ export async function getReadingProgress(bookId: string) {
 /**
  * Gets user favorite books
  */
-export async function getFavoriteBooks() {
+export async function getFavoriteBooks(): Promise<LivroSupa[]> {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
       return [];
     }
     
+    // First get the favorite book IDs
     const { data, error } = await supabase
       .from('biblioteca_leitura_progresso')
-      .select(`
-        livro_id,
-        livros_supa!inner (*)
-      `)
+      .select('livro_id')
+      .eq('user_id', userData.user.id)
       .eq('favorito', true);
     
     if (error) {
-      console.error('Error fetching favorite books:', error);
+      console.error('Error fetching favorite books IDs:', error);
       return [];
     }
     
-    return data?.map(item => item.livros_supa) || [];
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Then get the actual book data
+    const bookIds = data.map(item => item.livro_id);
+    const { data: booksData, error: booksError } = await supabase
+      .from('livros_supa')
+      .select('*')
+      .in('id', bookIds);
+    
+    if (booksError) {
+      console.error('Error fetching favorite books:', booksError);
+      return [];
+    }
+    
+    return booksData || [];
   } catch (error) {
     console.error('Error in getFavoriteBooks:', error);
     return [];
@@ -224,21 +242,18 @@ export async function getFavoriteBooks() {
 /**
  * Gets recently read books
  */
-export async function getRecentlyReadBooks(limit: number = 5) {
+export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa[]> {
   try {
-    const user = await supabase.auth.getUser();
-    if (!user) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData || !userData.user) {
       return [];
     }
     
+    // Get recently read book IDs with progress info
     const { data, error } = await supabase
       .from('biblioteca_leitura_progresso')
-      .select(`
-        livro_id,
-        pagina_atual,
-        ultima_leitura,
-        livros_supa!inner (*)
-      `)
+      .select('livro_id, pagina_atual, ultima_leitura')
+      .eq('user_id', userData.user.id)
       .order('ultima_leitura', { ascending: false })
       .limit(limit);
     
@@ -247,10 +262,32 @@ export async function getRecentlyReadBooks(limit: number = 5) {
       return [];
     }
     
-    return data?.map(item => ({
-      ...item.livros_supa,
-      pagina_atual: item.pagina_atual
-    })) || [];
+    if (!data || data.length === 0) {
+      return [];
+    }
+    
+    // Get the actual book details
+    const bookIds = data.map(item => item.livro_id);
+    const { data: booksData, error: booksError } = await supabase
+      .from('livros_supa')
+      .select('*')
+      .in('id', bookIds);
+    
+    if (booksError) {
+      console.error('Error fetching book details:', booksError);
+      return [];
+    }
+    
+    // Combine the books data with reading progress
+    const booksWithProgress = booksData?.map(book => {
+      const progressItem = data.find(item => item.livro_id === book.id);
+      return {
+        ...book,
+        pagina_atual: progressItem?.pagina_atual
+      };
+    }) || [];
+    
+    return booksWithProgress;
   } catch (error) {
     console.error('Error in getRecentlyReadBooks:', error);
     return [];
