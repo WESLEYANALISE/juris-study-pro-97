@@ -1,13 +1,17 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X, ZoomIn, ZoomOut, RotateCw, Bookmark, Heart, Download, Share2, AlertCircle, StickyNote, Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LivroJuridico } from '@/types/biblioteca-juridica';
 import { useBibliotecaProgresso } from '@/hooks/use-biblioteca-juridica';
+import { usePdfAnnotations } from '@/hooks/use-pdf-annotations';
 import { toast } from 'sonner';
 import { formatPDFUrl, testPDFAccess } from '@/utils/pdf-url-utils';
+import { AnnotationSidebar } from './AnnotationSidebar';
+import { cn } from '@/lib/utils';
 import './EnhancedPDFViewer.css';
 
 // Set PDF.js worker source - using minified version for consistency
@@ -39,12 +43,29 @@ export function EnhancedPDFViewer({
   const [viewportWidth, setViewportWidth] = useState(window.innerWidth);
   const [processedPdfUrl, setProcessedPdfUrl] = useState('');
   const [isValidatingUrl, setIsValidatingUrl] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
+  const [showAnnotations, setShowAnnotations] = useState(false);
 
   const {
     saveReadingProgress,
     isFavorite,
     toggleFavorite
   } = useBibliotecaProgresso();
+  
+  const bookId = book?.id || '';
+  const {
+    annotations,
+    bookmarks,
+    addAnnotation,
+    updateAnnotation,
+    deleteAnnotation,
+    addBookmark,
+    updateBookmark,
+    deleteBookmark,
+    exportAnnotationsToText,
+    isPageBookmarked
+  } = usePdfAnnotations(bookId);
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const documentRef = useRef<any>(null);
 
@@ -71,7 +92,11 @@ export function EnhancedPDFViewer({
   // Initialize component state and process PDF URL
   useEffect(() => {
     document.body.classList.add('pdf-viewer-open');
-    document.body.style.backgroundColor = '#121212'; // Dark background
+    if (darkMode) {
+      document.body.classList.add('dark-pdf-mode');
+    } else {
+      document.body.classList.remove('dark-pdf-mode');
+    }
 
     // Force reload PDF when URL changes
     setIsLoaded(false);
@@ -99,9 +124,9 @@ export function EnhancedPDFViewer({
     
     return () => {
       document.body.classList.remove('pdf-viewer-open');
-      document.body.style.backgroundColor = ''; // Reset background
+      document.body.classList.remove('dark-pdf-mode');
     };
-  }, [pdfUrl]);
+  }, [pdfUrl, darkMode]);
   
   // Save reading progress when page changes
   useEffect(() => {
@@ -151,12 +176,15 @@ export function EnhancedPDFViewer({
       setPageNumber(value);
     }
   }
+
   function zoomIn() {
     setScale(prevScale => Math.min(prevScale + 0.25, 3.0));
   }
+
   function zoomOut() {
     setScale(prevScale => Math.max(prevScale - 0.25, 0.5));
   }
+
   function rotate() {
     setRotation(prevRotation => (prevRotation + 90) % 360);
   }
@@ -175,6 +203,34 @@ export function EnhancedPDFViewer({
       window.open(processedPdfUrl, '_blank');
       toast.success('Download iniciado');
     }
+  };
+
+  // Toggle dark mode
+  const toggleDarkMode = () => {
+    setDarkMode(!darkMode);
+  };
+
+  // Toggle annotations sidebar
+  const toggleAnnotations = () => {
+    setShowAnnotations(!showAnnotations);
+  };
+
+  // Export annotations
+  const handleExportAnnotations = () => {
+    const content = exportAnnotationsToText();
+    if (!content) return;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `anotacoes_${bookTitle.replace(/\s+/g, '_')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Anotações exportadas com sucesso');
   };
 
   // Add keyboard event listeners for navigation
@@ -217,12 +273,8 @@ export function EnhancedPDFViewer({
     };
     const element = containerRef.current;
     if (element) {
-      element.addEventListener('touchstart', handleTouchStart, {
-        passive: true
-      });
-      element.addEventListener('touchend', handleTouchEnd, {
-        passive: true
-      });
+      element.addEventListener('touchstart', handleTouchStart);
+      element.addEventListener('touchend', handleTouchEnd);
     }
     return () => {
       if (element) {
@@ -231,7 +283,7 @@ export function EnhancedPDFViewer({
       }
     };
   }, []);
-  
+
   // Error display
   if (isError) {
     return (
@@ -266,157 +318,243 @@ export function EnhancedPDFViewer({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-900 z-50">
-      {/* Large close button in the top-left corner */}
-      <Button variant="outline" size="icon" className="absolute top-4 left-4 z-50 h-10 w-10 rounded-full bg-black/40 hover:bg-black/60 border-white/20 text-white" onClick={onClose}>
-        <X className="h-5 w-5" />
-      </Button>
-      
-      <div ref={containerRef} className="enhanced-pdf-container flex flex-col h-full my-0 py-0 px-0 mx-0">
-        {/* Header with title */}
-        <div className="px-4 py-3 border-b border-gray-800 bg-black/80 backdrop-blur-sm sticky top-0 z-40">
-          <div className="container max-w-5xl mx-auto flex items-center justify-between">
-            <h2 className="text-lg font-semibold truncate text-white">{bookTitle}</h2>
-            
-            {/* Favorite and download buttons */}
-            <div className="flex items-center gap-2">
-              {book && <Button variant="ghost" size="sm" onClick={handleToggleFavorite} className="text-white hover:bg-gray-800">
-                <Heart className={`h-4 w-4 mr-2 ${isFavorite(book.id) ? 'fill-red-500 text-red-500' : ''}`} />
-                {isFavorite(book.id) ? 'Favorito' : 'Favoritar'}
-              </Button>}
-              
-              <Button variant="ghost" size="sm" onClick={handleDownload} className="text-white hover:bg-gray-800">
-                <Download className="h-4 w-4 mr-2" />
-                Download
-              </Button>
-            </div>
-          </div>
-        </div>
-        
-        {/* Loading indicator */}
-        {isLoading && <div className="flex flex-col items-center justify-center h-full p-4">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-lg text-white">Carregando livro... {progress}%</p>
-          <p className="text-xs text-gray-400 mt-2 max-w-md text-center">
-            Se o livro não carregar, verifique se o PDF está disponível no servidor.
-          </p>
-        </div>}
-        
-        {/* PDF Viewer Content */}
-        <div className="enhanced-pdf-content container max-w-4xl mx-auto flex-grow overflow-auto px-0 py-0 my-[81px]">
-          <Document 
-            file={processedPdfUrl} 
-            onLoadSuccess={onDocumentLoadSuccess} 
-            onLoadError={onDocumentLoadError} 
-            onProgress={({ loaded, total }) => {
-              if (total) {
-                setProgress(Math.round(loaded / total * 100));
-              }
-            }} 
-            loading={<div className="flex flex-col items-center justify-center py-20">
-              <Skeleton className="h-[500px] w-full max-w-lg bg-gray-800" />
-              <p className="mt-4 text-gray-400">Carregando PDF...</p>
-            </div>} 
-            error={<div className="text-center text-red-500 py-20">
-              <AlertCircle className="h-8 w-8 mx-auto mb-2" />
-              <p>Erro ao carregar PDF</p>
-            </div>} 
-            inputRef={documentRef} 
-            className="enhanced-pdf-document"
-            options={{
-              cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
-              cMapPacked: true,
-              standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
-            }}
+    <div className={cn("fixed inset-0 z-50", darkMode ? "bg-gray-900" : "bg-gray-100")} ref={containerRef}>
+      {/* Top controls - always visible */}
+      <div className={cn(
+        "px-4 py-2 flex justify-between items-center shadow-md",
+        darkMode ? "bg-gray-900 text-white border-b border-gray-800" : "bg-white text-black"
+      )}>
+        <div className="flex items-center">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className={darkMode ? "text-white" : "text-black"}
           >
-            {isLoaded && <Page 
-              pageNumber={pageNumber} 
-              scale={scale} 
-              rotate={rotation} 
-              width={viewportWidth < 640 ? viewportWidth - 32 : undefined} 
-              height={viewportWidth < 640 ? undefined : undefined} 
-              renderMode="canvas" 
-              className="enhanced-pdf-page mx-auto" 
-              error={<div className="text-center text-red-500 p-4">
-                <p>Erro ao renderizar página {pageNumber}</p>
-              </div>} 
-            />}
-          </Document>
+            <X className="h-5 w-5" />
+          </Button>
+          <h2 className="text-lg font-medium ml-2 max-w-md truncate">{bookTitle}</h2>
         </div>
         
-        {/* Navigation controls */}
-        <div className="enhanced-pdf-controls bg-gray-900 border-t border-gray-800">
-          <div className="enhanced-pdf-controls-row">
-            <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleDarkMode}
+            className={darkMode ? "text-white" : "text-black"}
+          >
+            {darkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size={isPageBookmarked(pageNumber) ? "icon" : "icon"} 
+            onClick={() => {
+              const bookmark = bookmarks.find(b => b.page === pageNumber);
+              if (bookmark) {
+                deleteBookmark(bookmark.id || '');
+              } else {
+                addBookmark({
+                  book_id: bookId,
+                  page: pageNumber,
+                  title: `Página ${pageNumber}`,
+                  color: '#4C7BF4'
+                });
+              }
+            }}
+            className={cn(
+              darkMode ? "text-white" : "text-black", 
+              isPageBookmarked(pageNumber) && "text-blue-500"
+            )}
+          >
+            <Bookmark className={cn("h-4 w-4", isPageBookmarked(pageNumber) && "fill-blue-500")} />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={toggleAnnotations}
+            className={cn(
+              darkMode ? "text-white" : "text-black",
+              showAnnotations && "bg-primary/20"
+            )}
+          >
+            <StickyNote className="h-4 w-4" />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleToggleFavorite}
+            className={darkMode ? "text-white" : "text-black"}
+          >
+            <Heart className={cn(
+              "h-4 w-4",
+              book && isFavorite(book.id) ? "fill-red-500 text-red-500" : ""
+            )} />
+          </Button>
+          
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleDownload}
+            className={darkMode ? "text-white" : "text-black"}
+          >
+            <Download className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+      
+      {/* PDF content area */}
+      <div className={cn(
+        "flex-1 overflow-auto h-[calc(100vh-10rem)]",
+        darkMode ? "bg-gray-900" : "bg-gray-100"
+      )}>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-full">
+            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+            <p className={cn("text-lg mb-2", darkMode ? "text-white" : "text-black")}>
+              Carregando livro... {progress}%
+            </p>
+            <Progress value={progress} className="w-64 mb-4" />
+          </div>
+        ) : (
+          <div className="flex justify-center items-center min-h-full py-4">
+            <Document
+              file={processedPdfUrl}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              onProgress={({loaded, total}) => {
+                if (total) {
+                  setProgress(Math.round((loaded / total) * 100));
+                }
+              }}
+              inputRef={documentRef}
+              className={darkMode ? "pdf-dark-mode" : ""}
+              options={{
+                cMapUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/cmaps/',
+                cMapPacked: true,
+                standardFontDataUrl: 'https://unpkg.com/pdfjs-dist@3.4.120/standard_fonts/',
+              }}
+            >
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                rotate={rotation}
+                className={cn(
+                  "pdf-page",
+                  darkMode ? "pdf-page-dark" : "pdf-page-light",
+                  "shadow-lg"
+                )}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+              />
+            </Document>
+          </div>
+        )}
+      </div>
+      
+      {/* Bottom navigation controls */}
+      <div className={cn(
+        "fixed bottom-0 left-0 right-0 py-3 px-4 border-t shadow-lg",
+        darkMode ? "bg-gray-900 text-white border-gray-800" : "bg-white text-black"
+      )}>
+        <div className="container max-w-3xl mx-auto">
+          <div className="flex flex-col gap-2">
+            {/* Page navigation */}
+            <div className="flex items-center justify-between">
               <Button 
-                variant="secondary" 
-                size="sm" 
+                variant="outline" 
                 onClick={() => changePage(-1)} 
-                disabled={pageNumber <= 1} 
-                className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700"
+                disabled={pageNumber <= 1 || isLoading}
+                className={cn(
+                  "w-24",
+                  darkMode ? "bg-gray-800 hover:bg-gray-700 border-gray-700" : ""
+                )}
               >
                 <ChevronLeft className="h-4 w-4 mr-1" /> Anterior
               </Button>
               
-              <div className="flex items-center gap-1 bg-gray-800 backdrop-blur px-2 py-1 rounded text-white">
-                <input 
-                  type="number" 
-                  min={1} 
-                  max={numPages || 1} 
-                  value={pageNumber} 
-                  onChange={handlePageInput} 
-                  className="w-12 h-6 bg-transparent text-center p-0 border-none text-sm" 
+              <div className="flex items-center">
+                <span className={cn("text-sm mr-2", darkMode ? "text-white" : "text-black")}>
+                  Página {pageNumber} de {numPages || '?'}
+                </span>
+                <Progress 
+                  value={numPages ? (pageNumber / numPages) * 100 : 0} 
+                  className="w-24 h-2 hidden sm:block" 
                 />
-                <span className="text-sm text-gray-400">/ {numPages || '-'}</span>
               </div>
               
               <Button 
-                variant="secondary" 
-                size="sm" 
+                variant="outline" 
                 onClick={() => changePage(1)} 
-                disabled={pageNumber >= (numPages || 0)} 
-                className="h-8 px-2 bg-gray-800 text-white hover:bg-gray-700"
+                disabled={!numPages || pageNumber >= numPages || isLoading}
+                className={cn(
+                  "w-24",
+                  darkMode ? "bg-gray-800 hover:bg-gray-700 border-gray-700" : ""
+                )}
               >
-                Próximo <ChevronRight className="h-4 w-4 ml-1" />
+                Próxima <ChevronRight className="h-4 w-4 ml-1" />
               </Button>
             </div>
             
-            <div className="flex items-center gap-1">
+            {/* Tools */}
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex items-center">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={zoomOut}
+                  className={darkMode ? "bg-gray-800 hover:bg-gray-700 border-gray-700" : ""}
+                >
+                  <ZoomOut className="h-4 w-4" />
+                </Button>
+                <span className={cn(
+                  "px-2 text-xs",
+                  darkMode ? "text-white" : "text-black"
+                )}>
+                  {Math.round(scale * 100)}%
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={zoomIn}
+                  className={darkMode ? "bg-gray-800 hover:bg-gray-700 border-gray-700" : ""}
+                >
+                  <ZoomIn className="h-4 w-4" />
+                </Button>
+              </div>
+              
               <Button 
                 variant="outline" 
-                size="sm" 
-                onClick={zoomOut} 
-                className="h-8 w-8 p-0 border-gray-700 text-white"
-              >
-                <ZoomOut className="h-4 w-4" />
-              </Button>
-              <span className="text-xs bg-gray-800 px-2 py-1 rounded text-white">
-                {Math.round(scale * 100)}%
-              </span>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={zoomIn} 
-                className="h-8 w-8 p-0 border-gray-700 text-white"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={rotate} 
-                className="h-8 w-8 p-0 border-gray-700 text-white"
+                size="sm"
+                onClick={rotate}
+                className={darkMode ? "bg-gray-800 hover:bg-gray-700 border-gray-700" : ""}
               >
                 <RotateCw className="h-4 w-4" />
               </Button>
             </div>
           </div>
-          
-          <div className="text-center text-xs text-gray-400 mt-2">
-            Deslize para esquerda ou direita para mudar de página
-          </div>
         </div>
       </div>
+      
+      {/* Annotations sidebar */}
+      {showAnnotations && book && (
+        <AnnotationSidebar
+          annotations={annotations}
+          bookmarks={bookmarks}
+          currentPage={pageNumber}
+          onAddAnnotation={addAnnotation}
+          onUpdateAnnotation={updateAnnotation}
+          onDeleteAnnotation={deleteAnnotation}
+          onAddBookmark={addBookmark}
+          onUpdateBookmark={updateBookmark}
+          onDeleteBookmark={deleteBookmark}
+          onExport={handleExportAnnotations}
+          bookId={book.id}
+          darkMode={darkMode}
+        />
+      )}
     </div>
   );
 }
