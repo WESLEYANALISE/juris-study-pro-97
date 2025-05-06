@@ -2513,6 +2513,36 @@ export type Database = {
         }
         Relationships: []
       }
+      livros_supa: {
+        Row: {
+          area: string | null
+          capa: string | null
+          created_at: string
+          id: number
+          pdf_name: string | null
+          pdf_url: string | null
+          sinopse: string | null
+        }
+        Insert: {
+          area?: string | null
+          capa?: string | null
+          created_at?: string
+          id?: number
+          pdf_name?: string | null
+          pdf_url?: string | null
+          sinopse?: string | null
+        }
+        Update: {
+          area?: string | null
+          capa?: string | null
+          created_at?: string
+          id?: number
+          pdf_name?: string | null
+          pdf_url?: string | null
+          sinopse?: string | null
+        }
+        Relationships: []
+      }
       livrospro: {
         Row: {
           capa_url: string | null

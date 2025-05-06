@@ -1,0 +1,82 @@
+
+/* PDF Reader Styles */
+.pdf-content {
+  margin: 0 auto;
+  max-width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.pdf-page {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: white;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.pdf-page canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+
+/* Dark mode styles */
+.pdf-dark-mode {
+  filter: invert(0.9) hue-rotate(180deg);
+}
+
+.pdf-page-dark {
+  background-color: rgb(240, 240, 240);
+}
+
+/* Page transition animations */
+.pdf-page {
+  animation: pageIn 0.3s ease;
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Touch hint */
+.swipe-hint {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  z-index: 100;
+  animation: fadeInOut 5s forwards;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Prevent scrolling when PDF viewer is open */
+body.pdf-reader-open {
+  overflow: hidden;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .pdf-page {
+    margin: 0 auto;
+    border-radius: 0;
+  }
+}

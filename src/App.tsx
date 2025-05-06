@@ -1,4 +1,3 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -9,8 +8,8 @@ import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
-// Old library component completely removed
-import BibliotecaJuridica from "@/pages/BibliotecaJuridica";
+// Use our redesigned library page instead of the old one
+import BibliotecaJuridicaPage from "@/pages/BibliotecaJuridicaPage";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
@@ -56,15 +55,16 @@ function App() {
               <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               
-              {/* BibliotecaJuridica as default library */}
+              {/* Use our new redesigned library */}
               <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
-              <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
+              <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridicaPage /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
               
-              {/* New PDF Links and Livro9 pages */}
+              {/* PDF Links and Livro9 pages */}
               <Route path="/pdf-links" element={<Layout><PDFLinksPage /></Layout>} />
               <Route path="/livro9" element={<Layout><Livro9Page /></Layout>} />
               
+              {/* ... keep existing code (all other routes) */}
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
               <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
@@ -76,7 +76,6 @@ function App() {
               <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
               <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
               <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />
-              {/* Removed Noticias route as requested */}
               <Route path="/peticoes" element={<Layout><Peticoes /></Layout>} />
               <Route path="/assistente" element={<Layout><AssistenteJuridico /></Layout>} />
               <Route path="/perfil" element={<Layout><Perfil /></Layout>} />
@@ -90,10 +89,8 @@ function App() {
               <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
               <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
               <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
-              {/* Kept JogosJuridicos but removed gamification */}
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
-              {/* Ensure JurisFlix route is present and properly configured */}
               <Route path="/jurisflix" element={<Layout><JurisFlix /></Layout>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>
