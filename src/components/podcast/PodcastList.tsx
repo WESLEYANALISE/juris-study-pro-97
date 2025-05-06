@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { PodcastCard } from '@/components/podcast/PodcastCard';
-import { ImmersivePodcastPlayer } from '@/components/podcast/ImmersivePodcastPlayer';
+import { OptimizedPodcastPlayer } from '@/components/podcast/OptimizedPodcastPlayer';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Music, AlertCircle, Filter } from 'lucide-react';
+import { Music, AlertCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -21,6 +21,7 @@ interface PodcastListProps {
   limit?: number;
 }
 
+// Optimized PodcastList component with memoization and batch state updates
 export function PodcastList({
   searchTerm = '',
   category = null,
@@ -34,34 +35,34 @@ export function PodcastList({
   const [error, setError] = useState<string | null>(null);
   const [selectedPodcast, setSelectedPodcast] = useState<any | null>(null);
   const [showAdvancedPlayer, setShowAdvancedPlayer] = useState(false);
-  const [localSearchTerm, setLocalSearchTerm] = useState(searchTerm);
-  const [localCategory, setLocalCategory] = useState<string | null>(category);
-  const [localSortBy, setLocalSortBy] = useState<string>(sortBy);
+  const [filters, setFilters] = useState({
+    searchTerm: searchTerm,
+    category: category,
+    sortBy: sortBy
+  });
   const [categories, setCategories] = useState<{name: string; count: number}[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
   
   const isMobile = useIsMobile();
   const { user } = useAuth();
 
-  // Fetch categories for filters
+  // Fetch categories for filters - only once
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        // Get all podcasts to extract categories
         const { data, error } = await supabase.from('podcast_tabela').select('area');
         
         if (error) throw error;
         
         if (data) {
-          // Count podcasts by category
+          // Batch process categories for better performance
           const categoryCounts: Record<string, number> = {};
+          
           data.forEach(podcast => {
             if (podcast.area) {
               categoryCounts[podcast.area] = (categoryCounts[podcast.area] || 0) + 1;
             }
           });
           
-          // Convert to array format needed by PodcastFilters
           const categoryArray = Object.entries(categoryCounts).map(([name, count]) => ({
             name,
             count
@@ -77,20 +78,24 @@ export function PodcastList({
     fetchCategories();
   }, []);
 
+  // Fetch podcasts with memoized query parameters
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchPodcasts = async () => {
+      if (!isMounted) return;
       setIsLoading(true);
       setError(null);
       
       try {
         let query = supabase.from('podcast_tabela').select('*');
         
-        if (localCategory) {
-          query = query.eq('area', localCategory);
+        if (filters.category) {
+          query = query.eq('area', filters.category);
         }
         
-        if (localSearchTerm) {
-          query = query.or(`titulo.ilike.%${localSearchTerm}%,descricao.ilike.%${localSearchTerm}%,tag.ilike.%${localSearchTerm}%`);
+        if (filters.searchTerm) {
+          query = query.or(`titulo.ilike.%${filters.searchTerm}%,descricao.ilike.%${filters.searchTerm}%,tag.ilike.%${filters.searchTerm}%`);
         }
         
         if (limit) {
@@ -98,7 +103,7 @@ export function PodcastList({
         }
         
         // Sort based on the sortBy parameter
-        switch (localSortBy) {
+        switch (filters.sortBy) {
           case 'recent':
             query = query.order('created_at', { ascending: false });
             break;
@@ -115,7 +120,7 @@ export function PodcastList({
         
         if (fetchError) throw fetchError;
         
-        if (data) {
+        if (data && isMounted) {
           const processedPodcasts = data.map(item => {
             // Process category data
             const categories = [];
@@ -126,22 +131,20 @@ export function PodcastList({
               });
             }
             
-            // Process tags
+            // Process tags - optimized
             const tags = item.tag 
               ? (typeof item.tag === 'string' 
                 ? item.tag.split(',').map((t: string) => t.trim()) 
                 : [item.tag]) 
               : [];
             
-            // Add tag categories
-            tags.forEach((tag: string) => {
-              if (tag && !categories.some(c => c.name === tag)) {
-                categories.push({
-                  name: tag,
-                  slug: tag.toLowerCase().replace(/\s+/g, '-')
-                });
-              }
-            });
+            // Add tag categories - batch process
+            const tagCategories = tags
+              .filter((tag: string) => tag && !categories.some(c => c.name === tag))
+              .map((tag: string) => ({
+                name: tag,
+                slug: tag.toLowerCase().replace(/\s+/g, '-')
+              }));
             
             return {
               id: item.id.toString(),
@@ -149,12 +152,11 @@ export function PodcastList({
               description: item.descricao || '',
               audio_url: item.url_audio || '',
               thumbnail_url: item.imagem_miniatuta || '',
-              duration: 0, // Will be determined on play
+              duration: 0,
               published_at: item.created_at || new Date().toISOString(),
-              categories,
+              categories: [...categories, ...tagCategories],
               tags,
               area: item.area || 'Geral',
-              // For demo purposes - would be real data in production
               commentCount: Math.floor(Math.random() * 20),
               likeCount: Math.floor(Math.random() * 100)
             };
@@ -164,24 +166,31 @@ export function PodcastList({
         }
       } catch (err) {
         console.error('Error fetching podcasts:', err);
-        setError('Não foi possível carregar os podcasts. Por favor, tente novamente.');
+        if (isMounted) {
+          setError('Não foi possível carregar os podcasts. Por favor, tente novamente.');
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchPodcasts();
-  }, [localSearchTerm, localCategory, localSortBy, limit]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, [filters.searchTerm, filters.category, filters.sortBy, limit]);
   
-  // Handle podcast selection
-  const handlePodcastClick = async (podcast: any) => {
+  // Memoized handlers
+  const handlePodcastClick = React.useCallback(async (podcast: any) => {
     // If using the direct parent component handler
     if (onSelectPodcast) {
       onSelectPodcast(podcast);
       return;
     }
     
-    // Otherwise use our internal handling with advanced player
     try {
       // If the podcast doesn't have audio_url, fetch it
       if (!podcast.audio_url) {
@@ -208,32 +217,23 @@ export function PodcastList({
       console.error("Error fetching podcast details:", err);
       setError("Não foi possível carregar os detalhes do podcast");
     }
-  };
+  }, [onSelectPodcast]);
   
-  // Handle search and filter changes
-  const handleSearchChange = (value: string) => {
-    setLocalSearchTerm(value);
-  };
-  
-  const handleCategoryChange = (category: string | null) => {
-    setLocalCategory(category);
-  };
-  
-  const handleSortChange = (sort: string) => {
-    setLocalSortBy(sort);
-  };
+  // Handle state updates in batches for better performance
+  const handleFilterChange = React.useCallback((type: string, value: any) => {
+    setFilters(prev => ({ ...prev, [type]: value }));
+  }, []);
   
   // Loading state
   if (isLoading) {
     return (
       <div className="space-y-4">
-        {/* Always show filter bar */}
         <PodcastFilters
-          onSearchChange={handleSearchChange}
-          onCategoryChange={handleCategoryChange}
-          onSortChange={handleSortChange}
+          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
+          onCategoryChange={(value) => handleFilterChange('category', value)}
+          onSortChange={(value) => handleFilterChange('sortBy', value)}
           categories={categories}
-          selectedCategory={localCategory}
+          selectedCategory={filters.category}
         />
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -254,11 +254,11 @@ export function PodcastList({
     return (
       <div className="space-y-4">
         <PodcastFilters
-          onSearchChange={handleSearchChange}
-          onCategoryChange={handleCategoryChange}
-          onSortChange={handleSortChange}
+          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
+          onCategoryChange={(value) => handleFilterChange('category', value)}
+          onSortChange={(value) => handleFilterChange('sortBy', value)}
           categories={categories}
-          selectedCategory={localCategory}
+          selectedCategory={filters.category}
         />
       
         <Alert variant="destructive">
@@ -275,23 +275,23 @@ export function PodcastList({
     return (
       <div className="space-y-4">
         <PodcastFilters
-          onSearchChange={handleSearchChange}
-          onCategoryChange={handleCategoryChange}
-          onSortChange={handleSortChange}
+          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
+          onCategoryChange={(value) => handleFilterChange('category', value)}
+          onSortChange={(value) => handleFilterChange('sortBy', value)}
           categories={categories}
-          selectedCategory={localCategory}
+          selectedCategory={filters.category}
         />
       
         <div className="text-center py-16">
           <Music className="h-16 w-16 text-muted-foreground/40 mx-auto mb-4" />
           <h3 className="text-xl font-medium mb-2">Nenhum podcast encontrado</h3>
           <p className="text-muted-foreground max-w-md mx-auto">
-            {localSearchTerm && localCategory 
-              ? `Não encontramos podcasts com "${localSearchTerm}" na categoria "${localCategory}"`
-              : localSearchTerm 
-                ? `Não encontramos podcasts com "${localSearchTerm}"`
-                : localCategory 
-                  ? `Não há podcasts na categoria "${localCategory}"`
+            {filters.searchTerm && filters.category 
+              ? `Não encontramos podcasts com "${filters.searchTerm}" na categoria "${filters.category}"`
+              : filters.searchTerm 
+                ? `Não encontramos podcasts com "${filters.searchTerm}"`
+                : filters.category 
+                  ? `Não há podcasts na categoria "${filters.category}"`
                   : 'Não há podcasts disponíveis no momento'}
           </p>
         </div>
@@ -299,44 +299,48 @@ export function PodcastList({
     );
   }
   
+  // Memoize the podcast grid to prevent unnecessary re-renders
+  const podcastGrid = useMemo(() => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {podcasts.map((podcast) => (
+        <PodcastCard
+          key={podcast.id}
+          id={podcast.id}
+          title={podcast.title}
+          description={podcast.description}
+          thumbnail={podcast.thumbnail_url}
+          duration={podcast.duration}
+          publishedAt={podcast.published_at}
+          categories={podcast.categories}
+          tags={podcast.tags}
+          area={podcast.area}
+          commentCount={podcast.commentCount}
+          likeCount={podcast.likeCount}
+          onClick={() => handlePodcastClick(podcast)}
+        />
+      ))}
+    </div>
+  ), [podcasts, handlePodcastClick]);
+  
   return (
     <>
       <div className="space-y-4">
-        {/* Always show filters at the top for both mobile and desktop */}
         <PodcastFilters
-          onSearchChange={handleSearchChange}
-          onCategoryChange={handleCategoryChange}
-          onSortChange={handleSortChange}
+          onSearchChange={(value) => handleFilterChange('searchTerm', value)}
+          onCategoryChange={(value) => handleFilterChange('category', value)}
+          onSortChange={(value) => handleFilterChange('sortBy', value)}
           categories={categories}
-          selectedCategory={localCategory}
+          selectedCategory={filters.category}
         />
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {podcasts.map((podcast) => (
-            <PodcastCard
-              key={podcast.id}
-              id={podcast.id}
-              title={podcast.title}
-              description={podcast.description}
-              thumbnail={podcast.thumbnail_url}
-              duration={podcast.duration}
-              publishedAt={podcast.published_at}
-              categories={podcast.categories}
-              tags={podcast.tags}
-              area={podcast.area}
-              commentCount={podcast.commentCount}
-              likeCount={podcast.likeCount}
-              onClick={() => handlePodcastClick(podcast)}
-            />
-          ))}
-        </div>
+        {podcastGrid}
       </div>
       
-      {/* Immersive Podcast Player Dialog */}
+      {/* Immersive Podcast Player Dialog - using the optimized version */}
       <Dialog open={showAdvancedPlayer} onOpenChange={setShowAdvancedPlayer}>
         <DialogContent className="max-w-6xl p-0 bg-transparent border-none">
           {selectedPodcast && (
-            <ImmersivePodcastPlayer
+            <OptimizedPodcastPlayer
               id={selectedPodcast.id}
               title={selectedPodcast.title}
               description={selectedPodcast.description}

@@ -28,16 +28,19 @@ export function SoundscapeCard({
   );
 }
 
+// Props interface for SoundscapeVisualization
+export interface SoundscapeVisualizationProps extends React.HTMLAttributes<HTMLDivElement> { 
+  isPlaying?: boolean;
+  color?: string;
+}
+
 // Audio visualization component
 export function SoundscapeVisualization({ 
   isPlaying = false, 
   color = "rgba(139, 92, 246, 0.8)",
   className,
   ...props 
-}: React.HTMLAttributes<HTMLDivElement> & { 
-  isPlaying?: boolean;
-  color?: string;
-}) {
+}: SoundscapeVisualizationProps) {
   const [bars, setBars] = useState<number[]>(Array(16).fill(1));
   
   // Animate the bars when playing
@@ -98,19 +101,22 @@ export function SoundscapePlayerContainer({
   );
 }
 
+// Props interface for SoundscapeTimeline
+export interface SoundscapeTimelineProps extends React.HTMLAttributes<HTMLDivElement> {
+  progress: number;
+  onSeek?: (value: number) => void;
+}
+
 // Sound wave timeline for podcast scrubbing
 export function SoundscapeTimeline({
   progress = 0,
   onSeek,
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & {
-  progress: number;
-  onSeek?: (value: number) => void;
-}) {
+}: SoundscapeTimelineProps) {
   const [wavePoints, setWavePoints] = useState<number[]>([]);
   
-  // Generate waveform points for visualization
+  // Generate waveform points for visualization - optimized to run only once
   useEffect(() => {
     const points = [];
     for (let i = 0; i < 100; i++) {
@@ -119,16 +125,19 @@ export function SoundscapeTimeline({
     setWavePoints(points);
   }, []);
   
+  // Handler functions are now memoized to prevent unnecessary re-renders
+  const handleClick = React.useCallback((e: React.MouseEvent) => {
+    if (!onSeek) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const percentage = x / rect.width;
+    onSeek(percentage);
+  }, [onSeek]);
+  
   return (
     <div 
       className={cn("relative h-16 cursor-pointer", className)}
-      onClick={(e) => {
-        if (!onSeek) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const percentage = x / rect.width;
-        onSeek(percentage);
-      }}
+      onClick={handleClick}
       {...props}
     >
       <svg width="100%" height="100%" viewBox="0 0 100 40">

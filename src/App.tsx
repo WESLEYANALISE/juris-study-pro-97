@@ -1,48 +1,64 @@
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
 import Layout from "@/components/Layout";
+import OptimizedLayout from "@/components/OptimizedLayout"; // Import the optimized layout
 import { RequireAuth } from "@/components/RequireAuth";
 import { AuthProvider } from "@/hooks/use-auth";
+import { lazy, Suspense } from "react"; // Import for code splitting
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+
+// Core pages
 import Index from "@/pages/Index";
+import Home from "@/pages/Home";
 import Auth from "@/pages/Auth";
-import Podcasts from "@/pages/Podcasts";
-import Dicionario from "@/pages/Dicionario";
-// Use our redesigned library page instead of the old one
-import BibliotecaJuridicaPage from "@/pages/BibliotecaJuridicaPage";
-import BibliotecaHTMLPage from "@/pages/BibliotecaHTMLPage";
-import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
-import Questoes from "@/pages/Questoes";
-import VadeMecum from "@/pages/VadeMecum";
-import VadeMecumViewer from "@/pages/VadeMecumViewer";
-import VadeMecumFavorites from "@/pages/VadeMecumFavorites"; 
-import Simulados from "@/pages/Simulados";
-import SimuladoCategoria from "@/pages/SimuladoCategoria";
-import SimuladoSessao from "@/pages/SimuladoSessao";
-import SimuladoResultado from "@/pages/SimuladoResultado";
-import Flashcards from "@/pages/Flashcards";
-import MapasMentais from "@/pages/MapasMentais";
-import Peticoes from "@/pages/Peticoes";
-import AssistenteJuridico from "@/pages/AssistenteJuridico";
-import Perfil from "@/pages/Perfil";
-import IniciandoNoDireito from "@/pages/IniciandoNoDireito";
-import PDFLinksPage from "@/pages/PDFLinksPage";
-import Livro9Page from "@/pages/Livro9Page";
-import NotFound from "@/pages/NotFound";
-import VerTudo from "@/pages/VerTudo";
-import Cursos from "@/pages/Cursos";
-import CursoViewer from "@/pages/CursoViewer";
-import RedacaoJuridica from "@/pages/RedacaoJuridica";
-import RedacaoConteudo from "@/pages/RedacaoConteudo";
-import VideoAulas from "@/pages/VideoAulas";
-import VideoAulasTradicional from "@/pages/VideoAulasTradicional";
-import VideoAulasInterativas from "./pages/VideoAulasInterativas";
-import VideoAulasRecomendacoes from "./pages/VideoAulasRecomendacoes";
-import Anotacoes from "@/pages/Anotacoes";
-import JogosJuridicos from "@/pages/JogosJuridicos";
-import JogoDetalhes from "@/pages/JogoDetalhes";
-import JurisFlix from "@/pages/JurisFlix";
+
+// React.lazy for code splitting - load components only when needed
+const Podcasts = lazy(() => import("@/pages/Podcasts"));
+const Dicionario = lazy(() => import("@/pages/Dicionario"));
+const BibliotecaJuridicaPage = lazy(() => import("@/pages/BibliotecaJuridicaPage"));
+const BibliotecaHTMLPage = lazy(() => import("@/pages/BibliotecaHTMLPage"));
+const BibliotecaRecomendacoes = lazy(() => import("@/pages/BibliotecaRecomendacoes"));
+const Questoes = lazy(() => import("@/pages/Questoes"));
+const VadeMecum = lazy(() => import("@/pages/VadeMecum"));
+const VadeMecumViewer = lazy(() => import("@/pages/VadeMecumViewer"));
+const VadeMecumFavorites = lazy(() => import("@/pages/VadeMecumFavorites"));
+const Simulados = lazy(() => import("@/pages/Simulados"));
+const SimuladoCategoria = lazy(() => import("@/pages/SimuladoCategoria"));
+const SimuladoSessao = lazy(() => import("@/pages/SimuladoSessao"));
+const SimuladoResultado = lazy(() => import("@/pages/SimuladoResultado"));
+const Flashcards = lazy(() => import("@/pages/Flashcards"));
+const MapasMentais = lazy(() => import("@/pages/MapasMentais"));
+const Peticoes = lazy(() => import("@/pages/Peticoes"));
+const AssistenteJuridico = lazy(() => import("@/pages/AssistenteJuridico"));
+const Perfil = lazy(() => import("@/pages/Perfil"));
+const IniciandoNoDireito = lazy(() => import("@/pages/IniciandoNoDireito"));
+const PDFLinksPage = lazy(() => import("@/pages/PDFLinksPage"));
+const Livro9Page = lazy(() => import("@/pages/Livro9Page"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const VerTudo = lazy(() => import("@/pages/VerTudo"));
+const Cursos = lazy(() => import("@/pages/Cursos"));
+const CursoViewer = lazy(() => import("@/pages/CursoViewer"));
+const RedacaoJuridica = lazy(() => import("@/pages/RedacaoJuridica"));
+const RedacaoConteudo = lazy(() => import("@/pages/RedacaoConteudo"));
+const VideoAulas = lazy(() => import("@/pages/VideoAulas"));
+const VideoAulasTradicional = lazy(() => import("@/pages/VideoAulasTradicional"));
+const VideoAulasInterativas = lazy(() => import("@/pages/VideoAulasInterativas"));
+const VideoAulasRecomendacoes = lazy(() => import("@/pages/VideoAulasRecomendacoes"));
+const Anotacoes = lazy(() => import("@/pages/Anotacoes"));
+const JogosJuridicos = lazy(() => import("@/pages/JogosJuridicos"));
+const JogoDetalhes = lazy(() => import("@/pages/JogoDetalhes"));
+const JurisFlix = lazy(() => import("@/pages/JurisFlix"));
+
+// Loading Component for React.lazy
+const LoadingComponent = () => (
+  <div className="flex items-center justify-center h-[80vh]">
+    <div className="text-center">
+      <LoadingSpinner className="h-12 w-12 mx-auto text-primary" />
+      <p className="mt-4 text-muted-foreground">Carregando...</p>
+    </div>
+  </div>
+);
 
 function App() {
   return (
@@ -51,53 +67,60 @@ function App() {
         <Router>
           <RequireAuth>
             <Routes>
+              {/* Auth page outside layout */}
               <Route path="/auth" element={<Auth />} />
-              <Route path="/" element={<Layout><Index /></Layout>} />
-              <Route path="/inicie" element={<Layout><IniciandoNoDireito /></Layout>} />
-              <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
-              <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               
-              {/* Use our new redesigned library */}
-              <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
-              <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridicaPage /></Layout>} />
-              <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
-              
-              {/* Nova rota para a Biblioteca HTML */}
-              <Route path="/biblioteca-html" element={<Layout><BibliotecaHTMLPage /></Layout>} />
-              
-              {/* PDF Links and Livro9 pages */}
-              <Route path="/pdf-links" element={<Layout><PDFLinksPage /></Layout>} />
-              <Route path="/livro9" element={<Layout><Livro9Page /></Layout>} />
-              
-              {/* ... keep existing code (all other routes) */}
-              <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
-              <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
-              <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
-              <Route path="/vademecum/favoritos" element={<Layout><VadeMecumFavorites /></Layout>} />
-              <Route path="/vademecum/:lawId/:articleId" element={<Layout><VadeMecumViewer /></Layout>} />
-              <Route path="/simulados" element={<Layout><Simulados /></Layout>} />
-              <Route path="/simulados/:categoria" element={<Layout><SimuladoCategoria /></Layout>} />
-              <Route path="/simulados/:categoria/sessao/:sessaoId" element={<Layout><SimuladoSessao /></Layout>} />
-              <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
-              <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
-              <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />
-              <Route path="/peticoes" element={<Layout><Peticoes /></Layout>} />
-              <Route path="/assistente" element={<Layout><AssistenteJuridico /></Layout>} />
-              <Route path="/perfil" element={<Layout><Perfil /></Layout>} />
-              <Route path="/vermais/:categoria" element={<Layout><VerTudo /></Layout>} />
-              <Route path="/cursos" element={<Layout><Cursos /></Layout>} />
-              <Route path="/curso/:cursoId" element={<Layout><CursoViewer /></Layout>} />
-              <Route path="/redacao-juridica" element={<Layout><RedacaoJuridica /></Layout>} />
-              <Route path="/redacao-conteudo/:id?" element={<Layout><RedacaoConteudo /></Layout>} />
-              <Route path="/videoaulas" element={<Layout><VideoAulas /></Layout>} />
-              <Route path="/videoaulas/tradicionais" element={<Layout><VideoAulasTradicional /></Layout>} />
-              <Route path="/videoaulas/recomendacoes" element={<Layout><VideoAulasRecomendacoes /></Layout>} />
-              <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
-              <Route path="/anotacoes" element={<Layout><Anotacoes /></Layout>} />
-              <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
-              <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
-              <Route path="/jurisflix" element={<Layout><JurisFlix /></Layout>} />
-              <Route path="*" element={<Layout><NotFound /></Layout>} />
+              {/* Use OptimizedLayout for all pages */}
+              <Route element={
+                <Suspense fallback={<LoadingComponent />}>
+                  <OptimizedLayout>
+                    <Outlet />
+                  </OptimizedLayout>
+                </Suspense>
+              }>
+                <Route path="/" element={<Home />} />
+                <Route path="/inicie" element={<IniciandoNoDireito />} />
+                <Route path="/podcasts" element={<Podcasts />} />
+                <Route path="/dicionario" element={<Dicionario />} />
+                
+                {/* Library routes */}
+                <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
+                <Route path="/biblioteca-juridica" element={<BibliotecaJuridicaPage />} />
+                <Route path="/biblioteca/recomendacoes" element={<BibliotecaRecomendacoes />} />
+                <Route path="/biblioteca-html" element={<BibliotecaHTMLPage />} />
+                <Route path="/pdf-links" element={<PDFLinksPage />} />
+                <Route path="/livro9" element={<Livro9Page />} />
+                
+                {/* Other routes */}
+                <Route path="/questoes" element={<Questoes />} />
+                <Route path="/vademecum" element={<VadeMecum />} />
+                <Route path="/vademecum/:lawId" element={<VadeMecumViewer />} />
+                <Route path="/vademecum/favoritos" element={<VadeMecumFavorites />} />
+                <Route path="/vademecum/:lawId/:articleId" element={<VadeMecumViewer />} />
+                <Route path="/simulados" element={<Simulados />} />
+                <Route path="/simulados/:categoria" element={<SimuladoCategoria />} />
+                <Route path="/simulados/:categoria/sessao/:sessaoId" element={<SimuladoSessao />} />
+                <Route path="/simulados/resultado/:sessaoId" element={<SimuladoResultado />} />
+                <Route path="/flashcards" element={<Flashcards />} />
+                <Route path="/mapas-mentais" element={<MapasMentais />} />
+                <Route path="/peticoes" element={<Peticoes />} />
+                <Route path="/assistente" element={<AssistenteJuridico />} />
+                <Route path="/perfil" element={<Perfil />} />
+                <Route path="/vermais/:categoria" element={<VerTudo />} />
+                <Route path="/cursos" element={<Cursos />} />
+                <Route path="/curso/:cursoId" element={<CursoViewer />} />
+                <Route path="/redacao-juridica" element={<RedacaoJuridica />} />
+                <Route path="/redacao-conteudo/:id?" element={<RedacaoConteudo />} />
+                <Route path="/videoaulas" element={<VideoAulas />} />
+                <Route path="/videoaulas/tradicionais" element={<VideoAulasTradicional />} />
+                <Route path="/videoaulas/recomendacoes" element={<VideoAulasRecomendacoes />} />
+                <Route path="/videoaulas-interativas" element={<VideoAulasInterativas />} />
+                <Route path="/anotacoes" element={<Anotacoes />} />
+                <Route path="/jogos" element={<JogosJuridicos />} />
+                <Route path="/jogos/:jogoId" element={<JogoDetalhes />} />
+                <Route path="/jurisflix" element={<JurisFlix />} />
+                <Route path="*" element={<NotFound />} />
+              </Route>
             </Routes>
           </RequireAuth>
         </Router>
