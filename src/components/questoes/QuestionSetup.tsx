@@ -78,17 +78,17 @@ export const QuestionSetup = ({ onStart }: QuestionSetupProps) => {
 
       const { count, error } = await query;
       if (error) throw error;
-      return count;
+      return count || 0; // Ensure we always return at least 0
     }
   });
 
   // Update available quantities based on question count
   useEffect(() => {
-    if (questionCount !== null) {
+    if (questionCount !== null && questionCount !== undefined) {
       const maxQuestions = questionCount as number;
       const newAvailableQuantities = [5, 10, 15, 20, 25, 30].filter(num => num <= maxQuestions);
       
-      if (newAvailableQuantities.length === 0) {
+      if (newAvailableQuantities.length === 0 && maxQuestions > 0) {
         // If no standard values fit, just use the max available
         newAvailableQuantities.push(maxQuestions);
       }
@@ -97,7 +97,7 @@ export const QuestionSetup = ({ onStart }: QuestionSetupProps) => {
       
       // Adjust selected quantity if it's more than available
       if (quantidade > maxQuestions) {
-        setQuantidade(Math.max(...newAvailableQuantities));
+        setQuantidade(Math.max(...newAvailableQuantities, 0));
       }
     }
   }, [questionCount, quantidade]);
@@ -226,7 +226,7 @@ export const QuestionSetup = ({ onStart }: QuestionSetupProps) => {
           <div className="space-y-2">
             <label className="text-sm font-medium">Quantidade de Questões</label>
             <Select 
-              value={quantidade.toString()} 
+              value={quantidade ? quantidade.toString() : "0"} 
               onValueChange={(value) => setQuantidade(Number(value))}
               disabled={availableQuantities.length === 0 || questionCount === 0}
             >
