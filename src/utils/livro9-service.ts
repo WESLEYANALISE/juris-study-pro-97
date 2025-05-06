@@ -1,6 +1,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { safeSelect } from './supabase-helpers';
 
 export interface Livro9Item {
   id: string;
@@ -23,6 +24,7 @@ export interface Livro9Area {
  */
 export async function fetchLivro9ByArea(): Promise<{ [key: string]: Livro9Item[] }> {
   try {
+    // Cast to any to bypass TypeScript's type checking since this table might not be in the generated types
     const { data, error } = await (supabase.from('livro9') as any).select('*');
     
     if (error) {
@@ -53,8 +55,8 @@ export async function fetchLivro9ByArea(): Promise<{ [key: string]: Livro9Item[]
  */
 export async function fetchLivro9Areas(): Promise<Livro9Area[]> {
   try {
-    const query = supabase.from('livro9') as any;
-    const { data, error } = await query.select('area').order('area');
+    // Cast to any to bypass TypeScript's type checking
+    const { data, error } = await (supabase.from('livro9') as any).select('area').order('area');
     
     if (error) {
       toast.error('Error fetching livro9 areas: ' + error.message);
@@ -87,6 +89,7 @@ export async function fetchLivro9Areas(): Promise<Livro9Area[]> {
  */
 export async function fetchLivro9ByAreaName(area: string): Promise<Livro9Item[]> {
   try {
+    // Cast to any to bypass TypeScript's type checking
     const query = supabase.from('livro9') as any;
     const builtQuery = area === 'all' 
       ? query.select('*').order('pdf_name')
@@ -112,6 +115,7 @@ export async function fetchLivro9ByAreaName(area: string): Promise<Livro9Item[]>
  */
 export async function searchLivro9(searchQuery: string): Promise<Livro9Item[]> {
   try {
+    // Cast to any to bypass TypeScript's type checking
     const query = supabase.from('livro9') as any;
     const { data, error } = await query
       .select('*')
