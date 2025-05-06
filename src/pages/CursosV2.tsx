@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useDebounce } from '@/hooks/use-debounce';
@@ -163,7 +162,7 @@ const CursosV2 = () => {
   const hasFilteredResults = courses && courses.length > 0;
   
   return (
-    <JuridicalBackground variant="book" opacity={0.02}>
+    <JuridicalBackground variant="books" opacity={0.02}>
       <Container className="py-8">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
