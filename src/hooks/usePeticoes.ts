@@ -12,27 +12,23 @@ interface Peticao {
   arquivo_url: string;
   created_at?: string;
   area: string;
-  tipo: string;
-  sub_area?: string;
-  tags?: string[];
 }
 
-// Record from the database
+// Record from the database - matching the actual structure
 interface PeticaoRecord {
-  id: string;
+  id: number;
   area: string;
-  tipo: string;
-  documento: string;
-  // Other fields might be present but not required for our mapping
+  link: string;
+  total: number;
+  created_at: string;
 }
 
 interface UsePeticoesOptions {
   initialFilters?: {
     area: string;
     subArea: string;
-    tipo: string;
-    tags: string[];
     search: string;
+    tags: string[];
   };
   page?: number;
   pageSize?: number;
@@ -42,9 +38,8 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
   const [filters, setFilters] = useState({
     area: "",
     subArea: "",
-    tipo: "",
-    tags: [] as string[],
     search: "",
+    tags: [] as string[],
     ...options.initialFilters
   });
   
@@ -100,10 +95,6 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
           countQuery = countQuery.eq("area", filters.area);
         }
         
-        if (filters.tipo && filters.tipo !== "all") {
-          countQuery = countQuery.eq("tipo", filters.tipo);
-        }
-        
         const { count, error: countError } = await countQuery;
         
         if (countError) {
@@ -122,10 +113,6 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
           query = query.eq("area", filters.area);
         }
         
-        if (filters.tipo && filters.tipo !== "all") {
-          query = query.eq("tipo", filters.tipo);
-        }
-        
         // Apply pagination
         query = query
           .range((page - 1) * pageSize, page * pageSize - 1)
@@ -138,23 +125,18 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         }
 
         // Map the data to match our interface
-        return (data as PeticaoRecord[] || []).map(item => ({
-          id: item.id || '',
-          titulo: item.tipo || '',
-          // Since descricao doesn't exist in the database, provide a default value
-          descricao: 'Modelo de petição jurídica para uso profissional',
-          categoria: item.area || '',
-          arquivo_url: item.documento || '',
-          created_at: new Date().toISOString(),
-          area: item.area || '',
-          tipo: item.tipo || '',
-          // Extract potential sub-area from tipo field if available
-          sub_area: item.tipo && item.tipo.includes("-") 
-            ? item.tipo.split("-")[0].trim() 
-            : undefined,
+        return (data || []).map((item: PeticaoRecord) => ({
+          id: item.id.toString(),
+          titulo: item.area,
+          // Since descrição doesn't exist in the database, provide a default value
+          descricao: `${item.total} modelos de petições disponíveis nesta área`,
+          categoria: item.area,
+          arquivo_url: item.link,
+          created_at: item.created_at,
+          area: item.area,
           // Add default tags based on area
           tags: [item.area]
-        }));
+        })) as Peticao[];
       } catch (error) {
         console.error("Error loading peticoes:", error);
         toast.error("Erro ao carregar petições");
@@ -174,8 +156,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         peticao.area.toLowerCase().includes(filters.search.toLowerCase()) ||
         (peticao.descricao && peticao.descricao.toLowerCase().includes(filters.search.toLowerCase()));
       
-      const matchesSubArea = !filters.subArea || filters.subArea === "all" || 
-        (peticao.sub_area && peticao.sub_area === filters.subArea);
+      const matchesSubArea = !filters.subArea || filters.subArea === "all";
       
       const matchesTags = filters.tags.length === 0 || 
         (peticao.tags && filters.tags.every(tag => peticao.tags?.includes(tag)));

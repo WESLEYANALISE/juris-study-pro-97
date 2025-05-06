@@ -10,9 +10,7 @@ import { FlashcardHeader } from "@/components/flashcards/FlashcardHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Brain, Info, Sparkles, Award, BarChart } from "lucide-react";
 import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 
 type FlashCard = {
   id: string | number;
@@ -48,6 +46,50 @@ export default function Flashcards() {
       if (error) throw error;
       return (data ?? []) as FlashCard[];
     }
+  });
+
+  // Calculate areas and temas for dropdown
+  const { data: areas = [], isLoading: isLoadingAreas } = useQuery({
+    queryKey: ["flashcard-areas"],
+    queryFn: async () => {
+      if (!allCards) return [];
+      
+      const areaMap = new Map<string, number>();
+      
+      allCards.forEach(card => {
+        const count = areaMap.get(card.area) || 0;
+        areaMap.set(card.area, count + 1);
+      });
+      
+      return Array.from(areaMap.entries())
+        .map(([area, count]) => ({ area, count }))
+        .sort((a, b) => a.area.localeCompare(b.area));
+    },
+    enabled: !!allCards,
+  });
+  
+  const { data: temas = [], isLoading: isLoadingTemas } = useQuery({
+    queryKey: ["flashcard-temas"],
+    queryFn: async () => {
+      if (!allCards) return [];
+      
+      const temaMap = new Map<string, { area: string; count: number }>();
+      
+      allCards.forEach(card => {
+        const key = `${card.area}-${card.tema}`;
+        const existing = temaMap.get(key);
+        
+        if (existing) {
+          temaMap.set(key, { ...existing, count: existing.count + 1 });
+        } else {
+          temaMap.set(key, { area: card.area, tema: card.tema, count: 1 });
+        }
+      });
+      
+      return Array.from(temaMap.values())
+        .sort((a, b) => a.tema.localeCompare(b.tema));
+    },
+    enabled: !!allCards,
   });
 
   // Fetch user stats
@@ -180,7 +222,13 @@ export default function Flashcards() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <FlashcardSetup onStartStudy={handleStartStudy} />
+            <FlashcardSetup 
+              onStartStudy={handleStartStudy} 
+              areas={areas}
+              temas={temas}
+              isMobile={isMobile}
+              loading={isLoading || isLoadingAreas || isLoadingTemas}
+            />
           </motion.div>
           
           {/* Stats on desktop */}
@@ -218,11 +266,13 @@ export default function Flashcards() {
           transition={{ duration: 0.3 }}
         >
           <FlashcardSession 
-            cards={filteredCards} 
-            showAnswers={studyConfig.showAnswers} 
-            studyMode={studyConfig.studyMode} 
-            autoNarrate={studyConfig.autoNarrate} 
-            onExit={handleExit} 
+            flashcards={filteredCards}
+            onComplete={(results) => {
+              // Handle session completion
+              console.log('Session completed with results:', results);
+              handleExit();
+            }}
+            onExit={handleExit}
           />
         </motion.div>
       )}

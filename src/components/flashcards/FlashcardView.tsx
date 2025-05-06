@@ -166,7 +166,7 @@ export function FlashcardView({
         </div>
       </motion.div>
 
-      <style jsx global>{`
+      <style>{`
         .preserve-3d {
           transform-style: preserve-3d;
         }

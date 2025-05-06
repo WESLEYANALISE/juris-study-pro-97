@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FlashcardHeader } from "./FlashcardHeader";
 import { 
   Select,
   SelectContent, 
@@ -16,23 +15,35 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbS
 import { Input } from "@/components/ui/input";
 
 interface FlashcardSetupProps {
-  areas: { area: string; count: number }[];
-  temas: { area: string; tema: string; count: number }[];
-  onStartSession: (area: string, tema: string, count: number) => void;
-  isMobile: boolean;
-  loading: boolean;
+  onStartStudy: (config: { 
+    selectedTemas: string[];
+    selectedAreas: string[];
+    showAnswers: boolean;
+    studyMode: "manual" | "auto";
+    autoNarrate: boolean;
+    cardCount: number;
+    spaceInterval: "normal" | "short" | "long";
+  }) => void;
+  areas?: { area: string; count: number }[];
+  temas?: { area: string; tema: string; count: number }[];
+  isMobile?: boolean;
+  loading?: boolean;
 }
 
 export function FlashcardSetup({ 
-  areas, 
-  temas, 
-  onStartSession, 
-  isMobile, 
-  loading 
+  onStartStudy,
+  areas = [], 
+  temas = [], 
+  isMobile = false, 
+  loading = false 
 }: FlashcardSetupProps) {
   const [selectedArea, setSelectedArea] = useState("");
   const [selectedTema, setSelectedTema] = useState("");
   const [cardCount, setCardCount] = useState(10);
+  const [showAnswers, setShowAnswers] = useState(false);
+  const [studyMode, setStudyMode] = useState<"manual" | "auto">("manual");
+  const [autoNarrate, setAutoNarrate] = useState(false);
+  const [spaceInterval, setSpaceInterval] = useState<"normal" | "short" | "long">("normal");
   
   // Filter temas based on selected area
   const filteredTemas = temas.filter(
@@ -50,7 +61,7 @@ export function FlashcardSetup({
     .reduce((acc, tema) => acc + tema.count, 0);
 
   // Calculate maximum cards we can use
-  const maxCards = Math.min(availableCardCount, 50);
+  const maxCards = Math.min(availableCardCount || 50, 50);
 
   // Adjust card count if it exceeds available cards
   useEffect(() => {
@@ -67,24 +78,19 @@ export function FlashcardSetup({
   };
 
   const handleStartSession = () => {
-    onStartSession(selectedArea, selectedTema, cardCount);
-  };
-
-  const userStats = {
-    totalStudied: 120,
-    todayStudied: 25,
-    masteredCards: 50,
-    streak: 3,
+    onStartStudy({
+      selectedAreas: selectedArea ? [selectedArea] : [],
+      selectedTemas: selectedTema ? [selectedTema] : [],
+      showAnswers,
+      studyMode,
+      autoNarrate,
+      cardCount,
+      spaceInterval
+    });
   };
 
   return (
     <div className="flex flex-col space-y-6 max-w-2xl mx-auto">
-      <FlashcardHeader 
-        userStats={userStats}
-        onShowStats={() => {}}
-        isMobile={isMobile}
-      />
-      
       <Breadcrumb className="mb-2">
         <BreadcrumbList>
           <BreadcrumbItem>

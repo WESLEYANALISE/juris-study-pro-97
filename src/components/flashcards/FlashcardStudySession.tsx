@@ -216,15 +216,11 @@ export function FlashcardStudySession({
             </motion.div>
           ) : (
             <FlashcardView
-              flashcard={currentCard}
-              index={index}
-              total={cards.length}
+              question={currentCard.pergunta}
+              answer={currentCard.resposta}
+              explanation={currentCard.explicacao}
               showAnswer={showingAnswer}
               onShowAnswer={() => setShowingAnswer(true)}
-              onNext={handleNext}
-              fullWidth={true}
-              hideControls={studyMode === "auto"}
-              autoNarrate={autoNarrate}
             />
           )}
         </motion.div>
