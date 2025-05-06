@@ -89,6 +89,183 @@ export type Database = {
           },
         ]
       }
+      biblioteca_html: {
+        Row: {
+          autor: string | null
+          categoria: string
+          conteudo_html: string
+          created_at: string | null
+          data_publicacao: string | null
+          descricao: string | null
+          id: string
+          tags: string[] | null
+          thumbnail_url: string | null
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          autor?: string | null
+          categoria: string
+          conteudo_html: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          descricao?: string | null
+          id?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          autor?: string | null
+          categoria?: string
+          conteudo_html?: string
+          created_at?: string | null
+          data_publicacao?: string | null
+          descricao?: string | null
+          id?: string
+          tags?: string[] | null
+          thumbnail_url?: string | null
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      biblioteca_html_anotacoes: {
+        Row: {
+          cor: string | null
+          created_at: string | null
+          documento_id: string
+          id: string
+          secao_id: string
+          seletor_css: string | null
+          texto: string
+          texto_selecionado: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string | null
+          documento_id: string
+          id?: string
+          secao_id: string
+          seletor_css?: string | null
+          texto: string
+          texto_selecionado?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string | null
+          documento_id?: string
+          id?: string
+          secao_id?: string
+          seletor_css?: string | null
+          texto?: string
+          texto_selecionado?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_html_anotacoes_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_html"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biblioteca_html_marcadores: {
+        Row: {
+          cor: string | null
+          created_at: string | null
+          documento_id: string
+          id: string
+          posicao: string | null
+          secao_id: string
+          titulo: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cor?: string | null
+          created_at?: string | null
+          documento_id: string
+          id?: string
+          posicao?: string | null
+          secao_id: string
+          titulo: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cor?: string | null
+          created_at?: string | null
+          documento_id?: string
+          id?: string
+          posicao?: string | null
+          secao_id?: string
+          titulo?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_html_marcadores_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_html"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      biblioteca_html_progresso: {
+        Row: {
+          created_at: string | null
+          documento_id: string
+          favorito: boolean | null
+          id: string
+          progresso_percentual: number | null
+          secao_atual: string | null
+          ultima_leitura: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          documento_id: string
+          favorito?: boolean | null
+          id?: string
+          progresso_percentual?: number | null
+          secao_atual?: string | null
+          ultima_leitura?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          documento_id?: string
+          favorito?: boolean | null
+          id?: string
+          progresso_percentual?: number | null
+          secao_atual?: string | null
+          ultima_leitura?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "biblioteca_html_progresso_documento_id_fkey"
+            columns: ["documento_id"]
+            isOneToOne: false
+            referencedRelation: "biblioteca_html"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       biblioteca_juridica: {
         Row: {
           area: string | null

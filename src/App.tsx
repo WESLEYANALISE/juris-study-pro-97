@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -10,6 +11,7 @@ import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
 // Use our redesigned library page instead of the old one
 import BibliotecaJuridicaPage from "@/pages/BibliotecaJuridicaPage";
+import BibliotecaHTMLPage from "@/pages/BibliotecaHTMLPage";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
@@ -59,6 +61,9 @@ function App() {
               <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
               <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridicaPage /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
+              
+              {/* Nova rota para a Biblioteca HTML */}
+              <Route path="/biblioteca-html" element={<Layout><BibliotecaHTMLPage /></Layout>} />
               
               {/* PDF Links and Livro9 pages */}
               <Route path="/pdf-links" element={<Layout><PDFLinksPage /></Layout>} />

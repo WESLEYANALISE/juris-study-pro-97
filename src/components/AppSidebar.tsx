@@ -51,7 +51,8 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       items: [
         { title: "Vídeo-aulas", url: "/videoaulas", icon: Video, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Biblioteca Jurídica", url: "/biblioteca-juridica", icon: Library, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
-        { title: "Podcasts", url: "/podcasts", icon: Headphones, profiles: ["concurseiro", "universitario", "advogado", "tudo"], isNew: true },
+        { title: "Biblioteca HTML", url: "/biblioteca-html", icon: BookOpenText, profiles: ["concurseiro", "universitario", "advogado", "tudo"], isNew: true },
+        { title: "Podcasts", url: "/podcasts", icon: Headphones, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Vade-Mecum", url: "/vademecum", icon: BookOpen, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Dicionário", url: "/dicionario", icon: BookOpen, profiles: ["universitario", "advogado", "tudo"] },
         { title: "Mapas Mentais", url: "/mapas-mentais", icon: Brain, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
