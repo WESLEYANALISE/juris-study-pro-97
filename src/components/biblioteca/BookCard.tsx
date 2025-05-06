@@ -1,87 +1,124 @@
 
-import React, { useState } from 'react';
-import { LivroSupa } from '@/utils/biblioteca-service';
-import { Card } from '@/components/ui/card';
-import { BookOpen, Heart } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { BookOpen, Bookmark } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
-// Define the props interface to work with both Livro and LivroSupa types
-interface BookCardProps {
-  book?: LivroSupa;
-  livro?: any; // Support for the old Livro type
-  onSelect?: () => void;
-  onCardClick?: () => void; // Support for the old callback name
-  showProgress?: boolean;
-}
+type Livro = {
+  id: string;
+  livro: string;
+  area: string;
+  link: string | null;
+  download: string | null;
+  imagem: string | null;
+  sobre: string | null;
+};
 
-export function BookCard({ book, livro, onSelect, onCardClick, showProgress = false }: BookCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
-  
-  // Support both new and old prop structures
-  const bookData = book || livro;
-  const handleClick = onSelect || onCardClick;
-  
-  if (!bookData) return null;
-  
-  // Get the appropriate property names depending on which type we're using
-  const title = 'pdf_name' in bookData ? bookData.pdf_name : bookData.livro;
-  const category = 'area' in bookData ? bookData.area : bookData.area;
-  const coverUrl = 'capa' in bookData ? bookData.capa : bookData.imagem;
-  
-  // Progress data (in future can be fetched from user's reading progress)
-  const progressPercent = showProgress && 'pagina_atual' in bookData ? 
-    Math.min(Math.round((bookData.pagina_atual as number / 100) * 100), 100) : 
-    null;
-  
+type BookCardProps = {
+  livro: Livro;
+  onCardClick?: () => void;
+  isFavorite?: boolean;
+  showFavoriteButton?: boolean;
+  onToggleFavorite?: () => void;
+};
+
+export function BookCard({
+  livro,
+  onCardClick = () => {},
+  isFavorite = false,
+  showFavoriteButton = false,
+  onToggleFavorite
+}: BookCardProps) {
+  const { toast } = useToast();
+  const [isHovering, setIsHovering] = useState(false);
+
+  const handleFavoriteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleFavorite) {
+      onToggleFavorite();
+    } else {
+      toast({
+        title: "Funcionalidade em breve",
+        description: "Você precisará fazer login para favoritar livros."
+      });
+    }
+  };
+
   return (
-    <Card
-      className="book-card h-full overflow-hidden cursor-pointer transition-all duration-300 relative"
-      onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+    <Card 
+      className={cn(
+        "group flex flex-col hover:shadow-xl transition-all hover:-translate-y-2 cursor-pointer h-[300px] overflow-hidden",
+        "border border-purple-500/30 hover:border-purple-500/80 relative",
+        "bg-gradient-to-br from-background/95 to-purple-950/20 backdrop-blur-sm"
+      )} 
+      onClick={onCardClick} 
+      onMouseEnter={() => setIsHovering(true)} 
+      onMouseLeave={() => setIsHovering(false)}
     >
-      <div className="aspect-[2/3] relative">
-        {/* Book Cover Image */}
-        {coverUrl ? (
-          <img
-            src={coverUrl}
-            alt={title}
-            className="h-full w-full object-cover"
-            onError={(e) => {
-              // Fallback to placeholder if image fails to load
-              (e.target as HTMLImageElement).src = '/placeholder-book-cover.png';
-            }}
-          />
+      <div className="relative flex-grow overflow-hidden">
+        {livro.imagem ? (
+          <div className="w-full h-full relative">
+            <img 
+              src={livro.imagem} 
+              alt={livro.livro} 
+              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/75 to-transparent opacity-90 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-0 p-3 w-full">
+                <h3 className="font-semibold text-sm text-white line-clamp-3 group-hover:text-purple-200 transition-colors">{livro.livro}</h3>
+                <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.area}</p>
+              </div>
+            </div>
+            
+            {showFavoriteButton && (
+              <button 
+                onClick={handleFavoriteClick} 
+                className={cn(
+                  "absolute top-2 right-2 p-1.5 rounded-full text-white transition-colors",
+                  "bg-black/60 hover:bg-black/80",
+                  "shadow-lg backdrop-blur-sm"
+                )}
+              >
+                <Bookmark 
+                  size={16} 
+                  className={cn(
+                    "transition-all", 
+                    isFavorite ? "fill-yellow-400 text-yellow-400" : "",
+                    "group-hover:scale-110"
+                  )} 
+                />
+              </button>
+            )}
+          </div>
         ) : (
-          <div className="h-full w-full flex items-center justify-center bg-muted">
-            <BookOpen className="h-16 w-16 text-muted-foreground/30" />
-          </div>
-        )}
-        
-        {/* Overlay with title on hover */}
-        <div 
-          className={`absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 flex flex-col justify-end transition-opacity duration-300 ${
-            isHovered ? 'opacity-100' : 'opacity-90'
-          }`}
-        >
-          <h3 className="text-white text-sm font-medium line-clamp-3">{title}</h3>
-          <p className="text-white/80 text-xs mt-1 line-clamp-1">{category}</p>
-        </div>
-        
-        {/* Progress bar */}
-        {progressPercent !== null && (
-          <div className="absolute bottom-0 left-0 right-0">
-            <Progress value={progressPercent} className="h-1 rounded-none" />
-          </div>
-        )}
-        
-        {/* Favorite indicator (example, to be implemented with actual data) */}
-        {false && (
-          <div className="absolute top-2 right-2">
-            <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+          <div className="w-full h-full bg-gradient-to-br from-gray-800/90 to-gray-900/90 flex items-end">
+            <div className="p-3 w-full relative">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent" />
+              <BookOpen className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 h-12 w-12 text-white/20 group-hover:scale-125 group-hover:text-purple-300/30 transition-all duration-500" />
+              <div className="relative">
+                <h3 className="font-semibold text-sm text-white line-clamp-3 group-hover:text-purple-200 transition-colors">{livro.livro}</h3>
+                <p className="text-xs text-white/80 mt-1 line-clamp-1">{livro.area}</p>
+              </div>
+              
+              {showFavoriteButton && (
+                <button 
+                  onClick={handleFavoriteClick} 
+                  className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-full text-white hover:bg-black/80 transition-colors"
+                >
+                  <Bookmark 
+                    size={16} 
+                    className={isFavorite ? "fill-yellow-400 text-yellow-400" : ""} 
+                  />
+                </button>
+              )}
+            </div>
           </div>
         )}
       </div>
+      
+      <div className="absolute bottom-0 left-0 w-full h-2/3 bg-gradient-to-t from-black/90 via-black/50 to-transparent pointer-events-none"></div>
     </Card>
   );
 }

@@ -1,3 +1,4 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -8,9 +9,8 @@ import Index from "@/pages/Index";
 import Auth from "@/pages/Auth";
 import Podcasts from "@/pages/Podcasts";
 import Dicionario from "@/pages/Dicionario";
-// Use our redesigned library page instead of the old one
-import BibliotecaJuridicaPage from "@/pages/BibliotecaJuridicaPage";
-import BibliotecaHTMLPage from "@/pages/BibliotecaHTMLPage";
+// Old library component completely removed
+import BibliotecaJuridica from "@/pages/BibliotecaJuridica";
 import BibliotecaRecomendacoes from "@/pages/BibliotecaRecomendacoes";
 import Questoes from "@/pages/Questoes";
 import VadeMecum from "@/pages/VadeMecum";
@@ -22,12 +22,11 @@ import SimuladoSessao from "@/pages/SimuladoSessao";
 import SimuladoResultado from "@/pages/SimuladoResultado";
 import Flashcards from "@/pages/Flashcards";
 import MapasMentais from "@/pages/MapasMentais";
+import Noticias from "@/pages/Noticias";
 import Peticoes from "@/pages/Peticoes";
 import AssistenteJuridico from "@/pages/AssistenteJuridico";
 import Perfil from "@/pages/Perfil";
 import IniciandoNoDireito from "@/pages/IniciandoNoDireito";
-import PDFLinksPage from "@/pages/PDFLinksPage";
-import Livro9Page from "@/pages/Livro9Page";
 import NotFound from "@/pages/NotFound";
 import VerTudo from "@/pages/VerTudo";
 import Cursos from "@/pages/Cursos";
@@ -42,7 +41,6 @@ import Anotacoes from "@/pages/Anotacoes";
 import JogosJuridicos from "@/pages/JogosJuridicos";
 import JogoDetalhes from "@/pages/JogoDetalhes";
 import JurisFlix from "@/pages/JurisFlix";
-import CursosV2 from './pages/CursosV2';
 
 function App() {
   return (
@@ -57,19 +55,11 @@ function App() {
               <Route path="/podcasts" element={<Layout><Podcasts /></Layout>} />
               <Route path="/dicionario" element={<Layout><Dicionario /></Layout>} />
               
-              {/* Use our new redesigned library */}
+              {/* BibliotecaJuridica as default library */}
               <Route path="/biblioteca" element={<Navigate to="/biblioteca-juridica" replace />} />
-              <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridicaPage /></Layout>} />
+              <Route path="/biblioteca-juridica" element={<Layout><BibliotecaJuridica /></Layout>} />
               <Route path="/biblioteca/recomendacoes" element={<Layout><BibliotecaRecomendacoes /></Layout>} />
               
-              {/* Nova rota para a Biblioteca HTML */}
-              <Route path="/biblioteca-html" element={<Layout><BibliotecaHTMLPage /></Layout>} />
-              
-              {/* PDF Links and Livro9 pages */}
-              <Route path="/pdf-links" element={<Layout><PDFLinksPage /></Layout>} />
-              <Route path="/livro9" element={<Layout><Livro9Page /></Layout>} />
-              
-              {/* ... keep existing code (all other routes) */}
               <Route path="/questoes" element={<Layout><Questoes /></Layout>} />
               <Route path="/vademecum" element={<Layout><VadeMecum /></Layout>} />
               <Route path="/vademecum/:lawId" element={<Layout><VadeMecumViewer /></Layout>} />
@@ -81,6 +71,7 @@ function App() {
               <Route path="/simulados/resultado/:sessaoId" element={<Layout><SimuladoResultado /></Layout>} />
               <Route path="/flashcards" element={<Layout><Flashcards /></Layout>} />
               <Route path="/mapas-mentais" element={<Layout><MapasMentais /></Layout>} />
+              <Route path="/noticias" element={<Layout><Noticias /></Layout>} />
               <Route path="/peticoes" element={<Layout><Peticoes /></Layout>} />
               <Route path="/assistente" element={<Layout><AssistenteJuridico /></Layout>} />
               <Route path="/perfil" element={<Layout><Perfil /></Layout>} />
@@ -97,7 +88,6 @@ function App() {
               <Route path="/jogos" element={<Layout><JogosJuridicos /></Layout>} />
               <Route path="/jogos/:jogoId" element={<Layout><JogoDetalhes /></Layout>} />
               <Route path="/jurisflix" element={<Layout><JurisFlix /></Layout>} />
-              <Route path="/cursos-v2" element={<RequireAuth><CursosV2 /></RequireAuth>} />
               <Route path="*" element={<Layout><NotFound /></Layout>} />
             </Routes>
           </RequireAuth>

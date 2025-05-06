@@ -1,57 +1,44 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Hide mobile navigation when course viewer is active */
-body.course-viewer-active .fixed[class*="MobileNavigation"] {
-  display: none !important;
-}
- 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.75rem;
-  }
-
-  .dark {
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
+    --background: 222 30% 10%; /* Dark gray background */
+    --foreground: 210 20% 98%; /* Light text */
+    
+    --card: 222 25% 16%; /* Slightly lighter gray for cards */
     --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
+    
+    --popover: 222 25% 16%;
     --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
+    
+    --primary: 265 70% 70%; /* Purple - keep the brand color */
+    --primary-foreground: 0 0% 98%;
+    
+    --secondary: 222 20% 20%; /* Medium gray for secondary elements */
+    --secondary-foreground: 0 0% 98%;
+    
+    --muted: 225 20% 25%; /* Muted backgrounds */
+    --muted-foreground: 240 5% 75%;
+    
+    --accent: 273 70% 65%; /* Purple accent */
+    --accent-foreground: 0 0% 98%;
+    
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
+    --destructive-foreground: 0 0% 98%;
+    
+    --border: 225 12% 25%;
+    --input: 225 12% 25%;
+    --ring: 240 4% 35%;
+    
+    --radius: 0.75rem;
+    
+    --success: 142 70.6% 45.3%;
+    --success-foreground: 210 40% 98%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 240 5.9% 10%;
   }
 }
 
@@ -59,7 +46,203 @@ body.course-viewer-active .fixed[class*="MobileNavigation"] {
   * {
     @apply border-border;
   }
+  
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
+  
+  /* Improved focus styles */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary/50 ring-0;
+  }
+  
+  /* Enhanced scrollbar */
+  ::-webkit-scrollbar {
+    @apply w-1.5 h-1.5;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-900/20;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700/50 rounded-full transition-colors hover:bg-gray-600/70;
+  }
+  
+  /* Custom selection colors */
+  ::selection {
+    @apply bg-purple-700/30 text-white;
+  }
+}
+
+/* Define custom shadow utilities */
+@layer utilities {
+  .shadow-purple {
+    --tw-shadow-color: rgb(139 92 246 / 0.8);
+    --tw-shadow: 0 4px 6px -1px var(--tw-shadow-color), 0 2px 4px -2px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+
+  .hover\:shadow-purple:hover {
+    --tw-shadow-color: rgb(139 92 246 / 0.5);
+    --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color);
+    box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  }
+
+  /* Enhanced glass morphism effect */
+  .bg-glass {
+    @apply backdrop-blur-xl bg-white/5 border border-white/10 shadow-lg;
+  }
+  
+  .bg-glass-darker {
+    @apply backdrop-blur-xl bg-black/30 border border-gray-800 shadow-lg;
+  }
+  
+  /* Dark glass effect for cards */
+  .bg-glass-card {
+    @apply backdrop-blur-xl bg-gray-800/40 border border-gray-700/50 shadow-card-dark;
+  }
+  
+  /* Progressive gradient transition effect */
+  .gradient-fade {
+    -webkit-mask-image: linear-gradient(to top, transparent, black 25%);
+            mask-image: linear-gradient(to top, transparent, black 25%);
+  }
+  
+  /* New 3D hover effects */
+  .hover-lift {
+    @apply transition-all duration-300;
+  }
+  
+  .hover-lift:hover {
+    @apply -translate-y-1 shadow-xl;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -5px rgba(0, 0, 0, 0.2);
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300;
+  }
+  
+  .hover-scale:hover {
+    @apply scale-[1.02];
+  }
+  
+  /* Improved gradient text */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-white/90 to-white/70;
+  }
+  
+  .text-gradient-purple {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-primary to-violet-400;
+  }
+}
+
+/* Enhanced card and button styles */
+@layer components {
+  .card-glass {
+    @apply bg-glass rounded-xl border border-white/10 shadow-lg overflow-hidden;
+  }
+  
+  .card-dark {
+    @apply bg-gray-800/40 backdrop-blur-sm rounded-xl border border-gray-700/50 shadow-card-dark hover:shadow-lg transition-all duration-300;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .card-primary {
+    @apply bg-gradient-to-br from-primary/20 to-purple-800/20 border-purple-700/30;
+  }
+  
+  .button-glow {
+    @apply relative overflow-hidden;
+  }
+  
+  .button-glow::after {
+    @apply content-[''] absolute inset-0 rounded-lg opacity-0 transition-opacity duration-500;
+    background: radial-gradient(circle at center, theme(colors.primary.DEFAULT / 40%) 0%, transparent 70%);
+    z-index: -1;
+  }
+  
+  .button-glow:hover::after {
+    @apply opacity-100;
+  }
+}
+
+/* Sidebar styling */
+.gradient-sidebar {
+  @apply bg-gradient-to-b from-gray-900/95 via-gray-900 to-gray-800/90 border-r border-gray-800/50;
+}
+
+/* 3D Flashcard flip animation */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+
+/* Progress bar customization */
+.progress-bar-primary::-webkit-progress-value {
+  @apply bg-primary;
+}
+
+.progress-bar-primary::-moz-progress-bar {
+  @apply bg-primary;
+}
+
+/* PDF reader styles */
+.pdf-page-dark canvas {
+  filter: invert(0.85) hue-rotate(180deg) !important;
+}
+
+.pdf-viewer-open {
+  overflow: hidden;
+}
+
+/* New multi-layer gradient backgrounds */
+.bg-gradient-multilayer {
+  @apply relative overflow-hidden;
+}
+
+.bg-gradient-multilayer::before {
+  @apply content-[''] absolute w-full h-full inset-0 opacity-20;
+  background: 
+    radial-gradient(circle at 0% 0%, theme(colors.gray.800 / 60%) 0%, transparent 60%),
+    radial-gradient(circle at 100% 100%, theme(colors.primary.DEFAULT / 30%) 0%, transparent 60%);
+  z-index: -1;
+}
+
+/* New page transition animations */
+.page-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0px);
+  transition: opacity 0.3s, transform 0.3s;
+}
+
+.page-exit {
+  opacity: 1;
+  transform: translateY(0px);
+}
+
+.page-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.3s, transform 0.3s;
 }

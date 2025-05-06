@@ -160,7 +160,26 @@ const Index = () => {
         </div>
 
         {/* Profile selection */}
-        
+        <motion.div initial={{
+        opacity: 0
+      }} animate={{
+        opacity: 1
+      }} transition={{
+        duration: 0.5,
+        delay: 0.3
+      }} className="glass-purple p-6 rounded-lg shadow-sm mt-10 mb-6">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Gavel className="h-5 w-5 text-primary" />
+            <span>Escolha seu perfil de estudos</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <JuridicalCard title="Concurseiro" description="Foco em conteúdos para concursos públicos" icon="landmark" variant="primary" className="cursor-pointer" />
+            
+            <JuridicalCard title="Universitário" description="Material para graduação em Direito" icon="book" variant="default" className="cursor-pointer" />
+            
+            <JuridicalCard title="Advogado" description="Recursos para a prática profissional" icon="scales" variant="secondary" className="cursor-pointer" />
+          </div>
+        </motion.div>
       </div>
     </JuridicalBackground>;
 };

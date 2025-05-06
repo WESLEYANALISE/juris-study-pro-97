@@ -1,43 +1,35 @@
 import { useState, lazy, Suspense } from "react";
+import { useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { usePeticoes } from "@/hooks/usePeticoes";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Filter, Folder } from "lucide-react";
-import { PeticaoFolderView } from "@/components/peticoes/PeticaoFolderView";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { PeticaoSearch } from "@/components/peticoes/PeticaoSearch";
-import { FileText, DownloadCloud, Eye, BookOpen, BarChart3, History, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { FileText, DownloadCloud, Eye, BookOpen, Filter, BarChart3, History, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { DataCard } from "@/components/ui/data-card";
 import { JuridicalCard } from "@/components/ui/juridical-card";
 import { PeticaoCard } from "@/components/peticoes/PeticaoCard";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { usePeticoes } from "@/hooks/usePeticoes";
 import { useRecentPeticoes } from "@/hooks/useRecentPeticoes";
 import { PeticaoFilters } from "@/components/peticoes/PeticaoFilters";
 import { DataPagination } from "@/components/ui/data-pagination";
 import { LoadingState } from "@/components/ui/loading-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useNavigate } from "react-router-dom";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-// Lazy-load some components to reduce initial bundle size
+// Lazy-load the PeticaoViewer to reduce initial bundle size
 const PeticaoViewer = lazy(() => import("@/components/peticoes/PeticaoViewerExport").then(module => ({
   default: module.PeticaoViewer
 })));
 const Peticoes = () => {
   // Basic states
+  const [searchQuery, setSearchQuery] = useState("");
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedPeticaoUrl, setSelectedPeticaoUrl] = useState<string | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-
-  // Handle close viewer
-  const handleCloseViewer = () => {
-    setViewerOpen(false);
-    setSelectedPeticaoUrl(null);
-  };
-  const [searchQuery, setSearchQuery] = useState("");
   const pageSize = 12;
   const navigate = useNavigate();
 
@@ -84,6 +76,10 @@ const Peticoes = () => {
       url: url
     });
   };
+  const handleCloseViewer = () => {
+    setViewerOpen(false);
+    setSelectedPeticaoUrl(null);
+  };
 
   // Handle search updates - with debounce
   const updateSearchQuery = (value: string) => {
@@ -104,9 +100,7 @@ const Peticoes = () => {
     });
   };
   return <div className="container max-w-7xl mx-auto py-[15px] px-[8px]">
-      {viewerOpen && selectedPeticaoUrl && <Suspense fallback={<div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
-            <LoadingSpinner size="lg" />
-          </div>}>
+      {viewerOpen && selectedPeticaoUrl && <Suspense fallback={<div className="fixed inset-0 bg-background z-50 flex items-center justify-center"><LoadingSpinner size="lg" /></div>}>
           <PeticaoViewer url={selectedPeticaoUrl} onBack={handleCloseViewer} />
         </Suspense>}
       
@@ -147,7 +141,10 @@ const Peticoes = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                
+                <Button variant="primary" size="sm" className="gap-2">
+                  <BarChart3 className="h-4 w-4" />
+                  Estatísticas
+                </Button>
               </div>
             </div>
             
@@ -175,19 +172,12 @@ const Peticoes = () => {
           </div>
           
           {/* Tabs for different views */}
-          <Tabs defaultValue="folders" className="mt-6">
+          <Tabs defaultValue="areas" className="mt-6">
             <TabsList className="mb-4">
-              <TabsTrigger value="folders" className="gap-2">
-                <Folder className="h-4 w-4" />
-                <span>Pastas</span>
-              </TabsTrigger>
               <TabsTrigger value="areas">Por Área</TabsTrigger>
+              <TabsTrigger value="recentes">Recentes</TabsTrigger>
               <TabsTrigger value="todos">Todos</TabsTrigger>
             </TabsList>
-            
-            <TabsContent value="folders">
-              <PeticaoFolderView />
-            </TabsContent>
             
             <TabsContent value="areas">
               {isLoading ? <LoadingState variant="skeleton" count={6} /> : Object.keys(peticoesByArea).length === 0 ? <div className="text-center py-12 bg-card/30 backdrop-blur-sm rounded-lg border border-white/5 shadow-lg">
@@ -260,6 +250,59 @@ const Peticoes = () => {
               {/* Show loading indicator when fetching new page */}
               {isFetching && !isLoading && <div className="flex justify-center my-4">
                   <LoadingSpinner size="sm" />
+                </div>}
+            </TabsContent>
+            
+            <TabsContent value="recentes">
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Visualizados Recentemente</h2>
+                
+                {recentItems && recentItems.length > 0 && <Button variant="outline" size="sm" onClick={clearRecentItems} className="gap-2 text-xs">
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Limpar histórico
+                  </Button>}
+              </div>
+              
+              {!recentItems || recentItems.length === 0 ? <div className="text-center py-12 bg-card/30 backdrop-blur-sm rounded-lg border border-white/5 shadow-lg">
+                  <History className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                  <h3 className="mt-4 text-lg font-semibold">Nenhum documento visualizado recentemente</h3>
+                  <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
+                    Os documentos que você visualizar aparecerão aqui para acesso rápido
+                  </p>
+                </div> : <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {recentItems.map(recentItem => <JuridicalCard key={`${recentItem.id}-${recentItem.viewedAt}`} title={recentItem.title} description={recentItem.area} icon="scroll" variant="primary" onClick={() => {
+                setSelectedPeticaoUrl(recentItem.url);
+                setViewerOpen(true);
+              }}>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        Visualizado {new Date(recentItem.viewedAt).toLocaleDateString()}
+                      </div>
+                      <div className="text-sm text-muted-foreground mb-4">
+                        Clique para abrir novamente o documento
+                      </div>
+                      <Button onClick={() => {
+                  setSelectedPeticaoUrl(recentItem.url);
+                  setViewerOpen(true);
+                }} className="w-full" variant="gradient">
+                        <Eye className="mr-2 h-4 w-4" />
+                        Visualizar
+                      </Button>
+                    </JuridicalCard>)}
+                </div>}
+              
+              {peticoes && peticoes.length > 0 && <div className="mt-8">
+                  <h2 className="text-xl font-semibold mb-4">Petições Disponíveis</h2>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {peticoes.slice(0, 6).map(peticao => <JuridicalCard key={peticao.id} title={peticao.tipo} description={peticao.area} icon="scroll" variant="primary" onClick={() => handleViewPeticao(peticao)}>
+                        <div className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                          {peticao.descricao || "Modelo de petição para uso profissional."}
+                        </div>
+                        <Button onClick={() => handleViewPeticao(peticao)} className="w-full" variant="gradient">
+                          <Eye className="mr-2 h-4 w-4" />
+                          Visualizar
+                        </Button>
+                      </JuridicalCard>)}
+                  </div>
                 </div>}
             </TabsContent>
             

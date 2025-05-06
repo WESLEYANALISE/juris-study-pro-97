@@ -47,26 +47,52 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
     gcTime: 30 * 60 * 1000, // 30 minutes
   });
 
-  // For tipos, let's assume we have another way to get these or use static ones
-  // as the "tipo" column doesn't exist in the peticoes table
+  // Only fetch tipos when an area is selected to reduce queries
   const { data: tipos = [], isLoading: isLoadingTipos } = useQuery({
-    queryKey: ["peticoes-tipos"],
+    queryKey: ["peticoes-tipos", filters.area],
     queryFn: async () => {
-      // Return a static list for now since 'tipo' doesn't exist in the peticoes table
-      return ["Petição Inicial", "Contestação", "Recurso", "Agravo", "Embargos"];
+      let query = supabase
+        .from("peticoes")
+        .select("tipo");
+        
+      // Filter by area if selected
+      if (filters.area && filters.area !== "all") {
+        query = query.eq("area", filters.area);
+      }
+      
+      query = query.order("tipo");
+      
+      const { data } = await query;
+      return [...new Set(data?.map((item) => item.tipo).filter(Boolean))];
     },
+    enabled: true, // Always load tipos, but will be filtered by area if selected
     staleTime: 5 * 60 * 1000,
   });
 
-  // Only extract sub-areas if needed (this is a workaround since we don't have the actual columns)
+  // Only extract sub-areas if needed
   const { data: subAreas = [], isLoading: isLoadingSubAreas } = useQuery({
     queryKey: ["peticoes-subareas", filters.area],
     queryFn: async () => {
       if (!filters.area || filters.area === "all") return [];
       
-      // Return static sub-areas for demo purposes
-      // In a real application, this would be fetched from the database
-      return ["Civil", "Família", "Contratos", "Imobiliário"];
+      const { data } = await supabase
+        .from("peticoes")
+        .select("tipo")
+        .eq("area", filters.area)
+        .order("tipo");
+      
+      // Extract potential sub-areas from the tipo field (this is a workaround)
+      const subAreaSet = new Set<string>();
+      data?.forEach(item => {
+        if (item.tipo && item.tipo.includes("-")) {
+          const potentialSubArea = item.tipo.split("-")[0].trim();
+          if (potentialSubArea && potentialSubArea !== item.tipo) {
+            subAreaSet.add(potentialSubArea);
+          }
+        }
+      });
+      
+      return Array.from(subAreaSet);
     },
     enabled: !!filters.area && filters.area !== "all",
     staleTime: 5 * 60 * 1000,

@@ -89,183 +89,6 @@ export type Database = {
           },
         ]
       }
-      biblioteca_html: {
-        Row: {
-          autor: string | null
-          categoria: string
-          conteudo_html: string
-          created_at: string | null
-          data_publicacao: string | null
-          descricao: string | null
-          id: string
-          tags: string[] | null
-          thumbnail_url: string | null
-          titulo: string
-          updated_at: string | null
-        }
-        Insert: {
-          autor?: string | null
-          categoria: string
-          conteudo_html: string
-          created_at?: string | null
-          data_publicacao?: string | null
-          descricao?: string | null
-          id?: string
-          tags?: string[] | null
-          thumbnail_url?: string | null
-          titulo: string
-          updated_at?: string | null
-        }
-        Update: {
-          autor?: string | null
-          categoria?: string
-          conteudo_html?: string
-          created_at?: string | null
-          data_publicacao?: string | null
-          descricao?: string | null
-          id?: string
-          tags?: string[] | null
-          thumbnail_url?: string | null
-          titulo?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      biblioteca_html_anotacoes: {
-        Row: {
-          cor: string | null
-          created_at: string | null
-          documento_id: string
-          id: string
-          secao_id: string
-          seletor_css: string | null
-          texto: string
-          texto_selecionado: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          cor?: string | null
-          created_at?: string | null
-          documento_id: string
-          id?: string
-          secao_id: string
-          seletor_css?: string | null
-          texto: string
-          texto_selecionado?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          cor?: string | null
-          created_at?: string | null
-          documento_id?: string
-          id?: string
-          secao_id?: string
-          seletor_css?: string | null
-          texto?: string
-          texto_selecionado?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "biblioteca_html_anotacoes_documento_id_fkey"
-            columns: ["documento_id"]
-            isOneToOne: false
-            referencedRelation: "biblioteca_html"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      biblioteca_html_marcadores: {
-        Row: {
-          cor: string | null
-          created_at: string | null
-          documento_id: string
-          id: string
-          posicao: string | null
-          secao_id: string
-          titulo: string
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          cor?: string | null
-          created_at?: string | null
-          documento_id: string
-          id?: string
-          posicao?: string | null
-          secao_id: string
-          titulo: string
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          cor?: string | null
-          created_at?: string | null
-          documento_id?: string
-          id?: string
-          posicao?: string | null
-          secao_id?: string
-          titulo?: string
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "biblioteca_html_marcadores_documento_id_fkey"
-            columns: ["documento_id"]
-            isOneToOne: false
-            referencedRelation: "biblioteca_html"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      biblioteca_html_progresso: {
-        Row: {
-          created_at: string | null
-          documento_id: string
-          favorito: boolean | null
-          id: string
-          progresso_percentual: number | null
-          secao_atual: string | null
-          ultima_leitura: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          documento_id: string
-          favorito?: boolean | null
-          id?: string
-          progresso_percentual?: number | null
-          secao_atual?: string | null
-          ultima_leitura?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          documento_id?: string
-          favorito?: boolean | null
-          id?: string
-          progresso_percentual?: number | null
-          secao_atual?: string | null
-          ultima_leitura?: string | null
-          updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "biblioteca_html_progresso_documento_id_fkey"
-            columns: ["documento_id"]
-            isOneToOne: false
-            referencedRelation: "biblioteca_html"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       biblioteca_juridica: {
         Row: {
           area: string | null
@@ -936,8 +759,9 @@ export type Database = {
           id: number
           link: string | null
           materia: string | null
-          sequencia: string | null
+          sequencia: number | null
           sobre: string | null
+          tipo_acesso: string | null
         }
         Insert: {
           area?: string | null
@@ -947,8 +771,9 @@ export type Database = {
           id?: number
           link?: string | null
           materia?: string | null
-          sequencia?: string | null
+          sequencia?: number | null
           sobre?: string | null
+          tipo_acesso?: string | null
         }
         Update: {
           area?: string | null
@@ -958,8 +783,9 @@ export type Database = {
           id?: number
           link?: string | null
           materia?: string | null
-          sequencia?: string | null
+          sequencia?: number | null
           sobre?: string | null
+          tipo_acesso?: string | null
         }
         Relationships: []
       }
@@ -2597,39 +2423,6 @@ export type Database = {
         }
         Relationships: []
       }
-      livro9: {
-        Row: {
-          area: string
-          created_at: string | null
-          description: string | null
-          id: string
-          original_path: string | null
-          pdf_name: string
-          pdf_url: string
-          total_pages: number | null
-        }
-        Insert: {
-          area: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          original_path?: string | null
-          pdf_name: string
-          pdf_url: string
-          total_pages?: number | null
-        }
-        Update: {
-          area?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          original_path?: string | null
-          pdf_name?: string
-          pdf_url?: string
-          total_pages?: number | null
-        }
-        Relationships: []
-      }
       livros: {
         Row: {
           autor: string | null
@@ -2684,36 +2477,6 @@ export type Database = {
           livro_id?: string
           timestamp?: string
           user_id?: string
-        }
-        Relationships: []
-      }
-      livros_supa: {
-        Row: {
-          area: string | null
-          capa: string | null
-          created_at: string
-          id: number
-          pdf_name: string | null
-          pdf_url: string | null
-          sinopse: string | null
-        }
-        Insert: {
-          area?: string | null
-          capa?: string | null
-          created_at?: string
-          id?: number
-          pdf_name?: string | null
-          pdf_url?: string | null
-          sinopse?: string | null
-        }
-        Update: {
-          area?: string | null
-          capa?: string | null
-          created_at?: string
-          id?: number
-          pdf_name?: string | null
-          pdf_url?: string | null
-          sinopse?: string | null
         }
         Relationships: []
       }
@@ -2920,62 +2683,24 @@ export type Database = {
       }
       peticoes: {
         Row: {
-          area: string | null
-          created_at: string
-          icon_color: string | null
-          id: number
-          last_updated: string | null
-          link: string | null
-          total: number | null
+          area: string
+          documento: string
+          id: string
+          tipo: string | null
         }
         Insert: {
-          area?: string | null
-          created_at?: string
-          icon_color?: string | null
-          id?: number
-          last_updated?: string | null
-          link?: string | null
-          total?: number | null
+          area: string
+          documento: string
+          id?: string
+          tipo?: string | null
         }
         Update: {
-          area?: string | null
-          created_at?: string
-          icon_color?: string | null
-          id?: number
-          last_updated?: string | null
-          link?: string | null
-          total?: number | null
+          area?: string
+          documento?: string
+          id?: string
+          tipo?: string | null
         }
         Relationships: []
-      }
-      peticoes_acessos: {
-        Row: {
-          accessed_at: string | null
-          id: string
-          peticao_id: number | null
-          user_id: string | null
-        }
-        Insert: {
-          accessed_at?: string | null
-          id?: string
-          peticao_id?: number | null
-          user_id?: string | null
-        }
-        Update: {
-          accessed_at?: string | null
-          id?: string
-          peticao_id?: number | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "peticoes_acessos_peticao_id_fkey"
-            columns: ["peticao_id"]
-            isOneToOne: false
-            referencedRelation: "peticoes"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       plano_estudos: {
         Row: {

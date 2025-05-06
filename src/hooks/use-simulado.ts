@@ -26,7 +26,7 @@ export function useSimulado(categoria: SimuladoCategoria) {
     });
   };
 
-  // Fetch questions for a specific edition - ensures we're using simulados_oab for OAB category
+  // Fetch questions for a specific edition
   const useQuestoesEdicao = (edicaoId: string) => {
     return useQuery({
       queryKey: ['simulados', 'edicao', edicaoId, 'questoes'],
@@ -42,34 +42,32 @@ export function useSimulado(categoria: SimuladoCategoria) {
         
         if (!edicao) throw new Error("Edição não encontrada");
         
-        // For OAB simulados, always use the simulados_oab table
-        let query: any = supabase.from('simulados_oab').select('*');
-        
-        // Unless it's not OAB, then use the appropriate table based on category
-        if (edicao.categoria !== 'OAB') {
-          switch(edicao.categoria) {
-            case 'PRF':
-              query = supabase.from('simulados_prf').select('*');
-              break;
-            case 'PF':
-              query = supabase.from('simulados_pf').select('*');
-              break;
-            case 'TJSP':
-              query = supabase.from('simulados_tjsp').select('*');
-              break;
-            case 'JUIZ':
-              query = supabase.from('simulados_juiz').select('*');
-              break;
-            case 'PROMOTOR':
-              query = supabase.from('simulados_promotor').select('*');
-              break;
-            case 'DELEGADO':
-              query = supabase.from('simulados_delegado').select('*');
-              break;
-            default:
-              // Default to OAB if no match (redundant but safe)
-              query = supabase.from('simulados_oab').select('*');
-          }
+        // Use hard-coded table name based on categoria instead of template literals
+        let query;
+        switch(edicao.categoria) {
+          case 'OAB':
+            query = supabase.from('simulados_oab').select('*');
+            break;
+          case 'PRF':
+            query = supabase.from('simulados_prf').select('*');
+            break;
+          case 'PF':
+            query = supabase.from('simulados_pf').select('*');
+            break;
+          case 'TJSP':
+            query = supabase.from('simulados_tjsp').select('*');
+            break;
+          case 'JUIZ':
+            query = supabase.from('simulados_juiz').select('*');
+            break;
+          case 'PROMOTOR':
+            query = supabase.from('simulados_promotor').select('*');
+            break;
+          case 'DELEGADO':
+            query = supabase.from('simulados_delegado').select('*');
+            break;
+          default:
+            throw new Error(`Categoria inválida: ${edicao.categoria}`);
         }
 
         // Add edition filter
@@ -78,28 +76,8 @@ export function useSimulado(categoria: SimuladoCategoria) {
         const { data, error } = await query;
         if (error) throw error;
         
-        // Type cast the data to match our Questao interface
-        const questoes = data.map((q: any) => ({
-          id: q.id,
-          ano: q.ano,
-          banca: q.banca,
-          numero_questao: q.numero_questao,
-          questao: q.questao,
-          alternativa_a: q.alternativa_a,
-          alternativa_b: q.alternativa_b,
-          alternativa_c: q.alternativa_c,
-          alternativa_d: q.alternativa_d,
-          alternativa_e: q.alternativa_e,
-          resposta_correta: q.resposta_correta || q.alternativa_correta,
-          alternativa_correta: q.alternativa_correta,
-          explicacao: q.explicacao,
-          area: q.area,
-          imagem_url: q.imagem_url,
-          edicao_id: q.edicao_id
-        })) as Questao[];
-        
         return {
-          questoes,
+          questoes: data as Questao[],
           edicao: edicao as SimuladoEdicao
         };
       },
@@ -149,26 +127,7 @@ export function useSimulado(categoria: SimuladoCategoria) {
 
         const { data, error } = await query;
         if (error) throw error;
-        
-        // Map the data to match our Questao interface
-        return data.map((q: any) => ({
-          id: q.id,
-          ano: q.ano,
-          banca: q.banca,
-          numero_questao: q.numero_questao,
-          questao: q.questao,
-          alternativa_a: q.alternativa_a,
-          alternativa_b: q.alternativa_b,
-          alternativa_c: q.alternativa_c,
-          alternativa_d: q.alternativa_d,
-          alternativa_e: q.alternativa_e,
-          resposta_correta: q.resposta_correta || q.alternativa_correta,
-          alternativa_correta: q.alternativa_correta,
-          explicacao: q.explicacao,
-          area: q.area,
-          imagem_url: q.imagem_url,
-          edicao_id: q.edicao_id
-        })) as Questao[];
+        return data as Questao[];
       },
     });
   };

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, ExternalLink, Download, RefreshCw, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, Download, RefreshCw } from "lucide-react";
 
 interface DocxViewerProps {
   url: string;
@@ -55,19 +55,19 @@ export function DocxViewer({ url, onBack }: DocxViewerProps) {
       className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm flex flex-col"
     >
       <div className="bg-gradient-to-r from-primary/20 to-background/95 p-4 flex items-center justify-between border-b border-white/10 shadow-md">
+        <Button 
+          onClick={onBack} 
+          variant="glass"
+          size="sm"
+          className="gap-2 text-white"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        
         <div className="flex gap-2">
           <Button 
-            onClick={onBack} 
-            variant="glass"
-            size="sm"
-            className="gap-2 text-white"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Voltar
-          </Button>
-          
-          <Button 
-            variant="ghost" 
+            variant="subtle" 
             size="sm" 
             className="gap-2"
             onClick={handleReload}
@@ -75,9 +75,6 @@ export function DocxViewer({ url, onBack }: DocxViewerProps) {
             <RefreshCw className="h-4 w-4" />
             Recarregar
           </Button>
-        </div>
-        
-        <div className="flex gap-2">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -95,15 +92,6 @@ export function DocxViewer({ url, onBack }: DocxViewerProps) {
           >
             <Download className="h-4 w-4" />
             Baixar
-          </Button>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            className="gap-2"
-            onClick={onBack}
-          >
-            <X className="h-4 w-4" />
-            Fechar
           </Button>
         </div>
       </div>

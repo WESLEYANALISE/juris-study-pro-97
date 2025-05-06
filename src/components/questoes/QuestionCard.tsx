@@ -1,351 +1,264 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Heart, MessageSquare, Share2, Flag, CheckCircle, XCircle, Loader2, ChevronRight } from 'lucide-react';
-import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { safeSelect, safeInsert, safeDelete } from "@/utils/supabase-helpers";
-import { SupabaseFavorite, SupabaseHistoryEntry } from "@/types/supabase";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useState, useEffect, useRef } from "react";
+import { CheckCircle2, XCircle, Bookmark, BookmarkCheck, Timer, Share2, Award } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-export interface QuestionCardProps {
-  question?: any; // Question object from the original implementation
-  onFavorite?: (questionId: string, isFavorited: boolean) => void;
-  // Properties for the newer version
-  id?: number;
-  area?: string;
-  tema?: string;
-  pergunta?: string;
-  respostas?: {
-    A: string;
-    B: string;
-    C: string;
-    D: string;
+import { useToast } from "@/hooks/use-toast";
+import { useIsMobile } from "@/hooks/use-mobile";
+interface QuestionCardProps {
+  id: number;
+  area: string | null;
+  tema: string | null;
+  pergunta: string;
+  respostas: {
+    [key: string]: string | null;
   };
-  respostaCorreta?: string;
+  respostaCorreta: string | null;
   comentario?: string;
-  percentualAcertos?: string;
-  onAnswer?: (questionId: number, answer: string, correct: boolean) => Promise<boolean>; // Updated to Promise<boolean>
+  percentualAcertos: string | null;
+  onAnswer: (questionId: number, answer: string, correct: boolean) => void;
   onNext?: () => void;
 }
-
-// Make sure we're exporting the component with the correct name
-export const QuestionCard: React.FC<QuestionCardProps> = ({
-  question,
-  onFavorite,
-  ...props
-}) => {
+export const QuestionCard = ({
+  id,
+  area,
+  tema,
+  pergunta,
+  respostas,
+  respostaCorreta,
+  comentario,
+  percentualAcertos,
+  onAnswer,
+  onNext
+}: QuestionCardProps) => {
+  const [selectedAnswer, setSelectedAnswer] = useState<string>("");
+  const [hasAnswered, setHasAnswered] = useState(false);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [timeSpent, setTimeSpent] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const {
-    user
-  } = useAuth();
+    toast
+  } = useToast();
   const isMobile = useIsMobile();
-  const [isFavorited, setIsFavorited] = useState(false);
-  const [loadingFavorite, setLoadingFavorite] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [answerSubmitError, setAnswerSubmitError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showAnswerAnimation, setShowAnswerAnimation] = useState(false);
+
+  // Fix: Using useEffect with proper cleanup for timer
   useEffect(() => {
-    // Add body class to hide mobile navigation when in question mode
-    document.body.classList.add('questions-active');
-    return () => {
-      // Clean up by removing the class when component unmounts
-      document.body.classList.remove('questions-active');
-    };
-  }, []);
-  useEffect(() => {
-    if (question) {
-      checkIfFavorited().then(setIsFavorited);
-      trackQuestionView();
+    if (!hasAnswered) {
+      timerRef.current = setInterval(() => {
+        setTimeSpent(prev => prev + 1);
+      }, 1000);
+      return () => {
+        if (timerRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+        }
+      };
     }
-  }, [question?.id, user]);
+  }, [hasAnswered]);
 
   // Reset state when question changes
   useEffect(() => {
-    setSelectedAnswer(null);
-    setIsAnswerCorrect(null);
-    setShowExplanation(false);
-    setAnswerSubmitError(null);
-    setIsSubmitting(false);
-    setShowAnswerAnimation(false);
-  }, [props.id, question?.id]);
-  const checkIfFavorited = async () => {
-    if (!user || !question) return false;
-    try {
-      const {
-        data,
-        error
-      } = await safeSelect<SupabaseFavorite>('questoes_favoritas', '*', query => query.eq('user_id', user.id).eq('questao_id', question.id));
-      if (error) throw error;
-      return data && data.length > 0;
-    } catch (error) {
-      console.error('Erro ao verificar favorito:', error);
-      return false;
+    setSelectedAnswer("");
+    setHasAnswered(false);
+    setTimeSpent(0);
+
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
     }
-  };
-  const trackQuestionView = async () => {
-    if (!user || !question) return;
-    try {
-      await safeInsert<SupabaseHistoryEntry>('historico_questoes', {
-        user_id: user.id,
-        questao_id: question.id,
-        visualizado_em: new Date().toISOString()
+
+    // Start new timer
+    timerRef.current = setInterval(() => {
+      setTimeSpent(prev => prev + 1);
+    }, 1000);
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [id]);
+  const handleSubmit = () => {
+    if (!selectedAnswer || hasAnswered) return;
+
+    // Stop timer
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+    const isCorrect = selectedAnswer === respostaCorreta;
+    setHasAnswered(true);
+    onAnswer(id, selectedAnswer, isCorrect);
+
+    // Show success/error toast
+    if (isCorrect) {
+      toast({
+        title: "Resposta correta!",
+        description: `Você acertou em ${formatTime(timeSpent)}`,
+        variant: "success"
       });
-    } catch (error) {
-      console.error('Erro ao registrar visualização:', error);
+    } else {
+      toast({
+        title: "Resposta incorreta",
+        description: "Verifique a explicação para entender o tema.",
+        variant: "destructive"
+      });
     }
   };
-  const toggleFavorite = async () => {
-    if (!user || !question) return false;
-    try {
-      setLoadingFavorite(true);
-      if (isFavorited) {
-        // Remove from favorites
-        await safeDelete<SupabaseFavorite>('questoes_favoritas', query => query.eq('user_id', user.id).eq('questao_id', question.id));
-        return false;
-      } else {
-        // Add to favorites
-        await safeInsert<SupabaseFavorite>('questoes_favoritas', {
-          user_id: user.id,
-          questao_id: question.id,
-          favoritado_em: new Date().toISOString()
-        });
-        return true;
+  const handleBookmark = () => {
+    setIsBookmarked(!isBookmarked);
+    toast({
+      title: isBookmarked ? "Questão removida dos favoritos" : "Questão adicionada aos favoritos",
+      variant: "default"
+    });
+  };
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+  const getAnswerStyle = (answer: string) => {
+    if (!hasAnswered) return "";
+    if (answer === respostaCorreta) return "border-success text-success";
+    if (answer === selectedAnswer) return "border-destructive text-destructive";
+    return "";
+  };
+
+  // Calculate animation variants for the card
+  const cardVariants = {
+    answered: {
+      scale: [1, 1.02, 1],
+      transition: {
+        duration: 0.3
       }
-    } catch (error) {
-      console.error('Erro ao favoritar questão:', error);
-      return isFavorited; // Return current state if there was an error
-    } finally {
-      setLoadingFavorite(false);
+    },
+    initial: {
+      scale: 1
     }
   };
-  const handleAnswerSelection = async (key: string) => {
-    if (selectedAnswer || isSubmitting) return; // Prevent multiple answers or while submitting
-
-    setSelectedAnswer(key);
-    const correct = key === props.respostaCorreta;
-    setIsAnswerCorrect(correct);
-    setShowAnswerAnimation(true);
-
-    // Delay showing explanation for animation effect
-    setTimeout(() => {
-      setShowExplanation(true);
-    }, 800);
-    if (props.onAnswer && props.id) {
-      try {
-        setIsSubmitting(true);
-        setAnswerSubmitError(null);
-        await props.onAnswer(props.id, key, correct);
-        setIsSubmitting(false);
-
-        // Show toast feedback
-        if (correct) {
-          toast.success("Resposta correta! 🎉");
-        } else {
-          toast.error("Resposta incorreta");
-        }
-      } catch (error) {
-        console.error("Erro ao registrar resposta:", error);
-        setIsSubmitting(false);
-        setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
-      }
-    }
-  };
-  const retryAnswerSubmission = async () => {
-    if (selectedAnswer && props.onAnswer && props.id) {
-      const correct = selectedAnswer === props.respostaCorreta;
-      try {
-        setIsSubmitting(true);
-        await props.onAnswer(props.id, selectedAnswer, correct);
-        setIsSubmitting(false);
-        setAnswerSubmitError(null);
-      } catch (error) {
-        console.error("Erro ao registrar resposta:", error);
-        setIsSubmitting(false);
-        setAnswerSubmitError("Erro ao registrar resposta. Toque para tentar novamente.");
-      }
-    }
-  };
-
-  // Handle the newer version of QuestionCard used in Questoes.tsx
-  if (props.id) {
-    return <Card className="w-full border shadow-lg transition-all duration-300 bg-card/90 backdrop-blur-sm border-primary/10 hover:border-primary/20">
-        <CardHeader className={`${isMobile ? 'pb-1 p-4' : 'pb-2'} bg-gradient-to-r from-primary/5 to-transparent`}>
-          <div className="flex justify-between items-center">
-            <Badge variant="outline" className="text-xs bg-primary/10 hover:bg-primary/20">
-              {props.area}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {props.tema}
-            </Badge>
-          </div>
-          <CardTitle className={`${isMobile ? 'text-lg' : 'text-xl'} mt-2`}>Questão</CardTitle>
-        </CardHeader>
-        <CardContent className={isMobile ? 'p-4 pt-0' : ''}>
-          <div className="space-y-3">
-            <div className={`${isMobile ? 'text-sm' : 'text-base'} leading-relaxed`}>{props.pergunta}</div>
-            
-            <div className="space-y-2 mt-4">
-              {props.respostas && Object.entries(props.respostas).map(([key, value]) => {
-              const isSelected = selectedAnswer === key;
-              const isCorrect = props.respostaCorreta === key;
-
-              // Base button styling
-              let buttonClassName = `w-full justify-start text-left ${isMobile ? 'py-2 px-3 text-xs' : 'py-3 px-4 text-sm'} hover:bg-primary/10 hover:border-primary/40 transition-colors rounded-lg shadow-sm`;
-
-              // Add styling based on selection and correctness
-              if (isSelected) {
-                buttonClassName += isCorrect ? " bg-green-500/20 border-green-500 shadow-md shadow-green-500/10" : " bg-red-500/20 border-red-500 shadow-md shadow-red-500/10";
-              } else if (selectedAnswer && isCorrect) {
-                // Highlight correct answer when user selected wrong
-                buttonClassName += " bg-green-500/20 border-green-500 shadow-md shadow-green-500/10";
-              }
-              return <motion.div key={key} animate={showAnswerAnimation && isSelected ? {
-                scale: [1, 1.02, 1],
-                transition: {
-                  duration: 0.4
-                }
-              } : {}}>
-                    <Button variant="outline" className={buttonClassName} onClick={() => handleAnswerSelection(key)} disabled={!!selectedAnswer || isSubmitting}>
-                      <span className="font-bold mr-2 min-w-[20px]">{key})</span> 
-                      <span className="line-clamp-3">{value}</span>
-                      {isSelected && (isCorrect ? <CheckCircle className="ml-auto h-5 w-5 flex-shrink-0 text-green-500" /> : <XCircle className="ml-auto h-5 w-5 flex-shrink-0 text-red-500" />)}
-                      {!isSelected && selectedAnswer && isCorrect && <CheckCircle className="ml-auto h-5 w-5 flex-shrink-0 text-green-500" />}
-                      {isSubmitting && isSelected && <Loader2 className="ml-auto h-4 w-4 animate-spin" />}
-                    </Button>
-                  </motion.div>;
-            })}
+  return <motion.div initial={{
+    opacity: 0,
+    y: 20
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} exit={{
+    opacity: 0,
+    y: -20
+  }} transition={{
+    duration: 0.3
+  }}>
+      <Card className="w-full gradient-card shadow-purple">
+        <motion.div variants={cardVariants} animate={hasAnswered ? "answered" : "initial"}>
+          <CardHeader>
+            <div className={cn("flex items-center justify-between gap-2 text-sm text-muted-foreground mb-2", isMobile && "flex-col items-start gap-1")}>
+              <div className="flex items-center gap-2">
+                {area && <span className="bg-primary/20 text-primary px-2 py-0.5 rounded-full text-xs backdrop-blur-sm">
+                    {area}
+                  </span>}
+                {tema && <>
+                    <span>•</span>
+                    <span>{tema}</span>
+                  </>}
+              </div>
+              <div className="flex items-center gap-2">
+                {percentualAcertos && !isMobile && <div className="flex items-center text-sm text-muted-foreground bg-card/50 px-2 py-1 rounded-full backdrop-blur-sm">
+                    <Award className="h-3 w-3 mr-1 text-secondary" />
+                    Taxa de acerto: {percentualAcertos}%
+                  </div>}
+                <div className="flex items-center text-xs bg-muted/50 px-2 py-1 rounded-full backdrop-blur-sm">
+                  <Timer className="h-3 w-3 mr-1" />
+                  {formatTime(timeSpent)}
+                </div>
+              </div>
             </div>
-            
-            {answerSubmitError}
-            
-            <AnimatePresence>
-              {showExplanation && props.comentario && <motion.div initial={{
-              opacity: 0,
-              height: 0
-            }} animate={{
-              opacity: 1,
-              height: "auto"
-            }} exit={{
-              opacity: 0,
-              height: 0
-            }} className={`mt-4 p-4 bg-muted/40 rounded-md border border-primary/20 ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                  <h4 className="font-medium mb-2 flex items-center gap-1.5 text-primary">
-                    <CheckCircle className="h-4 w-4 text-primary" />
-                    Explicação:
-                  </h4>
-                  <p className={`${isMobile ? 'text-xs' : 'text-sm'} leading-relaxed`}>{props.comentario}</p>
-                </motion.div>}
-            </AnimatePresence>
-            
-            {props.percentualAcertos && <div className={`mt-2 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex items-center gap-1`}>
-                <span>Taxa de acertos:</span>
-                <Badge variant={Number(props.percentualAcertos) > 70 ? "outline" : "outline"} className="text-xs">
-                  {props.percentualAcertos}%
-                </Badge>
-              </div>}
-          </div>
-        </CardContent>
-        <CardFooter className={`flex justify-between border-t border-muted/30 ${isMobile ? 'p-4 pt-3' : ''}`}>
-          
-          {selectedAnswer && props.onNext && <motion.div initial={{
-          opacity: 0,
-          y: 10
-        }} animate={{
-          opacity: 1,
-          y: 0
-        }} transition={{
-          delay: 0.3
-        }}>
-              <Button onClick={props.onNext} variant="default" size="sm" className="gap-1 bg-primary hover:bg-primary/90 text-white">
-                {isMobile ? "Próxima" : "Próxima Questão"}
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </motion.div>}
-        </CardFooter>
-      </Card>;
-  }
+            <CardTitle className="text-lg font-medium p-3 bg-primary/5 border-l-2 border-primary/30 rounded">
+              {pergunta}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 px-[4px]">
+            <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer} className="space-y-3" disabled={hasAnswered}>
+              {Object.entries(respostas).filter(([_, value]) => value !== null).map(([key, value]) => <motion.div key={key} className={cn("flex items-center space-x-3 rounded-lg border p-4 transition-colors shadow-sm", isMobile && "p-3 items-center", selectedAnswer === key && !hasAnswered && "bg-primary/10 border-primary/30", getAnswerStyle(key), hasAnswered && key === respostaCorreta && "bg-success/10 border-success", hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/10 border-destructive")} whileHover={!hasAnswered ? {
+              scale: 1.01,
+              backgroundColor: "rgba(139, 92, 246, 0.05)"
+            } : {}} whileTap={!hasAnswered ? {
+              scale: 0.99
+            } : {}}>
+                    <div className={cn("flex items-center justify-center min-w-6 h-6 rounded-full border", selectedAnswer === key && !hasAnswered && "bg-primary/20 border-primary", hasAnswered && key === respostaCorreta && "bg-success/20 border-success", hasAnswered && key === selectedAnswer && key !== respostaCorreta && "bg-destructive/20 border-destructive")}>
+                      <RadioGroupItem value={key} id={`answer-${key}`} className="mt-0" />
+                    </div>
+                    <Label htmlFor={`answer-${key}`} className={cn("flex-grow cursor-pointer", isMobile && "text-base")}>
+                      <div className="flex items-center">
+                        <span className="font-semibold mr-2">{key}.</span>
+                        <span>{value}</span>
+                      </div>
+                    </Label>
+                    {hasAnswered && key === respostaCorreta && <CheckCircle2 className="h-5 w-5 text-success" />}
+                    {hasAnswered && key === selectedAnswer && key !== respostaCorreta && <XCircle className="h-5 w-5 text-destructive" />}
+                  </motion.div>)}
+            </RadioGroup>
 
-  // Original QuestionCard implementation with improved design
-  return <Card className="w-full border shadow-md hover:shadow-lg transition-all duration-300 bg-card/90 backdrop-blur-sm">
-      <CardHeader className="pb-3">
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl">Questão</CardTitle>
-          <div className="flex gap-1">
-            {question?.ano && <Badge variant="outline" className="text-xs">
-                {question.ano}
-              </Badge>}
-            {question?.banca && <Badge variant="outline" className="text-xs">
-                {question.banca}
-              </Badge>}
-          </div>
-        </div>
-        <CardDescription className="flex gap-2 items-center">
-          {question?.area && <Badge variant="secondary" className="text-xs bg-primary/10">
-              {question.area}
-            </Badge>}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ScrollArea className="h-[300px] w-full rounded-md border border-border/50 bg-muted/5 p-4">
-          <div className="mb-4 leading-relaxed">{question?.questao}</div>
-        </ScrollArea>
-        
-        {question?.imagem_url && <div className="flex justify-center my-4">
-            <img src={question.imagem_url} alt="Questão" className="max-h-64 rounded-md border hover:shadow-md transition-all" />
-          </div>}
-        
-        <div className="space-y-3 mt-4">
-          <Button variant="outline" className="w-full justify-start text-left py-3 hover:bg-primary/10">
-            <span className="font-bold mr-2">A)</span> {question?.alternativa_a}
-          </Button>
-          <Button variant="outline" className="w-full justify-start text-left py-3 hover:bg-primary/10">
-            <span className="font-bold mr-2">B)</span> {question?.alternativa_b}
-          </Button>
-          <Button variant="outline" className="w-full justify-start text-left py-3 hover:bg-primary/10">
-            <span className="font-bold mr-2">C)</span> {question?.alternativa_c}
-          </Button>
-          <Button variant="outline" className="w-full justify-start text-left py-3 hover:bg-primary/10">
-            <span className="font-bold mr-2">D)</span> {question?.alternativa_d}
-          </Button>
-          {question?.alternativa_e && <Button variant="outline" className="w-full justify-start text-left py-3 hover:bg-primary/10">
-              <span className="font-bold mr-2">E)</span> {question?.alternativa_e}
-            </Button>}
-        </div>
-      </CardContent>
-      <CardFooter className="flex items-center justify-between border-t pt-4">
-        <div className="flex gap-2">
-          <Button variant="ghost" size="icon" onClick={async () => {
-          setLoadingFavorite(true);
-          const newFavoritedState = await toggleFavorite();
-          setIsFavorited(newFavoritedState);
-          setLoadingFavorite(false);
-          if (onFavorite) {
-            onFavorite(question.id, newFavoritedState);
-          }
-          if (newFavoritedState) {
-            toast.success("Questão favoritada");
-          } else {
-            toast.error("Questão removida dos favoritos");
-          }
-        }} disabled={loadingFavorite} className="hover:bg-primary/10">
-            {loadingFavorite ? <Loader2 className="h-4 w-4 animate-spin" /> : isFavorited ? <Heart className="h-4 w-4 fill-red-500 text-red-500" /> : <Heart className="h-4 w-4" />}
-          </Button>
-          <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-            <MessageSquare className="h-4 w-4" />
-          </Button>
-          <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-            <Share2 className="h-4 w-4" />
-          </Button>
-        </div>
-        <Button variant="ghost" size="icon" className="hover:bg-primary/10">
-          <Flag className="h-4 w-4" />
-        </Button>
-      </CardFooter>
-    </Card>;
+            {hasAnswered && <motion.div initial={{
+            opacity: 0,
+            height: 0
+          }} animate={{
+            opacity: 1,
+            height: "auto"
+          }} transition={{
+            duration: 0.3
+          }}>
+                <Alert className={cn(selectedAnswer === respostaCorreta ? "bg-success/10 text-success border-success/30" : "bg-destructive/10 text-destructive border-destructive/30", "backdrop-blur-sm")}>
+                  <AlertTitle className="flex items-center gap-2">
+                    {selectedAnswer === respostaCorreta ? <>
+                        <CheckCircle2 className="h-5 w-5" />
+                        Parabéns! Você acertou!
+                      </> : <>
+                        <XCircle className="h-5 w-5" />
+                        Não foi dessa vez...
+                      </>}
+                  </AlertTitle>
+                  {comentario && <AlertDescription className="mt-2 text-foreground">
+                      {comentario}
+                    </AlertDescription>}
+                </Alert>
+              </motion.div>}
+          </CardContent>
+          <CardFooter className={cn("flex flex-wrap gap-2", isMobile && "flex-col")}>
+            <Button onClick={handleSubmit} disabled={!selectedAnswer || hasAnswered} className={cn("flex-1", isMobile && "w-full", !hasAnswered && "gradient-button")} variant={!hasAnswered ? "default" : undefined}>
+              Responder
+            </Button>
+            
+            {hasAnswered && onNext && <Button onClick={onNext} variant="outline" className={cn("flex-1", isMobile && "w-full")}>
+                Próxima
+              </Button>}
+            
+            {!isMobile && <>
+                
+                
+                
+              </>}
+            
+            {isMobile && <div className="flex justify-between w-full">
+                <Button variant="outline" size="icon" onClick={handleBookmark} title={isBookmarked ? "Remover dos favoritos" : "Adicionar aos favoritos"}>
+                  {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4" />}
+                </Button>
+                
+                <Button variant="outline" size="icon" onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+              toast({
+                title: "Link copiado!",
+                description: "Link para esta questão copiado para a área de transferência"
+              });
+            }} title="Compartilhar esta questão">
+                  <Share2 className="h-4 w-4" />
+                </Button>
+              </div>}
+          </CardFooter>
+        </motion.div>
+      </Card>
+    </motion.div>;
 };
-export default QuestionCard;

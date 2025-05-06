@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import { Button } from '@/components/ui/button';
@@ -13,16 +14,14 @@ import {
   PenLine,
   Menu,
   Download,
-  Share2,
-  AlertCircle
+  Share2
 } from 'lucide-react';
 import { useTouchGestures } from '@/hooks/use-touch-gestures';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatPDFUrl, testPDFAccess } from '@/utils/pdf-url-utils';
 import './PDFViewer.css';
 
-// Set up the PDF.js worker - using minified version for consistency
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up the PDF.js worker
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 interface PDFViewerProps {
   livro: {
@@ -46,39 +45,21 @@ export function PDFViewer({
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [showControls, setShowControls] = useState<boolean>(true);
   const [showMobileTools, setShowMobileTools] = useState<boolean>(false);
-  const [pdfUrl, setPdfUrl] = useState<string>('');
-  const [isValidatingUrl, setIsValidatingUrl] = useState<boolean>(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Process and validate the URL
+  // Debugging PDF URL
   useEffect(() => {
-    if (!livro.pdf) {
-      setError('URL do PDF não fornecida');
-      setIsLoading(false);
-      setIsValidatingUrl(false);
-      return;
-    }
-
-    // Format the URL
-    const formattedUrl = formatPDFUrl(livro.pdf);
-    console.log("PDF URL after formatting:", formattedUrl);
-    setPdfUrl(formattedUrl);
-    
-    // Validate if URL is accessible
-    setIsValidatingUrl(true);
-    testPDFAccess(formattedUrl).then(isAccessible => {
-      setIsValidatingUrl(false);
-      if (!isAccessible) {
-        console.error("PDF URL is not accessible:", formattedUrl);
-        setError(`O PDF não está acessível. Por favor, verifique se o arquivo existe no servidor.`);
-        setIsLoading(false);
+    console.log("PDF URL:", livro.pdf);
+    // Validate if URL is properly formatted
+    if (livro.pdf) {
+      try {
+        new URL(livro.pdf);
+      } catch (err) {
+        console.error("PDF URL is not valid:", err);
+        setError('URL do PDF inválida ou mal formatada');
       }
-    }).catch(err => {
-      setIsValidatingUrl(false);
-      setError(`Erro ao verificar acessibilidade do PDF: ${err.message}`);
-      setIsLoading(false);
-    });
+    }
   }, [livro.pdf]);
 
   // Set up touch gestures for mobile
@@ -108,6 +89,26 @@ export function PDFViewer({
       document.body.classList.remove('pdf-viewer-open');
     };
   }, []);
+
+  // Validate if the PDF URL is valid
+  useEffect(() => {
+    const validateURL = async () => {
+      if (!livro.pdf || typeof livro.pdf !== 'string') {
+        setError('PDF URL inválida ou não disponível');
+        setIsLoading(false);
+        return;
+      }
+      try {
+        // Basic URL validation
+        new URL(livro.pdf);
+        setError(null);
+      } catch (err) {
+        console.error("Invalid PDF URL:", err);
+        setError('URL do PDF inválida');
+      }
+    };
+    validateURL();
+  }, [livro.pdf]);
 
   // Auto-hide controls after inactivity
   useEffect(() => {
@@ -144,10 +145,8 @@ export function PDFViewer({
   }: {
     numPages: number;
   }): void {
-    console.log("PDF loaded successfully. Total pages:", numPages);
     setNumPages(numPages);
     setIsLoading(false);
-    setError(null);
     
     // Show swipe hint for mobile users
     const isMobile = window.innerWidth <= 768;
@@ -167,8 +166,7 @@ export function PDFViewer({
 
   function onDocumentLoadError(error: Error): void {
     console.error('Error loading PDF:', error);
-    console.error('Attempted PDF URL:', pdfUrl);
-    setError(`Erro ao carregar o PDF: ${error.message}. Verifique se o arquivo existe no servidor.`);
+    setError('Erro ao carregar o PDF. Por favor, tente novamente mais tarde.');
     setIsLoading(false);
   }
 
@@ -243,23 +241,6 @@ export function PDFViewer({
     }, 3000);
   };
 
-  // Show validating spinner
-  if (isValidatingUrl) {
-    return (
-      <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4 mx-auto"></div>
-          <p className="text-lg">Verificando disponibilidade do PDF...</p>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="fixed inset-0 bg-background/90 backdrop-blur-sm z-50 flex flex-col">
       <motion.div 
@@ -285,10 +266,7 @@ export function PDFViewer({
               transition={{ duration: 0.3 }}
             >
               <h3 className="text-lg font-semibold mb-2">Erro ao carregar PDF</h3>
-              <p className="mb-4">{error}</p>
-              <div className="text-xs mb-4 bg-black/10 p-2 rounded overflow-auto max-h-32">
-                <code className="break-all whitespace-pre-wrap">{pdfUrl}</code>
-              </div>
+              <p>{error}</p>
               <Button className="mt-4" onClick={onClose}>
                 Voltar
               </Button>
@@ -296,7 +274,7 @@ export function PDFViewer({
           </div>
         ) : (
           <Document 
-            file={pdfUrl} 
+            file={livro.pdf} 
             onLoadSuccess={onDocumentLoadSuccess} 
             onLoadError={onDocumentLoadError} 
             loading={

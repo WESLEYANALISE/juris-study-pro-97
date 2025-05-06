@@ -1,8 +1,7 @@
-import React from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { ZoomIn, ZoomOut, ArrowUp } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { ArrowUp, ZoomIn, ZoomOut } from 'lucide-react';
+import { motion } from 'framer-motion';
 interface FloatingControlsProps {
   fontSize: number;
   increaseFontSize: () => void;
@@ -10,57 +9,49 @@ interface FloatingControlsProps {
   showBackToTop: boolean;
   scrollToTop: () => void;
 }
-export function FloatingControls({
+export const FloatingControls = ({
   fontSize,
   increaseFontSize,
   decreaseFontSize,
   showBackToTop,
   scrollToTop
-}: FloatingControlsProps) {
-  return <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 items-end">
-      <AnimatePresence>
-        {showBackToTop && <motion.div initial={{
-        opacity: 0,
-        scale: 0.8,
-        y: 10
-      }} animate={{
-        opacity: 1,
-        scale: 1,
-        y: 0
-      }} exit={{
-        opacity: 0,
-        scale: 0.8,
-        y: 10
-      }} transition={{
-        duration: 0.2
-      }} className="my-[49px]">
-            <Button variant="primary" size="icon" onClick={scrollToTop} className="rounded-full shadow-lg h-10 w-10">
-              <ArrowUp className="h-5 w-5" />
-            </Button>
-          </motion.div>}
-      </AnimatePresence>
-
+}: FloatingControlsProps) => {
+  return <>
+      {/* Font size controls (bottom left) - purple transparent background */}
       <motion.div initial={{
       opacity: 0,
-      x: 20
+      x: -20
     }} animate={{
-      opacity: 1,
+      opacity: 0.95,
       x: 0
-    }} transition={{
-      delay: 0.3,
-      duration: 0.3
-    }} className={cn("flex gap-2 p-1.5 rounded-lg backdrop-blur-lg", "bg-background/50 border border-primary/20", "shadow-lg")}>
-        <Button variant="glass" size="sm" onClick={decreaseFontSize} disabled={fontSize <= 12} className="h-9 w-9 p-0">
-          <ZoomOut className="h-4 w-4" />
+    }} whileHover={{
+      opacity: 1
+    }} className="fixed left-4 bottom-16 z-50 bg-[#9b87f5]/20 backdrop-blur shadow-lg rounded-full p-1 flex items-center gap-1 px-[3px] mx-0 border border-[#9b87f5]/30 my-[55px]">
+        <Button variant="ghost" size="icon" onClick={decreaseFontSize} className="h-8 w-8 rounded-full text-[#9b87f5]" title="Diminuir fonte">
+          <ZoomOut size={16} />
         </Button>
         
-        <div className="min-w-8 h-9 flex items-center justify-center font-medium text-sm bg-primary/10 rounded-md">
-          {fontSize}
-        </div>
+        <span className="text-xs font-medium px-1 text-[#9b87f5] dark:text-[#b5a6f7]">{fontSize}px</span>
         
-        <Button variant="glass" size="sm" onClick={increaseFontSize} disabled={fontSize >= 24} className="h-9 w-9 p-0">
-          <ZoomIn className="h-4 w-4" />
+        <Button variant="ghost" size="icon" onClick={increaseFontSize} className="h-8 w-8 rounded-full text-[#9b87f5]" title="Aumentar fonte">
+          <ZoomIn size={16} />
         </Button>
       </motion.div>
-    </div>;
-}
+      
+      {/* Back to top button (right side) - purple transparent */}
+      {showBackToTop && <motion.div initial={{
+      opacity: 0,
+      y: 20
+    }} animate={{
+      opacity: 0.95,
+      y: 0
+    }} whileHover={{
+      opacity: 1
+    }} className="fixed right-4 bottom-16 z-50">
+          <Button variant="outline" size="sm" onClick={scrollToTop} title="Voltar ao topo" className="rounded-full h-10 w-10 shadow-md bg-[#9b87f5]/20 backdrop-blur mx-[13px] border border-[#9b87f5]/30 text-[#9b87f5] my-[55px]">
+            <ArrowUp size={16} />
+          </Button>
+        </motion.div>}
+    </>;
+};
+export default FloatingControls;

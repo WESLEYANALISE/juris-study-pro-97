@@ -56,41 +56,23 @@ export const SimuladoSetup = ({
       }
     };
     
-    // Buscar informações sobre o último exame da OAB
+    // Tentativa de buscar informações sobre o último exame da OAB
     const fetchUltimoExame = async () => {
       try {
-        // Consulta específica para exames da OAB
-        if (categoria === 'OAB') {
-          // Usando uma abordagem diferente para buscar o último exame da OAB
-          // Buscamos o exame mais recente baseado na data
-          const { data, error } = await supabase
-            .from('simulado_edicoes')
-            .select('nome, ano, numero')
-            .eq('categoria', 'OAB')
-            .order('ano', { ascending: false })
-            .order('numero', { ascending: false })
-            .limit(1);
-            
-          if (error) throw error;
-          
-          // Atualizar com dados reais se disponíveis
-          if (data && data.length > 0) {
-            const exame = data[0];
-            setUltimoExame(`${exame.nome} (${exame.ano}/${exame.numero}) - Resultado em breve`);
-          } else {
-            setUltimoExame("XXXVIII Exame de Ordem - Previsto para Agosto 2025");
-          }
-        } else {
-          setUltimoExame(null);
-        }
+        // Esta seria uma integração real com dados da OAB
+        // Por enquanto, usamos um valor estático
+        setUltimoExame("XXXVIII Exame de Ordem - Previsto para Agosto 2025");
       } catch (error) {
         console.error("Erro ao buscar informações do último exame:", error);
-        setUltimoExame("Informações sobre o próximo exame não disponíveis");
       }
     };
     
     fetchEdicoes();
-    fetchUltimoExame();
+    if (categoria === "OAB") {
+      fetchUltimoExame();
+    } else {
+      setUltimoExame(null);
+    }
   }, [categoria]);
 
   const selectedEdicao = edicoes.find(e => e.id === edicaoId);

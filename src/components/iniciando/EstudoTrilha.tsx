@@ -4,14 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { BadgeCheck, BookOpen, Scale, Gavel, FileText, Library, BrainCircuit, HeartHandshake, ScrollText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { Progress } from '@/components/ui/progress';
-import { Link } from 'react-router-dom';
 
-interface EstudoTrilhaProps {
-  userProgress?: any | null;
-}
-
-export const EstudoTrilha = ({ userProgress }: EstudoTrilhaProps) => {
+export const EstudoTrilha = () => {
   const trilhas = [
     {
       nivel: "Básico",
@@ -20,25 +14,19 @@ export const EstudoTrilha = ({ userProgress }: EstudoTrilhaProps) => {
           titulo: "Introdução ao Direito", 
           descricao: "Conceitos fundamentais, fontes do Direito e normas jurídicas", 
           icon: BookOpen,
-          ordem: 1,
-          id: "intro-direito",
-          linkTo: "/curso/intro-direito"
+          ordem: 1
         },
         {
           titulo: "Direito Constitucional Básico", 
           descricao: "Constituição, princípios fundamentais e organização do Estado", 
           icon: ScrollText,
-          ordem: 2,
-          id: "constitucional-basico",
-          linkTo: "/curso/constitucional-basico"
+          ordem: 2
         },
         {
           titulo: "Direito Civil - Parte Geral", 
           descricao: "Pessoas, bens, fatos e negócios jurídicos", 
           icon: FileText,
-          ordem: 3,
-          id: "civil-geral",
-          linkTo: "/curso/civil-geral"
+          ordem: 3
         }
       ]
     },
@@ -49,25 +37,19 @@ export const EstudoTrilha = ({ userProgress }: EstudoTrilhaProps) => {
           titulo: "Direito Penal - Parte Geral", 
           descricao: "Princípios, teoria do crime e aplicação da lei penal", 
           icon: Gavel,
-          ordem: 4,
-          id: "penal-geral",
-          linkTo: "/curso/penal-geral"
+          ordem: 4
         },
         {
           titulo: "Direito Processual Civil", 
           descricao: "Procedimentos, petições e atos processuais", 
           icon: Scale,
-          ordem: 5,
-          id: "proc-civil",
-          linkTo: "/curso/proc-civil"
+          ordem: 5
         },
         {
           titulo: "Direito Administrativo", 
           descricao: "Administração pública, atos administrativos e licitações", 
           icon: Library,
-          ordem: 6,
-          id: "administrativo",
-          linkTo: "/curso/administrativo"
+          ordem: 6
         }
       ]
     },
@@ -78,51 +60,17 @@ export const EstudoTrilha = ({ userProgress }: EstudoTrilhaProps) => {
           titulo: "Direito Tributário", 
           descricao: "Sistema tributário, impostos e obrigações fiscais", 
           icon: BrainCircuit,
-          ordem: 7,
-          id: "tributario",
-          linkTo: "/curso/tributario"
+          ordem: 7
         },
         {
           titulo: "Direito do Trabalho", 
           descricao: "Relações de trabalho, direitos trabalhistas e previdência", 
           icon: HeartHandshake,
-          ordem: 8,
-          id: "trabalho",
-          linkTo: "/curso/trabalho"
+          ordem: 8
         }
       ]
     }
   ];
-
-  // Get progress for a specific course
-  const getCourseProgress = (courseId: string) => {
-    if (!userProgress) return 0;
-    
-    // Check if there is a progress field for this course
-    const progressField = `progresso_${courseId.replace(/-/g, '_')}`;
-    return userProgress[progressField] || 0;
-  };
-
-  // Check if a course is completed
-  const isCourseCompleted = (courseId: string) => {
-    return getCourseProgress(courseId) >= 100;
-  };
-
-  // Get the next recommended course based on progress
-  const getNextRecommendedCourse = () => {
-    // Flatten all courses
-    const allCourses = trilhas.flatMap(trilha => trilha.cards);
-    
-    // Find the first course that's not completed or has the lowest progress
-    return allCourses.reduce((recommended, current) => {
-      const currentProgress = getCourseProgress(current.id);
-      const recommendedProgress = recommended ? getCourseProgress(recommended.id) : 101;
-      
-      return currentProgress < recommendedProgress ? current : recommended;
-    }, null);
-  };
-
-  const nextCourse = getNextRecommendedCourse();
 
   return (
     <div className="space-y-8">
@@ -132,33 +80,6 @@ export const EstudoTrilha = ({ userProgress }: EstudoTrilhaProps) => {
           Um guia estruturado para iniciar seus estudos jurídicos na ordem mais didática.
         </p>
       </div>
-
-      {nextCourse && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-primary/10 to-primary/5 p-4 rounded-lg border border-primary/20 mb-8"
-        >
-          <h3 className="text-lg font-semibold mb-2">Próximo na sua jornada</h3>
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/20 p-3 rounded-full">
-              <nextCourse.icon className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h4 className="font-medium">{nextCourse.titulo}</h4>
-              <div className="mt-2 mb-2">
-                <Progress value={getCourseProgress(nextCourse.id)} className="h-2" />
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {getCourseProgress(nextCourse.id)}% completo
-              </div>
-            </div>
-            <Button asChild>
-              <Link to={nextCourse.linkTo}>Continuar</Link>
-            </Button>
-          </div>
-        </motion.div>
-      )}
 
       <div className="space-y-10">
         {trilhas.map((trilha, idx) => (
@@ -175,57 +96,23 @@ export const EstudoTrilha = ({ userProgress }: EstudoTrilhaProps) => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {trilha.cards.map((card) => {
-                const progress = getCourseProgress(card.id);
-                const completed = isCourseCompleted(card.id);
-                
-                return (
-                  <Card 
-                    key={card.titulo} 
-                    className={`border-2 transition-colors ${completed 
-                      ? "border-green-500/50 bg-green-50/10" 
-                      : progress > 0 
-                        ? "border-primary/50" 
-                        : "hover:border-primary/50"}`}
-                  >
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-center">
-                        <card.icon className={`h-8 w-8 ${completed ? "text-green-500" : "text-primary"}`} />
-                        <span className={`${completed 
-                          ? "bg-green-500/10 text-green-500" 
-                          : "bg-primary/10 text-primary"} text-xs px-2 py-1 rounded-full`}
-                        >
-                          {completed ? "Completo" : `Passo ${card.ordem}`}
-                        </span>
-                      </div>
-                      <CardTitle className="text-lg">{card.titulo}</CardTitle>
-                      <CardDescription>{card.descricao}</CardDescription>
-                      
-                      {progress > 0 && (
-                        <div className="mt-2">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span>Progresso</span>
-                            <span>{progress}%</span>
-                          </div>
-                          <Progress value={progress} className="h-1.5" />
-                        </div>
-                      )}
-                    </CardHeader>
-                    <CardContent>
-                      <Button 
-                        variant={completed ? "outline" : "default"} 
-                        size="sm" 
-                        className="w-full"
-                        asChild
-                      >
-                        <Link to={card.linkTo}>
-                          {completed ? "Revisar material" : progress > 0 ? "Continuar" : "Ver materiais"}
-                        </Link>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+              {trilha.cards.map((card) => (
+                <Card key={card.titulo} className="border-2 hover:border-primary/50 transition-colors">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between items-center">
+                      <card.icon className="h-8 w-8 text-primary" />
+                      <span className="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">
+                        Passo {card.ordem}
+                      </span>
+                    </div>
+                    <CardTitle className="text-lg">{card.titulo}</CardTitle>
+                    <CardDescription>{card.descricao}</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button variant="outline" size="sm" className="w-full">Ver materiais</Button>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </motion.div>
         ))}

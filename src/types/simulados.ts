@@ -5,7 +5,7 @@ export type SimuladoCategoria = 'OAB' | 'PRF' | 'PF' | 'TJSP' | 'JUIZ' | 'PROMOT
 
 export interface Questao {
   id: string;
-  ano?: string | number;
+  ano?: string;
   banca?: string;
   numero_questao?: string;
   questao: string;
@@ -14,15 +14,15 @@ export interface Questao {
   alternativa_c: string;
   alternativa_d: string;
   alternativa_e?: string;
-  resposta_correta?: string;
-  alternativa_correta?: string; // Some APIs use this field instead of resposta_correta
+  resposta_correta: string;
   explicacao?: string;
   area?: string;
   subarea?: string;
   nivel?: string;
+  // Add missing properties that are used in components
+  alternativa_correta?: string;
   imagem_url?: string;
   edicao_id?: string;
-  edicao?: string;
 }
 
 export interface RespostaUsuario {

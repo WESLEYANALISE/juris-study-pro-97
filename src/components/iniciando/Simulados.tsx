@@ -1,197 +1,171 @@
 
 import React from 'react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { GraduationCap, Clock, Award, FileCheck, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-interface SimuladosIniciantesProps {
-  stats?: {
-    questoesRespondidas?: number;
-    questoesCorretas?: number;
-  } | null;
-}
-
-export const SimuladosIniciantes = ({ stats }: SimuladosIniciantesProps) => {
+export const SimuladosIniciantes = () => {
+  const navigate = useNavigate();
+  
   const simulados = [
     {
-      id: "sim-inicial-intro",
-      titulo: "Conceitos Básicos do Direito",
-      descricao: "10 questões sobre fundamentos gerais e terminologia jurídica",
-      tempo: "15 minutos",
-      nivel: "Iniciante",
-      badges: ["Fundamentos", "Conceitos"],
+      id: 1,
+      titulo: "Noções Básicas de Direito Constitucional",
       questoes: 10,
-      acertos: 0
-    },
-    {
-      id: "sim-inicial-const",
-      titulo: "Constituição Brasileira",
-      descricao: "15 questões sobre princípios fundamentais e organização do Estado",
       tempo: "20 minutos",
-      nivel: "Iniciante",
-      badges: ["Constitucional", "Princípios"],
+      dificuldade: "Muito Fácil",
+      area: "Constitucional",
+      descricao: "Questões básicas sobre os princípios fundamentais e organização do Estado"
+    },
+    {
+      id: 2,
+      titulo: "Introdução ao Direito Civil",
       questoes: 15,
-      acertos: 0
+      tempo: "30 minutos",
+      dificuldade: "Fácil",
+      area: "Civil",
+      descricao: "Questões sobre personalidade, bens e fatos jurídicos"
     },
     {
-      id: "sim-inicial-civil",
-      titulo: "Direito Civil Introdutório",
-      descricao: "12 questões sobre pessoas, bens e negócios jurídicos",
-      tempo: "18 minutos",
-      nivel: "Intermediário",
-      badges: ["Civil", "Parte Geral"],
-      questoes: 12,
-      acertos: 0
-    },
-    {
-      id: "sim-inicial-penal",
-      titulo: "Introdução ao Direito Penal",
-      descricao: "10 questões sobre princípios e conceitos básicos do Direito Penal",
-      tempo: "15 minutos",
-      nivel: "Intermediário",
-      badges: ["Penal", "Princípios"],
+      id: 3,
+      titulo: "Conceitos Iniciais de Direito Penal",
       questoes: 10,
-      acertos: 0
+      tempo: "20 minutos",
+      dificuldade: "Fácil",
+      area: "Penal",
+      descricao: "Questões sobre princípios e aplicação da lei penal"
     }
   ];
 
-  // Calculate if user should be allowed to take more advanced simulados
-  const canTakeIntermediate = (stats?.questoesRespondidas || 0) >= 20;
-  
-  // Calculate correct percentage
-  const percentCorrect = stats?.questoesRespondidas 
-    ? Math.round((stats.questoesCorretas || 0) / stats.questoesRespondidas * 100) 
-    : 0;
-  
+  // Simulados "completados" para demonstração
+  const historico = [
+    {
+      id: 101,
+      titulo: "Teste de Conceitos Jurídicos Básicos",
+      questoes: 10,
+      acertos: 7,
+      data: "12/04/2025",
+      area: "Geral"
+    }
+  ];
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="mb-6">
         <h2 className="text-2xl font-bold mb-2">Simulados para Iniciantes</h2>
         <p className="text-muted-foreground">
-          Teste seus conhecimentos com simulados adaptados para quem está começando no Direito.
+          Questões com dificuldade adequada para quem está começando, com explicações detalhadas.
         </p>
       </div>
 
-      {stats && stats.questoesRespondidas > 0 && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="p-4 bg-primary/5 border border-primary/20 rounded-lg mb-6"
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="bg-primary/20 p-2 rounded-full">
-                <FileCheck className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-medium">Seu progresso</h3>
-                <p className="text-sm text-muted-foreground">
-                  {stats.questoesRespondidas} questões respondidas
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="bg-green-500/20 p-2 rounded-full">
-                <Award className="h-5 w-5 text-green-500" />
-              </div>
-              <div>
-                <h3 className="font-medium">Taxa de acerto</h3>
-                <p className="text-sm text-muted-foreground">
-                  {percentCorrect}% de acertos
-                </p>
-              </div>
-            </div>
-            
-            <Button asChild>
-              <Link to="/simulados">
-                Ver todos os simulados
-              </Link>
-            </Button>
-          </div>
-        </motion.div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {simulados.map((simulado, idx) => {
-          const isIntermediate = simulado.nivel === "Intermediário";
-          const isDisabled = isIntermediate && !canTakeIntermediate;
-          
-          return (
+      <div className="space-y-6">
+        <h3 className="text-lg font-medium flex items-center gap-2">
+          <AlertCircle className="h-5 w-5 text-primary" />
+          Simulados Disponíveis
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {simulados.map((simulado, idx) => (
             <motion.div
               key={simulado.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
             >
-              <Card className={isDisabled ? "opacity-70" : undefined}>
-                <CardHeader>
+              <Card className="h-full flex flex-col">
+                <CardHeader className="pb-2">
                   <div className="flex justify-between items-start mb-2">
-                    <Badge variant={isIntermediate ? "secondary" : "default"} className="mb-2">
-                      {simulado.nivel}
+                    <Badge variant="outline" className="bg-primary/10 text-primary hover:bg-primary/20">
+                      {simulado.area}
                     </Badge>
-                    <div className="flex items-center text-muted-foreground text-sm">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {simulado.tempo}
+                    <Badge variant={
+                      simulado.dificuldade === "Muito Fácil" ? "secondary" : 
+                      simulado.dificuldade === "Fácil" ? "outline" : "default"
+                    }>
+                      {simulado.dificuldade}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-lg">{simulado.titulo}</CardTitle>
+                </CardHeader>
+                
+                <CardContent className="pb-2 flex-grow">
+                  <p className="text-sm text-muted-foreground mb-4">{simulado.descricao}</p>
+                  <div className="flex justify-between text-sm">
+                    <div className="flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                      <span>{simulado.questoes} questões</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      <span>{simulado.tempo}</span>
                     </div>
                   </div>
-                  <CardTitle>{simulado.titulo}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm mb-3">
-                    {simulado.descricao}
-                  </p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {simulado.badges.map((badge) => (
-                      <span 
-                        key={badge} 
-                        className="text-xs py-1 px-2 bg-primary/10 text-primary rounded-full"
-                      >
-                        {badge}
-                      </span>
-                    ))}
-                  </div>
                 </CardContent>
-                <CardFooter className="flex justify-between">
-                  <div className="text-sm text-muted-foreground">
-                    {simulado.questoes} questões
-                  </div>
+                
+                <CardFooter>
                   <Button 
-                    asChild={!isDisabled} 
-                    disabled={isDisabled}
-                    variant={isDisabled ? "outline" : "default"}
+                    className="w-full" 
+                    onClick={() => navigate("/simulados")}
                   >
-                    {!isDisabled ? (
-                      <Link to={`/simulados/iniciante/sessao/${simulado.id}`}>
-                        Iniciar Simulado
-                      </Link>
-                    ) : (
-                      <span>Iniciar Simulado</span>
-                    )}
+                    Iniciar Simulado
                   </Button>
                 </CardFooter>
               </Card>
             </motion.div>
-          );
-        })}
+          ))}
+        </div>
       </div>
 
-      {!canTakeIntermediate && (
-        <div className="p-4 bg-amber-500/10 border border-amber-200 rounded-lg">
-          <div className="flex gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-            <div>
-              <h4 className="font-medium mb-1">Simulados intermediários bloqueados</h4>
-              <p className="text-sm text-muted-foreground">
-                Complete pelo menos 20 questões nos simulados introdutórios para desbloquear os simulados de nível intermediário.
-              </p>
-            </div>
+      {historico.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-primary" />
+            Simulados Realizados
+          </h3>
+          
+          <div className="space-y-4">
+            {historico.map((sim) => (
+              <Card key={sim.id} className="bg-card">
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div>
+                      <h4 className="font-medium">{sim.titulo}</h4>
+                      <div className="flex items-center text-sm text-muted-foreground gap-4">
+                        <span>{sim.data}</span>
+                        <Badge variant="outline">{sim.area}</Badge>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold">{sim.acertos}/{sim.questoes}</div>
+                      <div className="text-xs text-muted-foreground">acertos</div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Desempenho</span>
+                      <span className="font-medium">{Math.round((sim.acertos / sim.questoes) * 100)}%</span>
+                    </div>
+                    <Progress value={(sim.acertos / sim.questoes) * 100} className="h-2" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       )}
+
+      <div className="bg-card p-4 rounded-md border border-border mt-6">
+        <h4 className="font-medium mb-2">Recomendação para próximos passos</h4>
+        <p className="text-sm text-muted-foreground">
+          Após completar os simulados básicos, experimente aprofundar seus conhecimentos nas áreas de melhor desempenho 
+          através dos cursos específicos e materiais complementares disponíveis na plataforma.
+        </p>
+      </div>
     </div>
   );
 };

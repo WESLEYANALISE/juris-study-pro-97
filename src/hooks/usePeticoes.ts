@@ -4,30 +4,26 @@ import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-// Updated interface for petições from the database
-export interface Peticao {
+interface Peticao {
   id: string;
+  titulo: string;
+  descricao?: string;
+  categoria: string;
+  arquivo_url: string;
+  created_at?: string;
   area: string;
-  total: number;
-  link: string;
-  icon_color?: string;
-  tipo?: string;
+  tipo: string;
   sub_area?: string;
   tags?: string[];
-  titulo?: string;
-  descricao?: string;
-  arquivo_url?: string;
-  created_at?: string;
 }
 
-// Database record from the peticoes table
-export interface PeticaoRecord {
+// Record from the database
+interface PeticaoRecord {
   id: string;
   area: string;
-  total: number; 
-  link: string;
-  icon_color?: string;
-  last_updated?: string;
+  tipo: string;
+  documento: string;
+  // Other fields might be present but not required for our mapping
 }
 
 interface UsePeticoesOptions {
@@ -104,6 +100,10 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
           countQuery = countQuery.eq("area", filters.area);
         }
         
+        if (filters.tipo && filters.tipo !== "all") {
+          countQuery = countQuery.eq("tipo", filters.tipo);
+        }
+        
         const { count, error: countError } = await countQuery;
         
         if (countError) {
@@ -122,6 +122,10 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
           query = query.eq("area", filters.area);
         }
         
+        if (filters.tipo && filters.tipo !== "all") {
+          query = query.eq("tipo", filters.tipo);
+        }
+        
         // Apply pagination
         query = query
           .range((page - 1) * pageSize, page * pageSize - 1)
@@ -133,24 +137,24 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
           throw error;
         }
 
-        // Map the data to match our interface - cast first to solve TypeScript issues
-        return (data as unknown as PeticaoRecord[]).map(item => ({
-          id: String(item.id),
-          area: item.area,
-          total: item.total,
-          link: item.link,
-          icon_color: item.icon_color,
-          // Add these fields to match the expected interface
-          titulo: item.area,
+        // Map the data to match our interface
+        return (data as PeticaoRecord[] || []).map(item => ({
+          id: item.id || '',
+          titulo: item.tipo || '',
+          // Since descricao doesn't exist in the database, provide a default value
           descricao: 'Modelo de petição jurídica para uso profissional',
-          categoria: item.area,
-          arquivo_url: item.link,
-          created_at: item.last_updated || new Date().toISOString(),
-          // Set optional properties
-          tipo: "",
-          sub_area: undefined,
+          categoria: item.area || '',
+          arquivo_url: item.documento || '',
+          created_at: new Date().toISOString(),
+          area: item.area || '',
+          tipo: item.tipo || '',
+          // Extract potential sub-area from tipo field if available
+          sub_area: item.tipo && item.tipo.includes("-") 
+            ? item.tipo.split("-")[0].trim() 
+            : undefined,
+          // Add default tags based on area
           tags: [item.area]
-        })) as Peticao[];
+        }));
       } catch (error) {
         console.error("Error loading peticoes:", error);
         toast.error("Erro ao carregar petições");
@@ -166,6 +170,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
   const filteredPeticoes = useCallback(() => {
     return peticoes.filter((peticao) => {
       const matchesSearch = !filters.search || 
+        peticao.titulo.toLowerCase().includes(filters.search.toLowerCase()) ||
         peticao.area.toLowerCase().includes(filters.search.toLowerCase()) ||
         (peticao.descricao && peticao.descricao.toLowerCase().includes(filters.search.toLowerCase()));
       

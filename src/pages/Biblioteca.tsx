@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +37,6 @@ const getPdfUrl = (livroName: string): string => {
 };
 
 export default function Biblioteca() {
-  // ... keep existing code (state declarations, queries, etc)
   const [state, setState] = useState<State>({
     mode: "carousel"
   });

@@ -3,7 +3,17 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Curso } from "@/types/curso";
+
+interface Curso {
+  id: number;
+  area: string;
+  materia: string;
+  sequencia: number;
+  link: string;
+  capa: string;
+  sobre: string;
+  download: string | null;
+}
 
 interface CursoViewerState {
   curso: Curso | null;
@@ -14,7 +24,6 @@ interface CursoViewerState {
   hasNotes: boolean;
   notes: string;
   isComplete: boolean;
-  error: string | null;
 }
 
 export function useCursoViewer() {
@@ -34,7 +43,6 @@ export function useCursoViewer() {
     hasNotes: false,
     notes: "",
     isComplete: false,
-    error: null,
   });
 
   // Set mountedRef to false when component unmounts
@@ -74,7 +82,7 @@ export function useCursoViewer() {
     const getCurso = async () => {
       // Only fetch if we don't have curso data and have an ID
       if (!state.curso && cursoId) {
-        setState(prev => ({ ...prev, loading: true, error: null }));
+        setState(prev => ({ ...prev, loading: true }));
         try {
           console.log("Fetching curso with ID:", cursoId);
           const { data, error } = await supabase
@@ -90,40 +98,15 @@ export function useCursoViewer() {
           
           console.log("Curso data received:", data);
           
-          // Convert sequencia from string to number and add it to our curso object
-          const cursoData = {
-            ...data,
-            sequencia: data.sequencia ? parseInt(data.sequencia) : 0,
-            titulo: data.materia, // Map materia to titulo for compatibility
-            thumbnail: data.capa, // Map capa to thumbnail for compatibility
-          };
-          
-          // Check if course has a valid link
-          if (!cursoData.link) {
-            if (mountedRef.current) {
-              setState(prev => ({ 
-                ...prev, 
-                curso: cursoData as Curso, 
-                loading: false,
-                error: "Este curso não possui um link válido."
-              }));
-              toast.warning("Este curso não possui um link de conteúdo válido.");
-            }
-          } else {
-            // Only update state if component is still mounted
-            if (mountedRef.current) {
-              setState(prev => ({ ...prev, curso: cursoData as Curso, loading: false }));
-            }
+          // Only update state if component is still mounted
+          if (mountedRef.current) {
+            setState(prev => ({ ...prev, curso: data as Curso, loading: false }));
           }
         } catch (error) {
           console.error("Error fetching course:", error);
           if (mountedRef.current) {
             toast.error("Erro ao carregar curso. Por favor, tente novamente.");
-            setState(prev => ({ 
-              ...prev, 
-              loading: false, 
-              error: "Não foi possível carregar os dados do curso."
-            }));
+            setState(prev => ({ ...prev, loading: false }));
           }
         }
       }
@@ -133,19 +116,13 @@ export function useCursoViewer() {
   }, [cursoId, state.curso]);
 
   const handleStartCourse = useCallback(() => {
-    // Check if the course has a valid link
-    if (state.curso && !state.curso.link) {
-      toast.error("Este curso não possui um link válido. Por favor, tente novamente mais tarde.");
-      return;
-    }
-    
     // Batch state updates to avoid multiple renders
     setState(prev => ({ 
       ...prev, 
       menuOpen: false, 
       showCourse: true 
     }));
-  }, [state.curso]);
+  }, []);
 
   const handleBack = useCallback(() => {
     if (state.progress > 0 && cursoId) {

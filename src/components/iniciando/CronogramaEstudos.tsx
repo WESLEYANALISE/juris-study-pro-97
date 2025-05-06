@@ -1,180 +1,20 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from '@/components/ui/label';
-import { CalendarDays, CalendarClock, Calendar, Download, Check, Loader2 } from 'lucide-react';
+import { CalendarDays, CalendarClock, Calendar, Download, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/components/ui/use-toast';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
-interface CronogramaEstudosProps {
-  userId: string | null;
-}
-
-// Define an interface for the DB structure
-interface PlanoEstudoDB {
-  id?: string;
-  user_id: string;
-  tipo_plano?: string;
-  tempo_disponivel?: string;
-  area_interesse?: string[];
-  objetivo?: string;
-  nivel_atual?: string;
-  horas_estudo_semana?: number;
-  concluido?: boolean;
-  progress?: number;
-  created_at?: string;
-  updated_at?: string;
-  criado_em?: string;
-  ultima_atualizacao?: string;
-}
-
-// Our component state structure
-interface PlanoEstudoState {
-  id?: string;
-  tipo_plano: string;
-  tempo_disponivel: string;
-  criado_em: string;
-  ultima_atualizacao: string;
-}
-
-export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
+export const CronogramaEstudos = () => {
   const [tipoPlano, setTipoPlano] = useState('basico');
   const [tempoDisponivel, setTempoDisponivel] = useState('pouco');
   const [planoGerado, setPlanoGerado] = useState(false);
-  const [planoSalvo, setPlanoSalvo] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [existingPlan, setExistingPlan] = useState<PlanoEstudoState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const { toast } = useToast();
-
-  // Fetch user's existing plan if available
-  useEffect(() => {
-    const fetchExistingPlan = async () => {
-      if (!userId) {
-        setIsLoading(false);
-        return;
-      }
-      
-      try {
-        // Use a generic query approach with proper casting
-        const { data, error } = await supabase
-          .from('plano_estudos')
-          .select('*')
-          .eq('user_id', userId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-          
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error fetching study plan:', error);
-          toast({
-            title: 'Erro',
-            description: 'Não foi possível carregar seu plano de estudos',
-            variant: 'destructive'
-          });
-        }
-        
-        if (data) {
-          // Create a properly structured object that matches our expected state
-          const planData = data as PlanoEstudoDB;
-          setExistingPlan({
-            id: planData.id,
-            tipo_plano: planData.tipo_plano || 'basico',
-            tempo_disponivel: planData.tempo_disponivel || 'pouco',
-            criado_em: planData.criado_em || planData.created_at || new Date().toISOString(),
-            ultima_atualizacao: planData.ultima_atualizacao || planData.updated_at || new Date().toISOString()
-          });
-          
-          setTipoPlano(planData.tipo_plano || 'basico');
-          setTempoDisponivel(planData.tempo_disponivel || 'pouco');
-          setPlanoGerado(true);
-          setPlanoSalvo(true);
-        }
-      } catch (error) {
-        console.error('Error in fetchExistingPlan:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchExistingPlan();
-  }, [userId, toast]);
 
   const handleGerarPlano = () => {
     setPlanoGerado(true);
-    setPlanoSalvo(false);
   };
-  
-  const handleSalvarPlano = async () => {
-    if (!userId) {
-      toast({
-        title: 'É necessário estar logado',
-        description: 'Faça login para salvar seu plano de estudos',
-        variant: 'default'
-      });
-      return;
-    }
-    
-    setIsSaving(true);
-    
-    try {
-      const planoData: PlanoEstudoDB = {
-        user_id: userId,
-        tipo_plano: tipoPlano,
-        tempo_disponivel: tempoDisponivel,
-        objetivo: "Aprender conceitos básicos", // Adding required fields
-        nivel_atual: "Iniciante", // Adding required fields
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        criado_em: new Date().toISOString(),
-        ultima_atualizacao: new Date().toISOString()
-      };
-      
-      // Use a more generic approach without strict type checking
-      const { error } = await supabase
-        .from('plano_estudos')
-        .insert(planoData as any);
-        
-      if (error) {
-        console.error('Error saving study plan:', error);
-        toast({
-          title: 'Erro',
-          description: 'Não foi possível salvar seu plano de estudos',
-          variant: 'destructive'
-        });
-        return;
-      }
-      
-      setPlanoSalvo(true);
-      toast({
-        title: 'Plano salvo',
-        description: 'Seu plano de estudos foi salvo com sucesso',
-        variant: 'default'
-      });
-    } catch (error) {
-      console.error('Error in handleSalvarPlano:', error);
-      toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro ao salvar seu plano',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -253,13 +93,8 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
             <CardHeader className="pb-2">
               <div className="flex justify-between items-center">
                 <CardTitle>Seu Plano de Estudos Personalizado</CardTitle>
-                {planoSalvo && <Check className="h-5 w-5 text-green-500" />}
+                <Check className="h-5 w-5 text-green-500" />
               </div>
-              {existingPlan && (
-                <p className="text-sm text-muted-foreground">
-                  Criado em {format(new Date(existingPlan.criado_em), "d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                </p>
-              )}
             </CardHeader>
             <CardContent>
               <div className="py-2 px-4 bg-primary/10 rounded-md mb-4">
@@ -346,39 +181,14 @@ export const CronogramaEstudos = ({ userId }: CronogramaEstudosProps) => {
               </div>
             </CardContent>
             <CardFooter className="flex justify-between">
-              <Button 
-                variant="outline" 
-                className="flex items-center gap-2"
-                disabled={!userId}
-              >
+              <Button variant="outline" className="flex items-center gap-2">
                 <CalendarClock className="h-4 w-4" />
                 Adicionar ao Cronograma
               </Button>
-              
-              {!planoSalvo ? (
-                <Button 
-                  className="flex items-center gap-2"
-                  onClick={handleSalvarPlano}
-                  disabled={isSaving || !userId}
-                >
-                  {isSaving ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Salvando...
-                    </>
-                  ) : (
-                    <>
-                      <Download className="h-4 w-4" />
-                      Salvar Plano
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <Button className="flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Baixar PDF
-                </Button>
-              )}
+              <Button className="flex items-center gap-2">
+                <Download className="h-4 w-4" />
+                Baixar Plano PDF
+              </Button>
             </CardFooter>
           </Card>
 

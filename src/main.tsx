@@ -1,16 +1,23 @@
 
-import React from 'react'
-import ReactDOM from 'react-dom/client'
+import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
 import './index.css'
-import './styles/vademecum.css' // Add our new styles
-import { QueryClientProvider } from '@tanstack/react-query'
+import { AuthProvider } from "@/hooks/use-auth"
+import { QueryClientProvider } from "@tanstack/react-query"
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+import { registerSW } from './registerSW'
 import { queryClient } from './lib/query-client'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
+// Register service worker for PWA
+if (import.meta.env.PROD) {
+  registerSW();
+}
+
+createRoot(document.getElementById("root")!).render(
+  <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <App />
-    </QueryClientProvider>
-  </React.StrictMode>,
-)
+    </AuthProvider>
+    <ReactQueryDevtools initialIsOpen={false} />
+  </QueryClientProvider>
+);
