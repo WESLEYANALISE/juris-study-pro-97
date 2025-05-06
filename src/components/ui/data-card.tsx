@@ -65,12 +65,7 @@ export function DataCard({
   };
   return <motion.div {...motionProps}>
       <Card className={cn("overflow-hidden hover-lift backdrop-blur-sm border-white/5", variantStyles[variant], className)} {...props}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            {icon && <span className={cn("bg-card/50 p-1.5 rounded-full shadow-inner", variantIconStyles[variant])}>{icon}</span>}
-            {title}
-          </CardTitle>
-        </CardHeader>
+        
         
         {footer && <CardFooter className="border-t border-white/5 bg-muted/20 px-6 py-3">
             {footer}

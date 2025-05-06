@@ -25,20 +25,18 @@ import { useNavigate } from "react-router-dom";
 const PeticaoViewer = lazy(() => import("@/components/peticoes/PeticaoViewerExport").then(module => ({
   default: module.PeticaoViewer
 })));
-
 const Peticoes = () => {
   // Basic states
   const [viewerOpen, setViewerOpen] = useState(false);
   const [selectedPeticaoUrl, setSelectedPeticaoUrl] = useState<string | null>(null);
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  
+
   // Handle close viewer
   const handleCloseViewer = () => {
     setViewerOpen(false);
     setSelectedPeticaoUrl(null);
   };
-
   const [searchQuery, setSearchQuery] = useState("");
   const pageSize = 12;
   const navigate = useNavigate();
@@ -105,18 +103,12 @@ const Peticoes = () => {
       behavior: 'smooth'
     });
   };
-
-  return (
-    <div className="container max-w-7xl mx-auto py-[15px] px-[8px]">
-      {viewerOpen && selectedPeticaoUrl && (
-        <Suspense fallback={
-          <div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
+  return <div className="container max-w-7xl mx-auto py-[15px] px-[8px]">
+      {viewerOpen && selectedPeticaoUrl && <Suspense fallback={<div className="fixed inset-0 bg-background z-50 flex items-center justify-center">
             <LoadingSpinner size="lg" />
-          </div>
-        }>
+          </div>}>
           <PeticaoViewer url={selectedPeticaoUrl} onBack={handleCloseViewer} />
-        </Suspense>
-      )}
+        </Suspense>}
       
       <div className="relative">
         {/* Background texture */}
@@ -155,10 +147,7 @@ const Peticoes = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
-                <Button variant="primary" size="sm" className="gap-2">
-                  <BarChart3 className="h-4 w-4" />
-                  Estatísticas
-                </Button>
+                
               </div>
             </div>
             
@@ -319,8 +308,6 @@ const Peticoes = () => {
           </Tabs>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Peticoes;
