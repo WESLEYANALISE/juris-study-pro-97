@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 import { safeSelect } from './supabase-helpers';
 
 export interface LivroSupa {
-  id: string;
+  id: string; // Make sure this is defined as string to match our usage
   pdf_name: string;
   area: string;
   pdf_url: string;
@@ -220,8 +220,10 @@ export async function getFavoriteBooks(): Promise<LivroSupa[]> {
       return [];
     }
     
-    // Then get the actual book data
+    // Extract the IDs as strings for the IN query
     const bookIds = data.map(item => item.livro_id);
+    
+    // Then get the actual book data - ensure we're using the string "in" filter correctly
     const { data: booksData, error: booksError } = await supabase
       .from('livros_supa')
       .select('*')
@@ -232,7 +234,16 @@ export async function getFavoriteBooks(): Promise<LivroSupa[]> {
       return [];
     }
     
-    return booksData || [];
+    // Ensure the returned data matches our LivroSupa interface
+    return (booksData || []).map(book => ({
+      id: String(book.id), // Convert id to string to match our interface
+      pdf_name: book.pdf_name,
+      area: book.area,
+      pdf_url: book.pdf_url,
+      sinopse: book.sinopse,
+      capa: book.capa,
+      created_at: book.created_at
+    }));
   } catch (error) {
     console.error('Error in getFavoriteBooks:', error);
     return [];
@@ -266,8 +277,10 @@ export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa
       return [];
     }
     
-    // Get the actual book details
+    // Extract the IDs as strings for the IN query
     const bookIds = data.map(item => item.livro_id);
+    
+    // Get the actual book details
     const { data: booksData, error: booksError } = await supabase
       .from('livros_supa')
       .select('*')
@@ -278,14 +291,20 @@ export async function getRecentlyReadBooks(limit: number = 5): Promise<LivroSupa
       return [];
     }
     
-    // Combine the books data with reading progress
-    const booksWithProgress = booksData?.map(book => {
-      const progressItem = data.find(item => item.livro_id === book.id);
+    // Combine the books data with reading progress and ensure types match our interface
+    const booksWithProgress: LivroSupa[] = (booksData || []).map(book => {
+      const progressItem = data.find(item => item.livro_id === String(book.id));
       return {
-        ...book,
+        id: String(book.id), // Convert id to string to match our interface
+        pdf_name: book.pdf_name,
+        area: book.area,
+        pdf_url: book.pdf_url,
+        sinopse: book.sinopse,
+        capa: book.capa,
+        created_at: book.created_at,
         pagina_atual: progressItem?.pagina_atual
       };
-    }) || [];
+    });
     
     return booksWithProgress;
   } catch (error) {
