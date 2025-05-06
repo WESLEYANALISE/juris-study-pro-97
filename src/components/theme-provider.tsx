@@ -38,9 +38,6 @@ export function ThemeProvider({
     // Add dark theme
     root.classList.add("dark")
     
-    // Set custom primary color to match podcast interface
-    document.documentElement.style.setProperty('--primary', '139 92 246'); // purple-500
-    
     // Store theme preference
     localStorage.setItem(storageKey, theme)
   }, [theme, storageKey])

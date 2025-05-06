@@ -3,22 +3,19 @@ import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
-import { SoundscapeVisualization } from '@/components/ui/soundscape-theme';
 
 interface ArticleContentProps {
   articleNumber: string;
   articleText: string;
   fontSize: number;
   isHeading: boolean;
-  isPlaying?: boolean;
 }
 
 export const ArticleContent: React.FC<ArticleContentProps> = ({
   articleNumber,
   articleText,
   fontSize,
-  isHeading,
-  isPlaying = false
+  isHeading
 }) => {
   // Format paragraphs, bold "Parágrafo único", and handle highlights
   const formattedText = articleText
@@ -41,23 +38,11 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="relative">
-            <h3 className={cn(
-              "text-base font-medium px-4 py-1.5 rounded-md inline-block",
-              "bg-gradient-to-br from-primary/10 to-purple-900/10 border border-primary/20 backdrop-blur-sm"
-            )}>
-              Art. {articleNumber}
-            </h3>
-            
-            {isPlaying && (
-              <div className="absolute -top-2 -left-2">
-                <SoundscapeVisualization isPlaying={true} className="h-4 w-8" />
-              </div>
-            )}
-          </div>
+          <h3 className="text-base font-medium bg-primary/10 px-4 py-1.5 rounded-md inline-block border border-primary/20 backdrop-blur-sm">
+            Art. {articleNumber}
+          </h3>
         </motion.div>
       ) : null}
-      
       <motion.div 
         id={`article-content-${articleNumber}`}
         style={{ fontSize: `${fontSize}px` }} 
@@ -74,25 +59,12 @@ export const ArticleContent: React.FC<ArticleContentProps> = ({
       >
         {formattedText ? (
           <ReactMarkdown 
-            className={cn(
-              "prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4 article-content",
-              isPlaying && "bg-primary/5 p-2 rounded-md border border-primary/10"
-            )}
+            className="prose dark:prose-invert max-w-none prose-p:my-3 prose-headings:my-4 article-content"
           >
             {formattedText}
           </ReactMarkdown>
         ) : (
           <p className="text-muted-foreground italic">Texto do artigo não disponível</p>
-        )}
-        
-        {isPlaying && (
-          <div className="mt-3 flex justify-center">
-            <div className="sound-wave">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <div key={index} className="bar" />
-              ))}
-            </div>
-          </div>
         )}
       </motion.div>
     </motion.div>

@@ -1,26 +1,20 @@
 
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Bookmark, Clock, History, Book } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { SoundscapeVisualization } from '@/components/ui/soundscape-theme';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Clock, Bookmark, ArrowRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface VadeMecumSidebarProps {
   favorites: any[];
   recentHistory: any[];
 }
 
-export function VadeMecumSidebar({
-  favorites,
-  recentHistory
-}: VadeMecumSidebarProps) {
-  const isPlaying = true; // For demonstration purposes
-
+export function VadeMecumSidebar({ favorites, recentHistory }: VadeMecumSidebarProps) {
+  const navigate = useNavigate();
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -30,131 +24,130 @@ export function VadeMecumSidebar({
       }
     }
   };
-
+  
   const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 }
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0 }
+  };
+
+  const navigateToFavorites = () => {
+    navigate('/vademecum/favoritos');
+  };
+  
+  const navigateToHistory = () => {
+    navigate('/vademecum/historico');
+  };
+
+  const navigateToArticle = (lawName: string, articleId: string) => {
+    navigate(`/vademecum/${lawName}/${articleId}`);
   };
 
   return (
     <motion.div 
-      variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="w-full"
+      variants={containerVariants}
+      className="space-y-6 sticky top-4"
     >
-      <Card className="bg-gradient-to-br from-background/95 to-purple-950/20 border-primary/20 backdrop-blur-sm">
-        <CardContent className="p-4">
-          <div className="space-y-6">
-            {/* Favorites Section */}
-            <motion.div variants={itemVariants} className="space-y-3">
+      {/* Favorites Section */}
+      <motion.div variants={itemVariants}>
+        <Card className="backdrop-blur-sm bg-background/60 border-primary/20 overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/5 to-purple-500/5 p-4 border-b border-primary/10">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Bookmark className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-medium uppercase text-muted-foreground">
-                  Favoritos
-                </h3>
+                <h3 className="font-semibold text-foreground">Favoritos</h3>
               </div>
-              
-              <div className="space-y-2">
-                {favorites.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic px-2">
-                    Nenhum artigo favoritado
-                  </p>
-                ) : (
-                  <ScrollArea className="h-[180px] pr-3">
-                    {favorites.map((fav, index) => (
-                      <Link 
-                        key={index} 
-                        to={`/vademecum/${fav.law_name}/${fav.article_id}`}
-                        className="group"
-                      >
-                        <motion.div
-                          variants={itemVariants}
-                          className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 group-hover:border-primary/30 border border-transparent transition-all mb-2"
-                        >
-                          <div className={cn(
-                            "min-w-8 h-8 rounded-md flex items-center justify-center",
-                            "bg-purple-900/20 backdrop-blur-sm border border-primary/10 text-primary"
-                          )}>
-                            {fav.article_number.split(' ')[0]}
-                          </div>
-                          <div className="flex-1 overflow-hidden">
-                            <p className="text-xs font-medium truncate">{fav.article_text?.substring(0, 60)}...</p>
-                            <p className="text-[10px] text-muted-foreground truncate">{fav.law_name}</p>
-                          </div>
-                        </motion.div>
-                      </Link>
-                    ))}
-                  </ScrollArea>
-                )}
-              </div>
-            </motion.div>
-
-            {/* Recent History Section */}
-            <motion.div variants={itemVariants} className="space-y-3">
-              <div className="flex items-center gap-2">
-                <History className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-medium uppercase text-muted-foreground">
-                  Histórico Recente
-                </h3>
-              </div>
-              
-              <ScrollArea className="h-[160px] pr-3">
-                {recentHistory.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic px-2">
-                    Nenhum histórico recente
-                  </p>
-                ) : (
-                  recentHistory.map((item, index) => (
-                    <Link 
-                      key={index} 
-                      to={`/vademecum/${item.table_name}`}
-                      className="group"
-                    >
-                      <motion.div
-                        variants={itemVariants}
-                        className="flex items-center gap-2 p-2 rounded-md hover:bg-primary/10 group-hover:border-primary/30 border border-transparent transition-all mb-2"
-                      >
-                        <div className={cn(
-                          "min-w-8 h-8 rounded-md flex items-center justify-center",
-                          "bg-purple-900/20 backdrop-blur-sm border border-primary/10"
-                        )}>
-                          <Book className="h-4 w-4 text-primary" />
-                        </div>
-                        <div className="flex-1 overflow-hidden">
-                          <p className="text-xs font-medium truncate">{item.table_name}</p>
-                          <div className="flex items-center text-[10px] text-muted-foreground">
-                            <Clock className="h-3 w-3 mr-1" />
-                            <span>{new Date(item.viewed_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    </Link>
-                  ))
-                )}
-              </ScrollArea>
-            </motion.div>
-              
-            <motion.div 
-              variants={itemVariants}
-              className="text-center p-3 border border-dashed border-primary/20 rounded-lg mt-4"
-            >
-              <div className="flex flex-col items-center">
-                <div className="p-2 bg-primary/10 rounded-full">
-                  <SoundscapeVisualization isPlaying={isPlaying} className="h-4 w-12" />
-                </div>
-                <h4 className="text-sm font-medium mt-2">Áudio-Leitura</h4>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Disponível em breve
-                </p>
-                <Badge variant="outline" className="mt-2 text-[10px]">
-                  Novidade
-                </Badge>
-              </div>
-            </motion.div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs hover:bg-primary/10" 
+                onClick={navigateToFavorites}
+              >
+                Ver todos <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
+          
+          <ScrollArea className="h-44 p-2">
+            {favorites.length > 0 ? (
+              <div className="space-y-1 p-1">
+                {favorites.slice(0, 5).map((fav, index) => (
+                  <div
+                    key={fav.id || index}
+                    onClick={() => navigateToArticle(fav.law_name, fav.article_id)}
+                    className="group flex flex-col p-2 rounded-md hover:bg-primary/5 cursor-pointer transition-all"
+                  >
+                    <div className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      Art. {fav.article_number}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {fav.law_name?.replace(/_/g, ' ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full p-4">
+                <Bookmark className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
+                <p className="text-xs text-muted-foreground text-center">
+                  Nenhum favorito ainda. Marque artigos para acesso rápido.
+                </p>
+              </div>
+            )}
+          </ScrollArea>
+        </Card>
+      </motion.div>
+
+      {/* Recent History Section */}
+      <motion.div variants={itemVariants}>
+        <Card className="backdrop-blur-sm bg-background/60 border-primary/20 overflow-hidden">
+          <div className="bg-gradient-to-r from-primary/5 to-purple-500/5 p-4 border-b border-primary/10">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-primary" />
+                <h3 className="font-semibold text-foreground">Histórico</h3>
+              </div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-7 text-xs hover:bg-primary/10"
+                onClick={navigateToHistory}
+              >
+                Ver todos <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
+            </div>
+          </div>
+          
+          <ScrollArea className="h-44 p-2">
+            {recentHistory.length > 0 ? (
+              <div className="space-y-1 p-1">
+                {recentHistory.slice(0, 5).map((item, index) => (
+                  <div
+                    key={item.id || index}
+                    onClick={() => navigateToArticle(item.law_name, item.article_id)}
+                    className="group flex flex-col p-2 rounded-md hover:bg-primary/5 cursor-pointer transition-all"
+                  >
+                    <div className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      Art. {item.article_number}
+                    </div>
+                    <div className="text-xs text-muted-foreground truncate">
+                      {item.law_name?.replace(/_/g, ' ')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full p-4">
+                <Clock className="h-8 w-8 text-muted-foreground opacity-20 mb-2" />
+                <p className="text-xs text-muted-foreground text-center">
+                  Nenhuma visualização recente. Os artigos visualizados aparecerão aqui.
+                </p>
+              </div>
+            )}
+          </ScrollArea>
+        </Card>
+      </motion.div>
     </motion.div>
   );
 }
