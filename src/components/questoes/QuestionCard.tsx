@@ -4,12 +4,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from "@/components/ui/button";
 import { Heart, MessageSquare, Share2, Flag, CheckCircle, XCircle, Loader2, ChevronRight } from 'lucide-react';
 import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { safeSelect, safeInsert, safeDelete } from "@/utils/supabase-helpers";
 import { SupabaseFavorite, SupabaseHistoryEntry } from "@/types/supabase";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { motion, AnimatePresence } from "framer-motion";
 
 export interface QuestionCardProps {
   question?: any; // Question object from the original implementation
@@ -30,7 +31,6 @@ export interface QuestionCardProps {
 // Make sure we're exporting the component with the correct name
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite, ...props }) => {
   const { user } = useAuth();
-  const { toast } = useToast();
   const isMobile = useIsMobile();
   const [isFavorited, setIsFavorited] = useState(false);
   const [loadingFavorite, setLoadingFavorite] = useState(false);
@@ -39,6 +39,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   const [showExplanation, setShowExplanation] = useState(false);
   const [answerSubmitError, setAnswerSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showAnswerAnimation, setShowAnswerAnimation] = useState(false);
 
   useEffect(() => {
     // Add body class to hide mobile navigation when in question mode
@@ -64,6 +65,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     setShowExplanation(false);
     setAnswerSubmitError(null);
     setIsSubmitting(false);
+    setShowAnswerAnimation(false);
   }, [props.id, question?.id]);
 
   const checkIfFavorited = async () => {
@@ -140,7 +142,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
     setSelectedAnswer(key);
     const correct = key === props.respostaCorreta;
     setIsAnswerCorrect(correct);
-    setShowExplanation(true);
+    setShowAnswerAnimation(true);
+    
+    // Delay showing explanation for animation effect
+    setTimeout(() => {
+      setShowExplanation(true);
+    }, 800);
     
     if (props.onAnswer && props.id) {
       try {
@@ -148,6 +155,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
         setAnswerSubmitError(null);
         await props.onAnswer(props.id, key, correct);
         setIsSubmitting(false);
+        
+        // Show toast feedback
+        if (correct) {
+          toast.success("Resposta correta! 🎉");
+        } else {
+          toast.error("Resposta incorreta");
+        }
       } catch (error) {
         console.error("Erro ao registrar resposta:", error);
         setIsSubmitting(false);
@@ -175,8 +189,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
   // Handle the newer version of QuestionCard used in Questoes.tsx
   if (props.id) {
     return (
-      <Card className="w-full border shadow-md hover:shadow-lg transition-all duration-300 bg-card/90 backdrop-blur-sm">
-        <CardHeader className={`${isMobile ? 'pb-1 p-4' : 'pb-2'}`}>
+      <Card className="w-full border shadow-lg transition-all duration-300 bg-card/90 backdrop-blur-sm border-primary/10 hover:border-primary/20">
+        <CardHeader className={`${isMobile ? 'pb-1 p-4' : 'pb-2'} bg-gradient-to-r from-primary/5 to-transparent`}>
           <div className="flex justify-between items-center">
             <Badge variant="outline" className="text-xs bg-primary/10 hover:bg-primary/20">
               {props.area}
@@ -195,83 +209,112 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, onFavorite
               {props.respostas && Object.entries(props.respostas).map(([key, value]) => {
                 const isSelected = selectedAnswer === key;
                 const isCorrect = props.respostaCorreta === key;
-                let buttonClassName = `w-full justify-start text-left ${isMobile ? 'py-2 text-xs' : 'py-3 text-sm'} hover:bg-primary/10 hover:border-primary/40 transition-colors`;
+                
+                // Base button styling
+                let buttonClassName = `w-full justify-start text-left ${isMobile ? 'py-2 px-3 text-xs' : 'py-3 px-4 text-sm'} hover:bg-primary/10 hover:border-primary/40 transition-colors rounded-lg shadow-sm`;
                 
                 // Add styling based on selection and correctness
                 if (isSelected) {
                   buttonClassName += isCorrect 
-                    ? " bg-green-500/20 border-green-500" 
-                    : " bg-red-500/20 border-red-500";
+                    ? " bg-green-500/20 border-green-500 shadow-md shadow-green-500/10" 
+                    : " bg-red-500/20 border-red-500 shadow-md shadow-red-500/10";
                 } else if (selectedAnswer && isCorrect) {
                   // Highlight correct answer when user selected wrong
-                  buttonClassName += " bg-green-500/20 border-green-500";
+                  buttonClassName += " bg-green-500/20 border-green-500 shadow-md shadow-green-500/10";
                 }
                 
                 return (
-                  <Button 
+                  <motion.div
                     key={key}
-                    variant="outline" 
-                    className={buttonClassName}
-                    onClick={() => handleAnswerSelection(key)}
-                    disabled={!!selectedAnswer || isSubmitting}
+                    animate={showAnswerAnimation && isSelected ? {
+                      scale: [1, 1.02, 1],
+                      transition: { duration: 0.4 }
+                    } : {}}
                   >
-                    <span className="font-bold mr-2 min-w-[20px]">{key})</span> 
-                    <span className="line-clamp-3">{value}</span>
-                    {isSelected && (
-                      isCorrect 
-                        ? <CheckCircle className="ml-auto h-4 w-4 flex-shrink-0 text-green-500" /> 
-                        : <XCircle className="ml-auto h-4 w-4 flex-shrink-0 text-red-500" />
-                    )}
-                    {!isSelected && selectedAnswer && isCorrect && (
-                      <CheckCircle className="ml-auto h-4 w-4 flex-shrink-0 text-green-500" />
-                    )}
-                    {isSubmitting && isSelected && (
-                      <Loader2 className="ml-auto h-4 w-4 animate-spin" />
-                    )}
-                  </Button>
+                    <Button 
+                      variant="outline" 
+                      className={buttonClassName}
+                      onClick={() => handleAnswerSelection(key)}
+                      disabled={!!selectedAnswer || isSubmitting}
+                    >
+                      <span className="font-bold mr-2 min-w-[20px]">{key})</span> 
+                      <span className="line-clamp-3">{value}</span>
+                      {isSelected && (
+                        isCorrect 
+                          ? <CheckCircle className="ml-auto h-5 w-5 flex-shrink-0 text-green-500" /> 
+                          : <XCircle className="ml-auto h-5 w-5 flex-shrink-0 text-red-500" />
+                      )}
+                      {!isSelected && selectedAnswer && isCorrect && (
+                        <CheckCircle className="ml-auto h-5 w-5 flex-shrink-0 text-green-500" />
+                      )}
+                      {isSubmitting && isSelected && (
+                        <Loader2 className="ml-auto h-4 w-4 animate-spin" />
+                      )}
+                    </Button>
+                  </motion.div>
                 );
               })}
             </div>
             
             {answerSubmitError && (
-              <div 
-                className="p-2 bg-red-500/10 text-red-500 text-xs rounded-md text-center cursor-pointer"
+              <motion.div 
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-3 bg-red-500/15 text-red-600 text-xs rounded-md text-center cursor-pointer border border-red-500/30"
                 onClick={retryAnswerSubmission}
               >
                 {answerSubmitError}
-              </div>
+              </motion.div>
             )}
             
-            {showExplanation && props.comentario && (
-              <div className={`mt-4 p-3 bg-muted/40 rounded-md border border-muted ${isMobile ? 'text-xs' : 'text-sm'}`}>
-                <h4 className="font-medium mb-1 flex items-center gap-1">
-                  <CheckCircle className="h-3 w-3 text-green-500" />
-                  Explicação:
-                </h4>
-                <p className={isMobile ? 'text-xs' : 'text-sm'}>{props.comentario}</p>
-              </div>
-            )}
+            <AnimatePresence>
+              {showExplanation && props.comentario && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className={`mt-4 p-4 bg-muted/40 rounded-md border border-primary/20 ${isMobile ? 'text-xs' : 'text-sm'}`}
+                >
+                  <h4 className="font-medium mb-2 flex items-center gap-1.5 text-primary">
+                    <CheckCircle className="h-4 w-4 text-primary" />
+                    Explicação:
+                  </h4>
+                  <p className={`${isMobile ? 'text-xs' : 'text-sm'} leading-relaxed`}>{props.comentario}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
             
             {props.percentualAcertos && (
               <div className={`mt-2 ${isMobile ? 'text-xs' : 'text-sm'} text-muted-foreground flex items-center gap-1`}>
                 <span>Taxa de acertos:</span>
-                <Badge variant="outline" className="text-xs">
+                <Badge variant={Number(props.percentualAcertos) > 70 ? "outline" : "outline"} className="text-xs">
                   {props.percentualAcertos}%
                 </Badge>
               </div>
             )}
           </div>
         </CardContent>
-        <CardFooter className={`flex justify-between ${isMobile ? 'p-4 pt-2' : ''}`}>
-          <Button variant="ghost" size="sm" className="text-muted-foreground">
+        <CardFooter className={`flex justify-between border-t border-muted/30 ${isMobile ? 'p-4 pt-3' : ''}`}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:bg-primary/5">
             <Heart className="h-4 w-4 mr-1" />
             <span className="hidden sm:inline">Favoritar</span>
           </Button>
           {selectedAnswer && props.onNext && (
-            <Button onClick={props.onNext} variant="default" size="sm" className="gap-1">
-              {isMobile ? "Próxima" : "Próxima Questão"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Button 
+                onClick={props.onNext} 
+                variant="default" 
+                size="sm" 
+                className="gap-1 bg-primary hover:bg-primary/90 text-white"
+              >
+                {isMobile ? "Próxima" : "Próxima Questão"}
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </motion.div>
           )}
         </CardFooter>
       </Card>
