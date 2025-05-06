@@ -14,7 +14,7 @@ import { VadeMecumHeader } from "@/components/vademecum/VadeMecumHeader";
 import { VadeMecumError } from "@/components/vademecum/VadeMecumError";
 import { useVadeMecumArticlesOptimized } from "@/hooks/useVadeMecumArticlesOptimized";
 import { JuridicalBackgroundOptimized } from "@/components/ui/juridical-background-optimized";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { BookOpen } from "lucide-react";
 import { Container } from "@/components/ui/container";
 
@@ -22,9 +22,6 @@ import { Container } from "@/components/ui/container";
 type VadeMecumBackgroundVariant = "scales" | "books" | "constitution";
 
 const VadeMecumViewer = () => {
-  const navigate = useNavigate();
-  const { lawId } = useParams<{ lawId: string }>();
-
   // Menor tamanho inicial de lote para melhor performance
   const [visibleBatch, setVisibleBatch] = useState(15);
   const [recentHistory, setRecentHistory] = useState<any[]>([]);
@@ -90,11 +87,6 @@ const VadeMecumViewer = () => {
     // Using scales for all other types
     return "scales";
   }, [tableName]);
-
-  // Navigate to favorites page
-  const goToFavorites = useCallback(() => {
-    navigate('/vademecum/favoritos');
-  }, [navigate]);
 
   if (loading) {
     return (

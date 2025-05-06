@@ -30,6 +30,29 @@ const ALLOWED_TABLES = [
   "Constituição_Federal"
 ]; 
 
+// Função auxiliar para comparar números de artigos corretamente
+const compareArticleNumbers = (a: string, b: string): number => {
+  // Verificar se os valores são numéricos com possíveis pontos
+  const parseArticleNumber = (str: string): number[] => {
+    return str.split('.').map(part => parseInt(part) || 0);
+  };
+  
+  const aParts = parseArticleNumber(a);
+  const bParts = parseArticleNumber(b);
+  
+  // Comparar cada parte do número
+  for (let i = 0; i < Math.max(aParts.length, bParts.length); i++) {
+    const aVal = i < aParts.length ? aParts[i] : 0;
+    const bVal = i < bParts.length ? bParts[i] : 0;
+    
+    if (aVal !== bVal) {
+      return aVal - bVal;
+    }
+  }
+  
+  return 0;
+};
+
 export const useVadeMecumArticlesOptimized = (searchQuery: string) => {
   const { lawId } = useParams<{ lawId: string; }>();
   const [articles, setArticles] = useState<SupabaseArticle[]>([]);
@@ -99,6 +122,14 @@ export const useVadeMecumArticlesOptimized = (searchQuery: string) => {
           formal: item.formal || '',
           exemplo: item.exemplo || ''
         }));
+        
+        // Ordenar os artigos numericamente
+        processedData.sort((a, b) => {
+          if (!a.numero && !b.numero) return 0;
+          if (!a.numero) return 1;
+          if (!b.numero) return -1;
+          return compareArticleNumbers(a.numero, b.numero);
+        });
         
         setArticles(processedData);
         articlesCache.set(tableName, processedData);

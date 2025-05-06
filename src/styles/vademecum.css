@@ -146,3 +146,26 @@
 .progress-bar-fill {
   @apply bg-gradient-to-r from-primary/90 to-purple-600/90 h-full transition-all duration-500 ease-out;
 }
+
+/* Article list styling */
+.article-list-item {
+  @apply border-b border-primary/10 last:border-0 transition-colors;
+}
+
+/* Drawer styling for VadeMecum */
+.vademecum-drawer {
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.vademecum-drawer-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: var(--background);
+  backdrop-filter: blur(8px);
+}
+
+.vademecum-drawer-content {
+  padding-bottom: env(safe-area-inset-bottom, 20px);
+}
