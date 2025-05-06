@@ -49,8 +49,9 @@ const Peticoes = () => {
     initialFilters: {
       area: "",
       subArea: "",
-      search: searchQuery,
-      tags: []
+      tipo: "",
+      tags: [],
+      search: searchQuery
     },
     page: currentPage,
     pageSize
@@ -185,11 +186,12 @@ const Peticoes = () => {
                   <p className="text-muted-foreground mt-2 max-w-sm mx-auto">
                     Tente ajustar seus termos de busca ou limpar os filtros para ver mais resultados
                   </p>
-                  {filters.area || filters.subArea || filters.search || filters.tags.length > 0 && <Button variant="link" onClick={() => setFilters({
+                  {(filters.area || filters.subArea || filters.tipo || filters.search) && <Button variant="link" onClick={() => setFilters({
                 area: "",
                 subArea: "",
-                search: "",
-                tags: []
+                tipo: "",
+                tags: [],
+                search: ""
               })} className="mt-4">
                       Limpar todos os filtros
                     </Button>}
@@ -228,11 +230,11 @@ const Peticoes = () => {
                             {areaPeticoes.map(peticao => <PeticaoCard key={peticao.id} peticao={{
                         id: peticao.id,
                         area: peticao.area,
-                        sub_area: peticao.sub_area || "",
-                        tipo: peticao.tipo || peticao.area,
+                        sub_area: peticao.sub_area,
+                        tipo: peticao.tipo,
                         link: peticao.arquivo_url,
                         descricao: peticao.descricao || '',
-                        tags: peticao.tags || []
+                        tags: peticao.tags
                       }} onView={() => handleViewPeticao(peticao)} />)}
                           </div>
                         </motion.section>)}
@@ -315,7 +317,7 @@ const Peticoes = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {peticoes.map(peticao => <Card key={peticao.id} className="h-full flex flex-col bg-gradient-to-br from-background/60 to-background/90 border-white/5 shadow-lg hover:shadow-xl transition-all duration-300">
                         <CardHeader>
-                          <CardTitle>{peticao.tipo || peticao.area}</CardTitle>
+                          <CardTitle>{peticao.tipo}</CardTitle>
                           <CardDescription>{peticao.area}</CardDescription>
                         </CardHeader>
                         <CardContent className="flex-grow">

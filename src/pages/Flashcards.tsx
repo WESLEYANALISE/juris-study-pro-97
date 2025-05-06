@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,11 +6,12 @@ import { Card } from "@/components/ui/card";
 import { FlashcardSetup } from "@/components/flashcards/FlashcardSetup";
 import { FlashcardSession } from "@/components/flashcards/FlashcardSession";
 import { FlashcardExtendedStats } from "@/components/flashcards/FlashcardExtendedStats";
-import { FlashcardHeader } from "@/components/flashcards/FlashcardHeader";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Brain, Info, Sparkles, Award, BarChart } from "lucide-react";
 import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 type FlashCard = {
   id: string | number;
@@ -19,12 +21,6 @@ type FlashCard = {
   resposta: string;
   explicacao: string | null;
 };
-
-interface TemaCount {
-  area: string;
-  tema: string;
-  count: number;
-}
 
 export default function Flashcards() {
   const [studyConfig, setStudyConfig] = useState<{
@@ -51,56 +47,6 @@ export default function Flashcards() {
       if (error) throw error;
       return (data ?? []) as FlashCard[];
     }
-  });
-
-  // Calculate areas and temas for dropdown
-  const { data: areas = [], isLoading: isLoadingAreas } = useQuery({
-    queryKey: ["flashcard-areas"],
-    queryFn: async () => {
-      if (!allCards) return [];
-      
-      const areaMap = new Map<string, number>();
-      
-      allCards.forEach(card => {
-        const count = areaMap.get(card.area) || 0;
-        areaMap.set(card.area, count + 1);
-      });
-      
-      return Array.from(areaMap.entries())
-        .map(([area, count]) => ({ area, count }))
-        .sort((a, b) => a.area.localeCompare(b.area));
-    },
-    enabled: !!allCards,
-  });
-  
-  // Update areas with required tema property
-  const areasWithTema = areas.map(area => ({
-    ...area,
-    tema: "" // Add tema property with empty string as default value
-  }));
-
-  const { data: temas = [], isLoading: isLoadingTemas } = useQuery<TemaCount[]>({
-    queryKey: ["flashcard-temas"],
-    queryFn: async () => {
-      if (!allCards) return [];
-      
-      const temaMap = new Map<string, { area: string; tema: string; count: number }>();
-      
-      allCards.forEach(card => {
-        const key = `${card.area}-${card.tema}`;
-        const existing = temaMap.get(key);
-        
-        if (existing) {
-          temaMap.set(key, { ...existing, count: existing.count + 1 });
-        } else {
-          temaMap.set(key, { area: card.area, tema: card.tema, count: 1 });
-        }
-      });
-      
-      return Array.from(temaMap.values())
-        .sort((a, b) => a.tema.localeCompare(b.tema));
-    },
-    enabled: !!allCards,
   });
 
   // Fetch user stats
@@ -167,11 +113,43 @@ export default function Flashcards() {
       <div className="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-purple-900/20 to-transparent -z-10 pointer-events-none" />
       
       {/* Header with stats toggle */}
-      <FlashcardHeader 
-        userStats={userStats} 
-        onShowStats={() => setShowStats(!showStats)} 
-        isMobile={isMobile} 
-      />
+      <div className="flex justify-between items-center mb-6">
+        <motion.div 
+          className="flex items-center gap-2" 
+          initial={{ opacity: 0, x: -20 }} 
+          animate={{ opacity: 1, x: 0 }} 
+          transition={{ duration: 0.3 }}
+        >
+          <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center">
+            <Brain className="h-6 w-6 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold">Flashcards</h1>
+          
+          {userStats && !studyConfig && (
+            <Badge 
+              variant="outline" 
+              className="ml-2 bg-primary/10 border-primary/20 text-muted-foreground"
+            >
+              Sequência: {userStats.streak} dias
+            </Badge>
+          )}
+        </motion.div>
+        
+        {!isMobile && !studyConfig && (
+          <motion.button 
+            onClick={() => setShowStats(!showStats)} 
+            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors" 
+            initial={{ opacity: 0, x: 20 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            transition={{ duration: 0.3, delay: 0.1 }} 
+            whileHover={{ scale: 1.05 }} 
+            whileTap={{ scale: 0.95 }}
+          >
+            <BarChart className="h-4 w-4" />
+            {showStats ? "Ocultar estatísticas" : "Ver estatísticas"}
+          </motion.button>
+        )}
+      </div>
       
       {/* Quick stats row (when not in study session) */}
       {!studyConfig && userStats && (
@@ -226,20 +204,14 @@ export default function Flashcards() {
       {/* Stats and Setup layout */}
       {!studyConfig && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main setup area */}
+          {/* On mobile, show stats toggle and drawer */}
           <motion.div 
             className="md:col-span-2" 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.3, delay: 0.2 }}
           >
-            <FlashcardSetup 
-              onStartStudy={handleStartStudy} 
-              areas={areas}
-              temas={temas}
-              isMobile={isMobile}
-              loading={isLoading || isLoadingAreas || isLoadingTemas}
-            />
+            <FlashcardSetup onStartStudy={handleStartStudy} />
           </motion.div>
           
           {/* Stats on desktop */}
@@ -270,20 +242,18 @@ export default function Flashcards() {
       )}
 
       {/* Study session */}
-      {studyConfig && filteredCards.length > 0 && (
+      {studyConfig && (
         <motion.div 
           initial={{ opacity: 0, y: 20 }} 
           animate={{ opacity: 1, y: 0 }} 
           transition={{ duration: 0.3 }}
         >
           <FlashcardSession 
-            flashcards={filteredCards}
-            onComplete={(results) => {
-              // Handle session completion
-              console.log('Session completed with results:', results);
-              handleExit();
-            }}
-            onExit={handleExit}
+            cards={filteredCards} 
+            showAnswers={studyConfig.showAnswers} 
+            studyMode={studyConfig.studyMode} 
+            autoNarrate={studyConfig.autoNarrate} 
+            onExit={handleExit} 
           />
         </motion.div>
       )}

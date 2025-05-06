@@ -1,184 +1,279 @@
-import React from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { motion, AnimatePresence } from "framer-motion";
-import { Eye, BookOpen, Info, RotateCcw } from "lucide-react";
 
-interface FlashcardViewProps {
-  question: string;
-  answer: string;
-  explanation?: string;
-  showAnswer: boolean;
-  onShowAnswer: () => void;
+import { useState } from "react";
+import { Card } from "@/components/ui/card";
+import { motion } from "framer-motion";
+import { BookOpen, Eye, EyeOff, Volume2, VolumeX } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { TextToSpeechService } from "@/services/textToSpeechService";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { Slider } from "@/components/ui/slider";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+interface FlashCardViewProps {
+  flashcard: {
+    id: string | number;
+    pergunta: string;
+    resposta: string;
+    explicacao?: string | null;
+    tema: string;
+    area: string;
+  };
+  index: number;
+  total: number;
+  showAnswer?: boolean;
+  onShowAnswer?: () => void;
+  onNext?: () => void;
+  fullWidth?: boolean;
+  hideControls?: boolean;
+  autoNarrate?: boolean;
 }
 
 export function FlashcardView({
-  question,
-  answer,
-  explanation,
-  showAnswer,
+  flashcard,
+  index,
+  total,
+  showAnswer = false,
   onShowAnswer,
-}: FlashcardViewProps) {
-  const [showInfo, setShowInfo] = React.useState(false);
-  const [isFlipped, setIsFlipped] = React.useState(false);
+  onNext,
+  fullWidth = false,
+  hideControls = false,
+  autoNarrate = false
+}: FlashCardViewProps) {
+  const [showExplanation, setShowExplanation] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [narrationRate, setNarrationRate] = useState(1.0);
+  const isMobile = useIsMobile();
 
-  const handleToggleFlip = () => {
-    if (!showAnswer) {
-      onShowAnswer();
-    } else {
-      setIsFlipped(!isFlipped);
+  // Auto-narrate when card shows or answer appears
+  const handleAutoNarrate = async () => {
+    if (autoNarrate && !isSpeaking) {
+      const textToNarrate = showAnswer 
+        ? `Pergunta: ${flashcard.pergunta}. Resposta: ${flashcard.resposta}`
+        : flashcard.pergunta;
+      
+      await handleSpeak(textToNarrate);
     }
   };
 
-  const toggleInfo = () => {
-    if (showAnswer) {
-      setShowInfo(!showInfo);
+  // Effect for auto-narration
+  useState(() => {
+    if (autoNarrate) {
+      handleAutoNarrate();
     }
+  });
+
+  const handleSpeak = async (text: string) => {
+    if (isSpeaking) {
+      TextToSpeechService.stop();
+      setIsSpeaking(false);
+      return;
+    }
+    
+    setIsSpeaking(true);
+    await TextToSpeechService.speak(text, { rate: narrationRate });
+    setIsSpeaking(false);
   };
 
-  return (
-    <div className="flex flex-col items-center space-y-4">
-      <motion.div
-        className="w-full perspective"
-        initial={false}
-        animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.5 }}
-        style={{ perspective: 1200 }}
+  const handleNarrateCard = async () => {
+    const textToNarrate = showAnswer 
+      ? `Pergunta: ${flashcard.pergunta}. Resposta: ${flashcard.resposta}`
+      : flashcard.pergunta;
+    
+    await handleSpeak(textToNarrate);
+  };
+
+  return <motion.div 
+      className={cn("flex flex-col items-center", fullWidth ? "w-full" : "")}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+    >
+      <motion.div 
+        initial={{
+          opacity: 0,
+          y: 20
+        }} 
+        animate={{
+          opacity: 1,
+          y: 0
+        }} 
+        exit={{
+          opacity: 0,
+          y: -20
+        }} 
+        transition={{
+          duration: 0.3
+        }} 
+        className={cn("w-full", fullWidth ? "" : "max-w-xl")}
       >
-        <div className="w-full relative preserve-3d" style={{ transformStyle: "preserve-3d" }}>
-          {/* Card Front (Question) */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key="question"
-              className={`absolute w-full ${isFlipped ? "backface-hidden" : ""}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: isFlipped ? 0 : 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ 
-                backfaceVisibility: "hidden",
-                transform: isFlipped ? "rotateY(180deg)" : "rotateY(0deg)"
-              }}
-            >
-              <Card className="p-6 min-h-[200px] flex flex-col justify-between">
-                <div className="flex justify-between items-start">
-                  <div className="text-sm font-medium text-muted-foreground mb-4">Pergunta</div>
-                  {showAnswer && (
-                    <Button 
-                      onClick={handleToggleFlip} 
-                      size="sm" 
-                      variant="ghost"
-                      className="text-xs"
-                    >
-                      <RotateCcw className="h-3 w-3 mr-1" />
-                      Virar
-                    </Button>
-                  )}
-                </div>
-                
-                <div className="flex-grow flex items-center justify-center py-4">
-                  <p className="text-lg text-center font-medium">{question}</p>
-                </div>
-                
-                <div className="flex justify-center mt-4">
-                  {!showAnswer ? (
-                    <Button 
-                      onClick={onShowAnswer} 
-                      className="w-full max-w-[200px]"
-                      size="lg"
-                    >
-                      <Eye className="mr-2 h-4 w-4" /> Ver resposta
-                    </Button>
-                  ) : (
-                    <Button 
-                      onClick={handleToggleFlip} 
-                      variant="outline" 
-                      className="w-full max-w-[200px]"
-                      size="lg"
-                    >
-                      <BookOpen className="mr-2 h-4 w-4" /> Ver resposta
-                    </Button>
-                  )}
-                </div>
-              </Card>
-            </motion.div>
-          </AnimatePresence>
+        <Card 
+          className="relative bg-gradient-to-br from-[#1A1633] via-[#262051] to-[#1A1633] shadow-lg border border-primary/10 rounded-xl overflow-hidden hover:shadow-purple/10"
+          style={{
+            minHeight: 360
+          }}
+        >
+          <div className="text-primary font-medium px-6 py-3 text-sm border-b border-primary/10 flex items-center justify-between bg-background/5 backdrop-blur-sm">
+            <div className="flex items-center gap-2">
+              <span className="text-xs bg-primary/15 px-2 py-0.5 rounded-full">{flashcard.area}</span>
+              <span className="text-muted-foreground text-xs font-normal hidden sm:inline">{flashcard.tema}</span>
+            </div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <span>{index + 1}/{total}</span>
+            </div>
+          </div>
+          
+          <div className="p-5 sm:p-8 flex flex-col items-center justify-center">
+            <div className="text-xl font-medium text-center mb-8 p-4 rounded-lg bg-[#1A1633]/50 border border-primary/10 w-full">
+              {flashcard.pergunta}
+            </div>
 
-          {/* Card Back (Answer) */}
-          <AnimatePresence mode="wait">
-            {showAnswer && (
-              <motion.div
-                key="answer"
-                className={`absolute w-full ${!isFlipped ? "backface-hidden" : ""}`}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isFlipped ? 1 : 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.3 }}
-                style={{ 
-                  backfaceVisibility: "hidden",
-                  transform: isFlipped ? "rotateY(0deg)" : "rotateY(180deg)"
+            <div className="flex flex-col items-center w-full">
+              {showAnswer ? <div className="flex flex-col items-center w-full">
+                  <motion.div 
+                    initial={{
+                      opacity: 0,
+                      scale: 0.95
+                    }} 
+                    animate={{
+                      opacity: 1,
+                      scale: 1
+                    }} 
+                    transition={{
+                      duration: 0.3
+                    }} 
+                    className="text-xl bg-gradient-to-br from-[#2A1B45] to-[#191328] py-6 px-7 text-foreground font-medium border border-primary/15 text-center mb-6 w-full shadow-sm rounded-2xl"
+                  >
+                    {flashcard.resposta}
+                  </motion.div>
+                  
+                  {flashcard.explicacao && <motion.div 
+                    initial={{
+                      opacity: 0,
+                      height: 0
+                    }} 
+                    animate={{
+                      opacity: showExplanation ? 1 : 0,
+                      height: showExplanation ? "auto" : 0
+                    }} 
+                    transition={{
+                      duration: 0.3
+                    }} 
+                    className="w-full overflow-hidden"
+                  >
+                      <div className="text-sm mt-2 text-muted-foreground p-4 bg-[#1A1633]/50 rounded border-l-2 border-primary/30 w-full">
+                        <div className="font-medium mb-1 flex items-center gap-1">
+                          <BookOpen className="h-3 w-3" /> Explicação:
+                        </div>
+                        {flashcard.explicacao}
+                      </div>
+                    </motion.div>}
+                  
+                  {flashcard.explicacao && <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => setShowExplanation(!showExplanation)} 
+                    className="mt-2"
+                  >
+                      {showExplanation ? 'Ocultar explicação' : 'Mostrar explicação'}
+                    </Button>}
+                </div> : <motion.div 
+                whileHover={{
+                  scale: 1.03
+                }} 
+                whileTap={{
+                  scale: 0.97
                 }}
               >
-                <Card className="p-6 min-h-[200px] flex flex-col justify-between bg-primary/5">
-                  <div className="flex justify-between items-start">
-                    <div className="text-sm font-medium text-primary mb-4">Resposta</div>
-                    <Button 
-                      onClick={handleToggleFlip} 
-                      size="sm" 
-                      variant="ghost"
-                      className="text-xs"
-                    >
-                      <RotateCcw className="h-3 w-3 mr-1" />
-                      Virar
-                    </Button>
-                  </div>
-                  
-                  <div className="flex-grow flex items-center justify-center py-4">
-                    {showInfo && explanation ? (
-                      <div className="text-center">
-                        <p className="text-lg font-medium mb-4">{answer}</p>
-                        <div className="border-t border-primary/20 pt-3 mt-3">
-                          <p className="text-muted-foreground text-sm italic">{explanation}</p>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-lg text-center font-medium">{answer}</p>
-                    )}
-                  </div>
-                  
-                  <div className="flex justify-center mt-4">
-                    {explanation && (
-                      <Button 
-                        onClick={toggleInfo} 
-                        variant="ghost" 
-                        className="w-full max-w-[200px]"
-                      >
-                        <Info className={`${showInfo ? "text-primary" : ""} mr-2 h-4 w-4`} /> 
-                        {showInfo ? "Ocultar explicação" : "Ver explicação"}
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                  <Button 
+                    variant="default" 
+                    size="lg" 
+                    className="py-6 px-12 text-base font-medium mt-4 bg-gradient-to-r from-primary/90 to-purple-600/90 shadow-lg hover:shadow-purple-600/20 border border-primary/20 transition-all duration-300" 
+                    onClick={onShowAnswer}
+                  >
+                    <Eye className="mr-2 h-5 w-5" />
+                    Ver resposta
+                  </Button>
+                </motion.div>}
+            </div>
+          </div>
+        </Card>
       </motion.div>
 
-      {/* Fixed style tag - removed 'jsx' and 'global' props */}
-      <style>
-        {`
-        .preserve-3d {
-          transform-style: preserve-3d;
-        }
-        .perspective {
-          perspective: 1200px;
-        }
-        .backface-hidden {
-          backface-visibility: hidden;
-        }
-      `}
-      </style>
-    </div>
-  );
+      {/* Control buttons below the card */}
+      {!hideControls && <div className="flex justify-center gap-3 mt-4 w-full">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button 
+                variant="outline" 
+                size={isMobile ? "default" : "lg"} 
+                className={cn(
+                  "flex-1 max-w-[180px] bg-[#1A1633]/50 border-primary/10",
+                  isSpeaking ? "text-primary border-primary" : ""
+                )}
+              >
+                {isSpeaking ? <VolumeX className="mr-2" /> : <Volume2 className="mr-2" />}
+                Ouvir narração
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-80 bg-[#1A1633] border-primary/20">
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium flex items-center justify-between">
+                  Velocidade da narração
+                  <span className="text-xs font-mono text-muted-foreground">{narrationRate}x</span>
+                </h4>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs">0.5x</span>
+                  <Slider 
+                    value={[narrationRate]} 
+                    min={0.5} 
+                    max={2.0} 
+                    step={0.1} 
+                    onValueChange={(val) => setNarrationRate(val[0])} 
+                    className="flex-1" 
+                  />
+                  <span className="text-xs">2.0x</span>
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={handleNarrateCard} 
+                    className="flex-1"
+                  >
+                    {isSpeaking ? "Parar narração" : "Narrar pergunta"}
+                  </Button>
+                  {showAnswer && 
+                    <Button 
+                      variant="default" 
+                      size="sm" 
+                      onClick={() => handleSpeak(flashcard.resposta)} 
+                      className="flex-1"
+                    >
+                      Narrar resposta
+                    </Button>
+                  }
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+          
+          {showAnswer && <Button 
+            variant="outline" 
+            size={isMobile ? "default" : "lg"} 
+            className="flex-1 max-w-[180px] bg-[#1A1633]/50 border-primary/10 hover:bg-primary/20" 
+            onClick={onShowAnswer ? () => {} : onNext}
+          >
+              {onShowAnswer ? <>
+                  <EyeOff className="mr-2" />
+                  Ocultar resposta
+                </> : "Próximo"}
+            </Button>}
+        </div>}
+    </motion.div>;
 }
