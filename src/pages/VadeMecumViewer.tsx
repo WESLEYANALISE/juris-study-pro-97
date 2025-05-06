@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { useInView } from "react-intersection-observer";
@@ -21,19 +20,29 @@ import { BookOpen } from "lucide-react"; // Updated import name from BookOpenIco
 
 // Define a type for the supported background variants
 type VadeMecumBackgroundVariant = "scales" | "books" | "constitution";
-
 const VadeMecumViewer = () => {
   const navigate = useNavigate();
-  const { lawId } = useParams<{ lawId: string }>();
-  
+  const {
+    lawId
+  } = useParams<{
+    lawId: string;
+  }>();
+
   // Initial batch size increased for better initial load
   const [visibleBatch, setVisibleBatch] = useState(30);
   const [recentHistory, setRecentHistory] = useState<any[]>([]);
-  const { searchQuery, setSearchQuery } = useVadeMecumSearch();
-  const { favorites, loadHistory } = useVadeMecumFavorites();
-  const { user } = useAuth();
+  const {
+    searchQuery,
+    setSearchQuery
+  } = useVadeMecumSearch();
+  const {
+    favorites,
+    loadHistory
+  } = useVadeMecumFavorites();
+  const {
+    user
+  } = useAuth();
   const isMobile = useIsMobile();
-  
   const {
     fontSize,
     showBackToTop,
@@ -46,7 +55,10 @@ const VadeMecumViewer = () => {
   const [articlesCache, setArticlesCache] = useState<Record<string, any[]>>({});
 
   // Use react-intersection-observer for "infinite scroll" detection
-  const { ref, inView } = useInView({
+  const {
+    ref,
+    inView
+  } = useInView({
     threshold: 0.1,
     triggerOnce: false
   });
@@ -56,7 +68,6 @@ const VadeMecumViewer = () => {
     // Call the ref function from useInView
     ref(node);
   }, [ref]);
-  
   const {
     filteredArticles,
     loading,
@@ -99,7 +110,6 @@ const VadeMecumViewer = () => {
       // No need to fetch, already cached
       return;
     }
-    
     loadArticles();
   }, [lawId, loadArticles, articlesCache]);
 
@@ -129,96 +139,70 @@ const VadeMecumViewer = () => {
 
   // Animation variants
   const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.5, staggerChildren: 0.15 } }
+    hidden: {
+      opacity: 0
+    },
+    visible: {
+      opacity: 1,
+      transition: {
+        duration: 0.5,
+        staggerChildren: 0.15
+      }
+    }
   };
-
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
+    hidden: {
+      opacity: 0,
+      y: 20
+    },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5
+      }
+    }
   };
-
   if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[50vh] py-12">
+    return <div className="flex justify-center items-center min-h-[50vh] py-12">
         <div className="text-center space-y-4">
           <LoadingSpinner className="h-10 w-10 mx-auto text-primary" />
           <p className="text-muted-foreground animate-pulse">Carregando artigos...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-  
   if (error) {
     return <VadeMecumError error={error} onRetry={() => loadArticles()} />;
   }
-
-  return (
-    <JuridicalBackground variant={getBgVariant} opacity={0.03}>
-      <Container size="xl" className="p-4 py-6">
-        <motion.div 
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="grid grid-cols-1 lg:grid-cols-4 gap-8"
-        >
+  return <JuridicalBackground variant={getBgVariant} opacity={0.03}>
+      <Container size="xl" className="p-4 py-6 px-0">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* For mobile, display sidebar at top when on smaller screens */}
-          {isMobile && (
-            <motion.div variants={itemVariants} className="lg:col-span-1 mb-2">
+          {isMobile && <motion.div variants={itemVariants} className="lg:col-span-1 mb-2">
               <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
-            </motion.div>
-          )}
+            </motion.div>}
           
           <motion.div variants={itemVariants} className="lg:col-span-3 px-[10px]">
-            <VadeMecumHeader 
-              title={decodedLawName} 
-              searchQuery={searchQuery} 
-              setSearchQuery={setSearchQuery} 
-              onReload={() => loadArticles()} 
-            />
+            <VadeMecumHeader title={decodedLawName} searchQuery={searchQuery} setSearchQuery={setSearchQuery} onReload={() => loadArticles()} />
 
-            {cachedArticles.length === 0 && !loading ? (
-              <motion.div 
-                variants={itemVariants}
-                className="text-center py-12 bg-background/30 backdrop-blur-sm rounded-lg border border-primary/20"
-              >
+            {cachedArticles.length === 0 && !loading ? <motion.div variants={itemVariants} className="text-center py-12 bg-background/30 backdrop-blur-sm rounded-lg border border-primary/20">
                 <BookOpen className="h-16 w-16 mx-auto text-muted-foreground opacity-30 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">Nenhum artigo encontrado</h3>
                 <p className="text-muted-foreground max-w-md mx-auto">
                   Não encontramos nenhum artigo que corresponda aos seus critérios de busca.
                 </p>
-              </motion.div>
-            ) : (
-              <VadeMecumArticleList 
-                isLoading={loading} 
-                data={cachedArticles} 
-                filter={searchQuery} 
-                tableName={tableName} 
-                visibleArticles={visibleArticles} 
-                loadMoreRef={setRefs} 
-              />
-            )}
+              </motion.div> : <VadeMecumArticleList isLoading={loading} data={cachedArticles} filter={searchQuery} tableName={tableName} visibleArticles={visibleArticles} loadMoreRef={setRefs} />}
           </motion.div>
           
           {/* Only show sidebar in this position on desktop */}
-          {!isMobile && (
-            <motion.div variants={itemVariants} className="lg:col-span-1">
+          {!isMobile && <motion.div variants={itemVariants} className="lg:col-span-1">
               <VadeMecumSidebar favorites={favorites} recentHistory={recentHistory} />
-            </motion.div>
-          )}
+            </motion.div>}
         </motion.div>
 
         {/* Bottom floating controls for font size and back to top */}
-        <FloatingControls 
-          fontSize={fontSize} 
-          increaseFontSize={increaseFontSize} 
-          decreaseFontSize={decreaseFontSize} 
-          showBackToTop={showBackToTop} 
-          scrollToTop={scrollToTop} 
-        />
+        <FloatingControls fontSize={fontSize} increaseFontSize={increaseFontSize} decreaseFontSize={decreaseFontSize} showBackToTop={showBackToTop} scrollToTop={scrollToTop} />
       </Container>
-    </JuridicalBackground>
-  );
+    </JuridicalBackground>;
 };
-
 export default VadeMecumViewer;
