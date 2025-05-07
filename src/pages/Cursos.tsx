@@ -9,6 +9,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { Book, Video, Flag, BarChart, Star, Filter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
+
 interface Curso {
   id: number;
   materia: string;
@@ -17,16 +18,18 @@ interface Curso {
   link: string;
   capa: string;
   download: string;
-  tipo_acesso?: string;
+  tipo_acesso?: string;  // Added this property
   dificuldade?: string;
   sequencia: number;
 }
+
 interface MeuCurso {
   id: string;
   curso_id: number;
   progresso: number;
   concluido: boolean;
 }
+
 const Cursos = () => {
   const [activeTab, setActiveTab] = useState("todos");
   const [isLoading, setIsLoading] = useState(true);

@@ -1,5 +1,5 @@
 
-import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Newspaper, MessageSquare, Library, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
+import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Newspaper, MessageSquare, Library, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones, Trophy } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,

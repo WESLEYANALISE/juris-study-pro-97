@@ -13,8 +13,8 @@ interface Curso {
   capa: string;
   sobre: string;
   download: string | null;
-  tipo_acesso?: string; // Make optional since it might not exist in the database
-  dificuldade?: string; // Make optional since it might not exist in the database
+  tipo_acesso?: string; // Added this property
+  dificuldade?: string; // Already exists
 }
 
 interface CursoViewerState {
