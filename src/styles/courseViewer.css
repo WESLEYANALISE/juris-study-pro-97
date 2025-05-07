@@ -1,0 +1,13 @@
+
+/* Hide navigation elements when viewing a course */
+body.viewing-course nav,
+body.viewing-course footer,
+body.viewing-course .bottom-navigation {
+  display: none !important;
+}
+
+body.viewing-course {
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}

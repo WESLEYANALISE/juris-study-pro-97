@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageTransition } from "@/components/PageTransition";
@@ -13,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
-import { Book, Video, Flag, BarChart, Star } from "lucide-react";
+import { Book, Video, Flag, BarChart, Star, Filter } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -44,7 +45,9 @@ const Cursos = () => {
   const [meusCursos, setMeusCursos] = useState<MeuCurso[]>([]);
   const [areas, setAreas] = useState<string[]>([]);
   const [selectedArea, setSelectedArea] = useState<string | null>(null);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [difficulties, setDifficulties] = useState<string[]>([]);
   const navigate = useNavigate();
 
   const { data: userProgress } = useQuery({
@@ -94,14 +97,19 @@ const Cursos = () => {
         }));
 
         setCursos(formattedCursos);
+        
+        // Extract unique areas
+        const uniqueAreas = Array.from(
+          new Set(formattedCursos.map((curso) => curso.area))
+        ).filter(Boolean) as string[];
+        setAreas(uniqueAreas);
+        
+        // Extract unique difficulties
+        const uniqueDifficulties = Array.from(
+          new Set(formattedCursos.map((curso) => curso.dificuldade))
+        ).filter(Boolean) as string[];
+        setDifficulties(uniqueDifficulties);
       }
-
-      // Extract unique areas
-      const uniqueAreas = Array.from(
-        new Set((data || []).map((curso) => curso.area))
-      ).filter(Boolean) as string[];
-
-      setAreas(uniqueAreas);
 
       // Fetch user's course progress
       const user = await supabase.auth.getUser();
@@ -132,12 +140,13 @@ const Cursos = () => {
       return;
     }
 
-    navigate(`/curso/${curso.id}`);
+    navigate(`/curso/${curso.id}`, { state: { curso } });
   };
 
   const filteredCursos = cursos.filter(
     (curso) =>
       (!selectedArea || curso.area === selectedArea) &&
+      (!selectedDifficulty || curso.dificuldade === selectedDifficulty) &&
       (!searchTerm ||
         curso.materia.toLowerCase().includes(searchTerm.toLowerCase()) ||
         curso.area.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -146,6 +155,12 @@ const Cursos = () => {
   const meusCursosData = filteredCursos.filter((curso) =>
     meusCursos.some((meuCurso) => meuCurso.curso_id === curso.id)
   );
+
+  const resetFilters = () => {
+    setSelectedArea(null);
+    setSelectedDifficulty(null);
+    setSearchTerm("");
+  };
 
   if (isLoading) {
     return (
@@ -219,7 +234,7 @@ const Cursos = () => {
   return (
     <PageTransition>
       <div className="container mx-auto px-4 py-6">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
           <h1 className="text-3xl font-bold">Cursos Jurídicos</h1>
           <div className="flex gap-2">
             <Button
@@ -242,7 +257,7 @@ const Cursos = () => {
         </div>
 
         <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 overflow-x-auto flex whitespace-nowrap w-full">
             <TabsTrigger value="todos">
               <Book className="w-4 h-4 mr-2" /> Todos os Cursos
             </TabsTrigger>
@@ -255,7 +270,7 @@ const Cursos = () => {
           </TabsList>
 
           <div className="mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div className="md:col-span-2">
                 <input
                   type="text"
@@ -279,7 +294,35 @@ const Cursos = () => {
                   ))}
                 </select>
               </div>
+              <div>
+                <select
+                  className="w-full px-4 py-2 border rounded-lg"
+                  value={selectedDifficulty || ""}
+                  onChange={(e) => setSelectedDifficulty(e.target.value || null)}
+                >
+                  <option value="">Todas as Dificuldades</option>
+                  {difficulties.map((difficulty) => (
+                    <option key={difficulty} value={difficulty}>
+                      {difficulty}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
+            
+            {(selectedArea || selectedDifficulty || searchTerm) && (
+              <div className="flex justify-end mt-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={resetFilters}
+                  className="text-xs"
+                >
+                  <Filter className="w-3 h-3 mr-1" />
+                  Limpar filtros
+                </Button>
+              </div>
+            )}
           </div>
 
           <TabsContent value="todos">

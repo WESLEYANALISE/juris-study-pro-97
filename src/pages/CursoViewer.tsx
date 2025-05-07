@@ -5,6 +5,7 @@ import { CourseMenu } from "@/components/cursos/CourseMenu";
 import { CourseViewer } from "@/components/cursos/CourseViewer";
 import { useCursoViewer } from "@/hooks/use-curso-viewer";
 import { useState, useEffect } from "react";
+import "../styles/courseViewer.css"; // Import the course viewer styles
 
 const CursoViewer = () => {
   const {
@@ -33,8 +34,17 @@ const CursoViewer = () => {
   // Set mounted state to true after component mounts
   useEffect(() => {
     setMounted(true);
-    return () => setMounted(false);
-  }, []);
+    
+    // Add the viewing-course class to hide navigation
+    if (showCourse) {
+      document.body.classList.add('viewing-course');
+    }
+    
+    return () => {
+      setMounted(false);
+      document.body.classList.remove('viewing-course');
+    };
+  }, [showCourse]);
 
   // If not mounted yet, show loading spinner
   if (!mounted) {

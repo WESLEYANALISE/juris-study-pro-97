@@ -65,6 +65,17 @@ export function CourseViewer({
       onNotesVisibilityChange(showNotes);
     }
   }, [showNotes, onNotesVisibilityChange]);
+
+  // Hide navbar and footer when in full screen mode
+  useEffect(() => {
+    // Add a class to the body to hide navigation elements
+    document.body.classList.add('viewing-course');
+    
+    // Cleanup
+    return () => {
+      document.body.classList.remove('viewing-course');
+    };
+  }, []);
   
   // Track progress simulation
   useEffect(() => {
@@ -138,17 +149,16 @@ export function CourseViewer({
   };
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-black">
-      {/* Simplified header - just a close button */}
-      <div className="absolute top-4 right-4 z-50">
+    <div className="fixed inset-0 flex flex-col bg-black z-50">
+      {/* Floating close button in the top left */}
+      <div className="absolute top-4 left-4 z-50">
         <Button 
-          variant="destructive" 
+          variant="outline" 
           size="icon" 
           onClick={onBack} 
-          className="shadow-lg"
-          title="Fechar"
+          className="rounded-full shadow-lg backdrop-blur-sm bg-black/40 border-white/30"
         >
-          <X className="h-5 w-5" />
+          <X className="h-5 w-5 text-white" />
         </Button>
       </div>
       
@@ -193,7 +203,7 @@ export function CourseViewer({
       {showControls && (
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-black/80 backdrop-blur-sm transition-all z-30">
           <div className="flex flex-wrap gap-2 justify-between items-center">
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               <Button 
                 variant="outline" 
                 size={isMobile ? "sm" : "default"}
@@ -271,14 +281,14 @@ export function CourseViewer({
       )}
       
       {/* Toggle controls button */}
-      <div className="absolute bottom-4 left-4 z-50">
+      <div className="absolute bottom-4 right-4 z-50">
         <Button 
           variant="outline" 
           size="icon"
           onClick={toggleControls}
           className="rounded-full shadow-lg bg-black/40 border-white/30"
         >
-          {showControls ? <X className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+          {showControls ? <X className="h-5 w-5 text-white" /> : <ChevronLeft className="h-5 w-5 text-white" />}
         </Button>
       </div>
       
