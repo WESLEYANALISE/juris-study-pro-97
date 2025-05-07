@@ -83,10 +83,8 @@ const Cursos = () => {
           link: curso.link || "",
           capa: curso.capa || "",
           download: curso.download || "",
-          tipo_acesso: curso.tipo_acesso || "Free",
-          // Add default value
-          dificuldade: curso.dificuldade || "Iniciante",
-          // Add default value
+          tipo_acesso: curso.tipo_acesso || "Free", // Add default value
+          dificuldade: curso.dificuldade || "Iniciante", // Add default value
           sequencia: typeof curso.sequencia === 'string' ? parseInt(curso.sequencia) : curso.sequencia || 0
         }));
         setCursos(formattedCursos);
@@ -293,4 +291,5 @@ const Cursos = () => {
       </div>
     </PageTransition>;
 };
+
 export default Cursos;
