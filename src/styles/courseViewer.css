@@ -2,7 +2,9 @@
 /* Hide navigation elements when viewing a course */
 body.viewing-course nav,
 body.viewing-course footer,
-body.viewing-course .bottom-navigation {
+body.viewing-course header,
+body.viewing-course .bottom-navigation,
+body.viewing-course .sidebar {
   display: none !important;
 }
 
@@ -10,4 +12,31 @@ body.viewing-course {
   overflow: hidden;
   height: 100vh;
   width: 100vw;
+  background-color: #000;
+}
+
+/* Optimize video container for better mobile viewing */
+body.viewing-course iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: none;
+}
+
+/* Prevent scrolling issues in course viewer */
+body.viewing-course .fixed {
+  position: fixed !important;
+}
+
+/* Improve control buttons appearance */
+body.viewing-course button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Improve tap target sizes on mobile */
+@media (max-width: 768px) {
+  body.viewing-course button {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

@@ -23,10 +23,10 @@ interface YT {
       };
       events?: {
         onReady?: (event: { target: YT.Player }) => void;
-        onStateChange?: (event: { data: number; target: YT.Player }) => void;
+        onStateChange?: (event: YT.PlayerStateChangeEvent) => void;
         onPlaybackQualityChange?: (event: { target: YT.Player; data: string }) => void;
         onPlaybackRateChange?: (event: { target: YT.Player; data: number }) => void;
-        onError?: (event: { target: YT.Player; data: number }) => void;
+        onError?: (event: YT.OnErrorEvent) => void;
         onApiChange?: (event: { target: YT.Player }) => void;
       };
     }
@@ -78,13 +78,13 @@ namespace YT {
     destroy(): void;
   }
   
-  // Define PlayerStateChangeEvent interface
+  // Define the PlayerStateChangeEvent interface properly
   interface PlayerStateChangeEvent {
     data: number;
     target: YT.Player;
   }
 
-  // Add OnErrorEvent interface
+  // Add proper OnErrorEvent interface
   interface OnErrorEvent {
     data: number;
     target: YT.Player;
@@ -94,7 +94,6 @@ namespace YT {
 // Define YouTubeVideo interface
 interface YouTubeVideo {
   id: string;
-  // videoId is required for use with YouTube Player API - removed this as it's causing confusion
   title: string;
   description: string;
   thumbnail: string;

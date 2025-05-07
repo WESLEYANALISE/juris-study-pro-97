@@ -1,5 +1,5 @@
 
-import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Gavel, Newspaper, MessageSquare, Library, Trophy, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
+import { Calendar, BookOpen, GraduationCap, Scale, Home, Video, Brain, FilePlus, Newspaper, MessageSquare, Library, MonitorPlay, Lightbulb, BookOpenText, FileText, PenTool, User, Headphones } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -62,10 +62,8 @@ export function AppSidebar({ userProfile }: AppSidebarProps) {
       items: [
         { title: "Simulados", url: "/simulados", icon: GraduationCap, profiles: ["concurseiro", "tudo"] },
         { title: "Flashcards", url: "/flashcards", icon: Brain, profiles: ["concurseiro", "universitario", "tudo"] },
-        { title: "Jogos Jurídicos", url: "/jogos", icon: Trophy, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Redação Jurídica", url: "/redacao-juridica", icon: FileText, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Peticionário", url: "/peticoes", icon: FilePlus, profiles: ["advogado", "tudo"] },
-        { title: "Jurisprudência", url: "/jurisprudencia", icon: Gavel, profiles: ["concurseiro", "advogado", "tudo"] },
         { title: "Notícias", url: "/noticias", icon: Newspaper, profiles: ["advogado", "tudo"] },
         { title: "Assistente Jurídico", url: "/assistente", icon: MessageSquare, profiles: ["concurseiro", "universitario", "advogado", "tudo"] },
         { title: "Anotações", url: "/anotacoes", icon: PenTool, profiles: ["concurseiro", "universitario", "tudo"] },

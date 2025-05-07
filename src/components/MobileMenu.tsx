@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import { Menu } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -19,12 +20,10 @@ import {
   GraduationCap, 
   FileText, 
   FilePlus, 
-  Gavel, 
   Newspaper, 
   MessageSquare, 
   PenTool, 
-  User,
-  GamepadIcon
+  User
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -109,11 +108,6 @@ const menuItems = [
         icon: Brain
       },
       {
-        title: "Jogos Jurídicos",
-        url: "/jogos",
-        icon: GamepadIcon
-      },
-      {
         title: "Redação Jurídica",
         url: "/redacao-juridica",
         icon: FileText
@@ -122,11 +116,6 @@ const menuItems = [
         title: "Peticionário",
         url: "/peticoes",
         icon: FilePlus
-      }, 
-      {
-        title: "Jurisprudência",
-        url: "/jurisprudencia",
-        icon: Gavel
       }, 
       {
         title: "Notícias",
