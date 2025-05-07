@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,8 +13,8 @@ interface Curso {
   capa: string;
   sobre: string;
   download: string | null;
-  tipo_acesso: string;
-  dificuldade: string;
+  tipo_acesso?: string; // Make optional since it might not exist in the database
+  dificuldade?: string; // Make optional since it might not exist in the database
 }
 
 interface CursoViewerState {

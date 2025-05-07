@@ -26,8 +26,8 @@ interface Curso {
   link: string;
   capa: string;
   download: string;
-  tipo_acesso: string;
-  dificuldade: string;
+  tipo_acesso?: string;
+  dificuldade?: string;
   sequencia: number;
 }
 

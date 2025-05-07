@@ -83,6 +83,12 @@ namespace YT {
     data: number;
     target: YT.Player;
   }
+
+  // Add OnErrorEvent interface
+  interface OnErrorEvent {
+    data: number;
+    target: YT.Player;
+  }
 }
 
 // Define YouTubeVideo interface
