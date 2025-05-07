@@ -18,8 +18,8 @@ interface Curso {
   link: string;
   capa: string;
   download: string;
-  tipo_acesso?: string;  // Added this property
-  dificuldade?: string;
+  tipo_acesso: string;  // Ensure this property is defined properly
+  dificuldade: string;
   sequencia: number;
 }
 

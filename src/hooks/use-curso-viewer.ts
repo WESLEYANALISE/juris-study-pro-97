@@ -13,8 +13,8 @@ interface Curso {
   capa: string;
   sobre: string;
   download: string | null;
-  tipo_acesso?: string; // Added this property
-  dificuldade?: string; // Already exists
+  tipo_acesso: string; // Updated - Made this required since it's used in the code
+  dificuldade: string; // Already exists
 }
 
 interface CursoViewerState {
