@@ -79,7 +79,7 @@ const Cursos = () => {
       }
 
       if (data) {
-        // Transform data to match Curso interface
+        // Transform data to match Curso interface with proper default values
         const formattedCursos: Curso[] = data.map(curso => ({
           id: curso.id,
           materia: curso.materia || "",
@@ -88,8 +88,8 @@ const Cursos = () => {
           link: curso.link || "",
           capa: curso.capa || "",
           download: curso.download || "",
-          tipo_acesso: curso.tipo_acesso || "Free", // Default value
-          dificuldade: curso.dificuldade || "Iniciante", // Default value
+          tipo_acesso: curso.tipo_acesso || "Free", // Add default value
+          dificuldade: curso.dificuldade || "Iniciante", // Add default value
           sequencia: typeof curso.sequencia === 'string' ? parseInt(curso.sequencia) : curso.sequencia || 0
         }));
 

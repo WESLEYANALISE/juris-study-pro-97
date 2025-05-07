@@ -1,4 +1,3 @@
-
 import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -54,14 +53,14 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
       try {
         let query = supabase
           .from("peticoes")
-          .select("documento");
+          .select("link"); // Use "link" as this is what we have in the peticoes table
           
         // Filter by area if selected
         if (filters.area && filters.area !== "all") {
           query = query.eq("area", filters.area);
         }
         
-        query = query.order("documento");
+        query = query.order("link");
         
         const { data, error } = await query;
         
@@ -70,8 +69,8 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
           return [];
         }
         
-        // Filter out null values and get unique documento values
-        return [...new Set(data?.map((item) => item.documento).filter(Boolean))];
+        // Filter out null values and get unique link values (using link instead of documento)
+        return [...new Set(data?.map((item) => item.link).filter(Boolean))];
       } catch (e) {
         console.error("Exception fetching tipos:", e);
         return [];
@@ -89,16 +88,16 @@ export function PeticaoFilters({ filters, setFilters, allAreas = [] }: PeticaoFi
       
       const { data } = await supabase
         .from("peticoes")
-        .select("documento")
+        .select("link") // Use "link" as this is what we have in the peticoes table
         .eq("area", filters.area)
-        .order("documento");
+        .order("link");
       
-      // Extract potential sub-areas from the documento field (this is a workaround)
+      // Extract potential sub-areas from the link field (this is a workaround)
       const subAreaSet = new Set<string>();
       data?.forEach(item => {
-        if (item.documento && item.documento.includes("-")) {
-          const potentialSubArea = item.documento.split("-")[0].trim();
-          if (potentialSubArea && potentialSubArea !== item.documento) {
+        if (item.link && item.link.includes("-")) {
+          const potentialSubArea = item.link.split("-")[0].trim();
+          if (potentialSubArea && potentialSubArea !== item.link) {
             subAreaSet.add(potentialSubArea);
           }
         }

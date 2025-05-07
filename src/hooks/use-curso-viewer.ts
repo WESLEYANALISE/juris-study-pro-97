@@ -101,12 +101,12 @@ export function useCursoViewer() {
           
           // Only update state if component is still mounted
           if (mountedRef.current) {
-            // Convert sequencia from string to number and add default values for tipo_acesso
+            // Convert sequencia from string to number and add default values for missing fields
             const cursoData: Curso = {
               ...data,
               sequencia: typeof data.sequencia === 'string' ? parseInt(data.sequencia) : data.sequencia || 0,
-              tipo_acesso: data.tipo_acesso || 'Free', // Default value
-              dificuldade: data.dificuldade || 'Iniciante' // Default value
+              tipo_acesso: data.tipo_acesso || 'Free', // Default value if missing
+              dificuldade: data.dificuldade || 'Iniciante' // Default value if missing
             };
             
             setState(prev => ({ ...prev, curso: cursoData, loading: false }));

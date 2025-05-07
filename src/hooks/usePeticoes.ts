@@ -20,8 +20,7 @@ interface Peticao {
 interface PeticaoRecord {
   id: string;
   area: string;
-  documento: string;
-  link: string;
+  link: string; // Using the actual fields that exists in the peticoes table
   // Other fields might be present but not required for our mapping
 }
 
@@ -100,7 +99,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         }
         
         if (filters.tipo && filters.tipo !== "all") {
-          countQuery = countQuery.eq("documento", filters.tipo);
+          countQuery = countQuery.eq("link", filters.tipo); // Use link instead of documento
         }
         
         const { count, error: countError } = await countQuery;
@@ -122,7 +121,7 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         }
         
         if (filters.tipo && filters.tipo !== "all") {
-          query = query.eq("documento", filters.tipo);
+          query = query.eq("link", filters.tipo); // Use link instead of documento
         }
         
         // Apply pagination
@@ -139,17 +138,17 @@ export function usePeticoes(options: UsePeticoesOptions = {}) {
         // Map the data to match our interface
         return (data || []).map(item => ({
           id: item.id?.toString() || '',
-          titulo: item.documento || '',
+          titulo: item.link || '',  // Use link as titulo
           // Since descricao doesn't exist in the database, provide a default value
           descricao: 'Modelo de petição jurídica para uso profissional',
           categoria: item.area || '',
           arquivo_url: item.link || '',
           created_at: item.created_at || new Date().toISOString(),
           area: item.area || '',
-          tipo: item.documento || '',
-          // Extract potential sub-area from documento field if available
-          sub_area: item.documento && item.documento.includes("-") 
-            ? item.documento.split("-")[0].trim() 
+          tipo: item.link || '', // Using link as tipo
+          // Extract potential sub-area from link field if available
+          sub_area: item.link && item.link.includes("-") 
+            ? item.link.split("-")[0].trim() 
             : undefined,
           // Add default tags based on area
           tags: [item.area]
